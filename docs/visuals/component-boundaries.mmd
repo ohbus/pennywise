@@ -1,0 +1,50 @@
+%% Source: docs/architecture/project-structure.md, docs/architecture/error-flow.md
+flowchart TB
+    subgraph Apps[Deployable applications]
+        BFF[BFF\nGraphQL schema + resolvers\nWebSocket subscriptions]
+        ACC[Accounts\nREST controllers\nidentity and groups]
+        EXP[Expense Core\nREST controllers\nfinancial postings + audit]
+        NOT[Notifications\nREST controllers\npreferences + delivery]
+    end
+
+    subgraph Shared[Shared technical libraries]
+        ERR[errors\nrequest ID + problem details]
+        SEC[security\nauthentication adapters]
+        OBS[observability\nmetrics + tracing]
+        DBLIB[db\nJPA/Flyway conventions]
+    end
+
+    subgraph Platform[Platform resources]
+        PG[(PostgreSQL)]
+        MQ[(RabbitMQ)]
+        OUT[Transactional outbox]
+    end
+
+    BFF -->|HTTPS REST| ACC
+    BFF -->|HTTPS REST| EXP
+    BFF -->|HTTPS REST| NOT
+    ACC --> ERR
+    EXP --> ERR
+    NOT --> ERR
+    ACC --> SEC
+    EXP --> SEC
+    NOT --> SEC
+    ACC --> OBS
+    EXP --> OBS
+    NOT --> OBS
+    ACC --> DBLIB
+    EXP --> DBLIB
+    NOT --> DBLIB
+    ACC -->|owned schema| PG
+    EXP -->|owned financial schema| PG
+    NOT -->|owned schema| PG
+    EXP --> OUT
+    OUT --> MQ
+    MQ --> NOT
+
+    classDef app fill:#dbeafe,stroke:#2563eb,color:#111827
+    classDef lib fill:#fef3c7,stroke:#d97706,color:#111827
+    classDef platform fill:#dcfce7,stroke:#16a34a,color:#111827
+    class BFF,ACC,EXP,NOT app
+    class ERR,SEC,OBS,DBLIB lib
+    class PG,MQ,OUT platform

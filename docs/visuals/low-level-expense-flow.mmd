@@ -1,0 +1,24 @@
+%% Source: contracts/rest/expense-core.openapi.json, contracts/events/envelope.schema.json
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant B as GraphQL BFF
+    participant E as Expense Core REST
+    participant DB as PostgreSQL
+    participant Q as RabbitMQ
+    participant N as Notifications REST
+
+    C->>B: createExpense mutation + idempotency key
+    B->>E: POST /v1/expenses (validated DTO)
+    E->>E: authenticate, authorize, validate, calculate exact allocations
+    E->>DB: transaction: expense + postings + audit + sync change + outbox
+    DB-->>E: commit
+    E-->>B: 201 expense + requestId
+    B-->>C: mutation result
+    E->>Q: publish outbox event after commit
+    Q->>N: expense.created event
+    N->>N: resolve notification preferences and templates
+    N-->>C: WebSocket change subscription / email delivery
+
+    Note over E,DB: No cross-service SQL, entities, or repositories
+    Note over DB,Q: Financial state and outbox commit atomically

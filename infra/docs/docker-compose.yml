@@ -1,0 +1,18 @@
+services:
+  mermaid:
+    build:
+      context: ../..
+      dockerfile: infra/docs/Dockerfile
+      args:
+        MERMAID_CLI_VERSION: ${MERMAID_CLI_VERSION:-11.12.0}
+    image: pennywise-mermaid:${MERMAID_CLI_VERSION:-11.12.0}
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+    entrypoint: ["sh", "-c"]
+    command: >-
+      "mkdir -p build/docs/diagrams &&
+      for source in docs/visuals/*.mmd; do
+        name=$$(basename $$source .mmd);
+        mmdc -p infra/docs/puppeteer-config.json -i $$source -o build/docs/diagrams/$$name.svg -b transparent;
+      done"

@@ -1,0 +1,22 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Pennywise Notifications" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.subhrodip.pennywise.notifications.NotificationsApplicationKt" />
+    <module name="pennywise.app.notifications.main" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="VM_PARAMETERS" value="-Dspring.profiles.active=local" />
+    <envs>
+      <env name="SPRING_PROFILES_ACTIVE" value="local" />
+      <env name="SERVER_PORT" value="8083" />
+      <env name="SPRING_DATASOURCE_URL" value="jdbc:postgresql://localhost:5432/pennywise_notifications" />
+      <env name="SPRING_DATASOURCE_USERNAME" value="pennywise" />
+      <env name="SPRING_DATASOURCE_PASSWORD" value="pennywise-local-only" />
+      <env name="SPRING_RABBITMQ_HOST" value="localhost" />
+      <env name="SPRING_RABBITMQ_PORT" value="5672" />
+      <env name="SPRING_RABBITMQ_USERNAME" value="pennywise" />
+      <env name="SPRING_RABBITMQ_PASSWORD" value="pennywise-local-only" />
+      <env name="PENNYWISE_NOTIFICATIONS_EMAIL_HOST" value="localhost" />
+      <env name="PENNYWISE_NOTIFICATIONS_EMAIL_PORT" value="1025" />
+    </envs>
+    <method v="2"><option name="Make" enabled="true" /></method>
+  </configuration>
+</component>

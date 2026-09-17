@@ -1,0 +1,5 @@
+# Development image: dependencies are cached in a named volume by Compose.
+FROM gradle:9.7.1-jdk25
+WORKDIR /workspace
+COPY . .
+ENTRYPOINT ["./gradlew"]

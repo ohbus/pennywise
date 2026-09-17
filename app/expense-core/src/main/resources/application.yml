@@ -1,0 +1,14 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+pennywise:
+  outbox:
+    enabled: false
+    batch-size: 100
+    poll-delay-ms: 1000
+    lease-seconds: 30
+    max-attempts: 5
+    retry-after-seconds: 5

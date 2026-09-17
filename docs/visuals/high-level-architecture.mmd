@@ -1,0 +1,26 @@
+%% Source: docs/architecture/overview.md, docs/architecture/project-structure.md
+flowchart LR
+    User[Web / Mobile client]
+    BFF[GraphQL BFF\nHTTPS + WebSocket subscriptions]
+    Accounts[Accounts REST service]
+    Core[Expense Core REST service]
+    Notifications[Notifications REST service]
+    PG[(PostgreSQL\nfinancial state)]
+    Rabbit[(RabbitMQ\nasynchronous events)]
+    Mail[Email provider]
+
+    User --> BFF
+    BFF --> Accounts
+    BFF --> Core
+    BFF --> Notifications
+    Accounts --> PG
+    Core --> PG
+    Notifications --> PG
+    Core --> Rabbit
+    Rabbit --> Notifications
+    Notifications --> Mail
+
+    classDef service fill:#dbeafe,stroke:#2563eb,color:#111827
+    classDef data fill:#dcfce7,stroke:#16a34a,color:#111827
+    class BFF,Accounts,Core,Notifications service
+    class PG,Rabbit,Mail data

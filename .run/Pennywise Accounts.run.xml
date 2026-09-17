@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Pennywise Accounts" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.subhrodip.pennywise.accounts.AccountsApplicationKt" />
+    <module name="pennywise.app.accounts.main" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="VM_PARAMETERS" value="-Dspring.profiles.active=local" />
+    <envs>
+      <env name="SPRING_PROFILES_ACTIVE" value="local" />
+      <env name="SERVER_PORT" value="8081" />
+      <env name="SPRING_DATASOURCE_URL" value="jdbc:postgresql://localhost:5432/pennywise_accounts" />
+      <env name="SPRING_DATASOURCE_USERNAME" value="pennywise" />
+      <env name="SPRING_DATASOURCE_PASSWORD" value="pennywise-local-only" />
+    </envs>
+    <method v="2"><option name="Make" enabled="true" /></method>
+  </configuration>
+</component>

@@ -1,0 +1,174 @@
+name: Pennywise reusable CI
+
+on:
+  workflow_call:
+    inputs:
+      run_e2e: { type: boolean, required: false, default: false }
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: '25'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  preflight:
+    name: Contracts and Compose preflight
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: |
+          python3 tools/contracts/validate.py
+          docker compose -f infra/local/docker-compose.yml config --quiet
+          docker compose -f infra/local/docker-compose.dev.yml config --quiet
+
+  lint:
+    name: Lightweight lint and repository checks
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v5
+        with: { persist-credentials: false }
+      - name: Check formatting and contracts
+        run: |
+          git diff --check
+          python3 tools/contracts/validate.py
+
+  verify:
+    name: Verify ${{ matrix.kind }} / ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    needs: preflight
+    services:
+      postgres:
+        image: postgres:17
+        env: { POSTGRES_DB: pennywise, POSTGRES_USER: pennywise, POSTGRES_PASSWORD: pennywise }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready -U pennywise -d pennywise"
+          --health-interval=5s --health-timeout=5s --health-retries=12
+      rabbitmq:
+        image: rabbitmq:4.3-management
+        ports: ['5672:5672']
+        options: >-
+          --health-cmd="rabbitmq-diagnostics -q ping"
+          --health-interval=5s --health-timeout=5s --health-retries=12
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 9
+      matrix:
+        include:
+          - { kind: app, name: accounts, path: ':app:accounts' }
+          - { kind: app, name: expense-core, path: ':app:expense-core' }
+          - { kind: app, name: notifications, path: ':app:notifications' }
+          - { kind: app, name: bff, path: ':app:bff' }
+          - { kind: library, name: db, path: ':libs:db' }
+          - { kind: library, name: errors, path: ':libs:errors' }
+          - { kind: library, name: observability, path: ':libs:observability' }
+          - { kind: library, name: security, path: ':libs:security' }
+          - { kind: library, name: test-support, path: ':libs:test-support' }
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: microsoft
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: gradle
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Restore shared Gradle build cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/build-cache-*
+          key: pennywise-gradle-build-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', '**/gradle.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: pennywise-gradle-build-${{ runner.os }}-
+      - name: Build, test, check, and coverage
+        run: ./gradlew ${{ matrix.path }}:test ${{ matrix.path }}:check jacocoTestReport --no-daemon
+      - name: Build application artifact
+        if: matrix.kind == 'app'
+        run: ./gradlew ${{ matrix.path }}:bootJar --no-daemon
+      - name: Upload application jar artifact
+        if: matrix.kind == 'app'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar-${{ matrix.name }}
+          path: app/${{ matrix.name }}/build/libs/pennywise-${{ matrix.name }}-0.1.0-SNAPSHOT.jar
+          if-no-files-found: error
+          retention-days: 5
+      - name: Publish test summary
+        uses: test-summary/action@v2
+        if: always()
+        with:
+          paths: "**/build/test-results/test/TEST-*.xml"
+          show: "fail, skip"
+      - name: Upload test results and reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.name }}
+          path: |
+            **/build/test-results/test/TEST-*.xml
+            **/build/reports/tests/test/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  e2e:
+    if: inputs.run_e2e
+    needs: preflight
+    services:
+      postgres:
+        image: postgres:17
+        env: { POSTGRES_DB: pennywise, POSTGRES_USER: pennywise, POSTGRES_PASSWORD: pennywise }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready -U pennywise -d pennywise"
+          --health-interval=5s --health-timeout=5s --health-retries=12
+      rabbitmq:
+        image: rabbitmq:4.3-management
+        ports: ['5672:5672']
+        options: >-
+          --health-cmd="rabbitmq-diagnostics -q ping"
+          --health-interval=5s --health-timeout=5s --health-retries=12
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: microsoft
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: gradle
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Restore shared Gradle build cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/build-cache-*
+          key: pennywise-gradle-e2e-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', '**/gradle.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: pennywise-gradle-e2e-${{ runner.os }}-
+      - run: ./gradlew test --no-daemon
+      - name: Publish E2E test summary
+        uses: test-summary/action@v2
+        if: always()
+        with:
+          paths: "**/build/test-results/test/TEST-*.xml"
+          show: "fail, skip"
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-e2e
+          path: |
+            **/build/test-results/test/TEST-*.xml
+            **/build/reports/tests/test/
+          if-no-files-found: ignore
+          retention-days: 14
+      - run: bash tests/e2e/contract-smoke.sh

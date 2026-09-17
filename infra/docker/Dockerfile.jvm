@@ -1,0 +1,17 @@
+# One build definition for every Pennywise JVM application.
+# Build: docker build --build-arg APP_PROJECT=accounts -t pennywise-accounts -f infra/docker/Dockerfile.jvm .
+FROM gradle:9.7.1-jdk25 AS build
+ARG APP_PROJECT
+WORKDIR /workspace
+COPY . .
+RUN ./gradlew ":app:${APP_PROJECT}:bootJar" --no-daemon
+
+FROM eclipse-temurin:25-jre
+ARG APP_PROJECT
+ENV APP_PROJECT=${APP_PROJECT}
+WORKDIR /app
+RUN useradd --system --create-home --uid 10001 pennywise
+COPY --from=build "/workspace/app/${APP_PROJECT}/build/libs/pennywise-${APP_PROJECT}-0.1.0-SNAPSHOT.jar" /app/app.jar
+USER pennywise
+EXPOSE 8080
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/app.jar"]

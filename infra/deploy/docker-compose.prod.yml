@@ -1,0 +1,43 @@
+x-healthcheck: &healthcheck
+  test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8080/actuator/health/readiness | grep -q 'UP'"]
+  interval: 10s
+  timeout: 3s
+  retries: 12
+  start_period: 30s
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  read_only: true
+  tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+  security_opt: [no-new-privileges:true]
+  networks: [private]
+  init: true
+  environment:
+    SPRING_MAIN_BANNER_MODE: "off"
+    LOGGING_STRUCTURED_FORMAT: ${PENNYWISE_LOG_FORMAT:-ecs}
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus
+    MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+    MANAGEMENT_SERVER_SHUTDOWN: graceful
+    SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: 20s
+
+services:
+  accounts:
+    image: ${PENNYWISE_ACCOUNTS_IMAGE:?set PENNYWISE_ACCOUNTS_IMAGE}
+    <<: *service-defaults
+    healthcheck: *healthcheck
+  expense-core:
+    image: ${PENNYWISE_EXPENSE_CORE_IMAGE:?set PENNYWISE_EXPENSE_CORE_IMAGE}
+    <<: *service-defaults
+    healthcheck: *healthcheck
+  notifications:
+    image: ${PENNYWISE_NOTIFICATIONS_IMAGE:?set PENNYWISE_NOTIFICATIONS_IMAGE}
+    <<: *service-defaults
+    healthcheck: *healthcheck
+  bff:
+    image: ${PENNYWISE_BFF_IMAGE:?set PENNYWISE_BFF_IMAGE}
+    <<: *service-defaults
+    healthcheck: *healthcheck
+
+networks:
+  private:
+    internal: true

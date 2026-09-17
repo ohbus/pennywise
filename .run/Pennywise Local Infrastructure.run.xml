@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Pennywise Local Infrastructure" type="docker-deploy" factoryName="docker-compose.yml">
+    <deployment type="docker-compose.yml">
+      <settings>
+        <option name="composeProjectName" value="pennywise" />
+        <option name="commandLineSettings" value="-f infra/local/docker-compose.yml up" />
+      </settings>
+    </deployment>
+  </configuration>
+</component>

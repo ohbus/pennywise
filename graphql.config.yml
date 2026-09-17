@@ -1,0 +1,5 @@
+# GraphQL configuration for IntelliJ IDEA and GraphQL tooling
+schema:
+  - contracts/graphql/schema.graphqls
+documents:
+  - contracts/graphql/**/*.graphql

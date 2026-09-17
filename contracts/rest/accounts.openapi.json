@@ -1,0 +1,23 @@
+{
+  "openapi": "3.1.1",
+  "info": {"title": "Accounts API", "version": "1.0.0"},
+  "servers": [{"url": "/accounts/v1"}],
+  "paths": {
+    "/me": {
+      "get": {"operationId": "getMe", "responses": {"200": {"description": "Profile", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Profile"}}}}, "401": {"$ref": "#/components/responses/Unauthorized"}}},
+      "patch": {"operationId": "updateMe", "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProfilePatch"}}}}, "responses": {"200": {"description": "Updated profile", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Profile"}}}}, "400": {"$ref": "#/components/responses/Problem"}, "401": {"$ref": "#/components/responses/Unauthorized"}}}
+    },
+    "/me/deletion-request": {"post": {"operationId": "requestDeletion", "responses": {"202": {"description": "Deletion request accepted"}, "401": {"$ref": "#/components/responses/Unauthorized"}}}},
+    "/me/export-request": {"post": {"operationId": "requestExport", "responses": {"202": {"description": "Export request accepted", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ExportRequest"}}}}, "401": {"$ref": "#/components/responses/Unauthorized"}}}},
+    "/me/export-requests": {"get": {"operationId": "listExportRequests", "responses": {"200": {"description": "List of export requests", "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "#/components/schemas/ExportRequest"}}}}}, "401": {"$ref": "#/components/responses/Unauthorized"}}}},
+    "/profiles/{accountId}": {"get": {"operationId": "getProfileById", "parameters": [{"name": "accountId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}], "responses": {"200": {"description": "Profile", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Profile"}}}}, "404": {"description": "Profile not found", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}}}}}},
+    "/profiles/batch": {"post": {"operationId": "getProfilesBatch", "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/BatchProfileRequest"}}}}, "responses": {"200": {"description": "List of profiles", "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "#/components/schemas/Profile"}}}}}, "400": {"$ref": "#/components/responses/Problem"}}}}
+  },
+  "components": {"schemas": {
+    "Profile": {"type": "object", "required": ["accountId", "displayName", "timezone", "defaultCurrency"], "properties": {"accountId": {"type": "string", "format": "uuid"}, "displayName": {"type": "string", "minLength": 1, "maxLength": 120}, "timezone": {"type": "string"}, "defaultCurrency": {"type": "string", "pattern": "^[A-Z]{3}$"}}},
+    "ProfilePatch": {"type": "object", "minProperties": 1, "properties": {"displayName": {"type": "string", "minLength": 1, "maxLength": 120}, "timezone": {"type": "string"}, "defaultCurrency": {"type": "string", "pattern": "^[A-Z]{3}$"}}},
+    "ExportRequest": {"type": "object", "required": ["exportId", "status", "requestedAt"], "properties": {"exportId": {"type": "string", "format": "uuid"}, "status": {"type": "string", "enum": ["REQUESTED", "READY", "EXPIRED"]}, "requestedAt": {"type": "string", "format": "date-time"}}},
+    "BatchProfileRequest": {"type": "object", "required": ["accountIds"], "properties": {"accountIds": {"type": "array", "minItems": 1, "maxItems": 100, "items": {"type": "string", "format": "uuid"}}}},
+    "Problem": {"type": "object", "required": ["type", "title", "status", "code", "requestId"], "properties": {"type": {"type": "string", "format": "uri-reference"}, "title": {"type": "string"}, "status": {"type": "integer"}, "code": {"type": "string"}, "requestId": {"type": "string"}, "detail": {"type": "string"}}}
+  }, "responses": {"Problem": {"description": "Problem details", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}}}, "Unauthorized": {"description": "Authentication required"}}}
+}

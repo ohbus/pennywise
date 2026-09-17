@@ -1,0 +1,25 @@
+services:
+  postgres:
+    extends:
+      file: docker-compose.yml
+      service: postgres
+  rabbitmq:
+    extends:
+      file: docker-compose.yml
+      service: rabbitmq
+  accounts:
+    extends:
+      file: docker-compose.dev.yml
+      service: accounts
+    depends_on:
+      postgres:
+        condition: service_healthy
+  expense-core:
+    extends:
+      file: docker-compose.dev.yml
+      service: expense-core
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy

@@ -1,0 +1,40 @@
+package com.subhrodip.pennywise.notifications
+
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.transaction.annotation.Transactional
+
+@SpringBootTest(
+    properties = [
+        "spring.datasource.url=jdbc:h2:mem:notification_preferences;DB_CLOSE_DELAY=-1",
+        "spring.datasource.username=sa",
+        "spring.datasource.password=",
+        "spring.jpa.hibernate.ddl-auto=validate",
+        "spring.jpa.open-in-view=false"
+    ]
+)
+@Transactional
+class JpaPreferenceStoreTest @Autowired constructor(
+    private val store: JpaPreferenceStore,
+    private val repository: NotificationPreferenceRepository
+) {
+    @Test
+    fun `returns defaults without creating a persistence row`() {
+        assertEquals(NotificationPreferences(), store.get("alice"))
+        assertEquals(0, repository.count())
+    }
+
+    @Test
+    fun `persists and updates preferences by authenticated subject`() {
+        store.put("alice", NotificationPreferences(emailEnabled = false, pushEnabled = true))
+        store.put("alice", NotificationPreferences(emailEnabled = false, pushEnabled = false))
+
+        assertEquals(
+            NotificationPreferences(emailEnabled = false, pushEnabled = false),
+            store.get("alice")
+        )
+        assertEquals(1, repository.count())
+    }
+}

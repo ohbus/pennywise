@@ -1,0 +1,57 @@
+name: Pennywise master CI and images
+on:
+  push: { branches: [master] }
+  workflow_dispatch:
+permissions: { contents: read, packages: write }
+concurrency: { group: pennywise-master, cancel-in-progress: false }
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+jobs:
+  ci:
+    name: Master verification (reusable)
+    uses: ./.github/workflows/_reusable-ci.yml
+    with: { run_e2e: true }
+
+  images:
+    name: Publish container images
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions: { contents: read, packages: write }
+    strategy:
+      matrix: { service: [accounts, expense-core, notifications, bff] }
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Download application jar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar-${{ matrix.service }}
+          path: app/${{ matrix.service }}/build/libs
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Buildx with GHA cache support
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/pennywise-${{ matrix.service }}
+          tags: |
+            type=sha
+            type=ref,event=branch
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: infra/docker/Dockerfile.fast
+          build-args: APP_PROJECT=${{ matrix.service }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,scope=${{ matrix.service }},mode=max

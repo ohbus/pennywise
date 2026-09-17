@@ -1,0 +1,127 @@
+# Task board
+
+The coordinator owns this board and `registry.yaml`. The registry is the source
+of truth. Its JSON formatting is valid YAML 1.2 and permits dependency-free
+validation with Python's standard library.
+
+## Current milestone: documentation and contracts
+
+| ID | Owner | Status | Deliverable |
+| --- | --- | --- | --- |
+| DOC-01 | coordinator | done | Tracker, working agreement, task details |
+| DOC-02 | architecture agent | done | Product scope and ownership |
+| DOC-03 | architecture agent | done | Technology, security, persistence, structure |
+| DOC-04 | coordinator | done | Financial rules and REST contracts |
+| DOC-05 | coordinator | done | Events, recurrence, offline contracts |
+| DOC-06 | coordinator | done | GraphQL schema and operation mapping |
+| DOC-07 | quality agent | done | Acceptance, operations, recovery and capacity |
+| DOC-08 | coordinator | done | Cross-review and documentation gate |
+| DOC-09 | coordinator | done | Mermaid visual documentation with Docker Compose rendering |
+| DOC-10 | coordinator | done | Version-controlled IntelliJ run configurations |
+| DOC-11 | coordinator | done | Endpoint-specific pagination policy and bounded collection guidance |
+| DOC-12 | coordinator | done | Establish compatible Kotlin quality and coding guidelines |
+| DOC-13 | coordinator | done | Repository-wide implementation review and empty-folder cleanup |
+| DOC-14 | lint_research | done | Evaluate Kotlin lint compatibility |
+| DOC-15 | coordinator | done | Repository-wide plan and implementation drift audit |
+| DOC-15A | drift_architecture | done | Architecture, contract, and documentation drift review |
+| DOC-15B | drift_build | done | Code, build, CI, and test drift review |
+| DOC-16 | contract_reconciliation | done | Reconcile API contracts with implemented endpoints |
+| FND-01 | coordinator | done | Verified Gradle scaffold and UI placeholder |
+| FND-02 | platform | done | Local infrastructure and migration foundations |
+| FND-03 | quality | done | CI and executable quality checks |
+| FND-04 | coordinator | done | Repository workflow Makefile |
+| FND-05 | coordinator | done | Shared REST error flow |
+| FND-06 | coordinator | done | Central dependency and plugin catalog |
+| FND-07 | uuidv7 | done | Centralized UUIDv7 generation abstraction |
+| QA-01 | acceptance_harness | done | Integrated product acceptance harness |
+| QA-02 | coordinator | done | Scaffold tests, smoke E2E, and coverage baseline |
+| OPS-01 | deployment_release | done | Deployment telemetry and release hardening |
+| OPS-02 | recovery_capacity | done | Recovery, capacity, cost, and launch verification |
+| OPS-03 | coordinator | done | Modular Dockerfiles and Compose operations |
+| OPS-04 | coordinator | done | Configurable PR, branch, and main CI workflows with GHCR image delivery |
+| OPS-05 | coordinator | done | CI hardening review and local parity improvements |
+| OPS-06 | coordinator | done | Centralized aggressive reusable CI caching |
+| OPS-07 | coordinator | done | Dependency service containers and local health checks |
+| ACC-01 | accounts_slice | done | Accounts profile contract slice with validation and authenticated access |
+| ACC-02 | accounts_persistence | done | Durable account deletion and export request persistence |
+| CORE-01 | groups_membership | done | Groups, membership, and invitations |
+| CORE-02 | coordinator | done | Allocation preview and financial domain foundation |
+| CORE-03 | coordinator | done | Settlement record and idempotent reversal domain slice |
+| CORE-04 | sync_slice | done | Offline synchronization and cursor snapshots |
+| CORE-05 | recurrence_slice | done | Recurring expense generation |
+| CORE-06 | search_export | done | Search and export boundaries |
+| CORE-07 | expense_categories | done | Categorized expenses and category management |
+| CORE-08 | expense_persistence | done | Durable Expense Core settlement persistence adapter |
+| CORE-09 | group_persistence | done | Durable group, membership, and invitation persistence |
+| CORE-10 | outbox_persistence | done | Durable transactional outbox persistence |
+| CORE-11 | sync_persistence | done | Durable synchronization change persistence |
+| CORE-12 | outbox_relay_daemon | done | Outbox background polling relay daemon |
+| CORE-13 | expense_persistence | done | Durable expense ledger entity and posting persistence |
+| CORE-14 | expense_persistence | done | Durable expense update, deletion, and posting reversal |
+| MSG-01 | outbox_delivery | done | Outbox and broker delivery |
+| NOT-01 | notifications_slice | done | Notification inbox and delivery |
+| NOT-02 | notification_persistence | done | Durable Notifications preference persistence adapter |
+| NOT-03 | inbox_persistence | done | Durable notification inbox persistence |
+| NOT-04 | notification_consumer | done | Transactional notification event consumption |
+| NOT-05 | rabbit_listener | done | RabbitMQ listener and acknowledgement adapter |
+| BFF-01 | bff_gateway | done | GraphQL BFF gateway adapters |
+| BFF-02 | live_updates_slice | done | BFF live update fanout |
+| BFF-03 | bff_gateway | done | GraphQL BFF query and mutation resolvers |
+| CORE-15 | recurring_agent | done | Durable recurring expense schedules, occurrences, and runner |
+| QA-03 | acceptance_agent | done | Real multi-service acceptance test scenarios |
+| NOT-06 | email_agent | done | SMTP email dispatch adapter in Notifications service |
+| ACC-03 | accounts_agent | done | Expose GDPR export request REST endpoints in Accounts service |
+| CORE-16 | settlement_agent | done | Debt simplification and settlement suggestions engine |
+| BFF-04 | bff_agent | done | Settlement suggestions GraphQL resolver |
+| NOT-07 | consumer_agent | done | Connect notification consumer with email dispatch |
+| OPS-08 | devops_agent | done | Compose dev environment configuration hardening and live acceptance workflow |
+| CORE-17 | group_agent | done | Expose group members endpoint and durable member listing in Expense Core |
+| BFF-05 | subscription_agent | done | Implement groupChanged GraphQL subscription with reactive live update sink |
+| NOT-08 | pref_agent | done | Complete Notifications preferences contract schema and persistence validation |
+| ACC-04 | account_agent | done | Expose public profile lookup endpoint by account ID in Accounts service |
+| CORE-18 | group_update_agent | done | Group rename slice and hardening complete |
+| BFF-06 | group_graphql_agent | done | Group update/member slice completed with bounded member resolution |
+| NOT-09 | read_agent | done | Add mark inbox notification as read endpoint in Notifications service |
+| ACC-05 | batch_account_agent | done | Expose batch profile lookup REST endpoint in Accounts service |
+| DOC-17 | coordinator | done | Reconcile task state, Git ownership, and repository drift |
+| DOC-17A | task_state_audit | done | Audit tracker state and evidence consistency |
+| DOC-17B | git_task_map | done | Map commits and worktree files to tasks |
+| DOC-17C | drift_review | done | Review implementation, contracts, tests, and scope drift |
+| OPS-09 | compose_topology | done | Add dependency-only, standalone-app, and full-stack Compose workflows |
+| CORE-19 | unassigned | planned | Complete group lifecycle and membership administration |
+| CORE-20 | unassigned | planned | Expose recurring schedule management and pause notifications |
+| CORE-21 | unassigned | planned | Complete authorized persistent search and CSV transport |
+| CORE-22 | coordinator | done | Harden group updates with transactional change effects |
+| BFF-07 | coordinator | done | Complete bounded GraphQL group-member resolution |
+| MSG-02 | unassigned | planned | Deliver committed group changes to every BFF replica |
+| QA-04 | unassigned | planned | Execute authenticated real-dependency product acceptance |
+| OPS-10 | unassigned | planned | Produce public-launch restore, capacity, and cost evidence |
+| DOC-18 | unassigned | planned | Reconcile current API operation and error contracts |
+| DOC-19 | unassigned | planned | Backfill legacy tracker ownership and evidence |
+| DOC-20 | coordinator | done | Establish a non-breaking Kotlin formatting baseline |
+| OPS-11 | coordinator | done | Fix Buildx GHA cache export for main image publishing |
+| DOC-22 | coordinator | done | Apply programming principles and reconcile current documentation |
+| DOC-23 | coordinator | done | Mandate continuous documentation updates and Javadoc/KDoc comments in working agreement |
+| OPS-12 | coordinator | done | Isolate GHCR image publishing from reusable verification workflow |
+| OPS-13 | coordinator | done | Align CI triggers, workflows, and documentation with master branch |
+| OPS-14 | coordinator | done | Enable E2E smoke checks on feature branch CI |
+| CORE-23 | core23_agent | done | Verify group-rename atomic rollback and effect payloads |
+| CORE-24 | core | done | Cover group-rename request and authorization edge cases |
+| CORE-25 | core25_agent | done | Verify group-rename concurrency against PostgreSQL |
+| BFF-08 | bff | done | Test bounded group-member fanout behavior |
+| IDE-01 | coordinator | done | Resolve IntelliJ GraphQL schema detection and eliminate unnecessary constructor field injection |
+| BFF-09 | bff09_agent | done | Verify GraphQL transport error mapping for group operations |
+| QA-05 | qa05_agent | done | Add public-interface edge-case acceptance journeys |
+| BFF-10 | bff10_audit | done | Resolve GraphQL scalar deprecation warnings |
+| BFF-11 | bff11_agent | done | Expose and verify the GraphQL HTTP transport route |
+| QA-06 | coordinator | done | Isolate JpaOutboxStoreTest from inter-suite database pollution |
+| OPS-15 | coordinator | done | Publish CI test results, pass down built application artifacts, and optimize caching |
+| OPS-16 | coordinator | done | Standardize top-level CI environment and Node 24 runtime enforcement |
+| DOC-24 | coordinator | done | Mandate strict SOLID file separation, comprehensive documentation linking, and pre-implementation documentation review |
+| CORE-26 | core | done | Refactor Expense Core groups and settlements persistence into separated SOLID files |
+| ACC-06 | accounts | done | Refactor Accounts persistence into separated SOLID files |
+| NOT-10 | notifications | done | Refactor Notifications persistence into separated SOLID files |
+| CORE-27 | core | done | Refactor Expense Core expenses, sync, and outbox persistence into separated SOLID files |
+| CORE-28 | core | done | Refactor Expense Core recurring persistence into separated SOLID files |
+| FND-08 | coordinator | done | Refactor domain ports, in-memory stores, and consumer services into dedicated files |
+| OBS-01 | coordinator | done | Implement cross-cutting structured logging, MDC correlation, and observability tools |

@@ -1,0 +1,11 @@
+name: Pennywise PR CI
+on: { pull_request: {} }
+permissions: { contents: read }
+concurrency:
+  group: pennywise-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  ci:
+    name: Pull request verification (reusable)
+    uses: ./.github/workflows/_reusable-ci.yml
+    with: { run_e2e: true }

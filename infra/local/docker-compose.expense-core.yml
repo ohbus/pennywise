@@ -1,0 +1,9 @@
+services:
+  postgres:
+    extends:
+      file: docker-compose.yml
+      service: postgres
+  rabbitmq:
+    extends:
+      file: docker-compose.yml
+      service: rabbitmq

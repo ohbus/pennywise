@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Pennywise BFF" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.subhrodip.pennywise.bff.BffApplicationKt" />
+    <module name="pennywise.app.bff.main" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="VM_PARAMETERS" value="-Dspring.profiles.active=local" />
+    <envs>
+      <env name="SPRING_PROFILES_ACTIVE" value="local" />
+      <env name="SERVER_PORT" value="8080" />
+      <env name="PENNYWISE_ACCOUNTS_URL" value="http://localhost:8081" />
+      <env name="PENNYWISE_EXPENSE_CORE_URL" value="http://localhost:8082" />
+      <env name="PENNYWISE_NOTIFICATIONS_URL" value="http://localhost:8083" />
+    </envs>
+    <method v="2"><option name="Make" enabled="true" /></method>
+  </configuration>
+</component>

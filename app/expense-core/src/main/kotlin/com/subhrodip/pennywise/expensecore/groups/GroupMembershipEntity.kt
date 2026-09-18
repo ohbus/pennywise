@@ -8,12 +8,15 @@ import jakarta.persistence.UniqueConstraint
 import java.util.UUID
 
 /**
- * Persistent JPA entity associating a subject user to an expense group membership.
+ * Persistent JPA entity associating a user subject or placeholder to an expense group membership.
  *
  * Invariants:
- * - [membershipId] is a unique primary key UUID.
- * - The pair ([groupId], [subject]) is constrained to be unique in the database schema.
- * - [subject] is the authenticated principal identifier (up to 200 characters).
+ * - [membershipId] is a unique primary key UUID used as the participant identifier across expenses and ledger entries.
+ * - The pair ([groupId], [subject]) is constrained to be unique in the database schema when subject is non-null.
+ * - [subject] is the authenticated principal identifier (nullable for unclaimed placeholders).
+ * - [displayName] is an optional human-readable label for placeholders or members.
+ * - [isPlaceholder] is true for members created without a bound user account.
+ * - [status] is either ACTIVE or REMOVED.
  */
 @Entity
 @Table(
@@ -29,6 +32,12 @@ class GroupMembershipEntity(
     var membershipId: UUID,
     @Column(name = "group_id", nullable = false)
     var groupId: UUID,
-    @Column(name = "subject", nullable = false, length = 200)
-    var subject: String
+    @Column(name = "subject", length = 200)
+    var subject: String? = null,
+    @Column(name = "display_name", length = 120)
+    var displayName: String? = null,
+    @Column(name = "is_placeholder", nullable = false)
+    var isPlaceholder: Boolean = false,
+    @Column(name = "status", nullable = false, length = 16)
+    var status: String = "ACTIVE"
 )

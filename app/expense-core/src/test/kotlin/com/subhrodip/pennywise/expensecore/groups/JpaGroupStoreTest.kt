@@ -4,7 +4,9 @@ import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -13,7 +15,7 @@ import tools.jackson.databind.ObjectMapper
 
 /**
  * Integration tests for [JpaGroupStore] verifying transactional persistence, optimistic locking / serialization,
- * audit logging, outbox dispatch, and authorization semantics for groups, members, and invitations.
+ * audit logging, outbox dispatch, and authorization semantics for groups, archiving, placeholders, member removal, and invitations.
  */
 @SpringBootTest
 class JpaGroupStoreTest @Autowired constructor(
@@ -238,5 +240,111 @@ class JpaGroupStoreTest @Autowired constructor(
         // Verify no additional audit or outbox entries created
         assertEquals(initialAuditCount, auditRepository.count())
         assertEquals(initialOutboxCount, outboxRepository.count())
+    }
+
+    /**
+     * Verifies that archiving a group updates its status to ARCHIVED, increments revision,
+     * emits audit/outbox events, and blocks future update attempts.
+     */
+    @Test
+    fun `archives group and enforces read-only state`() {
+        val group = store.create("archive-owner", CreateGroupRequest("Household", "HOUSEHOLD", "USD"))
+        assertEquals("ACTIVE", group.status)
+        assertEquals(0L, group.revision)
+
+        val archived = store.archive(group.groupId, "archive-owner")
+        assertEquals("ARCHIVED", archived.status)
+        assertEquals(1L, archived.revision)
+
+        // Verify audit and outbox side-effects
+        val audit = auditRepository.findAll().single { it.groupId == group.groupId }
+        val outbox = outboxRepository.findAll().single { it.groupId == group.groupId }
+        assertEquals("group.archived", audit.action)
+        assertEquals("group.archived.v1", outbox.eventType)
+
+        // Repeat archive fails with 409
+        org.junit.jupiter.api.assertThrows<org.springframework.web.server.ResponseStatusException> {
+            store.archive(group.groupId, "archive-owner")
+        }
+
+        // Update name fails with 409 Conflict
+        org.junit.jupiter.api.assertThrows<org.springframework.web.server.ResponseStatusException> {
+            store.update(group.groupId, "archive-owner", UpdateGroupRequest("New Name"))
+        }
+    }
+
+    /**
+     * Verifies creating a named placeholder and claiming a targeted invitation binds the user's subject
+     * to the exact same participant membership ID.
+     */
+    @Test
+    fun `creates placeholder and binds subject via targeted invitation`() {
+        val group = store.create("placeholder-owner", CreateGroupRequest("Trip Group", "TRIP", "EUR"))
+
+        val placeholder = store.addPlaceholder(group.groupId, "placeholder-owner", CreatePlaceholderRequest("Bob Placeholder"))
+        assertTrue(placeholder.isPlaceholder)
+        assertEquals("Bob Placeholder", placeholder.displayName)
+        assertNull(placeholder.subject)
+
+        val invite = store.invite(group.groupId, "placeholder-owner", CreateInviteRequest(24, placeholder.membershipId))
+        assertEquals(placeholder.membershipId, invite.placeholderId)
+
+        val claimedGroup = store.claim(invite.token, "bob-registered")
+        assertEquals(group.groupId, claimedGroup.groupId)
+
+        val members = store.listMembers(group.groupId, "bob-registered")
+        val boundMember = members.find { it.membershipId == placeholder.membershipId }
+        assertNotNull(boundMember)
+        assertEquals("bob-registered", boundMember!!.subject)
+        assertEquals("Bob Placeholder", boundMember.displayName)
+        assertFalse(boundMember.isPlaceholder)
+    }
+
+    /**
+     * Verifies soft-removing a member sets status to REMOVED, increments revision,
+     * excludes them from active member listing, and revokes access.
+     */
+    @Test
+    fun `soft removes member and updates revision`() {
+        val group = store.create("remove-owner", CreateGroupRequest("Apartment", "HOUSEHOLD", "EUR"))
+        val invite = store.invite(group.groupId, "remove-owner", CreateInviteRequest(24))
+        store.claim(invite.token, "member-to-remove")
+
+        val membersBefore = store.listMembers(group.groupId, "remove-owner")
+        val removeTarget = membersBefore.find { it.subject == "member-to-remove" }!!
+
+        store.removeMember(group.groupId, "remove-owner", removeTarget.membershipId)
+
+        val membersAfter = store.listMembers(group.groupId, "remove-owner")
+        assertEquals(1, membersAfter.size)
+        assertEquals("remove-owner", membersAfter[0].subject)
+
+        // Removed member can no longer list group members
+        org.junit.jupiter.api.assertThrows<org.springframework.web.server.ResponseStatusException> {
+            store.listMembers(group.groupId, "member-to-remove")
+        }
+
+        // Duplicate removal returns 409 Conflict
+        org.junit.jupiter.api.assertThrows<org.springframework.web.server.ResponseStatusException> {
+            store.removeMember(group.groupId, "remove-owner", removeTarget.membershipId)
+        }
+    }
+
+    /**
+     * Verifies revoking an invitation prevents subsequent claim attempts and emits audit/outbox events.
+     */
+    @Test
+    fun `revokes invitation token and rejects claims`() {
+        val group = store.create("revoke-owner", CreateGroupRequest("Vacation", "TRIP", "USD"))
+        val invite = store.invite(group.groupId, "revoke-owner", CreateInviteRequest(24))
+
+        store.revokeInvite(group.groupId, "revoke-owner", invite.token)
+
+        org.junit.jupiter.api.assertThrows<org.springframework.web.server.ResponseStatusException> {
+            store.claim(invite.token, "intruder")
+        }
+
+        val audit = auditRepository.findAll().single { it.groupId == group.groupId && it.action == "invitation.revoked" }
+        assertEquals("invitation.revoked", audit.action)
     }
 }

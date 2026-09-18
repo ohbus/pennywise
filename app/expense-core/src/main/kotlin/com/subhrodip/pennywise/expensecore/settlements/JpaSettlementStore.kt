@@ -1,9 +1,12 @@
 package com.subhrodip.pennywise.expensecore.settlements
 
+import com.subhrodip.pennywise.expensecore.groups.GroupRepository
 import java.util.UUID
 import org.springframework.context.annotation.Primary
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
 
 /**
  * JPA persistence adapter implementing [SettlementStore] to record settlements and execute reversals.
@@ -11,10 +14,14 @@ import org.springframework.transaction.annotation.Transactional
  * Invariants:
  * - Recording a settlement is idempotent if a settlement with the same ID and group ID already exists.
  * - Reversing a settlement acquires a pessimistic write lock and transitions the settlement status to REVERSED.
+ * - Mutating settlement operations check that target group is not archived.
  */
 @Primary
 @Service
-class JpaSettlementStore(private val repository: SettlementRepository) : SettlementStore {
+class JpaSettlementStore(
+    private val repository: SettlementRepository,
+    private val groupRepository: GroupRepository
+) : SettlementStore {
 
     /**
      * Records a new settlement or returns the existing record if already present.
@@ -25,6 +32,7 @@ class JpaSettlementStore(private val repository: SettlementRepository) : Settlem
      */
     @Transactional
     override fun record(groupId: UUID, settlement: Settlement): Settlement {
+        checkActiveGroup(groupId)
         val existing = repository.findBySettlementIdAndGroupId(settlement.id, groupId)
         if (existing != null) return existing.toDomain()
         return repository.save(settlement.toEntity(groupId)).toDomain()
@@ -41,12 +49,20 @@ class JpaSettlementStore(private val repository: SettlementRepository) : Settlem
      */
     @Transactional
     override fun reverse(groupId: UUID, settlementId: UUID, reason: String): Settlement {
+        checkActiveGroup(groupId)
         val entity = repository.findForUpdate(settlementId, groupId)
             ?: error("Settlement not found")
         if (entity.status == SettlementStatus.REVERSED) return entity.toDomain()
         entity.status = SettlementStatus.REVERSED
         entity.reversalReason = reason
         return repository.save(entity).toDomain()
+    }
+
+    private fun checkActiveGroup(groupId: UUID) {
+        val group = groupRepository.findById(groupId).orElse(null)
+        if (group != null && group.status == "ARCHIVED") {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Group is archived")
+        }
     }
 }
 

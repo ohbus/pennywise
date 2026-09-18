@@ -51,6 +51,9 @@ class JpaExpenseStore(
 
         val group = groupRepository.findForMembershipUpdate(groupId)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group $groupId not found")
+        if (group.status == "ARCHIVED") {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Group is archived")
+        }
 
         group.revision += 1
         groupRepository.save(group)
@@ -147,6 +150,9 @@ class JpaExpenseStore(
     override fun update(groupId: UUID, expenseId: UUID, update: ExpenseRecord): ExpenseRecord {
         val group = groupRepository.findForMembershipUpdate(groupId)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group $groupId not found")
+        if (group.status == "ARCHIVED") {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Group is archived")
+        }
 
         val entity = expenseRepository.findByExpenseIdAndGroupId(expenseId, groupId)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Expense $expenseId not found in group $groupId")
@@ -297,6 +303,9 @@ class JpaExpenseStore(
     override fun delete(groupId: UUID, expenseId: UUID, version: Long?) {
         val group = groupRepository.findForMembershipUpdate(groupId)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group $groupId not found")
+        if (group.status == "ARCHIVED") {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Group is archived")
+        }
 
         val entity = expenseRepository.findByExpenseIdAndGroupId(expenseId, groupId)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Expense $expenseId not found in group $groupId")

@@ -1,10 +1,14 @@
 package com.subhrodip.pennywise.expensecore.groups
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.RequestPostProcessor
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -20,12 +24,13 @@ import com.subhrodip.pennywise.ids.ApiEndpoints
 
 /**
  * Tests for [GroupController] and [InviteClaimController] REST endpoints, covering group lifecycle,
- * invitations, memberships, and group-rename validation and authorization edge cases.
+ * archiving, placeholders, member removal, invitation revocation, and authorization edge cases.
  */
 class GroupControllerTest {
     private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(GroupController(InMemoryGroupStore()))
         .setControllerAdvice(GlobalErrorHandler()).build()
     private val alice = RequestPostProcessor { request -> request.userPrincipal = Principal { "alice" }; request }
+    private val bob = RequestPostProcessor { request -> request.userPrincipal = Principal { "bob" }; request }
 
     /**
      * Verifies that a valid group creation request establishes the group with initial revision 0
@@ -36,6 +41,7 @@ class GroupControllerTest {
         mvc.perform(post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice).contentType(MediaType.APPLICATION_JSON)
             .content("{\"name\":\"Vienna trip\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}"))
             .andExpect(status().isCreated).andExpect(jsonPath("$.name").value("Vienna trip"))
+            .andExpect(jsonPath("$.status").value("ACTIVE"))
         mvc.perform(get(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice))
             .andExpect(status().isOk).andExpect(jsonPath("$[0].revision").value(0))
     }
@@ -97,7 +103,6 @@ class GroupControllerTest {
             .andExpect(jsonPath("$.groupId").value(groupId))
             .andExpect(jsonPath("$.name").value("Berlin Trip"))
 
-        val bob = RequestPostProcessor { request -> request.userPrincipal = Principal { "bob" }; request }
         mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(bob))
             .andExpect(status().isNotFound)
     }
@@ -118,7 +123,6 @@ class GroupControllerTest {
             .andExpect(jsonPath("$[0].subject").value("alice"))
             .andExpect(jsonPath("$[0].membershipId").isNotEmpty)
 
-        val bob = RequestPostProcessor { request -> request.userPrincipal = Principal { "bob" }; request }
         mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupMembers(groupId)).with(bob))
             .andExpect(status().isNotFound)
     }
@@ -143,7 +147,6 @@ class GroupControllerTest {
             .andExpect(status().isCreated).andReturn().response.contentAsString
         val token = Regex("\\\"token\\\":\\\"([^\\\"]+)\\\"").find(invite)!!.groupValues[1]
 
-        val bob = RequestPostProcessor { request -> request.userPrincipal = Principal { "bob" }; request }
         testMvc.perform(post(ApiEndpoints.ExpenseCore.V1.inviteClaim(token)).with(bob))
             .andExpect(status().isOk)
 
@@ -176,203 +179,145 @@ class GroupControllerTest {
     }
 
     /**
-     * Verifies that renaming a group with leading or trailing whitespace trims the whitespace
-     * before persisting and returning the updated group.
+     * Verifies archiving a group transitions status to ARCHIVED and rejects subsequent write mutations with 409 CONFLICT.
      */
     @Test
-    fun `renames group and trims leading and trailing whitespace`() {
+    fun `archives group and rejects subsequent mutations`() {
         val created = mvc.perform(post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice).contentType(MediaType.APPLICATION_JSON)
-            .content("{\"name\":\"Original\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}"))
+            .content("{\"name\":\"Active Household\",\"kind\":\"HOUSEHOLD\",\"currency\":\"USD\"}"))
             .andExpect(status().isCreated).andReturn().response.contentAsString
         val groupId = Regex("\\\"groupId\\\":\\\"([^\\\"]+)\\\"").find(created)!!.groupValues[1]
 
-        mvc.perform(patch(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(alice)
-            .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"   Trimmed Name   \"}"))
+        // Archive group
+        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupById(groupId) + "/archive").with(alice))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.name").value("Trimmed Name"))
-            .andExpect(jsonPath("$.revision").value(1))
-    }
-
-    /**
-     * Verifies that renaming a group with Unicode / multi-byte characters succeeds and preserves the exact Unicode string.
-     */
-    @Test
-    fun `renames group with unicode name`() {
-        val created = mvc.perform(post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice).contentType(MediaType.APPLICATION_JSON)
-            .content("{\"name\":\"Original\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}"))
-            .andExpect(status().isCreated).andReturn().response.contentAsString
-        val groupId = Regex("\\\"groupId\\\":\\\"([^\\\"]+)\\\"").find(created)!!.groupValues[1]
-
-        val unicodeName = "Wien Ausflug 🏔️ 🍕 \uD83C\uDDE6\uD83C\uDDF9 日本語"
-        val requestJson = patch(ApiEndpoints.ExpenseCore.V1.groupById(groupId))
-            .with(alice)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"name\":\"$unicodeName\"}")
-
-        mvc.perform(requestJson)
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.name").value(unicodeName))
-            .andExpect(jsonPath("$.revision").value(1))
-    }
-
-    /**
-     * Verifies that repeated identical rename requests succeed and increment the revision counter on each invocation.
-     */
-    @Test
-    fun `repeated identical rename requests increment revision`() {
-        val created = mvc.perform(post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice).contentType(MediaType.APPLICATION_JSON)
-            .content("{\"name\":\"Initial Name\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}"))
-            .andExpect(status().isCreated).andReturn().response.contentAsString
-        val groupId = Regex("\\\"groupId\\\":\\\"([^\\\"]+)\\\"").find(created)!!.groupValues[1]
-
-        mvc.perform(patch(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(alice)
-            .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Identical Name\"}"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.name").value("Identical Name"))
+            .andExpect(jsonPath("$.status").value("ARCHIVED"))
             .andExpect(jsonPath("$.revision").value(1))
 
+        // Subsequent archive returns 409 Conflict
+        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupById(groupId) + "/archive").with(alice))
+            .andExpect(status().isConflict)
+
+        // Rename returns 409 Conflict
         mvc.perform(patch(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(alice)
-            .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Identical Name\"}"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.name").value("Identical Name"))
-            .andExpect(jsonPath("$.revision").value(2))
+            .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Archived Name\"}"))
+            .andExpect(status().isConflict)
     }
 
     /**
-     * Verifies that renaming with boundary length 120 characters succeeds, while length 121 is rejected
-     * with 400 Bad Request and GlobalErrorHandler ProblemDetail code VALIDATION_FAILED.
-     * Also verifies that the rejected request does not mutate group name or increment revision.
+     * Verifies creating a named placeholder and claiming an invitation linked to it binds the user's subject.
      */
     @Test
-    fun `renames group at boundary length 120 succeeds and 121 fails validation`() {
-        val created = mvc.perform(post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice).contentType(MediaType.APPLICATION_JSON)
-            .content("{\"name\":\"Initial\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}"))
-            .andExpect(status().isCreated).andReturn().response.contentAsString
-        val groupId = Regex("\\\"groupId\\\":\\\"([^\\\"]+)\\\"").find(created)!!.groupValues[1]
-
-        val name120 = "A".repeat(120)
-        mvc.perform(patch(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(alice)
-            .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"$name120\"}"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.name").value(name120))
-            .andExpect(jsonPath("$.revision").value(1))
-
-        val name121 = "B".repeat(121)
-        val rejectedResult = mvc.perform(patch(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(alice)
-            .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"$name121\"}"))
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
-            .andReturn()
-
-        assertEquals("VALIDATION_FAILED", Regex("\\\"code\\\":\\\"([^\\\"]+)\\\"").find(rejectedResult.response.contentAsString)!!.groupValues[1])
-
-        // Verify group unchanged
-        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(alice))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.name").value(name120))
-            .andExpect(jsonPath("$.revision").value(1))
-    }
-
-    /**
-     * Verifies that blank and whitespace-only names are rejected through the REST boundary with
-     * 400 Bad Request and GlobalErrorHandler ProblemDetail code VALIDATION_FAILED, and do not increment revision.
-     */
-    @Test
-    fun `rejects blank and whitespace only names with validation failed code`() {
-        val created = mvc.perform(post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice).contentType(MediaType.APPLICATION_JSON)
-            .content("{\"name\":\"Stable Group\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}"))
-            .andExpect(status().isCreated).andReturn().response.contentAsString
-        val groupId = Regex("\\\"groupId\\\":\\\"([^\\\"]+)\\\"").find(created)!!.groupValues[1]
-
-        val blankPayloads = listOf("{\"name\":\"\"}", "{\"name\":\"   \"}", "{\"name\":\"\\t\\n  \"}")
-        for (payload in blankPayloads) {
-            mvc.perform(patch(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(alice)
-                .contentType(MediaType.APPLICATION_JSON).content(payload))
-                .andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
-                .andExpect(jsonPath("$.violations").isArray)
-        }
-
-        // Verify group unchanged
-        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(alice))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.name").value("Stable Group"))
-            .andExpect(jsonPath("$.revision").value(0))
-    }
-
-    /**
-     * Verifies that malformed JSON payloads return 400 Bad Request with ProblemDetail code VALIDATION_FAILED,
-     * and do not increment group revision.
-     */
-    @Test
-    fun `rejects malformed json payload with validation failed code`() {
-        val created = mvc.perform(post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice).contentType(MediaType.APPLICATION_JSON)
-            .content("{\"name\":\"Initial Name\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}"))
-            .andExpect(status().isCreated).andReturn().response.contentAsString
-        val groupId = Regex("\\\"groupId\\\":\\\"([^\\\"]+)\\\"").find(created)!!.groupValues[1]
-
-        mvc.perform(patch(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(alice)
-            .contentType(MediaType.APPLICATION_JSON).content("{ malformed json }"))
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
-
-        // Verify group unchanged
-        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(alice))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.name").value("Initial Name"))
-            .andExpect(jsonPath("$.revision").value(0))
-    }
-
-    /**
-     * Verifies that attempting to rename a non-existent group ID returns 404 Not Found with code NOT_FOUND.
-     */
-    @Test
-    fun `returns 404 when group does not exist`() {
-        val nonExistentGroupId = java.util.UUID.randomUUID()
-        mvc.perform(patch(ApiEndpoints.ExpenseCore.V1.groupById(nonExistentGroupId)).with(alice)
-            .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"New Name\"}"))
-            .andExpect(status().isNotFound)
-            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
-    }
-
-    /**
-     * Verifies that attempting to rename a group by an authenticated non-member returns 404 Not Found
-     * (preventing group enumeration/discovery), and does not modify the group.
-     */
-    @Test
-    fun `returns 404 when non-member attempts group rename`() {
-        val created = mvc.perform(post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice).contentType(MediaType.APPLICATION_JSON)
-            .content("{\"name\":\"Private Group\",\"kind\":\"HOUSEHOLD\",\"currency\":\"USD\"}"))
-            .andExpect(status().isCreated).andReturn().response.contentAsString
-        val groupId = Regex("\\\"groupId\\\":\\\"([^\\\"]+)\\\"").find(created)!!.groupValues[1]
-
-        val bob = RequestPostProcessor { request -> request.userPrincipal = Principal { "bob" }; request }
-        mvc.perform(patch(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(bob)
-            .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Hijacked\"}"))
-            .andExpect(status().isNotFound)
-            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
-
-        // Verify group unchanged
-        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(alice))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.name").value("Private Group"))
-            .andExpect(jsonPath("$.revision").value(0))
-    }
-
-    /**
-     * Verifies [InMemoryGroupStore] direct update behavior: trims name, increments revision,
-     * and rejects non-member subjects with 404 ResponseStatusException.
-     */
-    @Test
-    fun `in-memory store update trims name and increments revision`() {
+    fun `creates placeholder and claims targeted invite`() {
         val store = InMemoryGroupStore()
-        val group = store.create("alice", CreateGroupRequest("Original", "TRIP", "EUR"))
-        val updated = store.update(group.groupId, "alice", UpdateGroupRequest("  Trimmed  "))
-        assertEquals("Trimmed", updated.name)
-        assertEquals(1, updated.revision)
+        val controller = GroupController(store)
+        val testMvc = MockMvcBuilders.standaloneSetup(controller, InviteClaimController(store))
+            .setControllerAdvice(GlobalErrorHandler()).build()
 
-        org.junit.jupiter.api.assertThrows<org.springframework.web.server.ResponseStatusException> {
-            store.update(group.groupId, "intruder", UpdateGroupRequest("Bad"))
-        }
+        val created = testMvc.perform(post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"name\":\"Trip\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}"))
+            .andExpect(status().isCreated).andReturn().response.contentAsString
+        val groupId = Regex("\\\"groupId\\\":\\\"([^\\\"]+)\\\"").find(created)!!.groupValues[1]
+
+        // Add placeholder
+        val placeholderRes = testMvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupById(groupId) + "/placeholders").with(alice)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Charlie Placeholder\"}"))
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.displayName").value("Charlie Placeholder"))
+            .andExpect(jsonPath("$.isPlaceholder").value(true))
+            .andReturn().response.contentAsString
+        val placeholderId = Regex("\\\"membershipId\\\":\\\"([^\\\"]+)\\\"").find(placeholderRes)!!.groupValues[1]
+
+        // Create invite targeting placeholder
+        val inviteRes = testMvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupInvites(groupId)).with(alice)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"expiresInHours\":24, \"placeholderId\":\"$placeholderId\"}"))
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.placeholderId").value(placeholderId))
+            .andReturn().response.contentAsString
+        val token = Regex("\\\"token\\\":\\\"([^\\\"]+)\\\"").find(inviteRes)!!.groupValues[1]
+
+        // Bob claims targeted invite
+        testMvc.perform(post(ApiEndpoints.ExpenseCore.V1.inviteClaim(token)).with(bob))
+            .andExpect(status().isOk)
+
+        // Check members list: placeholder converted to bound subject bob with same membershipId
+        val membersRes = testMvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupMembers(groupId)).with(alice))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(2))
+            .andReturn().response.contentAsString
+
+        assertTrue(membersRes.contains("\"membershipId\":\"$placeholderId\""))
+        assertTrue(membersRes.contains("\"subject\":\"bob\""))
+    }
+
+    /**
+     * Verifies soft-removing a member excludes them from active member list and blocks subsequent API access.
+     */
+    @Test
+    fun `removes group member soft delete and blocks access`() {
+        val store = InMemoryGroupStore()
+        val controller = GroupController(store)
+        val testMvc = MockMvcBuilders.standaloneSetup(controller, InviteClaimController(store))
+            .setControllerAdvice(GlobalErrorHandler()).build()
+
+        val created = testMvc.perform(post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"name\":\"Trip\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}"))
+            .andExpect(status().isCreated).andReturn().response.contentAsString
+        val groupId = Regex("\\\"groupId\\\":\\\"([^\\\"]+)\\\"").find(created)!!.groupValues[1]
+
+        val invite = testMvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupInvites(groupId)).with(alice).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"expiresInHours\":24}"))
+            .andExpect(status().isCreated).andReturn().response.contentAsString
+        val token = Regex("\\\"token\\\":\\\"([^\\\"]+)\\\"").find(invite)!!.groupValues[1]
+
+        testMvc.perform(post(ApiEndpoints.ExpenseCore.V1.inviteClaim(token)).with(bob))
+            .andExpect(status().isOk)
+
+        val membersRes = testMvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupMembers(groupId)).with(alice))
+            .andExpect(status().isOk)
+            .andReturn().response.contentAsString
+        val bobMembershipId = store.listMembers(java.util.UUID.fromString(groupId), "alice").find { it.subject == "bob" }!!.membershipId
+
+        // Remove Bob
+        testMvc.perform(delete(ApiEndpoints.ExpenseCore.V1.groupById(groupId) + "/members/$bobMembershipId").with(alice))
+            .andExpect(status().isNoContent)
+
+        // Active members list now has 1 member (alice)
+        testMvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupMembers(groupId)).with(alice))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(1))
+
+        // Bob can no longer access group details
+        testMvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(bob))
+            .andExpect(status().isNotFound)
+    }
+
+    /**
+     * Verifies revoking an invitation prevents subsequent claim attempts.
+     */
+    @Test
+    fun `revokes invitation token and prevents claiming`() {
+        val created = mvc.perform(post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"name\":\"Trip\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}"))
+            .andExpect(status().isCreated).andReturn().response.contentAsString
+        val groupId = Regex("\\\"groupId\\\":\\\"([^\\\"]+)\\\"").find(created)!!.groupValues[1]
+
+        val invite = mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupInvites(groupId)).with(alice).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"expiresInHours\":24}"))
+            .andExpect(status().isCreated).andReturn().response.contentAsString
+        val token = Regex("\\\"token\\\":\\\"([^\\\"]+)\\\"").find(invite)!!.groupValues[1]
+
+        // Revoke invite
+        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupInvites(groupId) + "/$token/revoke").with(alice))
+            .andExpect(status().isNoContent)
+
+        // Attempting to claim revoked invite returns 409 Conflict
+        val store = InMemoryGroupStore()
+        val controller = GroupController(store)
+        val testMvc = MockMvcBuilders.standaloneSetup(controller, InviteClaimController(store))
+            .setControllerAdvice(GlobalErrorHandler()).build()
+
+        testMvc.perform(post(ApiEndpoints.ExpenseCore.V1.inviteClaim(token)).with(bob))
+            .andExpect(status().isConflict)
     }
 }

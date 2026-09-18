@@ -15,6 +15,8 @@ import java.util.UUID
  * - [groupId] references the target group that the claimant will join.
  * - [expiresAt] indicates the timestamp after which the invitation cannot be claimed.
  * - [claimedAt] and [claimedBy] are null until successfully claimed by a user.
+ * - [revokedAt] is set if the invitation is explicitly revoked prior to claiming.
+ * - [placeholderId] references a specific placeholder membership to bind upon claiming, if targeted.
  */
 @Entity
 @Table(name = "group_invitations")
@@ -29,5 +31,9 @@ class GroupInvitationEntity(
     @Column(name = "claimed_at")
     var claimedAt: Instant? = null,
     @Column(name = "claimed_by", length = 200)
-    var claimedBy: String? = null
+    var claimedBy: String? = null,
+    @Column(name = "revoked_at")
+    var revokedAt: Instant? = null,
+    @Column(name = "placeholder_id")
+    var placeholderId: UUID? = null
 )

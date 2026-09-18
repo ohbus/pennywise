@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.web.reactive.function.client.WebClient
+import com.subhrodip.pennywise.ids.ApiEndpoints
 import reactor.core.Exceptions
 import java.net.InetSocketAddress
 import java.time.Duration
@@ -84,7 +85,7 @@ class BffFanoutTest {
      */
     @Test
     fun `resolves zero groups without triggering member requests`() {
-        registerHandler("/expense-core/v1/groups") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
             respondJson(exchange, 200, "[]")
         }
 
@@ -92,7 +93,7 @@ class BffFanoutTest {
 
         assertThat(groups).isNotNull
         assertThat(groups).isEmpty()
-        assertThat(recordedPaths).containsExactly("/expense-core/v1/groups")
+        assertThat(recordedPaths).containsExactly(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS)
     }
 
     /**
@@ -100,10 +101,10 @@ class BffFanoutTest {
      */
     @Test
     fun `resolves single group with members successfully`() {
-        registerHandler("/expense-core/v1/groups") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
             respondJson(exchange, 200, "[${groupJson("g-1", "Trip Alpha")}]")
         }
-        registerHandler("/expense-core/v1/groups/g-1/members") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-1")) { exchange ->
             respondJson(exchange, 200, """[{"membershipId":"m-1","subject":"alice"},{"membershipId":"m-2","subject":"bob"}]""")
         }
 
@@ -132,7 +133,7 @@ class BffFanoutTest {
             groupJson("g-$i", "Group $i", revision = i.toLong())
         }
 
-        registerHandler("/expense-core/v1/groups") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
             respondJson(exchange, 200, groupsJson)
         }
 
@@ -140,7 +141,7 @@ class BffFanoutTest {
         for (i in 1..groupCount) {
             val gid = "g-$i"
             memberRequestCounts[gid] = AtomicInteger(0)
-            registerHandler("/expense-core/v1/groups/$gid/members") { exchange ->
+            registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers(gid)) { exchange ->
                 memberRequestCounts[gid]!!.incrementAndGet()
                 val current = activeMemberRequests.incrementAndGet()
                 peakMemberConcurrency.accumulateAndGet(current) { prev, next -> maxOf(prev, next) }
@@ -180,10 +181,10 @@ class BffFanoutTest {
      */
     @Test
     fun `propagates upstream 404 during member resolution in listGroups`() {
-        registerHandler("/expense-core/v1/groups") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
             respondJson(exchange, 200, "[${groupJson("g-1", "Group 1")}]")
         }
-        registerHandler("/expense-core/v1/groups/g-1/members") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-1")) { exchange ->
             respondJson(exchange, 404, """{"error":"Not Found"}""")
         }
 
@@ -201,7 +202,7 @@ class BffFanoutTest {
      */
     @Test
     fun `propagates upstream 401 unauthorized failure`() {
-        registerHandler("/expense-core/v1/groups") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
             respondJson(exchange, 401, """{"error":"Unauthorized"}""")
         }
 
@@ -218,10 +219,10 @@ class BffFanoutTest {
      */
     @Test
     fun `propagates upstream 403 forbidden failure during member resolution`() {
-        registerHandler("/expense-core/v1/groups") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
             respondJson(exchange, 200, "[${groupJson("g-1", "Group 1")}]")
         }
-        registerHandler("/expense-core/v1/groups/g-1/members") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-1")) { exchange ->
             respondJson(exchange, 403, """{"error":"Forbidden"}""")
         }
 
@@ -238,10 +239,10 @@ class BffFanoutTest {
      */
     @Test
     fun `propagates upstream 5xx errors from member resolution`() {
-        registerHandler("/expense-core/v1/groups") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
             respondJson(exchange, 200, "[${groupJson("g-1", "Group 1")}]")
         }
-        registerHandler("/expense-core/v1/groups/g-1/members") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-1")) { exchange ->
             respondJson(exchange, 503, """{"error":"Service Unavailable"}""")
         }
 
@@ -258,10 +259,10 @@ class BffFanoutTest {
      */
     @Test
     fun `times out when upstream member resolution exceeds configured duration`() {
-        registerHandler("/expense-core/v1/groups") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
             respondJson(exchange, 200, "[${groupJson("g-1", "Group 1")}]")
         }
-        registerHandler("/expense-core/v1/groups/g-1/members") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-1")) { exchange ->
             Thread.sleep(1200)
             respondJson(exchange, 200, "[]")
         }
@@ -278,10 +279,10 @@ class BffFanoutTest {
      */
     @Test
     fun `fails when upstream returns malformed member payload`() {
-        registerHandler("/expense-core/v1/groups") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
             respondJson(exchange, 200, "[${groupJson("g-1", "Group 1")}]")
         }
-        registerHandler("/expense-core/v1/groups/g-1/members") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-1")) { exchange ->
             respondJson(exchange, 200, "not-valid-json")
         }
 
@@ -298,16 +299,16 @@ class BffFanoutTest {
      */
     @Test
     fun `getGroup resolves group with balances, expenses, and members`() {
-        registerHandler("/expense-core/v1/groups/g-1") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupById("g-1")) { exchange ->
             respondJson(exchange, 200, groupJson("g-1", "Group 1", revision = 2))
         }
-        registerHandler("/expense-core/v1/groups/g-1/balances") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupBalances("g-1")) { exchange ->
             respondJson(exchange, 200, """{"groupId":"g-1","balances":[{"participantId":"p-1","amount":{"currency":"EUR","minor":"100"}}]}""")
         }
-        registerHandler("/expense-core/v1/groups/g-1/expenses") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupExpenses("g-1")) { exchange ->
             respondJson(exchange, 200, """[{"expenseId":"e-1","version":1,"description":"Lunch","amount":{"currency":"EUR","minor":"200"},"allocations":[]}]""")
         }
-        registerHandler("/expense-core/v1/groups/g-1/members") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-1")) { exchange ->
             respondJson(exchange, 200, """[{"membershipId":"m-1","subject":"alice"}]""")
         }
 
@@ -326,16 +327,16 @@ class BffFanoutTest {
      */
     @Test
     fun `getGroup propagates upstream 404 when group does not exist`() {
-        registerHandler("/expense-core/v1/groups/missing") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupById("missing")) { exchange ->
             respondJson(exchange, 404, """{"error":"Group not found"}""")
         }
-        registerHandler("/expense-core/v1/groups/missing/balances") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupBalances("missing")) { exchange ->
             respondJson(exchange, 404, """{"error":"Not found"}""")
         }
-        registerHandler("/expense-core/v1/groups/missing/expenses") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupExpenses("missing")) { exchange ->
             respondJson(exchange, 404, """{"error":"Not found"}""")
         }
-        registerHandler("/expense-core/v1/groups/missing/members") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("missing")) { exchange ->
             respondJson(exchange, 404, """{"error":"Not found"}""")
         }
 
@@ -353,11 +354,11 @@ class BffFanoutTest {
     @Test
     fun `forwards bearer authorization header to upstream endpoints`() {
         val capturedAuthHeaders = CopyOnWriteArrayList<String>()
-        registerHandler("/expense-core/v1/groups") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
             capturedAuthHeaders.addAll(exchange.requestHeaders.getOrDefault("Authorization", emptyList()))
             respondJson(exchange, 200, "[${groupJson("g-auth", "Auth Group")}]")
         }
-        registerHandler("/expense-core/v1/groups/g-auth/members") { exchange ->
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-auth")) { exchange ->
             capturedAuthHeaders.addAll(exchange.requestHeaders.getOrDefault("Authorization", emptyList()))
             respondJson(exchange, 200, "[]")
         }

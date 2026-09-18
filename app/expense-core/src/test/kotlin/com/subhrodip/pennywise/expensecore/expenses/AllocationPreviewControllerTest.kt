@@ -10,6 +10,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import com.subhrodip.pennywise.errors.GlobalErrorHandler
 
+import com.subhrodip.pennywise.ids.ApiEndpoints
+
 class AllocationPreviewControllerTest {
     private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(AllocationPreviewController())
         .setControllerAdvice(GlobalErrorHandler()).build()
@@ -17,7 +19,7 @@ class AllocationPreviewControllerTest {
     @Test
     fun `preview returns exact deterministic allocation as strings`() {
         mvc.perform(
-            post("/expense-core/v1/allocations/preview")
+            post(ApiEndpoints.ExpenseCore.V1.PATH_ALLOCATION_PREVIEW)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"totalMinor":"100","participantIds":["c","a","b"]}""")
         ).andExpect(status().isOk)
@@ -36,7 +38,7 @@ class AllocationPreviewControllerTest {
     @Test
     fun `invalid participant list returns bad request`() {
         mvc.perform(
-            post("/expense-core/v1/allocations/preview")
+            post(ApiEndpoints.ExpenseCore.V1.PATH_ALLOCATION_PREVIEW)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"totalMinor":"100","participantIds":[]}""")
         ).andExpect(status().isBadRequest)

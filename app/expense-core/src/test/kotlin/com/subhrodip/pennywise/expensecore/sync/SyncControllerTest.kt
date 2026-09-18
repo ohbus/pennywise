@@ -11,6 +11,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 
+import com.subhrodip.pennywise.ids.ApiEndpoints
+
 class SyncControllerTest {
     private val store = SynchronizationStore(java.time.Clock.systemUTC())
     private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(SyncController(store)).setControllerAdvice(GlobalErrorHandler()).build()
@@ -21,15 +23,15 @@ class SyncControllerTest {
     fun `returns ordered changes and cursor`() {
         store.append(groupId.toString(), "expense-1", "{}")
         store.delete(groupId.toString(), "expense-2")
-        mvc.perform(get("/expense-core/v1/groups/$groupId/sync/changes").with(user).param("limit", "1"))
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSyncChanges(groupId)).with(user).param("limit", "1"))
             .andExpect(status().isOk).andExpect(jsonPath("$.changes[0].revision").value(1)).andExpect(jsonPath("$.hasMore").value(true))
     }
 
     @Test
     fun `rejects invalid cursor and limit`() {
-        mvc.perform(get("/expense-core/v1/groups/$groupId/sync/snapshot").with(user).param("cursor", "bad"))
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSyncSnapshot(groupId)).with(user).param("cursor", "bad"))
             .andExpect(status().isBadRequest)
-        mvc.perform(get("/expense-core/v1/groups/$groupId/sync/snapshot").with(user).param("limit", "101"))
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSyncSnapshot(groupId)).with(user).param("limit", "101"))
             .andExpect(status().isBadRequest)
     }
 
@@ -38,7 +40,7 @@ class SyncControllerTest {
         val otherGroup = UUID.randomUUID()
         store.append(otherGroup.toString(), "expense-1", "{}")
         val cursor = store.snapshot(otherGroup.toString(), null, 1).nextCursor!!
-        mvc.perform(get("/expense-core/v1/groups/$groupId/sync/changes").with(user).param("cursor", cursor))
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSyncChanges(groupId)).with(user).param("cursor", cursor))
             .andExpect(status().isBadRequest)
     }
 }

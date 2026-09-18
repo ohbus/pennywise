@@ -25,6 +25,8 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
+import com.subhrodip.pennywise.ids.ApiEndpoints
+
 data class CreateGroupRequest(
     @field:NotBlank @field:Size(max = 120) val name: String,
     @field:NotBlank @field:Pattern(regexp = "^(HOUSEHOLD|COUPLE|TRIP)$") val kind: String,
@@ -40,7 +42,7 @@ data class GroupResponse(val groupId: UUID, val name: String, val revision: Long
 data class GroupMemberResponse(val membershipId: UUID, val groupId: UUID, val subject: String)
 
 @RestController
-@RequestMapping("/expense-core/v1/groups")
+@RequestMapping(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS)
 class GroupController(private val groups: GroupStore) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -71,7 +73,7 @@ class GroupController(private val groups: GroupStore) {
 }
 
 @RestController
-@RequestMapping("/expense-core/v1/invites")
+@RequestMapping(ApiEndpoints.ExpenseCore.V1.BASE + "/invites")
 class InviteClaimController(private val groups: GroupStore) {
     @PostMapping("/{token}/claim")
     fun claim(@PathVariable token: String, @AuthenticationPrincipal principal: Principal): GroupResponse = groups.claim(token, principal.name)

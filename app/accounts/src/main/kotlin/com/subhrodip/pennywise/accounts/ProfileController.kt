@@ -1,5 +1,6 @@
 package com.subhrodip.pennywise.accounts
 
+import com.subhrodip.pennywise.ids.ApiEndpoints
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
@@ -50,19 +51,18 @@ data class ProfilePatchRequest(
         }
     }
 }
-
 @RestController
-@RequestMapping("/accounts/v1")
+@RequestMapping(ApiEndpoints.Accounts.V1.BASE)
 class ProfileController(
     private val profiles: ProfileStore,
     private val deletionService: DeletionRequestService,
     private val exportService: ExportRequestService
 ) {
-    @GetMapping("/me")
+    @GetMapping(ApiEndpoints.Accounts.V1.ME)
     fun get(@AuthenticationPrincipal principal: Principal): ProfileResponse =
         profiles.get(principal.name)
 
-    @PatchMapping("/me")
+    @PatchMapping(ApiEndpoints.Accounts.V1.ME)
     fun update(
         @AuthenticationPrincipal principal: Principal,
         @Valid @RequestBody request: ProfilePatchRequest
@@ -71,13 +71,13 @@ class ProfileController(
         return profiles.update(principal.name, request)
     }
 
-    @PostMapping("/me/deletion-request")
+    @PostMapping(ApiEndpoints.Accounts.V1.ME_DELETION_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
     fun requestDeletion(@AuthenticationPrincipal principal: Principal) {
         deletionService.request(principal.name)
     }
 
-    @PostMapping("/me/export-request")
+    @PostMapping(ApiEndpoints.Accounts.V1.ME_EXPORT_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
     fun requestExport(@AuthenticationPrincipal principal: Principal?): ExportRequestResponse {
         val subject = principal?.name ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated subject is required")
@@ -85,7 +85,7 @@ class ProfileController(
         return ExportRequestResponse(request.exportId, request.status, request.requestedAt)
     }
 
-    @GetMapping("/me/export-requests")
+    @GetMapping(ApiEndpoints.Accounts.V1.ME_EXPORT_REQUESTS)
     fun listExportRequests(@AuthenticationPrincipal principal: Principal?): List<ExportRequestResponse> {
         val subject = principal?.name ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated subject is required")
         return exportService.listBySubject(subject).map {
@@ -93,11 +93,11 @@ class ProfileController(
         }
     }
 
-    @GetMapping("/profiles/{accountId}")
+    @GetMapping(ApiEndpoints.Accounts.V1.PROFILES_BY_ID)
     fun getProfileById(@PathVariable accountId: UUID): ProfileResponse =
         profiles.findById(accountId) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found")
 
-    @PostMapping("/profiles/batch")
+    @PostMapping(ApiEndpoints.Accounts.V1.PROFILES_BATCH)
     fun getProfilesBatch(@Valid @RequestBody request: BatchProfileRequest): List<ProfileResponse> =
         profiles.findByIds(request.accountIds)
 }

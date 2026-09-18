@@ -1,6 +1,7 @@
 package com.subhrodip.pennywise.notifications
 
 import com.subhrodip.pennywise.errors.GlobalErrorHandler
+import com.subhrodip.pennywise.ids.ApiEndpoints
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -54,7 +55,7 @@ class InboxControllerTest {
         val notificationId = UUID.randomUUID()
         inbox.append("alice", InboxItem(notificationId, "expense.created", "Expense", Instant.now(), read = false))
 
-        mvc.perform(post("/notifications/v1/inbox/$notificationId/read").with(user))
+        mvc.perform(post(ApiEndpoints.Notifications.V1.inboxMarkRead(notificationId)).with(user))
             .andExpect(status().isNoContent)
 
         val items = inbox.list("alice")
@@ -65,7 +66,7 @@ class InboxControllerTest {
     @Test
     fun `returns 404 when marking unknown notification as read`() {
         val unknownId = UUID.randomUUID()
-        mvc.perform(post("/notifications/v1/inbox/$unknownId/read").with(user))
+        mvc.perform(post(ApiEndpoints.Notifications.V1.inboxMarkRead(unknownId)).with(user))
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.code").value("NOT_FOUND"))
     }
@@ -75,7 +76,7 @@ class InboxControllerTest {
         val notificationId = UUID.randomUUID()
         inbox.append("bob", InboxItem(notificationId, "expense.created", "Expense", Instant.now(), read = false))
 
-        mvc.perform(post("/notifications/v1/inbox/$notificationId/read").with(user))
+        mvc.perform(post(ApiEndpoints.Notifications.V1.inboxMarkRead(notificationId)).with(user))
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.code").value("NOT_FOUND"))
     }

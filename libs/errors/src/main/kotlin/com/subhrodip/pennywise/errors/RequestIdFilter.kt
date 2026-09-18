@@ -50,7 +50,7 @@ class RequestIdFilter : OncePerRequestFilter() {
     }
 
     companion object {
-        const val HEADER: String = "X-Request-Id"
+        const val HEADER: String = com.subhrodip.pennywise.ids.ApiEndpoints.Headers.REQUEST_ID
         private val log = LoggerFactory.getLogger(RequestIdFilter::class.java)
     }
 }

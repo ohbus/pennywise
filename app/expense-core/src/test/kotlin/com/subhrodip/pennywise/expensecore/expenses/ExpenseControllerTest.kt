@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import com.subhrodip.pennywise.ids.ApiEndpoints
 
 class ExpenseControllerTest {
     private val store = InMemoryExpenseStore()
@@ -45,8 +46,8 @@ class ExpenseControllerTest {
         """.trimIndent()
 
         mvc.perform(
-            post("/expense-core/v1/groups/$groupId/expenses")
-                .header("Idempotency-Key", "idemp-key-test-12345")
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "idemp-key-test-12345")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json)
         )
@@ -56,12 +57,12 @@ class ExpenseControllerTest {
             .andExpect(jsonPath("$.category").value("food"))
             .andExpect(jsonPath("$.allocations.length()").value(2))
 
-        mvc.perform(get("/expense-core/v1/groups/$groupId/expenses"))
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(1))
             .andExpect(jsonPath("$[0].expenseId").value(expenseId.toString()))
 
-        mvc.perform(get("/expense-core/v1/groups/$groupId/balances"))
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupBalances(groupId)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.balances.length()").value(2))
     }
@@ -93,8 +94,8 @@ class ExpenseControllerTest {
         """.trimIndent()
 
         mvc.perform(
-            post("/expense-core/v1/groups/$groupId/expenses")
-                .header("Idempotency-Key", "idemp-key-test-exact")
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "idemp-key-test-exact")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(exactJson)
         ).andExpect(status().isCreated)
@@ -120,8 +121,8 @@ class ExpenseControllerTest {
         """.trimIndent()
 
         mvc.perform(
-            post("/expense-core/v1/groups/$groupId/expenses")
-                .header("Idempotency-Key", "idemp-key-test-percent")
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "idemp-key-test-percent")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(percentJson)
         ).andExpect(status().isCreated)
@@ -151,8 +152,8 @@ class ExpenseControllerTest {
         """.trimIndent()
 
         mvc.perform(
-            post("/expense-core/v1/groups/$groupId/expenses")
-                .header("Idempotency-Key", "idemp-key-test-mismatch")
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "idemp-key-test-mismatch")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json)
         ).andExpect(status().isBadRequest)
@@ -182,7 +183,7 @@ class ExpenseControllerTest {
         """.trimIndent()
 
         mvc.perform(
-            post("/expense-core/v1/groups/$groupId/expenses")
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json)
         ).andExpect(status().isBadRequest)
@@ -215,8 +216,8 @@ class ExpenseControllerTest {
         """.trimIndent()
 
         mvc.perform(
-            post("/expense-core/v1/groups/$groupId/expenses")
-                .header("Idempotency-Key", "idemp-create-before-update")
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "idemp-create-before-update")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createJson)
         ).andExpect(status().isCreated)
@@ -241,7 +242,7 @@ class ExpenseControllerTest {
         """.trimIndent()
 
         mvc.perform(
-            put("/expense-core/v1/groups/$groupId/expenses/$expenseId")
+            put(ApiEndpoints.ExpenseCore.V1.groupExpenseById(groupId, expenseId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(updateJson)
         )
@@ -276,8 +277,8 @@ class ExpenseControllerTest {
         """.trimIndent()
 
         mvc.perform(
-            post("/expense-core/v1/groups/$groupId/expenses")
-                .header("Idempotency-Key", "idemp-conflict-test")
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "idemp-conflict-test")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createJson)
         ).andExpect(status().isCreated)
@@ -302,7 +303,7 @@ class ExpenseControllerTest {
         """.trimIndent()
 
         mvc.perform(
-            put("/expense-core/v1/groups/$groupId/expenses/$expenseId")
+            put(ApiEndpoints.ExpenseCore.V1.groupExpenseById(groupId, expenseId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(updateJson)
         ).andExpect(status().isConflict)
@@ -333,16 +334,16 @@ class ExpenseControllerTest {
         """.trimIndent()
 
         mvc.perform(
-            post("/expense-core/v1/groups/$groupId/expenses")
-                .header("Idempotency-Key", "idemp-delete-test")
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "idemp-delete-test")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createJson)
         ).andExpect(status().isCreated)
 
-        mvc.perform(delete("/expense-core/v1/groups/$groupId/expenses/$expenseId"))
+        mvc.perform(delete(ApiEndpoints.ExpenseCore.V1.groupExpenseById(groupId, expenseId)))
             .andExpect(status().isNoContent)
 
-        mvc.perform(get("/expense-core/v1/groups/$groupId/expenses"))
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(0))
     }

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import com.subhrodip.pennywise.errors.GlobalErrorHandler
+import com.subhrodip.pennywise.ids.ApiEndpoints
 import java.nio.charset.StandardCharsets
 import java.security.Principal
 import java.util.UUID
@@ -34,7 +35,7 @@ class ProfileControllerTest {
 
     @Test
     fun `gets profile for authenticated subject`() {
-        mvc.perform(get("/accounts/v1/me").with(alice))
+        mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME).with(alice))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.displayName").value("oidc|alice"))
             .andExpect(jsonPath("$.defaultCurrency").value("EUR"))
@@ -42,7 +43,7 @@ class ProfileControllerTest {
 
     @Test
     fun `updates profile with validated fields`() {
-        mvc.perform(patch("/accounts/v1/me").with(alice).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(patch(ApiEndpoints.Accounts.V1.PATH_ME).with(alice).contentType(MediaType.APPLICATION_JSON)
             .content("{\"displayName\":\"Alice\",\"timezone\":\"Europe/Vienna\",\"defaultCurrency\":\"USD\"}"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.displayName").value("Alice"))
@@ -52,19 +53,19 @@ class ProfileControllerTest {
 
     @Test
     fun `rejects empty patch`() {
-        mvc.perform(patch("/accounts/v1/me").with(alice).contentType(MediaType.APPLICATION_JSON).content("{}"))
+        mvc.perform(patch(ApiEndpoints.Accounts.V1.PATH_ME).with(alice).contentType(MediaType.APPLICATION_JSON).content("{}"))
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
     }
 
     @Test
     fun `accepts deletion request`() {
-        assertEquals(202, mvc.perform(post("/accounts/v1/me/deletion-request").with(alice)).andReturn().response.status)
+        assertEquals(202, mvc.perform(post(ApiEndpoints.Accounts.V1.PATH_ME_DELETION_REQUEST).with(alice)).andReturn().response.status)
     }
 
     @Test
     fun `creates export request for authenticated subject`() {
-        mvc.perform(post("/accounts/v1/me/export-request").with(alice))
+        mvc.perform(post(ApiEndpoints.Accounts.V1.PATH_ME_EXPORT_REQUEST).with(alice))
             .andExpect(status().isAccepted)
             .andExpect(jsonPath("$.exportId").isNotEmpty)
             .andExpect(jsonPath("$.status").value("REQUESTED"))
@@ -73,10 +74,10 @@ class ProfileControllerTest {
 
     @Test
     fun `lists export requests for authenticated subject`() {
-        mvc.perform(post("/accounts/v1/me/export-request").with(alice))
+        mvc.perform(post(ApiEndpoints.Accounts.V1.PATH_ME_EXPORT_REQUEST).with(alice))
             .andExpect(status().isAccepted)
 
-        mvc.perform(get("/accounts/v1/me/export-requests").with(alice))
+        mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME_EXPORT_REQUESTS).with(alice))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$").isArray)
             .andExpect(jsonPath("$[0].exportId").isNotEmpty)
@@ -86,14 +87,14 @@ class ProfileControllerTest {
 
     @Test
     fun `rejects export request without authentication`() {
-        mvc.perform(post("/accounts/v1/me/export-request"))
+        mvc.perform(post(ApiEndpoints.Accounts.V1.PATH_ME_EXPORT_REQUEST))
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
     }
 
     @Test
     fun `rejects export request listing without authentication`() {
-        mvc.perform(get("/accounts/v1/me/export-requests"))
+        mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME_EXPORT_REQUESTS))
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
     }
@@ -104,7 +105,7 @@ class ProfileControllerTest {
             request.userPrincipal = Principal { "invalid subject with spaces" }
             request
         }
-        mvc.perform(post("/accounts/v1/me/export-request").with(invalidUser))
+        mvc.perform(post(ApiEndpoints.Accounts.V1.PATH_ME_EXPORT_REQUEST).with(invalidUser))
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
     }
@@ -115,18 +116,18 @@ class ProfileControllerTest {
             request.userPrincipal = Principal { "invalid subject with spaces" }
             request
         }
-        mvc.perform(get("/accounts/v1/me/export-requests").with(invalidUser))
+        mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME_EXPORT_REQUESTS).with(invalidUser))
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
     }
 
     @Test
     fun `gets profile by account id`() {
-        mvc.perform(get("/accounts/v1/me").with(alice))
+        mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME).with(alice))
             .andExpect(status().isOk)
 
         val accountId = UUID.nameUUIDFromBytes("oidc|alice".toByteArray(StandardCharsets.UTF_8))
-        mvc.perform(get("/accounts/v1/profiles/$accountId"))
+        mvc.perform(get(ApiEndpoints.Accounts.V1.profileById(accountId)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.accountId").value(accountId.toString()))
             .andExpect(jsonPath("$.displayName").value("oidc|alice"))
@@ -137,7 +138,7 @@ class ProfileControllerTest {
     @Test
     fun `returns 404 when profile not found by account id`() {
         val nonExistentId = UUID.randomUUID()
-        mvc.perform(get("/accounts/v1/profiles/$nonExistentId"))
+        mvc.perform(get(ApiEndpoints.Accounts.V1.profileById(nonExistentId)))
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.code").value("NOT_FOUND"))
     }
@@ -152,14 +153,14 @@ class ProfileControllerTest {
 
     @Test
     fun `gets profiles in batch for valid account ids`() {
-        mvc.perform(get("/accounts/v1/me").with(alice))
+        mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME).with(alice))
             .andExpect(status().isOk)
 
         val bob = RequestPostProcessor { request ->
             request.userPrincipal = Principal { "oidc|bob" }
             request
         }
-        mvc.perform(get("/accounts/v1/me").with(bob))
+        mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME).with(bob))
             .andExpect(status().isOk)
 
         val aliceId = UUID.nameUUIDFromBytes("oidc|alice".toByteArray(StandardCharsets.UTF_8))
@@ -167,7 +168,7 @@ class ProfileControllerTest {
         val nonExistentId = UUID.randomUUID()
 
         val requestBody = "{\"accountIds\": [\"$aliceId\", \"$bobId\", \"$nonExistentId\"]}"
-        mvc.perform(post("/accounts/v1/profiles/batch")
+        mvc.perform(post(ApiEndpoints.Accounts.V1.PATH_PROFILES_BATCH)
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
             .andExpect(status().isOk)
@@ -175,7 +176,7 @@ class ProfileControllerTest {
             .andExpect(jsonPath("$.length()").value(2))
 
         val emptyBatch = "{\"accountIds\": [\"$nonExistentId\"]}"
-        mvc.perform(post("/accounts/v1/profiles/batch")
+        mvc.perform(post(ApiEndpoints.Accounts.V1.PATH_PROFILES_BATCH)
             .contentType(MediaType.APPLICATION_JSON)
             .content(emptyBatch))
             .andExpect(status().isOk)
@@ -185,7 +186,7 @@ class ProfileControllerTest {
 
     @Test
     fun `rejects batch profile lookup with empty account ids`() {
-        mvc.perform(post("/accounts/v1/profiles/batch")
+        mvc.perform(post(ApiEndpoints.Accounts.V1.PATH_PROFILES_BATCH)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"accountIds\": []}"))
             .andExpect(status().isBadRequest)
@@ -194,7 +195,7 @@ class ProfileControllerTest {
 
     @Test
     fun `rejects batch profile lookup with invalid uuid`() {
-        mvc.perform(post("/accounts/v1/profiles/batch")
+        mvc.perform(post(ApiEndpoints.Accounts.V1.PATH_PROFILES_BATCH)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"accountIds\": [\"not-a-valid-uuid\"]}"))
             .andExpect(status().isBadRequest)

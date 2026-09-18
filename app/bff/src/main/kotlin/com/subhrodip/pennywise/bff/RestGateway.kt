@@ -1,5 +1,6 @@
 package com.subhrodip.pennywise.bff
 
+import com.subhrodip.pennywise.ids.ApiEndpoints
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
@@ -105,7 +106,7 @@ class AccountsGateway(
     private val client = builder.baseUrl(baseUrl).build()
 
     fun getMe(bearer: String?): Mono<BffProfile> =
-        client.get().uri("/accounts/v1/me")
+        client.get().uri(ApiEndpoints.Accounts.V1.PATH_ME)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Accounts returned HTTP ${response.statusCode().value()}")) }
@@ -122,14 +123,14 @@ class ExpenseCoreGateway(
     private val client = builder.baseUrl(baseUrl).build()
 
     fun createGroup(input: BffCreateGroup, bearer: String?): Mono<BffGroup> =
-        client.post().uri("/expense-core/v1/groups")
+        client.post().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .bodyValue(input).retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
             .bodyToMono(BffGroup::class.java).timeout(timeout)
 
     fun listGroups(bearer: String?): Mono<List<BffGroup>> =
-        client.get().uri("/expense-core/v1/groups")
+        client.get().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
@@ -146,7 +147,7 @@ class ExpenseCoreGateway(
             .timeout(timeout)
 
     fun updateGroup(groupId: String, name: String, bearer: String?): Mono<BffGroup> =
-        client.patch().uri("/expense-core/v1/groups/{groupId}", groupId)
+        client.patch().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_BY_ID, groupId)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .bodyValue(mapOf("name" to name))
             .retrieve()
@@ -155,7 +156,7 @@ class ExpenseCoreGateway(
             .timeout(timeout)
 
     fun listMembers(groupId: String, bearer: String?): Mono<List<BffMember>> =
-        client.get().uri("/expense-core/v1/groups/{groupId}/members", groupId)
+        client.get().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_MEMBERS, groupId)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
@@ -164,13 +165,13 @@ class ExpenseCoreGateway(
             .timeout(timeout)
 
     fun getGroup(groupId: String, bearer: String?): Mono<BffGroup> {
-        val groupMono = client.get().uri("/expense-core/v1/groups/{groupId}", groupId)
+        val groupMono = client.get().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_BY_ID, groupId)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
             .bodyToMono(BffGroup::class.java)
 
-        val balancesMono = client.get().uri("/expense-core/v1/groups/{groupId}/balances", groupId)
+        val balancesMono = client.get().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_BALANCES, groupId)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
@@ -178,7 +179,7 @@ class ExpenseCoreGateway(
             .map { it.balances }
             .onErrorReturn(emptyList())
 
-        val expensesMono = client.get().uri("/expense-core/v1/groups/{groupId}/expenses", groupId)
+        val expensesMono = client.get().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_EXPENSES, groupId)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
@@ -200,8 +201,8 @@ class ExpenseCoreGateway(
     }
 
     fun createExpense(groupId: String, input: CreateExpenseInput, idempotencyKey: String, bearer: String?): Mono<BffExpense> =
-        client.post().uri("/expense-core/v1/groups/{groupId}/expenses", groupId)
-            .header("Idempotency-Key", idempotencyKey)
+        client.post().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_EXPENSES, groupId)
+            .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, idempotencyKey)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .bodyValue(input)
             .retrieve()
@@ -215,7 +216,7 @@ class ExpenseCoreGateway(
             "toParticipantId" to input.toParticipantId,
             "amountMinor" to input.amount.minor
         )
-        return client.post().uri("/expense-core/v1/groups/{groupId}/settlements", groupId)
+        return client.post().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_SETTLEMENTS, groupId)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .bodyValue(payload)
             .retrieve()
@@ -226,7 +227,7 @@ class ExpenseCoreGateway(
     }
 
     fun getSettlementSuggestions(groupId: String, bearer: String?): Mono<List<BffSuggestedSettlement>> =
-        client.get().uri("/expense-core/v1/groups/{groupId}/settlements/suggestions", groupId)
+        client.get().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_SETTLEMENT_SUGGESTIONS, groupId)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }

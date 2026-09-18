@@ -1,6 +1,7 @@
 package com.subhrodip.pennywise.notifications
 
 import com.subhrodip.pennywise.errors.GlobalErrorHandler
+import com.subhrodip.pennywise.ids.ApiEndpoints
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -20,7 +21,7 @@ class PreferenceControllerTest {
 
     @Test
     fun `reads default preferences for authenticated user`() {
-        mvc.perform(get("/notifications/v1/preferences").with(user))
+        mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_PREFERENCES).with(user))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.emailEnabled").value(true))
             .andExpect(jsonPath("$.pushEnabled").value(true))
@@ -29,20 +30,20 @@ class PreferenceControllerTest {
     @Test
     fun `updates and reads preferences`() {
         mvc.perform(
-            put("/notifications/v1/preferences")
+            put(ApiEndpoints.Notifications.V1.PATH_PREFERENCES)
                 .with(user)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"emailEnabled\":false,\"pushEnabled\":true}")
         )
             .andExpect(status().isNoContent)
 
-        val response = mvc.perform(get("/notifications/v1/preferences").with(user)).andReturn().response
+        val response = mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_PREFERENCES).with(user)).andReturn().response
         assertEquals("{\"emailEnabled\":false,\"pushEnabled\":true}", response.contentAsString)
     }
 
     @Test
     fun `rejects get preferences without authentication`() {
-        mvc.perform(get("/notifications/v1/preferences"))
+        mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_PREFERENCES))
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
     }
@@ -50,7 +51,7 @@ class PreferenceControllerTest {
     @Test
     fun `rejects update preferences without authentication`() {
         mvc.perform(
-            put("/notifications/v1/preferences")
+            put(ApiEndpoints.Notifications.V1.PATH_PREFERENCES)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"emailEnabled\":false,\"pushEnabled\":true}")
         )
@@ -60,7 +61,7 @@ class PreferenceControllerTest {
 
     @Test
     fun `rejects get preferences with blank subject`() {
-        mvc.perform(get("/notifications/v1/preferences").with(blankUser))
+        mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_PREFERENCES).with(blankUser))
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
     }
@@ -68,7 +69,7 @@ class PreferenceControllerTest {
     @Test
     fun `rejects update preferences with blank subject`() {
         mvc.perform(
-            put("/notifications/v1/preferences")
+            put(ApiEndpoints.Notifications.V1.PATH_PREFERENCES)
                 .with(blankUser)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"emailEnabled\":false,\"pushEnabled\":true}")

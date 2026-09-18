@@ -16,11 +16,13 @@ import java.util.Base64
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
+import com.subhrodip.pennywise.ids.ApiEndpoints
+
 data class InboxItem(val notificationId: UUID, val eventType: String, val message: String, val occurredAt: Instant, val read: Boolean = false)
 data class InboxPage(val items: List<InboxItem>, val nextCursor: String? = null)
 
 @RestController
-@RequestMapping("/notifications/v1/inbox")
+@RequestMapping(ApiEndpoints.Notifications.V1.PATH_INBOX)
 class InboxController(private val inbox: NotificationInbox) {
     @GetMapping
     fun list(
@@ -34,7 +36,7 @@ class InboxController(private val inbox: NotificationInbox) {
         return inbox.page(subject, cursor, limit)
     }
 
-    @PostMapping("/{notificationId}/read")
+    @PostMapping(ApiEndpoints.Notifications.V1.INBOX_MARK_READ_SUBPATH)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun markAsRead(@PathVariable notificationId: UUID, principal: Principal) {
         val subject = principal.name.trim().takeIf { it.isNotEmpty() }

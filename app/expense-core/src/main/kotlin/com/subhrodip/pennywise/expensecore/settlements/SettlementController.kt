@@ -15,11 +15,13 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
+import com.subhrodip.pennywise.ids.ApiEndpoints
+
 data class RecordSettlementRequest(val fromParticipantId: UUID, val toParticipantId: UUID, @field:Pattern(regexp = "^[0-9]+$") val amountMinor: String)
 data class ReverseSettlementRequest(@field:NotBlank @field:Size(max = 240) val reason: String)
 
 @RestController
-@RequestMapping("/expense-core/v1/groups/{groupId}/settlements")
+@RequestMapping(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_SETTLEMENTS)
 class SettlementController(
     private val service: SettlementService,
     private val suggestionEngine: SettlementSuggestionEngine? = null
@@ -29,11 +31,11 @@ class SettlementController(
     fun record(@PathVariable groupId: UUID, @Valid @RequestBody request: RecordSettlementRequest): Settlement =
         service.record(groupId, UuidGenerator.next(), request.fromParticipantId, request.toParticipantId, request.amountMinor.toLong())
 
-    @PostMapping("/{settlementId}/reversal")
+    @PostMapping(ApiEndpoints.ExpenseCore.V1.SETTLEMENT_REVERSAL_RELATIVE_SUBPATH)
     fun reverse(@PathVariable groupId: UUID, @PathVariable settlementId: UUID, @Valid @RequestBody request: ReverseSettlementRequest): Settlement =
         service.reverse(groupId, settlementId, request.reason)
 
-    @GetMapping("/suggestions")
+    @GetMapping(ApiEndpoints.ExpenseCore.V1.SETTLEMENT_SUGGESTIONS_RELATIVE_SUBPATH)
     fun getSuggestions(@PathVariable groupId: UUID): List<SuggestedSettlement> =
         suggestionEngine?.suggestSettlements(groupId) ?: service.suggestions(groupId)
 }

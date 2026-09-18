@@ -17,17 +17,19 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 
+import com.subhrodip.pennywise.ids.ApiEndpoints
+
 @RestController
-@RequestMapping("/expense-core/v1/groups/{groupId}")
+@RequestMapping(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_BY_ID)
 class ExpenseController(
     private val expenseStore: ExpenseStore
 ) {
 
-    @PostMapping("/expenses")
+    @PostMapping(ApiEndpoints.ExpenseCore.V1.EXPENSES_SUBPATH)
     @ResponseStatus(HttpStatus.CREATED)
     fun createExpense(
         @PathVariable groupId: UUID,
-        @RequestHeader("Idempotency-Key") idempotencyKey: String,
+        @RequestHeader(ApiEndpoints.Headers.IDEMPOTENCY_KEY) idempotencyKey: String,
         @Valid @RequestBody request: CreateExpenseRequest
     ): ExpenseResponse {
         val totalMinor = ExpenseValidator.parseAndValidateAmount(request.amount.minor)
@@ -98,7 +100,7 @@ class ExpenseController(
         )
     }
 
-    @PutMapping("/expenses/{expenseId}")
+    @PutMapping(ApiEndpoints.ExpenseCore.V1.EXPENSE_BY_ID_SUBPATH)
     fun updateExpense(
         @PathVariable groupId: UUID,
         @PathVariable expenseId: UUID,
@@ -172,7 +174,7 @@ class ExpenseController(
         )
     }
 
-    @DeleteMapping("/expenses/{expenseId}")
+    @DeleteMapping(ApiEndpoints.ExpenseCore.V1.EXPENSE_BY_ID_SUBPATH)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteExpense(
         @PathVariable groupId: UUID,
@@ -182,7 +184,7 @@ class ExpenseController(
         expenseStore.delete(groupId, expenseId, version)
     }
 
-    @GetMapping("/expenses")
+    @GetMapping(ApiEndpoints.ExpenseCore.V1.EXPENSES_SUBPATH)
     fun listExpenses(
         @PathVariable groupId: UUID,
         @RequestParam(required = false) category: String?,
@@ -206,7 +208,7 @@ class ExpenseController(
         }
     }
 
-    @GetMapping("/balances")
+    @GetMapping(ApiEndpoints.ExpenseCore.V1.BALANCES_SUBPATH)
     fun getBalances(@PathVariable groupId: UUID): GroupBalancesResponse {
         val balances = expenseStore.balances(groupId)
         return GroupBalancesResponse(groupId, balances)

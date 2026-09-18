@@ -15,6 +15,8 @@ import com.subhrodip.pennywise.expensecore.expenses.ExpenseRecord
 import com.subhrodip.pennywise.expensecore.expenses.InMemoryExpenseStore
 import java.time.Instant
 
+import com.subhrodip.pennywise.ids.ApiEndpoints
+
 class SettlementControllerTest {
     private val expenseStore = InMemoryExpenseStore()
     private val suggestionEngine = SettlementSuggestionEngine(expenseStore)
@@ -25,7 +27,7 @@ class SettlementControllerTest {
 
     @Test
     fun `rejects non numeric amount`() {
-        mvc.perform(post("/expense-core/v1/groups/${UUID.randomUUID()}/settlements").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(UUID.randomUUID())).contentType(MediaType.APPLICATION_JSON)
             .content("{\"fromParticipantId\":\"${UUID.randomUUID()}\",\"toParticipantId\":\"${UUID.randomUUID()}\",\"amountMinor\":\"x\"}"))
             .andExpect(status().isBadRequest)
     }
@@ -51,7 +53,7 @@ class SettlementControllerTest {
         )
         expenseStore.create(groupId, record, "test-key-1")
 
-        mvc.perform(get("/expense-core/v1/groups/$groupId/settlements/suggestions"))
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions(groupId)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$[0].fromParticipantId").value(bob.toString()))
             .andExpect(jsonPath("$[0].toParticipantId").value(alice.toString()))
@@ -62,7 +64,7 @@ class SettlementControllerTest {
     @Test
     fun `returns empty list when no debts exist`() {
         val groupId = UUID.randomUUID()
-        mvc.perform(get("/expense-core/v1/groups/$groupId/settlements/suggestions"))
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions(groupId)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(0))
     }

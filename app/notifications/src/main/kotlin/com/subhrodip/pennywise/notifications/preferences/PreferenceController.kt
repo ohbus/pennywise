@@ -12,10 +12,12 @@ import org.springframework.web.server.ResponseStatusException
 import java.security.Principal
 import java.util.concurrent.ConcurrentHashMap
 
+import com.subhrodip.pennywise.ids.ApiEndpoints
+
 data class NotificationPreferences(val emailEnabled: Boolean = true, val pushEnabled: Boolean = true)
 
 @RestController
-@RequestMapping("/notifications/v1/preferences")
+@RequestMapping(ApiEndpoints.Notifications.V1.PATH_PREFERENCES)
 class PreferenceController(private val store: PreferenceStore) {
     @GetMapping
     fun get(principal: Principal?): NotificationPreferences = store.get(subject(principal))

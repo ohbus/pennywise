@@ -13,6 +13,8 @@ import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
+import com.subhrodip.pennywise.ids.ApiEndpoints
+
 data class AllocationPreviewRequest(
     @field:NotBlank @field:Pattern(regexp = "^[0-9]+$") val totalMinor: String,
     @field:NotEmpty @field:Size(max = 100) val participantIds: List<@NotBlank String>
@@ -20,9 +22,9 @@ data class AllocationPreviewRequest(
 data class AllocationPreviewResponse(val totalMinor: String, val allocations: Map<String, String>)
 
 @RestController
-@RequestMapping("/expense-core/v1/allocations")
+@RequestMapping(ApiEndpoints.ExpenseCore.V1.BASE + ApiEndpoints.ExpenseCore.V1.ALLOCATIONS)
 class AllocationPreviewController {
-    @PostMapping("/preview")
+    @PostMapping(ApiEndpoints.ExpenseCore.V1.ALLOCATION_PREVIEW_SUBPATH)
     @ResponseStatus(HttpStatus.OK)
     fun preview(@Valid @RequestBody request: AllocationPreviewRequest): AllocationPreviewResponse {
         val total = request.totalMinor.toLongOrNull()

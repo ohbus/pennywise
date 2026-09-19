@@ -4638,6 +4638,43 @@
       "blocker": null
     },
     {
+      "id": "AUTH-03",
+      "parent_id": "AUTH-01",
+      "title": "Implement fail-closed provider-neutral OIDC resource-server validation",
+      "phase": "security",
+      "status": "planned",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["AUTH-01", "ERR-03"],
+      "owned_paths": [
+        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/security/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/",
+        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/",
+        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/config/",
+        "app/*/src/test/kotlin/**/*Security*",
+        "docs/operations/",
+        "docs/tasks/details/AUTH-03.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-03.md",
+      "acceptance_criteria": [
+        "All four applications use configurable JWT/OIDC resource-server validation outside explicitly opted-in local-demo mode.",
+        "Missing production issuer/audience configuration fails closed and never activates passthrough authentication.",
+        "Focused servlet/reactive security tests and documentation prove profile separation and token-derived identity behavior.",
+        "Contract, Bruno, and eventual real-provider E2E evidence is recorded without claiming local passthrough as OIDC evidence."
+      ],
+      "validation_commands": [
+        "./gradlew test --tests '*Security*' --rerun-tasks --no-daemon",
+        "py -3 tools/contracts/validate.py",
+        "py -3 tools/contracts/validate_public_surface.py",
+        "make security-hygiene",
+        "git diff --check"
+      ],
+      "evidence": [],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
       "id": "QA-07",
       "parent_id": "MILESTONE-QUALITY",
       "title": "Exhaustive public-interface integration coverage",

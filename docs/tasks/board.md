@@ -18,7 +18,8 @@ validation with Python's standard library.
 | ID | Owner | Status | Deliverable |
 | --- | --- | --- | --- |
 | AUTH-01 | coordinator | planned | Provider-neutral OIDC authentication hardening baseline and implementation tracker |
-| AUTH-02 | coordinator | planned | Remove implicit authentication identities with full boundary evidence |
+| AUTH-02 | coordinator | done | Remove implicit authentication identities with full boundary evidence |
+| AUTH-03 | coordinator | planned | Fail-closed provider-neutral OIDC resource-server validation |
 | OPS-24 | coordinator | done | Remove undeclared Ruby dependency and E2E Compose host-port collisions from CI |
 | OPS-17 | coordinator | done | Stable error taxonomy and service/source attribution |
 | OPS-18 | coordinator | done | Micrometer and Prometheus metrics for all services |

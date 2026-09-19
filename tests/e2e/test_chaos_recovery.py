@@ -69,6 +69,9 @@ def graphql_query(query: str, variables: dict[str, Any] | None = None,
 
 
 def run_chaos_recovery_tests() -> None:
+    """Run outage and recovery checks with explicit UTF-8 console output."""
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     print("=" * 70)
     print("🌪️  Running Chaos & Message Broker Outage Recovery Drill")
     print("=" * 70)

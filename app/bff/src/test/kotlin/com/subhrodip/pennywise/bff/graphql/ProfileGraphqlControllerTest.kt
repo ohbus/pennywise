@@ -1,5 +1,6 @@
-package com.subhrodip.pennywise.bff
+package com.subhrodip.pennywise.bff.graphql
 
+import com.subhrodip.pennywise.bff.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test

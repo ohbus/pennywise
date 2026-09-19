@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.bff
+package com.subhrodip.pennywise.bff.graphql
 
 import graphql.language.IntValue
 import graphql.language.StringValue

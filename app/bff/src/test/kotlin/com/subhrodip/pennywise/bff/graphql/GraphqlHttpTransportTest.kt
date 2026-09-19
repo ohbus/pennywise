@@ -1,5 +1,6 @@
-package com.subhrodip.pennywise.bff
+package com.subhrodip.pennywise.bff.graphql
 
+import com.subhrodip.pennywise.bff.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.BeforeEach
 import org.mockito.Mockito.`when`

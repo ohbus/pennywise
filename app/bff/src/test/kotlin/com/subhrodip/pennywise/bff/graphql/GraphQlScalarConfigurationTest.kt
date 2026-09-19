@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.bff
+package com.subhrodip.pennywise.bff.graphql
 
 import graphql.GraphQLContext
 import graphql.execution.CoercedVariables

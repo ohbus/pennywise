@@ -6,6 +6,10 @@ services:
   mailpit:
     extends: {file: docker-compose.yml, service: mailpit}
   accounts:
+    deploy:
+      resources:
+        reservations: {memory: 192m}
+        limits: {memory: 512m}
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.fast
@@ -18,6 +22,10 @@ services:
     ports: ["8081:8080"]
     depends_on: {postgres: {condition: service_healthy}}
   expense-core:
+    deploy:
+      resources:
+        reservations: {memory: 256m}
+        limits: {memory: 768m}
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.fast
@@ -36,6 +44,10 @@ services:
     ports: ["8082:8080"]
     depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}}
   notifications:
+    deploy:
+      resources:
+        reservations: {memory: 192m}
+        limits: {memory: 512m}
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.fast
@@ -54,6 +66,10 @@ services:
     ports: ["8083:8080"]
     depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, mailpit: {condition: service_healthy}}
   bff:
+    deploy:
+      resources:
+        reservations: {memory: 192m}
+        limits: {memory: 512m}
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.fast

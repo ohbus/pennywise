@@ -1,6 +1,10 @@
 services:
   postgres:
     image: postgres:17
+    deploy:
+      resources:
+        reservations: {memory: 256m}
+        limits: {memory: 768m}
     environment:
       POSTGRES_USER: pennywise
       POSTGRES_PASSWORD: pennywise-local-only
@@ -15,6 +19,10 @@ services:
       retries: 20
   rabbitmq:
     image: rabbitmq:4.3-management
+    deploy:
+      resources:
+        reservations: {memory: 256m}
+        limits: {memory: 768m}
     environment:
       RABBITMQ_DEFAULT_USER: pennywise
       RABBITMQ_DEFAULT_PASS: pennywise-local-only
@@ -26,6 +34,10 @@ services:
       retries: 20
   mailpit:
     image: axllent/mailpit:v1.27
+    deploy:
+      resources:
+        reservations: {memory: 64m}
+        limits: {memory: 256m}
     ports: ["1025:1025", "8025:8025"]
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8025/ || exit 1"]

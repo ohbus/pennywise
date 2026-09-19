@@ -5,6 +5,29 @@ All local entry points derive services from `infra/local/docker-compose.yml` or
 and must never be reused outside a developer machine. Run one topology at a
 time because each publishes the same stable host ports.
 
+## Local resource budget
+
+Every local Compose service has an explicit memory reservation and hard limit.
+The dependency-only file is the shared baseline inherited by standalone
+topologies; application containers add their limits in the full-stack file.
+These workstation-sized values are not production sizing:
+
+| Service | Reservation | Limit |
+| --- | ---: | ---: |
+| PostgreSQL | 256 MiB | 768 MiB |
+| RabbitMQ | 256 MiB | 768 MiB |
+| Mailpit | 64 MiB | 256 MiB |
+| Accounts | 192 MiB | 512 MiB |
+| Expense Core | 256 MiB | 768 MiB |
+| Notifications | 192 MiB | 512 MiB |
+| BFF | 192 MiB | 512 MiB |
+
+The complete stack reserves about 1.4 GiB and is capped at about 4.0 GiB,
+before Docker overhead. Compose applies these values through
+`deploy.resources`; verify the effective configuration with
+`make compose-config`. If a workstation has less available memory, start a
+narrow topology or increase Docker Desktop memory rather than removing limits.
+
 ## Command and service matrix
 
 | Purpose | Compose file | Services | Start | Inspect | Stop |

@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.accounts
+package com.subhrodip.pennywise.accounts.profile
 import com.subhrodip.pennywise.errors.ApplicationException
 import com.subhrodip.pennywise.errors.ErrorCode
 import org.springframework.http.HttpStatus

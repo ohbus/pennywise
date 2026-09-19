@@ -1,7 +1,7 @@
 package com.subhrodip.pennywise.accounts.requests.deletion
 
-import com.subhrodip.pennywise.accounts.ProfileRules
-import com.subhrodip.pennywise.accounts.ProfileStore
+import com.subhrodip.pennywise.accounts.profile.ProfileRules
+import com.subhrodip.pennywise.accounts.profile.ProfileStore
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

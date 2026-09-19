@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.accounts
+package com.subhrodip.pennywise.accounts.profile
 
 import com.subhrodip.pennywise.accounts.requests.deletion.DeletionRequestService
 import com.subhrodip.pennywise.accounts.requests.export.ExportRequestService

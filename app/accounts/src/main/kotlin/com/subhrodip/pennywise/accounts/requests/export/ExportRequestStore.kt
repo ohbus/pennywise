@@ -1,6 +1,6 @@
 package com.subhrodip.pennywise.accounts.requests.export
 
-import com.subhrodip.pennywise.accounts.ProfileRules
+import com.subhrodip.pennywise.accounts.profile.ProfileRules
 import com.subhrodip.pennywise.ids.UuidGenerator
 import java.time.Instant
 import java.util.UUID

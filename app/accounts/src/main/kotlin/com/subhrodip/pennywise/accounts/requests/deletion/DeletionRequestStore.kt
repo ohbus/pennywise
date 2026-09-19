@@ -1,6 +1,6 @@
 package com.subhrodip.pennywise.accounts.requests.deletion
 
-import com.subhrodip.pennywise.accounts.ProfileRules
+import com.subhrodip.pennywise.accounts.profile.ProfileRules
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 

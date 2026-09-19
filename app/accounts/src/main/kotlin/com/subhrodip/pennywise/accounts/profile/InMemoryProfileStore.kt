@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.accounts
+package com.subhrodip.pennywise.accounts.profile
 
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets

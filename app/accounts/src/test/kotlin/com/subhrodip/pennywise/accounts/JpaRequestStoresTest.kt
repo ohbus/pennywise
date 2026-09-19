@@ -6,6 +6,8 @@ import com.subhrodip.pennywise.accounts.requests.deletion.DeletionStatus
 import com.subhrodip.pennywise.accounts.requests.export.ExportRequestRepository
 import com.subhrodip.pennywise.accounts.requests.export.ExportStatus
 import com.subhrodip.pennywise.accounts.requests.export.JpaExportRequestStore
+import com.subhrodip.pennywise.accounts.profile.JpaProfileStore
+import com.subhrodip.pennywise.accounts.profile.ProfileRepository
 
 import java.time.Instant
 import java.util.UUID

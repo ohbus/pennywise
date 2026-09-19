@@ -202,6 +202,9 @@ class SimpleGraphQLWSClient:
 
 
 def run_concurrency_and_subscriptions_test() -> None:
+    """Run concurrency and subscription checks with explicit UTF-8 output."""
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     print("=" * 70)
     print("⚡ Running Concurrent Member Conflicts & GraphQL Subscriptions Test")
     print("=" * 70)

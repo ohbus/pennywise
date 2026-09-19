@@ -206,6 +206,9 @@ class ExpenseController(
         principal: Principal?
     ): List<ExpenseResponse> {
         ensureActiveMember(groupId, principal)
+        if (limit !in 1..100) {
+            throw ApplicationException(ErrorCode.ERR_02, "limit must be between 1 and 100")
+        }
         val list = expenseStore.list(groupId, category, cursor, limit)
         return list.map { expense ->
             ExpenseResponse(

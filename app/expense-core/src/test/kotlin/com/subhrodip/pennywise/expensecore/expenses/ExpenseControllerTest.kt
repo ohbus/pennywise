@@ -458,4 +458,18 @@ class ExpenseControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(0))
     }
+
+    /** Verifies expense collection limits reject unbounded or empty pages at the public boundary. */
+    @Test
+    fun `rejects invalid expense list limits`() {
+        val groupId = UUID.randomUUID()
+
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId)).param("limit", "0"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId)).param("limit", "101"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+    }
 }

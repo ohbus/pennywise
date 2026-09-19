@@ -28,7 +28,7 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 | Expense Core | POST | `/groups/{groupId}/invites/{token}/revoke` | `revokeInvite` | contract + controller + live success + non-member authorization + unknown/revoked-claim edges + revocation replay conflict | live replay confirmation |
 | Expense Core | POST | `/invites/{token}/claim` | `claimInvite` | contract + live auth/success + invalid-token/replay/revoked edges | expiry matrix |
 | Expense Core | POST | `/groups/{groupId}/expenses` | `createExpense` | contract + persistence + live + non-member authorization + archived-state edge | retry/dependency/timeout matrix |
-| Expense Core | GET | `/groups/{groupId}/expenses` | `listExpenses` | contract + live smoke + non-member authorization | validation/failure matrix |
+| Expense Core | GET | `/groups/{groupId}/expenses` | `listExpenses` | contract + live smoke + non-member authorization + limit bounds (1..100) | production dependency failure matrix |
 | Expense Core | PUT | `/groups/{groupId}/expenses/{expenseId}` | `updateExpense` | contract + persistence + live + non-member authorization | retry/dependency/timeout matrix |
 | Expense Core | DELETE | `/groups/{groupId}/expenses/{expenseId}` | `deleteExpense` | contract + live smoke + non-member authorization | validation/failure matrix |
 | Expense Core | POST | `/groups/{groupId}/settlements` | `recordSettlement` | contract + controller/persistence + live + non-member authorization + non-numeric/zero/same-participant validation | production dependency-failure evidence (QA-08) |

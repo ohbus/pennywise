@@ -4595,6 +4595,8 @@
         "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/recurring/RecurringExpenseControllerTest.kt",
         "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/settlements/SettlementControllerTest.kt",
         "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/settlements/JpaSettlementStoreTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseControllerTest.kt",
+        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseController.kt",
         "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/InMemorySettlementStore.kt",
         "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/JpaSettlementStore.kt",
         "README.md",

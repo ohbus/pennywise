@@ -8,12 +8,12 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 
 | Service | Method | Path | Operation | Current evidence | Remaining dimension work |
 |---|---|---|---|---|---|
-| Accounts | GET | `/me` | `getMe` | contract + GraphQL/E2E live | auth/validation/failure matrix |
-| Accounts | PATCH | `/me` | `updateMe` | contract + live smoke + invalid/empty-patch edges | failure matrix |
+| Accounts | GET | `/me` | `getMe` | contract + controller + GraphQL/E2E live + authenticated profile shape | unauthenticated/failure matrix |
+| Accounts | PATCH | `/me` | `updateMe` | contract + controller/live smoke + validated fields + empty-patch edge | failure matrix |
 | Accounts | POST | `/me/deletion-request` | `requestDeletion` | contract + live smoke + unauthenticated edge | service failure/replay matrix |
 | Accounts | POST | `/me/export-request` | `requestExport` | contract + live smoke + unauthenticated edge | service failure/replay matrix |
-| Accounts | GET | `/me/export-requests` | `listExportRequests` | contract + live smoke + unauthenticated edge | pagination/service failure matrix |
-| Accounts | GET | `/profiles/{accountId}` | `getProfileById` | contract + live smoke + malformed-ID edge | failure matrix |
+| Accounts | GET | `/me/export-requests` | `listExportRequests` | contract + controller/live smoke + unauthenticated and invalid-subject edges | pagination/service failure matrix |
+| Accounts | GET | `/profiles/{accountId}` | `getProfileById` | contract + controller/live smoke + malformed-ID and not-found edges | failure matrix |
 | Accounts | POST | `/profiles/batch` | `getProfilesBatch` | contract + controller + live smoke + empty/malformed/over-limit input + duplicate-ID deduplication | production dependency-failure evidence (QA-08) |
 | Expense Core | POST | `/groups` | `createGroup` | contract + GraphQL/E2E live + authentication/invalid-kind edges | failure matrix |
 | Expense Core | GET | `/groups` | `listGroups` | contract + live smoke + E2E + authentication/archived-state edges | validation/failure matrix |

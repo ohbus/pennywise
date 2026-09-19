@@ -16,6 +16,7 @@ dependencies {
     implementation(libs.boot.security)
     implementation(libs.boot.resource.server)
     implementation(libs.boot.data.jpa)
+    implementation(libs.boot.amqp)
     implementation(libs.boot.flyway)
     runtimeOnly(libs.postgresql)
     runtimeOnly(libs.flyway.postgresql)

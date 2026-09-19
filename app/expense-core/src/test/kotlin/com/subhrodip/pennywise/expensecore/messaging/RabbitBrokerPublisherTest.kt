@@ -1,0 +1,93 @@
+package com.subhrodip.pennywise.expensecore.messaging
+
+import com.subhrodip.pennywise.ids.EventConstants
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.doThrow
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import org.springframework.amqp.AmqpException
+import org.springframework.amqp.core.Message
+import org.springframework.amqp.rabbit.core.RabbitTemplate
+import tools.jackson.databind.ObjectMapper
+import java.time.Instant
+import java.util.UUID
+
+class RabbitBrokerPublisherTest {
+
+    private val rabbitTemplate: RabbitTemplate = mock(RabbitTemplate::class.java)
+    private val objectMapper = ObjectMapper()
+    private val publisher = RabbitBrokerPublisher(rabbitTemplate, objectMapper, EventConstants.EVENTS_EXCHANGE)
+
+    @Test
+    fun `publishes message conforming to envelope schema to central topic exchange`() {
+        val eventId = UUID.randomUUID()
+        val aggregateId = UUID.randomUUID()
+        val groupId = UUID.randomUUID()
+        val occurredAt = Instant.parse("2026-09-19T10:00:00Z")
+        val payloadJson = """{"name":"Euro Trip","currency":"EUR"}""".toByteArray(Charsets.UTF_8)
+
+        val brokerMessage = BrokerMessage(
+            eventId = eventId,
+            eventType = "group.created",
+            payload = payloadJson,
+            occurredAt = occurredAt,
+            headers = mapOf(
+                "aggregate-id" to aggregateId.toString(),
+                "group-id" to groupId.toString(),
+                "group-revision" to "3"
+            )
+        )
+
+        val result = publisher.publish(brokerMessage)
+        assertEquals(PublishResult.Confirmed, result)
+
+        val exchangeCaptor = ArgumentCaptor.forClass(String::class.java)
+        val routingKeyCaptor = ArgumentCaptor.forClass(String::class.java)
+        val messageCaptor = ArgumentCaptor.forClass(Message::class.java)
+
+        verify(rabbitTemplate).send(exchangeCaptor.capture(), routingKeyCaptor.capture(), messageCaptor.capture())
+
+        assertEquals(EventConstants.EVENTS_EXCHANGE, exchangeCaptor.value)
+        assertEquals("group.created", routingKeyCaptor.value)
+
+        val sentMessage = messageCaptor.value
+        val bodyJson = String(sentMessage.body, Charsets.UTF_8)
+        val envelope = objectMapper.readTree(bodyJson)
+
+        assertEquals(eventId.toString(), envelope.get("eventId").asText())
+        assertEquals("group.created", envelope.get("eventType").asText())
+        assertEquals(1, envelope.get("schemaVersion").asInt())
+        assertEquals(aggregateId.toString(), envelope.get("aggregateId").asText())
+        assertEquals(groupId.toString(), envelope.get("groupId").asText())
+        assertEquals(3L, envelope.get("groupRevision").asLong())
+        assertEquals(occurredAt.toString(), envelope.get("occurredAt").asText())
+        assertEquals("Euro Trip", envelope.get("payload").get("name").asText())
+        assertEquals("EUR", envelope.get("payload").get("currency").asText())
+    }
+
+    @Test
+    fun `returns Rejected when RabbitTemplate throws AmqpException`() {
+        val brokerMessage = BrokerMessage(
+            eventId = UUID.randomUUID(),
+            eventType = "group.renamed",
+            payload = "{}".toByteArray(),
+            occurredAt = Instant.now()
+        )
+
+        val failingRabbitTemplate: RabbitTemplate = mock(RabbitTemplate::class.java)
+        doThrow(AmqpException("Connection refused"))
+            .`when`(failingRabbitTemplate)
+            .send(any(String::class.java), any(String::class.java), any(Message::class.java))
+
+        val failingPublisher = RabbitBrokerPublisher(failingRabbitTemplate, objectMapper)
+        val result = failingPublisher.publish(brokerMessage)
+
+        assertTrue(result is PublishResult.Rejected)
+        val rejection = result as PublishResult.Rejected
+        assertTrue(rejection.reason.contains("Connection refused"))
+    }
+}

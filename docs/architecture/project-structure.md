@@ -66,6 +66,10 @@ domain error definitions, HTTP problem mapping, and request-correlation
 plumbing are separated physically while retaining the established public
 package for consumers.
 
+The BFF keeps GraphQL, REST transport, realtime fanout, and messaging concerns
+in separate source folders so transport adapters do not sit beside application
+startup code.
+
 Future `app/web` chooses tooling in a separate UI task. Its README explains the
 GraphQL endpoint, authentication integration decision still required, subscription
 and reconnect behavior, money-as-string representation, and pending offline

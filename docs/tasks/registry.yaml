@@ -1742,19 +1742,19 @@
       "blocker": null
     },
     {
-      "id": "CORE-19", "parent_id": "MILESTONE-PRODUCT", "title": "Complete group lifecycle and membership administration", "phase": "implementation", "status": "planned", "owner_role": "core", "owner_agent": null,
+      "id": "CORE-19", "parent_id": "MILESTONE-PRODUCT", "title": "Complete group lifecycle and membership administration", "phase": "implementation", "status": "done", "owner_role": "core", "owner_agent": "/root",
       "depends_on": ["CORE-09", "CORE-17"], "owned_paths": ["app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/", "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/groups/", "app/expense-core/src/main/resources/db/migration/", "contracts/rest/expense-core.openapi.json"], "specification": "docs/tasks/details/CORE-19.md",
-      "acceptance_criteria": ["Archive, placeholders, member removal, and invite revocation preserve history and enforce authorization."], "validation_commands": ["./gradlew :app:expense-core:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Archive, placeholders, member removal, and invite revocation preserve history and enforce authorization."], "validation_commands": ["./gradlew :app:expense-core:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Flyway V9 adds group archive status, named placeholders, soft member removal, and invitation revocation.", "GroupController, JpaGroupStore, and InMemoryGroupStore implement archive, placeholder addition, member removal, and invitation revocation/claiming.", "All unit/integration tests and make check passed cleanly."], "reviewer": "/root", "blocker": null
     },
     {
-      "id": "CORE-20", "parent_id": "MILESTONE-PRODUCT", "title": "Expose recurring schedule management and pause notifications", "phase": "implementation", "status": "planned", "owner_role": "core", "owner_agent": null,
+      "id": "CORE-20", "parent_id": "MILESTONE-PRODUCT", "title": "Expose recurring schedule management and pause notifications", "phase": "implementation", "status": "done", "owner_role": "core", "owner_agent": "/root",
       "depends_on": ["CORE-15", "NOT-07"], "owned_paths": ["app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/recurring/", "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/recurring/", "contracts/rest/expense-core.openapi.json", "contracts/events/"], "specification": "docs/tasks/details/CORE-20.md",
-      "acceptance_criteria": ["Authenticated recurrence management and invalid-membership pause notifications are publicly testable."], "validation_commands": ["./gradlew :app:expense-core:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Authenticated recurrence management and invalid-membership pause notifications are publicly testable."], "validation_commands": ["./gradlew :app:expense-core:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Commit 3d1c5fa adds RecurringExpenseController endpoints, DTOs, service update/pause/resume, bounded catch-up processing (maxCatchUpOccurrences), and invalid-membership pause notification outbox emission.", "All recurring unit and controller tests passed."], "reviewer": "/root", "blocker": null
     },
     {
-      "id": "CORE-21", "parent_id": "MILESTONE-PRODUCT", "title": "Complete authorized persistent search and CSV transport", "phase": "implementation", "status": "planned", "owner_role": "core", "owner_agent": null,
+      "id": "CORE-21", "parent_id": "MILESTONE-PRODUCT", "title": "Complete authorized persistent search and CSV transport", "phase": "implementation", "status": "done", "owner_role": "core", "owner_agent": "/root",
       "depends_on": ["CORE-06", "CORE-13"], "owned_paths": ["app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/search/", "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/search/", "contracts/rest/expense-core.openapi.json"], "specification": "docs/tasks/details/CORE-21.md",
-      "acceptance_criteria": ["Authorized durable search and bounded safe CSV export are exposed through REST."], "validation_commands": ["./gradlew :app:expense-core:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Authorized durable search and bounded safe CSV export are exposed through REST."], "validation_commands": ["./gradlew :app:expense-core:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Commit acd0270 and follow-up fixtures add SearchStore port, JpaSearchStore, InMemorySearchStore, SearchController (/groups/{id}/search and /export) with membership authorization and CSV formula escaping.", "All search unit, store, controller, and full repo tests passed."], "reviewer": "/root", "blocker": null
     },
     {
       "id": "CORE-22", "parent_id": "MILESTONE-PRODUCT", "title": "Harden group updates with transactional change effects", "phase": "implementation", "status": "done", "owner_role": "core", "owner_agent": "/root",
@@ -1782,9 +1782,9 @@
       "acceptance_criteria": ["Restore, measured capacity, and cost evidence satisfy the public-launch gate."], "validation_commands": ["make recovery-drill", "make capacity-smoke", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
     },
     {
-      "id": "DOC-18", "parent_id": "MILESTONE-DOCUMENTATION", "title": "Reconcile current API operation and error contracts", "phase": "documentation", "status": "planned", "owner_role": "contracts", "owner_agent": null,
+      "id": "DOC-18", "parent_id": "MILESTONE-DOCUMENTATION", "title": "Reconcile current API operation and error contracts", "phase": "documentation", "status": "done", "owner_role": "contracts", "owner_agent": "/root",
       "depends_on": ["ACC-05", "NOT-09", "CORE-18", "BFF-06"], "owned_paths": ["contracts/", "docs/api/"], "specification": "docs/tasks/details/DOC-18.md",
-      "acceptance_criteria": ["Operation mapping, authentication, errors, and batch/idempotency semantics match implemented behavior."], "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Operation mapping, authentication, errors, and batch/idempotency semantics match implemented behavior."], "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Reconciled GraphQL operation-mapping.md, Accounts batch profile duplicate/absence semantics, Notifications read idempotency, and API status document.", "python3 tools/contracts/validate.py and git diff --check passed."], "reviewer": "/root", "blocker": null
     },
     {
       "id": "DOC-19", "parent_id": "MILESTONE-DOCUMENTATION", "title": "Backfill legacy tracker ownership and evidence", "phase": "documentation", "status": "planned", "owner_role": "coordinator", "owner_agent": null,

@@ -88,15 +88,15 @@ validation with Python's standard library.
 | DOC-17B | git_task_map | done | Map commits and worktree files to tasks |
 | DOC-17C | drift_review | done | Review implementation, contracts, tests, and scope drift |
 | OPS-09 | compose_topology | done | Add dependency-only, standalone-app, and full-stack Compose workflows |
-| CORE-19 | unassigned | planned | Complete group lifecycle and membership administration |
-| CORE-20 | unassigned | planned | Expose recurring schedule management and pause notifications |
-| CORE-21 | unassigned | planned | Complete authorized persistent search and CSV transport |
+| CORE-19 | core | done | Complete group lifecycle and membership administration |
+| CORE-20 | core | done | Expose recurring schedule management and pause notifications |
+| CORE-21 | core | done | Complete authorized persistent search and CSV transport |
 | CORE-22 | coordinator | done | Harden group updates with transactional change effects |
 | BFF-07 | coordinator | done | Complete bounded GraphQL group-member resolution |
 | MSG-02 | unassigned | planned | Deliver committed group changes to every BFF replica |
 | QA-04 | unassigned | planned | Execute authenticated real-dependency product acceptance |
 | OPS-10 | unassigned | planned | Produce public-launch restore, capacity, and cost evidence |
-| DOC-18 | unassigned | planned | Reconcile current API operation and error contracts |
+| DOC-18 | contracts | done | Reconcile current API operation and error contracts |
 | DOC-19 | unassigned | planned | Backfill legacy tracker ownership and evidence |
 | DOC-20 | coordinator | done | Establish a non-breaking Kotlin formatting baseline |
 | OPS-11 | coordinator | done | Fix Buildx GHA cache export for main image publishing |

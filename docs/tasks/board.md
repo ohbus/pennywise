@@ -95,7 +95,7 @@ validation with Python's standard library.
 | BFF-07 | coordinator | done | Complete bounded GraphQL group-member resolution |
 | MSG-02 | messaging | done | Deliver committed group changes to every BFF replica |
 | QA-04 | coordinator | done | Execute authenticated real-dependency product acceptance |
-| OPS-10 | unassigned | planned | Produce public-launch restore, capacity, and cost evidence |
+| OPS-10 | platform | done | Produce public-launch restore, capacity, and cost evidence |
 | DOC-18 | contracts | done | Reconcile current API operation and error contracts |
 | DOC-19 | coordinator | done | Backfill legacy tracker ownership and evidence |
 | DOC-20 | coordinator | done | Establish a non-breaking Kotlin formatting baseline |

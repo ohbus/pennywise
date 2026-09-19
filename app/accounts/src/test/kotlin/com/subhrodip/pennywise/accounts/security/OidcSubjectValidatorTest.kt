@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.accounts
+package com.subhrodip.pennywise.accounts.security
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows

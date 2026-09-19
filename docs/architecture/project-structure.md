@@ -48,6 +48,15 @@ persistent entities (`@Entity`), Spring Data repository interfaces (`@Repository
 and service/adapter classes (`@Service`) must reside in individual source files,
 never bundled together in a single file.
 
+Application source packages follow feature slices, as demonstrated by
+`app/expense-core`: controllers, domain models, persistence ports, repositories,
+and adapters for one capability stay under that capability's package. Other
+applications and libraries should use the same convention; cross-cutting
+configuration belongs in an explicit `security`, `messaging`, or equivalent
+technical package rather than at the application package root. The Accounts
+security configuration and OIDC subject validator now follow this convention
+under `accounts.security`.
+
 Future `app/web` chooses tooling in a separate UI task. Its README explains the
 GraphQL endpoint, authentication integration decision still required, subscription
 and reconnect behavior, money-as-string representation, and pending offline

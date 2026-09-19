@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.accounts
+package com.subhrodip.pennywise.accounts.security
 
 import java.net.URI
 

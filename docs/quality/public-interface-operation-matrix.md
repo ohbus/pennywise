@@ -15,13 +15,13 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 | Accounts | GET | `/me/export-requests` | `listExportRequests` | contract + controller/live smoke + unauthenticated and invalid-subject edges | pagination/service failure matrix |
 | Accounts | GET | `/profiles/{accountId}` | `getProfileById` | contract + controller/live smoke + malformed-ID and not-found edges | failure matrix |
 | Accounts | POST | `/profiles/batch` | `getProfilesBatch` | contract + controller + live smoke + empty/malformed/over-limit input + duplicate-ID deduplication | production dependency-failure evidence (QA-08) |
-| Expense Core | POST | `/groups` | `createGroup` | contract + GraphQL/E2E live + authentication/invalid-kind edges | failure matrix |
-| Expense Core | GET | `/groups` | `listGroups` | contract + live smoke + E2E + authentication/archived-state edges | validation/failure matrix |
-| Expense Core | GET | `/groups/{groupId}` | `getGroup` | contract + live smoke + E2E + authentication/non-member/archived edges | validation/failure matrix |
-| Expense Core | PATCH | `/groups/{groupId}` | `updateGroup` | contract + live smoke + E2E + non-member/blank-input edges | conflict/failure matrix |
+| Expense Core | POST | `/groups` | `createGroup` | contract + controller/GraphQL/E2E live + authentication/invalid-kind edges | production dependency-failure evidence (QA-08) |
+| Expense Core | GET | `/groups` | `listGroups` | contract + controller/live smoke + E2E + authentication/archived-state edges | production dependency-failure evidence (QA-08) |
+| Expense Core | GET | `/groups/{groupId}` | `getGroup` | contract + controller/live smoke + E2E + authentication/non-member/not-found/archived edges | production dependency-failure evidence (QA-08) |
+| Expense Core | PATCH | `/groups/{groupId}` | `updateGroup` | contract + controller/live smoke + E2E + non-member/blank-input edges + revision increment | production dependency-failure evidence (QA-08) |
 | Expense Core | POST | `/allocations/preview` | `previewAllocation` | contract + live smoke + authentication/validation edges | failure matrix |
 | Expense Core | POST | `/groups/{groupId}/archive` | `archiveGroup` | contract + live smoke + authentication/non-member/replay edges | archived-state side-effect matrix |
-| Expense Core | GET | `/groups/{groupId}/members` | `listGroupMembers` | contract + live smoke + non-member/archived authorization | validation/failure matrix |
+| Expense Core | GET | `/groups/{groupId}/members` | `listGroupMembers` | contract + controller/live smoke + non-member/archived authorization + claimed-placeholder lifecycle | production dependency-failure evidence (QA-08) |
 | Expense Core | POST | `/groups/{groupId}/placeholders` | `createPlaceholder` | contract + live smoke + non-member/blank-input edges | resource-state matrix |
 | Expense Core | DELETE | `/groups/{groupId}/members/{membershipId}` | `removeGroupMember` | contract + controller + live smoke + non-member/malformed-ID authorization + removal replay conflict | live replay confirmation |
 | Expense Core | POST | `/groups/{groupId}/invites` | `createInvite` | contract + live smoke + non-member authorization + expiry-boundary edges | replay matrix |

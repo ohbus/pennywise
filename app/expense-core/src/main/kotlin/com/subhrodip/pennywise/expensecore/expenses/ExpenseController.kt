@@ -234,7 +234,9 @@ class ExpenseController(
     }
 
     private fun ensureActiveMember(groupId: UUID, principal: Principal?) {
-        val subject = principal?.name ?: "test-user"
+        val subject = principal?.name?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: throw ApplicationException(ErrorCode.ERR_03, "Authenticated subject is required")
         if (!membershipRepository.existsByGroupIdAndSubject(groupId, subject)) {
             throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
         }

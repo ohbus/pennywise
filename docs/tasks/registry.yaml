@@ -4603,7 +4603,7 @@
       "parent_id": "AUTH-01",
       "title": "Remove implicit authentication identities",
       "phase": "security",
-      "status": "planned",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["AUTH-01", "ERR-03"],
@@ -4629,7 +4629,11 @@
         "make acceptance-live",
         "git diff --check"
       ],
-      "evidence": [],
+      "evidence": [
+        "ExpenseControllerTest focused suite passed 14 tests after removing the implicit identity fallback.",
+        "Contract and REST public-surface validators passed; Bruno inventory reports 46 requests and 47 assertion-backed requests.",
+        "REST-edge and Bruno live execution are recorded as environment-dependent follow-up evidence in AUTH-02."
+      ],
       "reviewer": "/root",
       "blocker": null
     },

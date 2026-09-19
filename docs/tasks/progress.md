@@ -5,6 +5,7 @@ execution checkpoints and evidence; it does not replace task acceptance criteria
 
 | Date | Task(s) | Change | Verification | Commit |
 |---|---|---|---|---|
+| 2026-09-20 | AUTH-02 | Removed Expense Core's implicit `test-user` identity fallback; missing/blank subjects now fail before membership authorization, with focused controller, REST-edge, and Bruno coverage added | Focused Expense Core suite passed 14 tests; contract/public-surface validation passed; live REST-edge/Bruno evidence remains environment-dependent | 87d6736 |
 | 2026-09-17 | DOC-01–DOC-08 | Wrote product, architecture, technology, API, quality, operations and task documentation; passed documentation gate | Registry links, dependency IDs and contract JSON validated | d7c4f2c |
 | 2026-09-17 | FND-01 | Created Gradle multi-project Pennywise scaffold, four apps, four technical libraries, wrapper, and reserved UI workspace | `./gradlew compileKotlin`, `./gradlew bootJar`, `./gradlew test` | d7c4f2c |
 | 2026-09-17 | FND-02, OPS-03 | Added modular development/production Dockerfiles, Compose dependencies, service Compose, production image variables and quickstart | Compose config validation; secrets remain external | d41c0d0 |

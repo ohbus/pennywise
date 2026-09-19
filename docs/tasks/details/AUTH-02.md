@@ -69,5 +69,31 @@ control cases.
 
 ## Status
 
-Planned. No implementation is claimed until the required tracker, tests, and
-evidence are updated.
+Implemented in the current increment.
+
+## Implementation notes
+
+- `ExpenseController.ensureActiveMember` now trims the token-derived principal
+  subject and rejects null, blank, and whitespace-only values with `ERR_03`.
+- The membership repository is not called until a valid subject exists; the
+  existing member/non-member and archived-group checks remain authoritative for
+  every expense mutation and read.
+- The focused controller fixture uses a reusable test-only servlet request
+  wrapper to provide an explicit `test-user` control identity while preserving
+  explicit non-member principals. This wrapper is test infrastructure only and
+  does not alter application authentication.
+- Direct controller tests verify missing and blank identities fail before
+  membership lookup.
+- REST-edge coverage now probes unauthenticated expense list, balance, create,
+  update, and delete operations. Bruno includes an unauthenticated expense-list
+  boundary request and bearer challenge assertion.
+
+## Verification evidence
+
+- `./gradlew.bat :app:expense-core:test --tests '*ExpenseControllerTest' --rerun-tasks --no-daemon` — passed; 14 tests completed.
+- `git diff --check` — required before commit.
+- Contract/public-surface validation — required before commit.
+
+The live REST-edge and Bruno commands require the local Docker stack; their
+results must be recorded separately and must not be inferred from the focused
+JVM test.

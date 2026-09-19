@@ -202,6 +202,16 @@ def main() -> None:
     expect("Expense Core rejects unauthenticated group read", status, 401)
 
     status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}", token=None
+    )
+    expect("Expense Core rejects unauthenticated expense listing", status, 401)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}/balances", token=None
+    )
+    expect("Expense Core rejects unauthenticated balance read", status, 401)
+
+    status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}", token="non-member"
     )
     expect("Expense Core hides group from non-member", status, 404)
@@ -491,6 +501,12 @@ def main() -> None:
         headers={"Idempotency-Key": f"non-member-{uuid.uuid4()}"},
     )
     expect("non-member expense creation is hidden", status, 404)
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
+        method="POST", body=payload, token=None,
+        headers={"Idempotency-Key": f"missing-auth-{uuid.uuid4()}"},
+    )
+    expect("unauthenticated expense creation is rejected", status, 401)
     status, first = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
         method="POST", body=payload, headers={"Idempotency-Key": key},
@@ -515,6 +531,19 @@ def main() -> None:
         token="non-member",
     )
     expect("non-member expense update is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}/{expense_id}",
+        method="PUT", body={"version": 1, **{key: value for key, value in update_payload.items() if key != "expenseId"}},
+        token=None,
+    )
+    expect("unauthenticated expense update is rejected", status, 401)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}/{expense_id}?version=1",
+        method="DELETE", token=None,
+    )
+    expect("unauthenticated expense deletion is rejected", status, 401)
 
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}/{expense_id}?version=1",

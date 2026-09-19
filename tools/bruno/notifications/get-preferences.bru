@@ -14,3 +14,11 @@ headers {
   Authorization: Bearer {{token}}
   Accept: application/json
 }
+
+tests {
+  test("notification preferences are readable", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().emailEnabled).to.be.a("boolean");
+    expect(res.getBody().pushEnabled).to.be.a("boolean");
+  });
+}

@@ -28,3 +28,17 @@ script:post-response {
     bru.setVar("groupId", res.body.groupId);
   }
 }
+
+tests {
+  test("group is created", function() {
+    expect(res.getStatus()).to.eql(201);
+    expect(res.getBody().groupId).to.be.ok;
+  });
+
+  test("group response has domain fields", function() {
+    const body = res.getBody();
+    expect(body.name).to.be.ok;
+    expect(body.status).to.eql("ACTIVE");
+    expect(body.revision).to.eql(0);
+  });
+}

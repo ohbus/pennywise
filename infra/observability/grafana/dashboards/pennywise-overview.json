@@ -1,0 +1,13 @@
+{
+  "title": "Pennywise service overview",
+  "uid": "pennywise-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "panels": [
+    {"type":"timeseries","title":"Request rate","gridPos":{"h":8,"w":12,"x":0,"y":0},"targets":[{"expr":"sum by (service) (rate(http_server_requests_seconds_count{job=\"pennywise\"}[5m]))","legendFormat":"{{service}}"}]},
+    {"type":"timeseries","title":"5xx error rate","gridPos":{"h":8,"w":12,"x":12,"y":0},"targets":[{"expr":"sum by (service) (rate(http_server_requests_seconds_count{job=\"pennywise\",status=~\"5..\"}[5m]))","legendFormat":"{{service}}"}]},
+    {"type":"timeseries","title":"p95 latency","gridPos":{"h":8,"w":12,"x":0,"y":8},"targets":[{"expr":"histogram_quantile(0.95, sum by (service, le) (rate(http_server_requests_seconds_bucket{job=\"pennywise\"}[5m])))","legendFormat":"{{service}}"}]},
+    {"type":"timeseries","title":"JVM heap utilization","gridPos":{"h":8,"w":12,"x":12,"y":8},"targets":[{"expr":"jvm_memory_used_bytes{job=\"pennywise\",area=\"heap\"} / jvm_memory_max_bytes{job=\"pennywise\",area=\"heap\"}","legendFormat":"{{service}}"}]}
+  ]
+}

@@ -1,0 +1,33 @@
+meta {
+  name: Update Recurring Schedule
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/schedules/{{scheduleId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+tests {
+  test("recurring schedule update succeeds", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().scheduleId).to.eql(bru.getVar("scheduleId"));
+  });
+}
+
+body:json {
+  {
+    "description": "Updated monthly household rent",
+    "amount": {"currency": "EUR", "minor": "91000"},
+    "frequency": "MONTHLY",
+    "dayOfMonth": 1,
+    "startDate": "2026-10-01"
+  }
+}

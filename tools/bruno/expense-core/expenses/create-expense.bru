@@ -13,12 +13,12 @@ post {
 headers {
   Authorization: Bearer {{token}}
   Content-Type: application/json
-  Idempotency-Key: demo-expense-001
+  Idempotency-Key: bruno-{{$randomUUID}}
 }
 
 body:json {
   {
-    "expenseId": "01000000-0000-0000-0000-000000000001",
+    "expenseId": "{{$randomUUID}}",
     "description": "Groceries from Billa",
     "category": "food",
     "amount": {
@@ -54,4 +54,18 @@ script:post-response {
   if (res.status === 201) {
     bru.setVar("expenseId", res.body.expenseId);
   }
+}
+
+tests {
+  test("expense is created", function() {
+    expect(res.getStatus()).to.eql(201);
+    expect(res.getBody().expenseId).to.be.ok;
+    expect(res.getBody().version).to.eql(1);
+  });
+
+  test("expense amount is contract-shaped", function() {
+    const amount = res.getBody().amount;
+    expect(amount.currency).to.eql("EUR");
+    expect(amount.minor).to.eql("4200");
+  });
 }

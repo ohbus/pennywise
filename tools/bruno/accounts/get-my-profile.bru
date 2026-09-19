@@ -14,3 +14,16 @@ headers {
   Authorization: Bearer {{token}}
   Content-Type: application/json
 }
+
+tests {
+  test("profile response is successful", function() {
+    expect(res.getStatus()).to.eql(200);
+  });
+
+  test("profile contains stable identity fields", function() {
+    const body = res.getBody();
+    expect(body.accountId).to.be.ok;
+    expect(body.displayName).to.be.ok;
+    expect(body.defaultCurrency).to.match(/^[A-Z]{3}$/);
+  });
+}

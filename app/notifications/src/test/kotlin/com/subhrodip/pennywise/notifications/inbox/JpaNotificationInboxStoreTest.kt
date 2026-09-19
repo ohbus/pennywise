@@ -17,7 +17,8 @@ import java.util.concurrent.Executors
         "spring.datasource.username=sa",
         "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=validate",
-        "spring.jpa.open-in-view=false"
+        "spring.jpa.open-in-view=false",
+        "spring.rabbitmq.listener.simple.auto-startup=false"
     ]
 )
 class JpaNotificationInboxStoreTest @Autowired constructor(

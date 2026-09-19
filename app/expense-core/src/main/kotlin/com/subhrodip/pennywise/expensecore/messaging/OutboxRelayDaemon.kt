@@ -42,10 +42,12 @@ class OutboxMessagingConfiguration {
     fun outboxPublisher(
         relay: OutboxStore,
         brokerPublisher: BrokerPublisher,
+        objectMapper: org.springframework.beans.factory.ObjectProvider<tools.jackson.databind.ObjectMapper>,
         properties: OutboxRelayProperties
     ): OutboxPublisher = OutboxPublisher(
         relay = relay,
         publisher = brokerPublisher,
+        objectMapper = objectMapper.ifAvailable ?: tools.jackson.databind.ObjectMapper(),
         batchSize = properties.batchSize,
         lease = Duration.ofSeconds(properties.leaseSeconds),
         maxAttempts = properties.maxAttempts,

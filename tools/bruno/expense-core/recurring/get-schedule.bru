@@ -1,0 +1,22 @@
+meta {
+  name: Get Recurring Schedule
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/schedules/{{scheduleId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+tests {
+  test("recurring schedule is readable", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().scheduleId).to.eql(bru.getVar("scheduleId"));
+  });
+}

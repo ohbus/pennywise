@@ -1,5 +1,8 @@
 package com.subhrodip.pennywise.expensecore.expenses
 
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
+
 /**
  * Allocates integer minor units without floating point arithmetic. The first
  * remainder units go to the lexicographically smallest participant IDs so a
@@ -57,7 +60,7 @@ object AllocationCalculator {
             "EXACT" -> exact(totalMinor, items.associate { it.participantId to it.value.toLong() })
             "PERCENT_BASIS_POINTS" -> percentage(totalMinor, items.associate { it.participantId to it.value.toLong() })
             "WEIGHTED_SHARES" -> weightedShares(totalMinor, items.associate { it.participantId to it.value.toLong() })
-            else -> throw IllegalArgumentException("Unsupported allocation mode: $mode")
+            else -> throw ApplicationException(ErrorCode.ERR_02, "Unsupported allocation mode: $mode")
         }
     }
 }

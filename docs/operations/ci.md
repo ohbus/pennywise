@@ -20,8 +20,13 @@ Verification and E2E jobs each receive isolated PostgreSQL 17 and RabbitMQ
 must pass before job steps begin; no service state is shared between matrix jobs.
 
 The matrix tests every application and library in parallel after a single
-preflight, validates contracts and Compose files, runs Gradle `test`, `check`,
-and JaCoCo, and builds application jars. Jobs use Microsoft Build of OpenJDK.
+preflight, validates contracts, REST path structure, GraphQL schema/resolver
+parity, and Compose files, runs Gradle `test`, `check`, and JaCoCo, and builds
+application jars. The lightweight checks also run the acceptance unit suite,
+workflow YAML parsing, strict Python typing via `uvx`/mypy, and
+`git diff --check`. Jobs use Microsoft Build of OpenJDK. Local Python tooling
+must use `uv` or `uvx` rather than installing packages into the system
+interpreter.
 Every test run publishes a readable test summary directly to GitHub Actions job
 summaries (`test-summary/action@v2`) and uploads JUnit XML and HTML reports as
 job artifacts with `if: always()` retention.

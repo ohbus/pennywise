@@ -46,13 +46,21 @@ Run `make compose-config` after editing any local Compose file. The full command
 service, port, credential, health-check, and startup-order matrix is in
 [Compose topology](compose-topology.md).
 
+The development Compose topology runs host-built service JARs in JRE images.
+Run `make package` once after source changes, then `make compose-dev-up`; Docker
+does not download Gradle or resolve dependencies during container startup. The
+separate JVM image definition remains available for image builds that intentionally
+compile inside Docker.
+
 ### Bruno API collection
 
 The checked-in `tools/bruno/` collection provides local requests for all four
 HTTP services, including the GraphQL BFF and Notifications endpoints. Import
 that directory into Bruno, select its `local` environment, and start the stack
-with `make full-up` before sending requests. The collection uses only the
-local `test-user` bearer token and contains no production credentials.
+with `make full-up` before sending requests. For a repeatable CLI run use
+`make bruno-run BRUNO_ENV=local BRUNO_TOKEN=test-user`; override the four base
+URL variables and token centrally for CI or staging rather than editing request
+files. The collection contains no production credentials.
 
 ## Live acceptance testing
 

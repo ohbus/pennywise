@@ -13,3 +13,9 @@ delete {
 headers {
   Authorization: Bearer {{token}}
 }
+
+tests {
+  test("member removal succeeds", function() {
+    expect(res.getStatus()).to.eql(204);
+  });
+}

@@ -2,6 +2,13 @@ package com.subhrodip.pennywise.expensecore.expenses
 
 import com.subhrodip.pennywise.errors.GlobalErrorHandler
 import java.util.UUID
+import java.security.Principal
+import com.subhrodip.pennywise.expensecore.groups.GroupMembershipRepository
+import com.subhrodip.pennywise.expensecore.groups.GroupRepository
+import com.subhrodip.pennywise.expensecore.groups.GroupEntity
+import java.util.Optional
+import java.lang.reflect.Proxy
+import org.mockito.Mockito.`when`
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
@@ -12,12 +19,116 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.web.method.support.HandlerMethodArgumentResolver
+import org.springframework.web.method.support.ModelAndViewContainer
+import org.springframework.core.MethodParameter
+import org.springframework.web.context.request.NativeWebRequest
 import com.subhrodip.pennywise.ids.ApiEndpoints
 
 class ExpenseControllerTest {
     private val store = InMemoryExpenseStore()
-    private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(ExpenseController(store))
-        .setControllerAdvice(GlobalErrorHandler()).build()
+    private val archivedGroups = mutableSetOf<UUID>()
+    private val memberships = Proxy.newProxyInstance(
+        GroupMembershipRepository::class.java.classLoader,
+        arrayOf(GroupMembershipRepository::class.java)
+    ) { _, method, args ->
+        if (method.name.startsWith("existsByGroupIdAndSubject")) args?.getOrNull(1) == "test-user" else null
+    } as GroupMembershipRepository
+    private val groups = Proxy.newProxyInstance(
+        GroupRepository::class.java.classLoader,
+        arrayOf(GroupRepository::class.java)
+    ) { _, method, args ->
+        if (method.name == "findById") {
+            val groupId = args!![0] as UUID
+            Optional.of(GroupEntity(groupId, "Test", "TRIP", "EUR", if (groupId in archivedGroups) "ARCHIVED" else "ACTIVE"))
+        } else null
+    } as GroupRepository
+    private val mvcBuilder = MockMvcBuilders.standaloneSetup(ExpenseController(store, memberships, groups))
+        .setControllerAdvice(GlobalErrorHandler())
+        .setCustomArgumentResolvers(object : HandlerMethodArgumentResolver {
+            override fun supportsParameter(parameter: MethodParameter): Boolean =
+                parameter.parameterType == Principal::class.java
+
+            override fun resolveArgument(
+                parameter: MethodParameter,
+                mavContainer: ModelAndViewContainer?,
+                webRequest: NativeWebRequest,
+                binderFactory: org.springframework.web.bind.support.WebDataBinderFactory?
+            ): Any = webRequest.userPrincipal ?: Principal { "test-user" }
+        })
+
+    private val mvc: MockMvc = mvcBuilder.build()
+
+    @Test
+    fun `rejects expense creation for non-member`() {
+        val groupId = UUID.randomUUID()
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val json = """
+            {
+                "expenseId": "$expenseId", "description": "Unauthorized", "amount": {"currency": "EUR", "minor": "100"},
+                "payers": [{"participantId": "$participantId", "amount": {"currency": "EUR", "minor": "100"}}],
+                "allocation": {"mode": "EQUAL", "items": [{"participantId": "$participantId", "value": "1"}]}
+            }
+        """.trimIndent()
+
+        mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .principal(Principal { "non-member" })
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "non-member-expense")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+        ).andExpect(status().isNotFound)
+
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .principal(Principal { "non-member" })
+        ).andExpect(status().isNotFound)
+
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupBalances(groupId))
+                .principal(Principal { "non-member" })
+        ).andExpect(status().isNotFound)
+
+        mvc.perform(
+            put(ApiEndpoints.ExpenseCore.V1.groupExpenseById(groupId, expenseId))
+                .principal(Principal { "non-member" })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                        "version": 1, "description": "Unauthorized", "amount": {"currency": "EUR", "minor": "100"},
+                        "payers": [{"participantId": "$participantId", "amount": {"currency": "EUR", "minor": "100"}}],
+                        "allocation": {"mode": "EQUAL", "items": [{"participantId": "$participantId", "value": "1"}]}
+                    }
+                """.trimIndent())
+        ).andExpect(status().isNotFound)
+
+        mvc.perform(
+            delete(ApiEndpoints.ExpenseCore.V1.groupExpenseById(groupId, expenseId) + "?version=1")
+                .principal(Principal { "non-member" })
+        ).andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `rejects expense creation for archived group`() {
+        val groupId = UUID.randomUUID()
+        archivedGroups += groupId
+        val participantId = UUID.randomUUID()
+        val json = """
+            {
+                "expenseId": "${UUID.randomUUID()}", "description": "Archived", "amount": {"currency": "EUR", "minor": "100"},
+                "payers": [{"participantId": "$participantId", "amount": {"currency": "EUR", "minor": "100"}}],
+                "allocation": {"mode": "EQUAL", "items": [{"participantId": "$participantId", "value": "1"}]}
+            }
+        """.trimIndent()
+
+        mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "archived-group-expense")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+        ).andExpect(status().isConflict)
+    }
 
     @Test
     fun `creates expense with equal allocation successfully`() {

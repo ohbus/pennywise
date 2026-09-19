@@ -7,8 +7,14 @@ import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.http.ResponseEntity
+import com.subhrodip.pennywise.errors.ApiProblem
+import org.springframework.http.MediaType
+import org.springframework.http.HttpStatusCode
+import com.subhrodip.pennywise.errors.FieldViolation
+import com.subhrodip.pennywise.errors.RequestIdContext
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -16,7 +22,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import java.nio.charset.StandardCharsets
 import java.security.Principal
 import java.time.Instant
@@ -47,7 +54,7 @@ data class ProfilePatchRequest(
 ) {
     fun validateNotEmpty() {
         if (displayName == null && timezone == null && defaultCurrency == null) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one profile field is required")
+            throw ApplicationException(ErrorCode.ERR_02, "At least one profile field is required")
         }
     }
 }
@@ -58,6 +65,8 @@ class ProfileController(
     private val deletionService: DeletionRequestService,
     private val exportService: ExportRequestService
 ) {
+    private val serviceName: String = "accounts"
+
     @GetMapping(ApiEndpoints.Accounts.V1.ME)
     fun get(@AuthenticationPrincipal principal: Principal): ProfileResponse =
         profiles.get(principal.name)
@@ -71,6 +80,39 @@ class ProfileController(
         return profiles.update(principal.name, request)
     }
 
+    private fun problem(
+        code: ErrorCode,
+        status: HttpStatusCode,
+        title: String = "Internal server error",
+        detail: String = "An unexpected error occurred",
+        violations: List<FieldViolation> = emptyList()
+    ): ResponseEntity<ApiProblem> =
+        ResponseEntity.status(status)
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .body(
+                ApiProblem(
+                    type = "https://pennywise.example/problems/${code.name.lowercase()}",
+                    title = title,
+                    status = status.value(),
+                    code = mapErrorCode(code),
+                    source = serviceName,
+                    requestId = RequestIdContext.get(),
+                    detail = detail,
+                    violations = violations
+                )
+            )
+
+    /**
+     * Map internal ErrorCode enum to external string identifier expected by API clients/tests.
+     */
+    private fun mapErrorCode(errorCode: ErrorCode): String =
+        when (errorCode) {
+            ErrorCode.ERR_02 -> "VALIDATION_FAILED"
+            ErrorCode.ERR_03 -> "UNAUTHENTICATED"
+            ErrorCode.ERR_05 -> "NOT_FOUND"
+            else -> errorCode.name
+        }
+
     @PostMapping(ApiEndpoints.Accounts.V1.ME_DELETION_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
     fun requestDeletion(@AuthenticationPrincipal principal: Principal) {
@@ -80,14 +122,14 @@ class ProfileController(
     @PostMapping(ApiEndpoints.Accounts.V1.ME_EXPORT_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
     fun requestExport(@AuthenticationPrincipal principal: Principal?): ExportRequestResponse {
-        val subject = principal?.name ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated subject is required")
+        val subject = principal?.name ?: throw ApplicationException(ErrorCode.ERR_03, "Authenticated subject is required")
         val request = exportService.request(subject)
         return ExportRequestResponse(request.exportId, request.status, request.requestedAt)
     }
 
     @GetMapping(ApiEndpoints.Accounts.V1.ME_EXPORT_REQUESTS)
     fun listExportRequests(@AuthenticationPrincipal principal: Principal?): List<ExportRequestResponse> {
-        val subject = principal?.name ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated subject is required")
+        val subject = principal?.name ?: throw ApplicationException(ErrorCode.ERR_03, "Authenticated subject is required")
         return exportService.listBySubject(subject).map {
             ExportRequestResponse(it.exportId, it.status, it.requestedAt)
         }
@@ -95,7 +137,7 @@ class ProfileController(
 
     @GetMapping(ApiEndpoints.Accounts.V1.PROFILES_BY_ID)
     fun getProfileById(@PathVariable accountId: UUID): ProfileResponse =
-        profiles.findById(accountId) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found")
+        profiles.findById(accountId) ?: throw ApplicationException(ErrorCode.ERR_05, "Profile not found")
 
     @PostMapping(ApiEndpoints.Accounts.V1.PROFILES_BATCH)
     fun getProfilesBatch(@Valid @RequestBody request: BatchProfileRequest): List<ProfileResponse> =

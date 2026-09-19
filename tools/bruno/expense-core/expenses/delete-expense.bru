@@ -13,3 +13,9 @@ delete {
 headers {
   Authorization: Bearer {{token}}
 }
+
+tests {
+  test("expense deletion succeeds", function() {
+    expect(res.getStatus()).to.eql(204);
+  });
+}

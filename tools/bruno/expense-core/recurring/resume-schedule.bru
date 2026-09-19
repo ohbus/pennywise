@@ -1,0 +1,22 @@
+meta {
+  name: Resume Recurring Schedule
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/schedules/{{scheduleId}}/resume
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+tests {
+  test("schedule resumes", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().paused).to.eql(false);
+  });
+}

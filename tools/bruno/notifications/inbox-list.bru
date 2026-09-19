@@ -14,3 +14,10 @@ headers {
   Authorization: Bearer {{token}}
   Accept: application/json
 }
+
+tests {
+  test("seeded notification inbox is returned", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().items).to.be.an("array");
+  });
+}

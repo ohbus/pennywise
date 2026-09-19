@@ -208,8 +208,9 @@ class GroupGraphqlControllerTest {
         val targetGroupId = UUID.randomUUID().toString()
         val otherGroupId = UUID.randomUUID().toString()
         val events = mutableListOf<GroupInvalidation>()
+        `when`(gateway.getGroup(targetGroupId, "alice")).thenReturn(Mono.just(BffGroup(targetGroupId, "Trip", "TRIP", "1")))
 
-        val disposable = controller.groupChanged(targetGroupId).subscribe { events.add(it) }
+        val disposable = controller.groupChanged(targetGroupId, principal).subscribe { events.add(it) }
         try {
             controller.emitInvalidation(otherGroupId, 1L)
             controller.emitInvalidation(targetGroupId, 2L)
@@ -249,11 +250,13 @@ class GroupGraphqlControllerTest {
             allocations = listOf(BffAllocation(participantId, BffMoney("EUR", "2000")))
         )
 
+        `when`(gateway.getGroup(groupId, "alice")).thenReturn(Mono.just(BffGroup(groupId, "Trip", "TRIP", "1")))
+
         `when`(gateway.createExpense(groupId, input, "idemp-exp-2", "alice"))
             .thenReturn(Mono.just(expected))
 
         val events = mutableListOf<GroupInvalidation>()
-        val disposable = controller.groupChanged(groupId).subscribe { events.add(it) }
+        val disposable = controller.groupChanged(groupId, principal).subscribe { events.add(it) }
         try {
             val result = controller.createExpense(groupId, input, "idemp-exp-2", principal).block()
             assertNotNull(result)
@@ -288,11 +291,13 @@ class GroupGraphqlControllerTest {
             currency = "EUR"
         )
 
+        `when`(gateway.getGroup(groupId, "alice")).thenReturn(Mono.just(BffGroup(groupId, "Trip", "TRIP", "1")))
+
         `when`(gateway.recordRepayment(groupId, input, "alice"))
             .thenReturn(Mono.just(expected))
 
         val events = mutableListOf<GroupInvalidation>()
-        val disposable = controller.groupChanged(groupId).subscribe { events.add(it) }
+        val disposable = controller.groupChanged(groupId, principal).subscribe { events.add(it) }
         try {
             val result = controller.recordRepayment(input, principal).block()
             assertNotNull(result)

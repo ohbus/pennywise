@@ -6,7 +6,8 @@ import org.springframework.context.annotation.Primary
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 
 /**
  * JPA persistence adapter implementing [SettlementStore] to record settlements and execute reversals.
@@ -61,7 +62,7 @@ class JpaSettlementStore(
     private fun checkActiveGroup(groupId: UUID) {
         val group = groupRepository.findById(groupId).orElse(null)
         if (group != null && group.status == "ARCHIVED") {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Group is archived")
+            throw ApplicationException(ErrorCode.ERR_06, "Group is archived")
         }
     }
 }

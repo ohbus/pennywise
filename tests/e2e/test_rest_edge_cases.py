@@ -1,0 +1,585 @@
+#!/usr/bin/env python3
+"""Live public REST edge-case checks for the Accounts and Expense Core APIs."""
+
+from __future__ import annotations
+
+import json
+import base64
+import os
+import urllib.error
+import urllib.request
+import uuid
+
+
+ACCOUNTS_URL = os.environ.get("ACCOUNTS_URL", "http://localhost:8081")
+EXPENSE_CORE_URL = os.environ.get("EXPENSE_CORE_URL", "http://localhost:8082")
+NOTIFICATIONS_URL = os.environ.get("NOTIFICATIONS_URL", "http://localhost:8083")
+TOKEN = os.environ.get("BEARER_TOKEN", "test-user")
+
+ACCOUNTS_ME = "/accounts/v1/me"
+ACCOUNTS_DELETION = "/accounts/v1/me/deletion-request"
+ACCOUNTS_EXPORT = "/accounts/v1/me/export-request"
+ACCOUNTS_EXPORTS = "/accounts/v1/me/export-requests"
+ACCOUNTS_PROFILE = "/accounts/v1/profiles/{account_id}"
+ACCOUNTS_PROFILES_BATCH = "/accounts/v1/profiles/batch"
+EXPENSE_GROUPS = "/expense-core/v1/groups"
+EXPENSE_ALLOCATIONS_PREVIEW = "/expense-core/v1/allocations/preview"
+EXPENSE_GROUP_MEMBERS = "/expense-core/v1/groups/{group_id}/members"
+EXPENSE_GROUP = "/expense-core/v1/groups/{group_id}"
+EXPENSE_GROUP_ARCHIVE = "/expense-core/v1/groups/{group_id}/archive"
+EXPENSE_GROUP_EXPENSES = "/expense-core/v1/groups/{group_id}/expenses"
+EXPENSE_GROUP_PLACEHOLDERS = "/expense-core/v1/groups/{group_id}/placeholders"
+EXPENSE_GROUP_MEMBER = "/expense-core/v1/groups/{group_id}/members/{membership_id}"
+EXPENSE_GROUP_INVITES = "/expense-core/v1/groups/{group_id}/invites"
+EXPENSE_GROUP_INVITE_REVOKE = "/expense-core/v1/groups/{group_id}/invites/{token}/revoke"
+EXPENSE_INVITE_CLAIM = "/expense-core/v1/invites/{token}/claim"
+EXPENSE_GROUP_SCHEDULES = "/expense-core/v1/groups/{group_id}/schedules"
+EXPENSE_GROUP_SCHEDULE = "/expense-core/v1/groups/{group_id}/schedules/{schedule_id}"
+EXPENSE_GROUP_SCHEDULE_PAUSE = "/expense-core/v1/groups/{group_id}/schedules/{schedule_id}/pause"
+EXPENSE_GROUP_SEARCH = "/expense-core/v1/groups/{group_id}/search"
+EXPENSE_GROUP_EXPORT = "/expense-core/v1/groups/{group_id}/export"
+EXPENSE_GROUP_SYNC_SNAPSHOT = "/expense-core/v1/groups/{group_id}/sync/snapshot"
+EXPENSE_GROUP_SYNC_CHANGES = "/expense-core/v1/groups/{group_id}/sync/changes"
+EXPENSE_GROUP_SETTLEMENTS = "/expense-core/v1/groups/{group_id}/settlements"
+EXPENSE_GROUP_SETTLEMENT_SUGGESTIONS = "/expense-core/v1/groups/{group_id}/settlements/suggestions"
+EXPENSE_GROUP_SETTLEMENT_REVERSAL = "/expense-core/v1/groups/{group_id}/settlements/{settlement_id}/reversal"
+NOTIFICATIONS_INBOX = "/notifications/v1/inbox"
+NOTIFICATIONS_MARK_READ = "/notifications/v1/inbox/{notification_id}/read"
+NOTIFICATIONS_PREFERENCES = "/notifications/v1/preferences"
+
+
+def request_json(url: str, method: str = "GET", body: object | None = None, token: str | None = TOKEN,
+                headers: dict[str, str] | None = None) -> tuple[int, object]:
+    request_headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    if token is not None:
+        request_headers["Authorization"] = f"Bearer {token}"
+    if headers:
+        request_headers.update(headers)
+    data = json.dumps(body).encode() if body is not None else None
+    request = urllib.request.Request(url, data=data, headers=request_headers, method=method)
+    try:
+        with urllib.request.urlopen(request, timeout=5) as response:
+            raw = response.read()
+            return response.status, json.loads(raw) if raw else {}
+    except urllib.error.HTTPError as error:
+        raw = error.read()
+        try:
+            return error.code, json.loads(raw) if raw else {}
+        except json.JSONDecodeError:
+            return error.code, raw.decode(errors="replace")
+
+
+def expect(label: str, actual: int, *allowed: int) -> None:
+    if actual not in allowed:
+        raise AssertionError(f"{label}: expected HTTP {allowed}, got {actual}")
+    print(f"  ✓ {label}: HTTP {actual}")
+
+
+def main() -> None:
+    print("Running live REST edge-case checks")
+
+    status, _ = request_json(f"{ACCOUNTS_URL}{ACCOUNTS_ME}", token=None)
+    expect("Accounts rejects missing authentication", status, 401)
+
+    status, _ = request_json(f"{ACCOUNTS_URL}{ACCOUNTS_DELETION}", method="POST", token=None)
+    expect("Accounts rejects unauthenticated deletion request", status, 401)
+
+    status, _ = request_json(f"{ACCOUNTS_URL}{ACCOUNTS_EXPORT}", method="POST", token=None)
+    expect("Accounts rejects unauthenticated export request", status, 401)
+
+    status, _ = request_json(f"{ACCOUNTS_URL}{ACCOUNTS_EXPORTS}", token=None)
+    expect("Accounts rejects unauthenticated export listing", status, 401)
+
+    status, _ = request_json(
+        f"{ACCOUNTS_URL}{ACCOUNTS_ME}", method="PATCH", body={}
+    )
+    expect("Accounts rejects empty profile patch", status, 400)
+
+    status, _ = request_json(
+        f"{ACCOUNTS_URL}{ACCOUNTS_ME}", method="PATCH",
+        body={"defaultCurrency": "not-a-currency"},
+    )
+    expect("Accounts rejects invalid profile currency", status, 400)
+
+    status, _ = request_json(
+        f"{ACCOUNTS_URL}{ACCOUNTS_PROFILE.format(account_id='not-a-uuid')}"
+    )
+    expect("Accounts rejects malformed profile identifier", status, 400)
+
+    status, _ = request_json(
+        f"{ACCOUNTS_URL}{ACCOUNTS_PROFILES_BATCH}", method="POST", body={"accountIds": []}
+    )
+    expect("Accounts rejects empty profile batch", status, 400)
+
+    status, _ = request_json(
+        f"{ACCOUNTS_URL}{ACCOUNTS_PROFILES_BATCH}", method="POST",
+        body={"accountIds": ["not-a-uuid"]},
+    )
+    expect("Accounts rejects malformed profile batch identifier", status, 400)
+
+    status, _ = request_json(f"{NOTIFICATIONS_URL}{NOTIFICATIONS_INBOX}", token=None)
+    expect("Notifications rejects unauthenticated inbox listing", status, 401)
+
+    status, _ = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_INBOX}?limit=0"
+    )
+    expect("Notifications rejects zero inbox limit", status, 400)
+
+    status, _ = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_INBOX}?limit=101"
+    )
+    expect("Notifications rejects inbox limit above maximum", status, 400)
+
+    status, _ = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_INBOX}?cursor=not-a-valid-cursor"
+    )
+    expect("Notifications rejects malformed inbox cursor", status, 400)
+
+    status, _ = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_MARK_READ.format(notification_id=uuid.uuid4())}",
+        method="POST",
+    )
+    expect("Notifications hides unknown notification", status, 404)
+
+    status, _ = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_MARK_READ.format(notification_id=uuid.uuid4())}",
+        method="POST", token=None,
+    )
+    expect("Notifications rejects unauthenticated mark-read", status, 401)
+
+    status, _ = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_MARK_READ.format(notification_id='not-a-uuid')}",
+        method="POST",
+    )
+    expect("Notifications rejects malformed mark-read identifier", status, 400)
+
+    status, _ = request_json(f"{NOTIFICATIONS_URL}{NOTIFICATIONS_PREFERENCES}", token=None)
+    expect("Notifications rejects unauthenticated preference read", status, 401)
+
+    status, _ = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_PREFERENCES}",
+        method="PUT", body={"emailEnabled": False, "pushEnabled": True}, token=None,
+    )
+    expect("Notifications rejects unauthenticated preference update", status, 401)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUPS}",
+        method="POST",
+        body={"name": "Invalid group", "kind": "NOT_A_GROUP_KIND", "currency": "EUR"},
+    )
+    expect("group creation rejects invalid kind", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUPS}",
+        method="POST",
+        body={"name": "Unauthenticated group", "kind": "TRIP", "currency": "EUR"},
+        token=None,
+    )
+    expect("group creation rejects missing authentication", status, 401)
+
+    status, _ = request_json(f"{EXPENSE_CORE_URL}{EXPENSE_GROUPS}", token=None)
+    expect("group listing rejects missing authentication", status, 401)
+
+    status, group = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUPS}",
+        method="POST",
+        body={"name": f"REST edge {uuid.uuid4().hex[:8]}", "kind": "TRIP", "currency": "EUR"},
+    )
+    expect("create isolated group", status, 201)
+    group_id = group["groupId"]
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_MEMBERS.format(group_id=group_id)}", token=None
+    )
+    expect("Expense Core rejects unauthenticated membership read", status, 401)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}", token=None
+    )
+    expect("Expense Core rejects unauthenticated group read", status, 401)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}", token="non-member"
+    )
+    expect("Expense Core hides group from non-member", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_MEMBERS.format(group_id=group_id)}", token="non-member"
+    )
+    expect("Expense Core hides members from non-member", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}",
+        method="PATCH", body={"name": "Unauthorized rename"}, token="non-member",
+    )
+    expect("non-member group update is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}",
+        method="PATCH", body={"name": "   "},
+    )
+    expect("group update rejects blank name", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_ARCHIVE.format(group_id=group_id)}",
+        method="POST", token="non-member",
+    )
+    expect("non-member group archive is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_ARCHIVE.format(group_id=group_id)}",
+        method="POST", token=None,
+    )
+    expect("group archive rejects missing authentication", status, 401)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_PLACEHOLDERS.format(group_id=group_id)}",
+        method="POST", body={"name": "Unauthorized placeholder"}, token="non-member",
+    )
+    expect("non-member placeholder creation is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_PLACEHOLDERS.format(group_id=group_id)}",
+        method="POST", body={"name": "   "},
+    )
+    expect("placeholder creation rejects blank name", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_MEMBER.format(group_id=group_id, membership_id=uuid.uuid4())}",
+        method="DELETE", token="non-member",
+    )
+    expect("non-member member removal is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_MEMBER.format(group_id=group_id, membership_id='not-a-uuid')}",
+        method="DELETE",
+    )
+    expect("member removal rejects malformed identifier", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_INVITES.format(group_id=group_id)}",
+        method="POST", body={"expiresInHours": 24}, token="non-member",
+    )
+    expect("non-member invite creation is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_INVITE_REVOKE.format(group_id=group_id, token='not-a-real-token')}",
+        method="POST", token="non-member",
+    )
+    expect("non-member invite revocation is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_INVITE_REVOKE.format(group_id=group_id, token='not-a-real-token')}",
+        method="POST",
+    )
+    expect("member cannot revoke unknown invite", status, 409)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_INVITE_CLAIM.format(token='not-a-real-invite')}",
+        method="POST",
+    )
+    expect("invalid invite claim is rejected", status, 409)
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_INVITE_CLAIM.format(token='not-a-real-invite')}",
+        method="POST", token=None,
+    )
+    expect("unauthenticated invite claim is rejected", status, 401)
+
+    for invalid_hours in (0, 169):
+        status, _ = request_json(
+            f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_INVITES.format(group_id=group_id)}",
+            method="POST", body={"expiresInHours": invalid_hours},
+        )
+        expect(f"invite expiry {invalid_hours} hours is rejected", status, 400)
+
+    status, invite = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_INVITES.format(group_id=group_id)}",
+        method="POST", body={"expiresInHours": 24},
+    )
+    expect("member can create claimable invite", status, 201)
+    invite_token = invite["token"]
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_INVITE_CLAIM.format(token=invite_token)}",
+        method="POST", token="invite-claim-user",
+    )
+    expect("authenticated user can claim invite", status, 200)
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_INVITE_CLAIM.format(token=invite_token)}",
+        method="POST", token="invite-replay-user",
+    )
+    expect("claimed invite replay is rejected", status, 409)
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}",
+        token="invite-claim-user",
+    )
+    expect("claimed user can read group", status, 200)
+
+    status, revoked_invite = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_INVITES.format(group_id=group_id)}",
+        method="POST", body={"expiresInHours": 24},
+    )
+    expect("member can create revocable invite", status, 201)
+    revoked_token = revoked_invite["token"]
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_INVITE_REVOKE.format(group_id=group_id, token=revoked_token)}",
+        method="POST",
+    )
+    expect("member can revoke invite", status, 204)
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_INVITE_CLAIM.format(token=revoked_token)}",
+        method="POST", token="revoked-claim-user",
+    )
+    expect("revoked invite claim is rejected", status, 409)
+
+    schedule_id = str(uuid.uuid4())
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SCHEDULES.format(group_id=group_id)}",
+        token="non-member",
+    )
+    expect("non-member schedule listing is hidden", status, 404)
+
+    schedule_payload = {
+        "description": "Unauthorized schedule",
+        "amount": {"currency": "EUR", "minor": "100"},
+        "frequency": "MONTHLY",
+        "dayOfMonth": 1,
+        "startDate": "2026-01-01",
+    }
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SCHEDULES.format(group_id=group_id)}",
+        method="POST", body=schedule_payload, token="non-member",
+    )
+    expect("non-member schedule creation is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SCHEDULE.format(group_id=group_id, schedule_id=schedule_id)}",
+        token="non-member",
+    )
+    expect("non-member schedule lookup is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SCHEDULE_PAUSE.format(group_id=group_id, schedule_id=schedule_id)}",
+        method="POST", token="non-member",
+    )
+    expect("non-member schedule pause is hidden", status, 404)
+
+    settlement_participant = str(uuid.uuid4())
+    settlement_payload = {
+        "fromParticipantId": settlement_participant,
+        "toParticipantId": str(uuid.uuid4()),
+        "amountMinor": "100",
+    }
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SETTLEMENTS.format(group_id=group_id)}",
+        method="POST", body=settlement_payload, token="non-member",
+    )
+    expect("non-member settlement recording is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SETTLEMENT_SUGGESTIONS.format(group_id=group_id)}",
+        token="non-member",
+    )
+    expect("non-member settlement suggestions are hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SETTLEMENT_REVERSAL.format(group_id=group_id, settlement_id=uuid.uuid4())}",
+        method="POST", body={"reason": "unauthorized"}, token="non-member",
+    )
+    expect("non-member settlement reversal is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id='not-a-uuid')}"
+    )
+    expect("malformed group identifier is rejected", status, 400, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_ALLOCATIONS_PREVIEW}",
+        method="POST",
+        body={"totalMinor": "-1", "participantIds": ["alice"]},
+    )
+    expect("allocation validation rejects negative totals", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_ALLOCATIONS_PREVIEW}",
+        method="POST", body={"totalMinor": "100", "participantIds": ["alice"]}, token=None,
+    )
+    expect("allocation preview rejects missing authentication", status, 401)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SEARCH.format(group_id=group_id)}?limit=0"
+    )
+    expect("search pagination rejects zero limit", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SEARCH.format(group_id=group_id)}?cursor=%25%25%25invalid%25%25%25"
+    )
+    expect("search rejects malformed cursor", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SEARCH.format(group_id=group_id)}",
+        token="non-member",
+    )
+    expect("non-member search is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SYNC_SNAPSHOT.format(group_id=group_id)}?cursor=not-a-valid-cursor"
+    )
+    expect("sync snapshot rejects malformed cursor", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SYNC_CHANGES.format(group_id=group_id)}?cursor=not-a-valid-cursor"
+    )
+    expect("sync changes rejects malformed cursor", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SYNC_SNAPSHOT.format(group_id=group_id)}",
+        token="non-member",
+    )
+    expect("non-member sync snapshot is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SYNC_CHANGES.format(group_id=group_id)}",
+        token="non-member",
+    )
+    expect("non-member sync changes are hidden", status, 404)
+
+    expired_cursor = base64.urlsafe_b64encode(f"{group_id}|0|0".encode()).decode().rstrip("=")
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SYNC_SNAPSHOT.format(group_id=group_id)}?cursor={expired_cursor}"
+    )
+    expect("sync snapshot rejects expired cursor", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SYNC_CHANGES.format(group_id=group_id)}?cursor={expired_cursor}"
+    )
+    expect("sync changes rejects expired cursor", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPORT.format(group_id=group_id)}?maxRows=0",
+        headers={"Accept": "text/csv"},
+    )
+    expect("CSV export rejects zero row limit", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPORT.format(group_id=group_id)}",
+        headers={"Accept": "application/json"},
+    )
+    expect("CSV export rejects incompatible media type", status, 406)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPORT.format(group_id=group_id)}",
+        token="non-member", headers={"Accept": "text/csv"},
+    )
+    expect("non-member CSV export is hidden", status, 404)
+
+    participant = str(uuid.uuid4())
+    expense_id = str(uuid.uuid4())
+    key = f"rest-edge-{uuid.uuid4()}"
+    payload = {
+        "expenseId": expense_id,
+        "description": "Idempotency edge",
+        "amount": {"currency": "EUR", "minor": "100"},
+        "payers": [{"participantId": participant, "amount": {"currency": "EUR", "minor": "100"}}],
+        "allocation": {"mode": "EQUAL", "items": [{"participantId": participant, "value": "1"}]},
+    }
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
+        method="POST", body=payload, token="non-member",
+        headers={"Idempotency-Key": f"non-member-{uuid.uuid4()}"},
+    )
+    expect("non-member expense creation is hidden", status, 404)
+    status, first = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
+        method="POST", body=payload, headers={"Idempotency-Key": key},
+    )
+    expect("create idempotent expense", status, 201)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}", token="non-member"
+    )
+    expect("non-member expense listing is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}/balances", token="non-member"
+    )
+    expect("non-member balances are hidden", status, 404)
+
+    update_payload = dict(payload)
+    update_payload["description"] = "Unauthorized update"
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}/{expense_id}",
+        method="PUT", body={"version": 1, **{key: value for key, value in update_payload.items() if key != "expenseId"}},
+        token="non-member",
+    )
+    expect("non-member expense update is hidden", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}/{expense_id}?version=1",
+        method="DELETE", token="non-member",
+    )
+    expect("non-member expense deletion is hidden", status, 404)
+
+    status, replay = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
+        method="POST", body=payload, headers={"Idempotency-Key": key},
+    )
+    expect("duplicate expense replay is idempotent", status, 200, 201)
+    if isinstance(first, dict) and isinstance(replay, dict) and first.get("expenseId") != replay.get("expenseId"):
+        raise AssertionError("duplicate expense replay returned a different expense")
+
+    altered = dict(payload)
+    altered["description"] = "tampered replay"
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
+        method="POST", body=altered, headers={"Idempotency-Key": key},
+    )
+    expect("tampered idempotency replay conflicts", status, 409)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
+        method="POST", body=payload,
+    )
+    expect("missing idempotency key is rejected", status, 400)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id='00000000-0000-0000-0000-000000000099')}"
+    )
+    expect("missing group is not disclosed", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_ARCHIVE.format(group_id=group_id)}",
+        method="POST",
+    )
+    expect("member can archive group", status, 200)
+
+    status, _ = request_json(f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}")
+    expect("archived group is hidden from member lookup", status, 404)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_MEMBERS.format(group_id=group_id)}"
+    )
+    expect("archived group members are hidden", status, 404)
+
+    status, groups = request_json(f"{EXPENSE_CORE_URL}{EXPENSE_GROUPS}")
+    expect("member group list remains available after archive", status, 200)
+    if isinstance(groups, list) and any(isinstance(item, dict) and item.get("groupId") == group_id for item in groups):
+        raise AssertionError("archived group was still returned by member group listing")
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_ARCHIVE.format(group_id=group_id)}",
+        method="POST",
+    )
+    expect("archive replay is rejected", status, 404, 409)
+
+    status, _ = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
+        method="POST", body=payload,
+        headers={"Idempotency-Key": f"archived-{uuid.uuid4()}"},
+    )
+    expect("archived group rejects new expense", status, 404, 409)
+
+    print("REST edge-case checks passed")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,99 @@
+# Error catalog for ERR-01 to ERR-12
+# Each entry defines service, component, operation, httpStatus, severity, retryable, safeDetail
+
+- code: ERR-01
+  service: core
+  component: expense-core
+  operation: generic
+  httpStatus: 500
+  severity: critical
+  retryable: false
+  safeDetail: "Internal server error"
+- code: ERR-02
+  service: core
+  component: expense-core
+  operation: validation
+  httpStatus: 400
+  severity: error
+  retryable: false
+  safeDetail: "Invalid request parameters"
+- code: ERR-03
+  service: accounts
+  component: accounts
+  operation: authentication
+  httpStatus: 401
+  severity: error
+  retryable: false
+  safeDetail: "Authentication required"
+- code: ERR-04
+  service: accounts
+  component: accounts
+  operation: authorization
+  httpStatus: 403
+  severity: error
+  retryable: false
+  safeDetail: "Access denied"
+- code: ERR-05
+  service: core
+  component: groups
+  operation: not-found
+  httpStatus: 404
+  severity: warning
+  retryable: false
+  safeDetail: "Resource not found"
+- code: ERR-06
+  service: core
+  component: expense
+  operation: duplicate
+  httpStatus: 409
+  severity: error
+  retryable: false
+  safeDetail: "Duplicate resource"
+- code: ERR-07
+  service: notifications
+  component: inbox
+  operation: processing
+  httpStatus: 500
+  severity: error
+  retryable: true
+  safeDetail: "Notification processing error"
+- code: ERR-08
+  service: bff
+  component: graphql
+  operation: mapping
+  httpStatus: 502
+  severity: error
+  retryable: true
+  safeDetail: "Upstream service failure"
+- code: ERR-09
+  service: core
+  component: sync
+  operation: conflict
+  httpStatus: 409
+  severity: error
+  retryable: true
+  safeDetail: "Sync conflict"
+- code: ERR-10
+  service: core
+  component: settlement
+  operation: insufficient-funds
+  httpStatus: 422
+  severity: error
+  retryable: false
+  safeDetail: "Insufficient funds"
+- code: ERR-11
+  service: operations
+  component: metrics
+  operation: overload
+  httpStatus: 429
+  severity: warning
+  retryable: true
+  safeDetail: "Rate limit exceeded"
+- code: ERR-12
+  service: coordinator
+  component: governance
+  operation: release
+  httpStatus: 200
+  severity: info
+  retryable: false
+  safeDetail: "Governance completed"

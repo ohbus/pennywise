@@ -15,6 +15,12 @@ headers {
   Content-Type: application/json
 }
 
+tests {
+  test("unknown profile is reported as not found", function() {
+    expect(res.getStatus()).to.eql(404);
+  });
+}
+
 vars:pre-request {
   accountId: 00000000-0000-0000-0000-000000000001
 }

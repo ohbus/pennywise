@@ -1,7 +1,7 @@
 meta {
   name: Archive Group
   type: http
-  seq: 5
+  seq: 1
 }
 
 post {
@@ -12,4 +12,11 @@ post {
 
 headers {
   Authorization: Bearer {{token}}
+}
+
+tests {
+  test("group archive succeeds", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().status).to.eql("ARCHIVED");
+  });
 }

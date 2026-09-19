@@ -14,6 +14,13 @@ headers {
   Authorization: Bearer {{token}}
 }
 
+tests {
+  test("expenses are listed", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody()).to.be.an("array");
+  });
+}
+
 query {
   cursor:
   category:

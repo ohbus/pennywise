@@ -15,6 +15,13 @@ headers {
   Content-Type: application/json
 }
 
+tests {
+  test("expense update succeeds", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().expenseId).to.be.ok;
+  });
+}
+
 body:json {
   {
     "version": 1,

@@ -7,4 +7,9 @@ dependencies {
     api(libs.boot.web)
     api(project(":libs:ids"))
     implementation(libs.boot.data.jpa)
+    testImplementation(libs.boot.test)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
+tasks.withType<Test> { useJUnitPlatform() }
+
+

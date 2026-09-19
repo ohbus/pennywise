@@ -15,6 +15,13 @@ headers {
   Accept: text/csv
 }
 
+tests {
+  test("expense export returns CSV", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getHeader("Content-Type")).to.match(/^text\/csv/);
+  });
+}
+
 query {
   currency: EUR
   maxRows: 1000

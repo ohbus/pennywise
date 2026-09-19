@@ -128,6 +128,19 @@ class SearchControllerTest {
     }
 
     @Test
+    fun `search rejects malformed cursor with 400`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Trip", "TRIP", "EUR"))
+
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupSearch(group.groupId))
+                .with(alice)
+                .param("cursor", "%%%invalid%%")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+    }
+
+    @Test
     fun `export returns CSV with formula injection protection and attachment header`() {
         val group = groupStore.create("alice", CreateGroupRequest("Trip", "TRIP", "EUR"))
         val maliciousExpense = SearchExpense(
@@ -174,5 +187,30 @@ class SearchControllerTest {
         )
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+    }
+
+    @Test
+    fun `export rejects non-positive maxRows as validation failure`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Bounded Export", "TRIP", "EUR"))
+
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupExport(group.groupId))
+                .with(alice)
+                .param("maxRows", "0")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+    }
+
+    @Test
+    fun `export rejects an incompatible accept header with 406`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Trip", "TRIP", "EUR"))
+
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupExport(group.groupId))
+                .with(alice)
+                .header("Accept", "application/json")
+        )
+            .andExpect(status().isNotAcceptable)
     }
 }

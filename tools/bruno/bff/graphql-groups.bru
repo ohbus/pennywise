@@ -15,6 +15,14 @@ headers {
   Content-Type: application/json
 }
 
+tests {
+  test("group GraphQL response has no errors", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().errors).to.not.be.ok;
+    expect(res.getBody().data).to.be.ok;
+  });
+}
+
 body:json {
   {
     "query": "query Groups { groups { id name kind revision members { membershipId subject } } }",

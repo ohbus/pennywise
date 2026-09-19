@@ -15,6 +15,13 @@ headers {
   Content-Type: application/json
 }
 
+tests {
+  test("settlement is recorded", function() {
+    expect(res.getStatus()).to.eql(201);
+    expect(res.getBody().id).to.be.ok;
+  });
+}
+
 body:json {
   {
     "fromParticipantId": "00000000-0000-0000-0000-000000000002",

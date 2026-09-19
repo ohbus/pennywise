@@ -1,0 +1,25 @@
+meta {
+  name: Authenticated Errors Carry Attribution
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/00000000-0000-0000-0000-000000000099
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+tests {
+  test("missing resource is a structured problem", function() {
+    expect(res.getStatus()).to.eql(404);
+    const body = res.getBody();
+    expect(body.code).to.be.ok;
+    expect(body.source).to.eql("expense-core");
+    expect(body.requestId).to.be.ok;
+  });
+}

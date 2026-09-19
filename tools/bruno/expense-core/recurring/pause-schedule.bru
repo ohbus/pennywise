@@ -1,0 +1,22 @@
+meta {
+  name: Pause Recurring Schedule
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/schedules/{{scheduleId}}/pause
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+tests {
+  test("schedule pauses", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().paused).to.eql(true);
+  });
+}

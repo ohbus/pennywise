@@ -13,3 +13,9 @@ post {
 headers {
   Authorization: Bearer {{token}}
 }
+
+tests {
+  test("invite revocation succeeds", function() {
+    expect(res.getStatus()).to.eql(204);
+  });
+}

@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":libs:errors"))
     implementation(project(":libs:ids"))
     implementation(libs.boot.actuator)
+    runtimeOnly(libs.micrometer.prometheus)
     implementation(libs.boot.web)
     implementation(libs.boot.validation)
     implementation(libs.boot.security)
@@ -18,8 +19,9 @@ dependencies {
     implementation(libs.boot.data.jpa)
     implementation(libs.boot.amqp)
     implementation(libs.boot.flyway)
-    runtimeOnly(libs.postgresql)
     runtimeOnly(libs.flyway.postgresql)
+    runtimeOnly(libs.postgresql)
+    implementation(libs.kotlinx.coroutines.core)
     testRuntimeOnly(libs.h2)
     testImplementation(libs.boot.test)
 }

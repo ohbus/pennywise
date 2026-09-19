@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDate
 import java.util.UUID
+import java.security.Principal
 
 @SpringBootTest
 @Transactional
@@ -22,6 +23,7 @@ class RecurringExpenseControllerTest @Autowired constructor(
     private val controller: RecurringExpenseController,
     private val groupStore: JpaGroupStore
 ) {
+    private val alice = Principal { "alice" }
 
     @Test
     fun `creates, inspects, lists, updates, pauses, and resumes recurring schedule`() {
@@ -36,7 +38,7 @@ class RecurringExpenseControllerTest @Autowired constructor(
         )
 
         // 1. Create schedule
-        val created = controller.createSchedule(group.groupId, createRequest, null)
+        val created = controller.createSchedule(group.groupId, createRequest, alice)
         assertNotNull(created.scheduleId)
         assertEquals(group.groupId, created.groupId)
         assertEquals("Monthly Rent", created.description)
@@ -47,12 +49,12 @@ class RecurringExpenseControllerTest @Autowired constructor(
         assertFalse(created.paused)
 
         // 2. Get schedule
-        val retrieved = controller.getSchedule(group.groupId, created.scheduleId, null)
+        val retrieved = controller.getSchedule(group.groupId, created.scheduleId, alice)
         assertEquals(created.scheduleId, retrieved.scheduleId)
         assertEquals("Monthly Rent", retrieved.description)
 
         // 3. List schedules
-        val list = controller.listSchedules(group.groupId, null)
+        val list = controller.listSchedules(group.groupId, alice)
         assertEquals(1, list.size)
         assertEquals(created.scheduleId, list[0].scheduleId)
 
@@ -64,16 +66,16 @@ class RecurringExpenseControllerTest @Autowired constructor(
             dayOfMonth = 1,
             startDate = LocalDate.of(2026, 10, 1)
         )
-        val updated = controller.updateSchedule(group.groupId, created.scheduleId, updateRequest, null)
+        val updated = controller.updateSchedule(group.groupId, created.scheduleId, updateRequest, alice)
         assertEquals("Monthly Rent & Water", updated.description)
         assertEquals("270000", updated.amount.minor)
 
         // 5. Pause schedule
-        val paused = controller.pauseSchedule(group.groupId, created.scheduleId, null)
+        val paused = controller.pauseSchedule(group.groupId, created.scheduleId, alice)
         assertTrue(paused.paused)
 
         // 6. Resume schedule
-        val resumed = controller.resumeSchedule(group.groupId, created.scheduleId, null)
+        val resumed = controller.resumeSchedule(group.groupId, created.scheduleId, alice)
         assertFalse(resumed.paused)
     }
 
@@ -89,14 +91,30 @@ class RecurringExpenseControllerTest @Autowired constructor(
             startDate = LocalDate.now()
         )
 
-        val createErr = org.junit.jupiter.api.assertThrows<ResponseStatusException> {
-            controller.createSchedule(randomGroup, createRequest, null)
+        val createErr = org.junit.jupiter.api.assertThrows<com.subhrodip.pennywise.errors.ApplicationException> {
+            controller.createSchedule(randomGroup, createRequest, alice)
         }
-        assertEquals(HttpStatus.NOT_FOUND, createErr.statusCode)
+        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_05, createErr.errorCode)
 
-        val getErr = org.junit.jupiter.api.assertThrows<ResponseStatusException> {
-            controller.getSchedule(randomGroup, randomSchedule, null)
+        val getErr = org.junit.jupiter.api.assertThrows<com.subhrodip.pennywise.errors.ApplicationException> {
+            controller.getSchedule(randomGroup, randomSchedule, alice)
         }
-        assertEquals(HttpStatus.NOT_FOUND, getErr.statusCode)
+        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_05, getErr.errorCode)
+    }
+
+    @Test
+    fun `rejects missing principal for an existing group`() {
+        val group = groupStore.create("alice", CreateGroupRequest("No Anonymous Schedules", "TRIP", "EUR"))
+        val request = CreateRecurringScheduleRequestDto(
+            description = "Unauthorized",
+            amount = com.subhrodip.pennywise.expensecore.expenses.MoneyDto("EUR", "100"),
+            frequency = RecurrenceFrequency.WEEKLY,
+            startDate = LocalDate.of(2026, 10, 1)
+        )
+
+        val error = org.junit.jupiter.api.assertThrows<com.subhrodip.pennywise.errors.ApplicationException> {
+            controller.createSchedule(group.groupId, request, null)
+        }
+        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_03, error.errorCode)
     }
 }

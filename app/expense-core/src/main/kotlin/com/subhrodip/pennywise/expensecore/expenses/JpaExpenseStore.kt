@@ -11,7 +11,8 @@ import org.springframework.context.annotation.Primary
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 
 /**
  * Spring Data JPA implementation of [ExpenseStore].
@@ -46,13 +47,13 @@ class JpaExpenseStore(
             ) {
                 return existingRecord
             }
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Expense already exists with different payload")
+            throw ApplicationException(ErrorCode.ERR_06, "Expense already exists with different payload")
         }
 
         val group = groupRepository.findForMembershipUpdate(groupId)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group $groupId not found")
+            ?: throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
         if (group.status == "ARCHIVED") {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Group is archived")
+            throw ApplicationException(ErrorCode.ERR_06, "Group is archived")
         }
 
         group.revision += 1
@@ -149,20 +150,20 @@ class JpaExpenseStore(
     @Transactional
     override fun update(groupId: UUID, expenseId: UUID, update: ExpenseRecord): ExpenseRecord {
         val group = groupRepository.findForMembershipUpdate(groupId)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group $groupId not found")
+            ?: throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
         if (group.status == "ARCHIVED") {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Group is archived")
+            throw ApplicationException(ErrorCode.ERR_06, "Group is archived")
         }
 
         val entity = expenseRepository.findByExpenseIdAndGroupId(expenseId, groupId)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Expense $expenseId not found in group $groupId")
+            ?: throw ApplicationException(ErrorCode.ERR_05, "Expense $expenseId not found in group $groupId")
 
         if (entity.deleted) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Expense $expenseId has been deleted")
+            throw ApplicationException(ErrorCode.ERR_05, "Expense $expenseId has been deleted")
         }
 
         if (entity.version != update.version) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Stale version: expected ${entity.version}, but got ${update.version}")
+            throw ApplicationException(ErrorCode.ERR_06, "Stale version: expected ${entity.version}, but got ${update.version}")
         }
 
         group.revision += 1
@@ -302,20 +303,20 @@ class JpaExpenseStore(
     @Transactional
     override fun delete(groupId: UUID, expenseId: UUID, version: Long?) {
         val group = groupRepository.findForMembershipUpdate(groupId)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group $groupId not found")
+            ?: throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
         if (group.status == "ARCHIVED") {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Group is archived")
+            throw ApplicationException(ErrorCode.ERR_06, "Group is archived")
         }
 
         val entity = expenseRepository.findByExpenseIdAndGroupId(expenseId, groupId)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Expense $expenseId not found in group $groupId")
+            ?: throw ApplicationException(ErrorCode.ERR_03, "Expense $expenseId not found in group $groupId")
 
         if (entity.deleted) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Expense $expenseId has already been deleted")
+            throw ApplicationException(ErrorCode.ERR_05, "Expense $expenseId has already been deleted")
         }
 
         if (version != null && entity.version != version) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Stale version: expected ${entity.version}, but got $version")
+            throw ApplicationException(ErrorCode.ERR_06, "Stale version: expected ${entity.version}, but got $version")
         }
 
         group.revision += 1

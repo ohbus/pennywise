@@ -15,7 +15,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 
 @SpringBootTest
 @Transactional
@@ -157,9 +158,10 @@ class JpaExpenseStoreTest @Autowired constructor(
 
         expenseStore.create(groupId, record1, "idemp-1")
 
-        assertThrows(ResponseStatusException::class.java) {
+        val err = assertThrows(ApplicationException::class.java) {
             expenseStore.create(groupId, record2, "idemp-2")
         }
+        assertEquals(ErrorCode.ERR_06, err.errorCode)
     }
 
     @Test
@@ -305,13 +307,15 @@ class JpaExpenseStoreTest @Autowired constructor(
 
         // Update with stale version 99
         val staleUpdate = record.copy(version = 99, description = "Updated pass")
-        assertThrows(ResponseStatusException::class.java) {
+        val updateErr = assertThrows(ApplicationException::class.java) {
             expenseStore.update(groupId, expenseId, staleUpdate)
         }
+        assertEquals(ErrorCode.ERR_06, updateErr.errorCode)
 
         // Delete with stale version 99
-        assertThrows(ResponseStatusException::class.java) {
+        val deleteErr = assertThrows(ApplicationException::class.java) {
             expenseStore.delete(groupId, expenseId, version = 99)
         }
+        assertEquals(ErrorCode.ERR_06, deleteErr.errorCode)
     }
 }

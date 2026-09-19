@@ -8,6 +8,7 @@ kotlin { jvmToolchain(25) }
 dependencies {
     implementation(project(":libs:ids"))
     implementation(libs.boot.actuator)
+    runtimeOnly(libs.micrometer.prometheus)
     implementation(libs.boot.security)
     implementation(libs.boot.resource.server)
     implementation(libs.boot.graphql)

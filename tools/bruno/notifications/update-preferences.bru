@@ -15,6 +15,12 @@ headers {
   Content-Type: application/json
 }
 
+tests {
+  test("notification preferences update succeeds", function() {
+    expect(res.getStatus()).to.eql(204);
+  });
+}
+
 body:json {
   {
     "emailEnabled": true,

@@ -6,7 +6,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
@@ -28,12 +29,12 @@ class AllocationPreviewController {
     @ResponseStatus(HttpStatus.OK)
     fun preview(@Valid @RequestBody request: AllocationPreviewRequest): AllocationPreviewResponse {
         val total = request.totalMinor.toLongOrNull()
-            ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "totalMinor must be a non-negative integer")
-        if (total < 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "totalMinor must be non-negative")
+            ?: throw ApplicationException(ErrorCode.ERR_02, "totalMinor must be a non-negative integer")
+        if (total < 0) throw ApplicationException(ErrorCode.ERR_02, "totalMinor must be non-negative")
         val allocations = try {
             AllocationCalculator.equal(total, request.participantIds)
         } catch (error: IllegalArgumentException) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, error.message, error)
+            throw ApplicationException(ErrorCode.ERR_02, error.message, error)
         }
             .mapValues { (_, value) -> value.toString() }
         return AllocationPreviewResponse(request.totalMinor, allocations)

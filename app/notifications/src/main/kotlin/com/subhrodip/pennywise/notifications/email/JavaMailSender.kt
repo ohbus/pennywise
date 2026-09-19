@@ -8,6 +8,8 @@ import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.net.InetSocketAddress
 import java.net.Socket
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import java.nio.charset.StandardCharsets
 
 data class SimpleMailMessage(
@@ -78,7 +80,7 @@ class SmtpJavaMailSender(private val properties: EmailProperties) : JavaMailSend
     override fun send(message: SimpleMailMessage) {
         val recipients = message.to ?: emptyArray()
         if (recipients.isEmpty()) {
-            throw IllegalArgumentException("At least one recipient must be specified")
+            throw ApplicationException(ErrorCode.ERR_02, "At least one recipient must be specified")
         }
 
         try {

@@ -12,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional
         "spring.datasource.username=sa",
         "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=validate",
-        "spring.jpa.open-in-view=false"
+        "spring.jpa.open-in-view=false",
+        "spring.rabbitmq.listener.simple.auto-startup=false"
     ]
 )
 @Transactional

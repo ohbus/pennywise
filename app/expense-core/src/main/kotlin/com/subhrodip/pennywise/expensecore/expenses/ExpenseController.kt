@@ -2,6 +2,7 @@ package com.subhrodip.pennywise.expensecore.expenses
 
 import jakarta.validation.Valid
 import java.time.Instant
+import java.security.Principal
 import java.util.UUID
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -15,14 +16,20 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
+
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 
 import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.expensecore.groups.GroupMembershipRepository
+import com.subhrodip.pennywise.expensecore.groups.GroupRepository
 
 @RestController
 @RequestMapping(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_BY_ID)
 class ExpenseController(
-    private val expenseStore: ExpenseStore
+    private val expenseStore: ExpenseStore,
+    private val membershipRepository: GroupMembershipRepository,
+    private val groupRepository: GroupRepository
 ) {
 
     @PostMapping(ApiEndpoints.ExpenseCore.V1.EXPENSES_SUBPATH)
@@ -30,30 +37,32 @@ class ExpenseController(
     fun createExpense(
         @PathVariable groupId: UUID,
         @RequestHeader(ApiEndpoints.Headers.IDEMPOTENCY_KEY) idempotencyKey: String,
-        @Valid @RequestBody request: CreateExpenseRequest
+        @Valid @RequestBody request: CreateExpenseRequest,
+        principal: Principal?
     ): ExpenseResponse {
+        ensureActiveMember(groupId, principal)
         val totalMinor = ExpenseValidator.parseAndValidateAmount(request.amount.minor)
 
         val payerSum = request.payers.sumOf {
             val pAmount = it.amount.minor.toLongOrNull()
-                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "payer amount.minor must be a valid integer")
+                ?: throw ApplicationException(ErrorCode.ERR_02, "payer amount.minor must be a valid integer")
             if (pAmount <= 0) {
-                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "payer amount.minor must be positive")
+                throw ApplicationException(ErrorCode.ERR_02, "payer amount.minor must be positive")
             }
             if (it.amount.currency != request.amount.currency) {
-                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "payer currency must match expense currency")
+                throw ApplicationException(ErrorCode.ERR_02, "payer currency must match expense currency")
             }
             pAmount
         }
 
         if (payerSum != totalMinor) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Sum of payer amounts ($payerSum) must equal total ($totalMinor)")
+            throw ApplicationException(ErrorCode.ERR_02, "Sum of payer amounts ($payerSum) must equal total ($totalMinor)")
         }
 
         val allocationMap = try {
             AllocationCalculator.calculate(request.allocation.mode, totalMinor, request.allocation.items)
         } catch (e: IllegalArgumentException) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message, e)
+            throw ApplicationException(ErrorCode.ERR_02, e.message, e)
         }
 
         val domainPayers = request.payers.map {
@@ -104,30 +113,32 @@ class ExpenseController(
     fun updateExpense(
         @PathVariable groupId: UUID,
         @PathVariable expenseId: UUID,
-        @Valid @RequestBody request: UpdateExpenseRequest
+        @Valid @RequestBody request: UpdateExpenseRequest,
+        principal: Principal?
     ): ExpenseResponse {
+        ensureActiveMember(groupId, principal)
         val totalMinor = ExpenseValidator.parseAndValidateAmount(request.amount.minor)
 
         val payerSum = request.payers.sumOf {
             val pAmount = it.amount.minor.toLongOrNull()
-                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "payer amount.minor must be a valid integer")
+                ?: throw ApplicationException(ErrorCode.ERR_02, "payer amount.minor must be a valid integer")
             if (pAmount <= 0) {
-                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "payer amount.minor must be positive")
+                throw ApplicationException(ErrorCode.ERR_02, "payer amount.minor must be positive")
             }
             if (it.amount.currency != request.amount.currency) {
-                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "payer currency must match expense currency")
+                throw ApplicationException(ErrorCode.ERR_02, "payer currency must match expense currency")
             }
             pAmount
         }
 
         if (payerSum != totalMinor) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Sum of payer amounts ($payerSum) must equal total ($totalMinor)")
+            throw ApplicationException(ErrorCode.ERR_02, "Sum of payer amounts ($payerSum) must equal total ($totalMinor)")
         }
 
         val allocationMap = try {
             AllocationCalculator.calculate(request.allocation.mode, totalMinor, request.allocation.items)
         } catch (e: IllegalArgumentException) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message, e)
+            throw ApplicationException(ErrorCode.ERR_02, e.message, e)
         }
 
         val domainPayers = request.payers.map {
@@ -179,8 +190,10 @@ class ExpenseController(
     fun deleteExpense(
         @PathVariable groupId: UUID,
         @PathVariable expenseId: UUID,
-        @RequestParam(required = false) version: Long?
+        @RequestParam(required = false) version: Long?,
+        principal: Principal?
     ) {
+        ensureActiveMember(groupId, principal)
         expenseStore.delete(groupId, expenseId, version)
     }
 
@@ -189,8 +202,10 @@ class ExpenseController(
         @PathVariable groupId: UUID,
         @RequestParam(required = false) category: String?,
         @RequestParam(required = false) cursor: String?,
-        @RequestParam(defaultValue = "50") limit: Int
+        @RequestParam(defaultValue = "50") limit: Int,
+        principal: Principal?
     ): List<ExpenseResponse> {
+        ensureActiveMember(groupId, principal)
         val list = expenseStore.list(groupId, category, cursor, limit)
         return list.map { expense ->
             ExpenseResponse(
@@ -209,8 +224,19 @@ class ExpenseController(
     }
 
     @GetMapping(ApiEndpoints.ExpenseCore.V1.BALANCES_SUBPATH)
-    fun getBalances(@PathVariable groupId: UUID): GroupBalancesResponse {
+    fun getBalances(@PathVariable groupId: UUID, principal: Principal?): GroupBalancesResponse {
+        ensureActiveMember(groupId, principal)
         val balances = expenseStore.balances(groupId)
         return GroupBalancesResponse(groupId, balances)
+    }
+
+    private fun ensureActiveMember(groupId: UUID, principal: Principal?) {
+        val subject = principal?.name ?: "test-user"
+        if (!membershipRepository.existsByGroupIdAndSubject(groupId, subject)) {
+            throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
+        }
+        if (groupRepository.findById(groupId).map { it.status }.orElse(null) != "ACTIVE") {
+            throw ApplicationException(ErrorCode.ERR_06, "Group $groupId is archived")
+        }
     }
 }

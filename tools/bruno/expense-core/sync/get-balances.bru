@@ -13,3 +13,10 @@ get {
 headers {
   Authorization: Bearer {{token}}
 }
+
+tests {
+  test("group balances are returned", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().balances).to.be.an("array");
+  });
+}

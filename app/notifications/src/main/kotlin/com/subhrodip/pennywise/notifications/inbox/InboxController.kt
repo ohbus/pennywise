@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
+// Removed unusedthrow ApplicationException(ErrorCode.ERR_06, "Acceptance rollback fault")
 import java.security.Principal
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import java.time.Instant
 import java.util.Base64
 import java.util.UUID
@@ -26,12 +28,12 @@ data class InboxPage(val items: List<InboxItem>, val nextCursor: String? = null)
 class InboxController(private val inbox: NotificationInbox) {
     @GetMapping
     fun list(
-        principal: Principal,
+        principal: Principal?,
         @RequestParam(required = false) cursor: String?,
         @RequestParam(defaultValue = "50") limit: Int
     ): InboxPage {
-        val subject = principal.name.trim().takeIf { it.isNotEmpty() }
-            ?: throw IllegalArgumentException("authenticated subject is required")
+        val subject = principal?.name?.trim()?.takeIf { it.isNotEmpty() }
+            ?: throw ApplicationException(ErrorCode.ERR_03, "authenticated subject is required")
         require(limit in 1..100) { "limit must be between 1 and 100" }
         return inbox.page(subject, cursor, limit)
     }
@@ -39,10 +41,11 @@ class InboxController(private val inbox: NotificationInbox) {
     @PostMapping(ApiEndpoints.Notifications.V1.INBOX_MARK_READ_SUBPATH)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun markAsRead(@PathVariable notificationId: UUID, principal: Principal) {
+        // Removed stray throw; method will perform normal logic.
         val subject = principal.name.trim().takeIf { it.isNotEmpty() }
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "authenticated subject is required")
+            ?: throw ApplicationException(ErrorCode.ERR_03, "authenticated subject is required")
         if (!inbox.markAsRead(subject, notificationId)) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found")
+            throw ApplicationException(ErrorCode.ERR_05, "Notification not found")
         }
     }
 }
@@ -75,7 +78,7 @@ class NotificationInbox(
         val value = String(Base64.getUrlDecoder().decode(cursor)).split('|')
         require(value.size == 2)
         Instant.parse(value[0]) to UUID.fromString(value[1])
-    }.getOrElse { throw IllegalArgumentException("invalid inbox cursor") }
+    }.getOrElse { throw ApplicationException(ErrorCode.ERR_02, "invalid inbox cursor") }
 }
 
 interface NotificationInboxStore {

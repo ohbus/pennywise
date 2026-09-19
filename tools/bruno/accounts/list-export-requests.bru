@@ -14,3 +14,10 @@ headers {
   Authorization: Bearer {{token}}
   Content-Type: application/json
 }
+
+tests {
+  test("export requests are listed", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody()).to.be.an("array");
+  });
+}

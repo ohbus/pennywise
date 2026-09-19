@@ -6,6 +6,42 @@ validation with Python's standard library.
 
 ## Current milestone: documentation and contracts
 
+## Exhaustive public-interface coverage
+
+| ID | Owner | Status | Deliverable |
+| --- | --- | --- | --- |
+| QA-07 | coordinator | in_progress | Contract-driven REST, GraphQL, WebSocket, negative-path, concurrency, recovery, and evidence matrix |
+| QA-08 | coordinator | planned | Production-scale, deployment-resilience, security, and unresolved WebSocket protocol evidence |
+
+## Production hardening milestone
+
+| ID | Owner | Status | Deliverable |
+| --- | --- | --- | --- |
+| OPS-17 | coordinator | done | Stable error taxonomy and service/source attribution |
+| OPS-18 | coordinator | done | Micrometer and Prometheus metrics for all services |
+| OPS-19 | operations | done | Dashboards, alerts, SLOs, and runbooks baseline |
+| OPS-20 | platform | done | Reliability, security, and capacity release gates |
+| OPS-21 | platform | done | Modular k6 load tests for high-value endpoints |
+| OPS-22 | platform | done | 1M-user capacity baseline and production readiness evidence |
+| OPS-23 | platform | done | Fixture-backed mutation capacity scenarios |
+
+## Error reporting hardening workstream
+
+| ID | Owner | Status | Deliverable |
+| --- | --- | --- | --- |
+| ERR-01 | coordinator | done | Governed error taxonomy, catalog, naming, and validation |
+| ERR-02 | coordinator | done | Typed shared error definitions, exceptions, problem envelope, and error IDs |
+| ERR-03 | coordinator | done | Structured 401/403 security errors across REST services and BFF |
+| ERR-04 | accounts | done | Accounts-specific error migration |
+| ERR-05 | core | done | Expense Core groups and membership error migration |
+| ERR-06 | core | done | Expense Core expense and idempotency error migration |
+| ERR-07 | core | done | Settlement, recurrence, sync, and outbox error migration |
+| ERR-08 | notifications | done | Notifications and event-consumer error migration |
+| ERR-09 | bff | done | Upstream and GraphQL error mapping |
+| ERR-10 | quality | done | Contract, unit, integration, Bruno, and acceptance coverage |
+| ERR-11 | operations | done | Bounded error metrics, dashboards, and alerts |
+| ERR-12 | coordinator | done | Governance review, release evidence, and completion gate |
+
 | ID | Owner | Status | Deliverable |
 | --- | --- | --- | --- |
 | DOC-01 | coordinator | done | Tracker, working agreement, task details |
@@ -125,3 +161,4 @@ validation with Python's standard library.
 | CORE-28 | core | done | Refactor Expense Core recurring persistence into separated SOLID files |
 | FND-08 | coordinator | done | Refactor domain ports, in-memory stores, and consumer services into dedicated files |
 | OBS-01 | coordinator | done | Implement cross-cutting structured logging, MDC correlation, and observability tools |
+| DOC-26 | coordinator | done | Reconcile local smoke-demo delivery evidence and Bruno API collection |

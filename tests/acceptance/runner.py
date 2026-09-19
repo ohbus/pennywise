@@ -441,7 +441,7 @@ def run_acceptance_suite(
     # 6. Edge-case journeys (QA-05 / QA-04)
     if include_edge_cases:
         try:
-            edge_results = qa05.run_qa05_journeys(bff_url)
+            edge_results = qa05.run_qa05_journeys(bff_url, expense_core_url)
             for r in edge_results:
                 results.append({
                     "id": r.id,

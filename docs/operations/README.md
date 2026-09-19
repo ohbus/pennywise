@@ -11,6 +11,10 @@ largest stack for every task. See [Compose topology](compose-topology.md) for th
 dependency-only stack, each native application's prerequisites, the complete
 containerized stack, ports, credentials, health checks, and matching Make
 commands. [Clone and run](quickstart.md) is the shortest path for a new checkout;
+
+Production observability, error attribution, metric cardinality, and release
+hardening requirements are maintained in
+[production-hardening.md](production-hardening.md).
 the repository-wide command catalogue is always available through `make help`.
 
 Production begins as stateless pinned containers behind a load balancer, with

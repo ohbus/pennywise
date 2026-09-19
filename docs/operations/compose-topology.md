@@ -88,5 +88,6 @@ Validate configuration and public contracts before committing topology changes:
 ```sh
 make compose-config
 python3 tools/contracts/validate.py
+python3 tools/contracts/validate_public_surface.py
 git diff --check
 ```

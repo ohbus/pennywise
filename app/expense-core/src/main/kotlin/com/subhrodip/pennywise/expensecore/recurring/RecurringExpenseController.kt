@@ -15,7 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import java.security.Principal
 import java.util.UUID
 
@@ -88,9 +89,9 @@ class RecurringExpenseController(
     ): RecurringScheduleResponse {
         verifyGroupAndMembership(groupId, principal)
         val schedule = recurringService.getSchedule(scheduleId)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not found")
+            ?: throw ApplicationException(ErrorCode.ERR_05, "Schedule $scheduleId not found")
         if (schedule.groupId != groupId) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not found in group $groupId")
+            throw ApplicationException(ErrorCode.ERR_05, "Schedule $scheduleId not found in group $groupId")
         }
         return schedule.toResponse()
     }
@@ -141,9 +142,9 @@ class RecurringExpenseController(
     ): RecurringScheduleResponse {
         verifyGroupAndMembership(groupId, principal)
         val schedule = recurringService.getSchedule(scheduleId)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not found")
+            ?: throw ApplicationException(ErrorCode.ERR_05, "Schedule $scheduleId not found")
         if (schedule.groupId != groupId) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not found in group $groupId")
+            throw ApplicationException(ErrorCode.ERR_05, "Schedule $scheduleId not found in group $groupId")
         }
         return recurringService.pauseSchedule(scheduleId).toResponse()
     }
@@ -156,27 +157,29 @@ class RecurringExpenseController(
     ): RecurringScheduleResponse {
         verifyGroupAndMembership(groupId, principal)
         val schedule = recurringService.getSchedule(scheduleId)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not found")
+            ?: throw ApplicationException(ErrorCode.ERR_05, "Schedule $scheduleId not found")
         if (schedule.groupId != groupId) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not found in group $groupId")
+            throw ApplicationException(ErrorCode.ERR_05, "Schedule $scheduleId not found in group $groupId")
         }
         return recurringService.resumeSchedule(scheduleId).toResponse()
     }
 
     private fun verifyGroupAndMembership(groupId: UUID, principal: Principal?) {
         if (!groupRepository.existsById(groupId)) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group $groupId not found")
+            throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
         }
-        if (principal != null && !membershipRepository.existsByGroupIdAndSubject(groupId, principal.name)) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group $groupId not found")
+        val subject = principal?.name?.takeIf { it.isNotBlank() }
+            ?: throw ApplicationException(ErrorCode.ERR_03, "Authenticated subject is required")
+        if (!membershipRepository.existsByGroupIdAndSubject(groupId, subject)) {
+            throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
         }
     }
 
     private fun parseAmount(minorStr: String): Long {
         val minor = minorStr.toLongOrNull()
-            ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "amount.minor must be a valid integer")
+            ?: throw ApplicationException(ErrorCode.ERR_02, "amount.minor must be a valid integer")
         if (minor <= 0) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "amount.minor must be positive")
+            throw ApplicationException(ErrorCode.ERR_02, "amount.minor must be positive")
         }
         return minor
     }

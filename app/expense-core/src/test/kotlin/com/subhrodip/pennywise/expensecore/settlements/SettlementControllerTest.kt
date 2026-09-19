@@ -14,6 +14,10 @@ import com.subhrodip.pennywise.expensecore.expenses.ExpensePayer
 import com.subhrodip.pennywise.expensecore.expenses.ExpenseRecord
 import com.subhrodip.pennywise.expensecore.expenses.InMemoryExpenseStore
 import java.time.Instant
+import java.security.Principal
+import java.lang.reflect.Proxy
+import org.springframework.test.web.servlet.request.RequestPostProcessor
+import com.subhrodip.pennywise.expensecore.groups.GroupMembershipRepository
 
 import com.subhrodip.pennywise.ids.ApiEndpoints
 
@@ -21,9 +25,16 @@ class SettlementControllerTest {
     private val expenseStore = InMemoryExpenseStore()
     private val suggestionEngine = SettlementSuggestionEngine(expenseStore)
     private val service = SettlementService(InMemorySettlementStore(), suggestionEngine)
-    private val controller = SettlementController(service, suggestionEngine)
+    private val memberships = Proxy.newProxyInstance(
+        GroupMembershipRepository::class.java.classLoader,
+        arrayOf(GroupMembershipRepository::class.java)
+    ) { _, method, args ->
+        if (method.name.startsWith("existsByGroupIdAndSubject")) args?.getOrNull(1) == "test-user" else null
+    } as GroupMembershipRepository
+    private val controller = SettlementController(service, memberships, suggestionEngine)
     private val mvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(GlobalErrorHandler()).build()
+    private val user = RequestPostProcessor { request -> request.userPrincipal = Principal { "test-user" }; request }
 
     @Test
     fun `rejects non numeric amount`() {
@@ -53,7 +64,7 @@ class SettlementControllerTest {
         )
         expenseStore.create(groupId, record, "test-key-1")
 
-        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions(groupId)))
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions(groupId)).with(user))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$[0].fromParticipantId").value(bob.toString()))
             .andExpect(jsonPath("$[0].toParticipantId").value(alice.toString()))
@@ -64,8 +75,17 @@ class SettlementControllerTest {
     @Test
     fun `returns empty list when no debts exist`() {
         val groupId = UUID.randomUUID()
-        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions(groupId)))
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions(groupId)).with(user))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(0))
+    }
+
+    @Test
+    fun `hides settlement suggestions from non-members`() {
+        val nonMember = RequestPostProcessor { request -> request.userPrincipal = Principal { "non-member" }; request }
+
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions(UUID.randomUUID())).with(nonMember)
+        ).andExpect(status().isNotFound)
     }
 }

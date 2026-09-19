@@ -1,4 +1,4 @@
-# Kotlin coding guidelines
+# Kotlin and Python coding guidelines
 
 The mandatory principle policy is documented in
 [programming-principles.md](programming-principles.md). Review every change
@@ -27,3 +27,15 @@ checks. The incompatible ktlint integration is not used.
   never leave documentation updates for a later stage when changing behavior.
 - Every delegated subagent must thoroughly review all relevant documentation
   and adhere strictly to project standards before writing any code.
+
+## Python typing
+
+All Python source, test, and operational code is strongly typed. Functions and
+methods require parameter and return annotations, collections use explicit
+generic element types, and structured JSON should use typed mappings/models
+where practical. `Any` is reserved for genuinely untyped external payloads and
+must be narrowed at the boundary. Use `uv`/`uvx` for isolated Python tooling;
+do not install packages into the system interpreter. Run
+`make python-typecheck`; CI runs the same isolated mypy configuration. Do not
+bypass the gate with `# type: ignore` without an adjacent reason and a removal
+condition.

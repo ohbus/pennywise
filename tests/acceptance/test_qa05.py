@@ -8,7 +8,10 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import qa05
+try:
+    from . import qa05
+except ImportError:
+    import qa05
 
 
 class EdgeCaseHandler(http.server.BaseHTTPRequestHandler):
@@ -19,7 +22,7 @@ class EdgeCaseHandler(http.server.BaseHTTPRequestHandler):
     def log_message(self, _format: str, *_args: object) -> None:
         pass
 
-    def _reply(self, status: int, body: dict) -> None:
+    def _reply(self, status: int, body: object) -> None:
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
@@ -38,6 +41,8 @@ class EdgeCaseHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         if self.headers.get("Authorization") != "Bearer test-user":
             self._reply(401, {"code": "UNAUTHENTICATED"})
+        elif self.path == "/expense-core/v1/groups":
+            self._reply(200, [{"groupId": "00000000-0000-0000-0000-000000000001"}])
         else:
             self._reply(200, {"members": []})
 
@@ -55,6 +60,7 @@ class Qa05Test(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
+        EdgeCaseHandler.renames = 0
         cls.server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), EdgeCaseHandler)
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
         cls.thread.start()

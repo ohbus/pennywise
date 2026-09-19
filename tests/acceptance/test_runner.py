@@ -11,7 +11,10 @@ from urllib.parse import urlparse
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import runner
+try:
+    from . import runner
+except ImportError:
+    import runner
 
 
 class MockServicesHandler(http.server.BaseHTTPRequestHandler):
@@ -106,6 +109,13 @@ class MockServicesHandler(http.server.BaseHTTPRequestHandler):
                     }
                 ).encode("utf-8")
             )
+            return
+
+        if path == "/expense-core/v1/groups":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps([{"groupId": "00000000-0000-0000-0000-000000000001"}]).encode("utf-8"))
             return
 
         self.send_response(404)
@@ -208,10 +218,14 @@ def find_free_port() -> int:
 
 
 class RunnerTest(unittest.TestCase):
+    def setUp(self) -> None:
+        MockServicesHandler.renames = 0
+
     @classmethod
     def setUpClass(cls) -> None:
+        MockServicesHandler.renames = 0
         cls.port = find_free_port()
-        cls.server = http.server.HTTPServer(("127.0.0.1", cls.port), MockServicesHandler)
+        cls.server = http.server.ThreadingHTTPServer(("127.0.0.1", cls.port), MockServicesHandler)
         cls.server_thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
         cls.server_thread.start()
         cls.server_url = f"http://127.0.0.1:{cls.port}"

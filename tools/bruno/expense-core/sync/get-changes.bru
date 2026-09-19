@@ -1,0 +1,21 @@
+meta {
+  name: Get Sync Changes
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/sync/changes
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+tests {
+  test("sync changes response is successful", function() {
+    expect(res.getStatus()).to.eql(200);
+  });
+}

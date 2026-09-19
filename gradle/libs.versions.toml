@@ -8,7 +8,7 @@ h2 = "2.4.240"
 uuidCreator = "6.1.1"
 junitPlatform = "6.0.3"
 spotless = "8.1.0"
-
+kotlinxCoroutines = "1.7.3"
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
@@ -19,6 +19,7 @@ spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 
 [libraries]
 boot-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator", version.ref = "springBoot" }
+micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
 boot-amqp = { module = "org.springframework.boot:spring-boot-starter-amqp", version.ref = "springBoot" }
 boot-validation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "springBoot" }
 boot-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "springBoot" }
@@ -37,3 +38,5 @@ h2 = { module = "com.h2database:h2", version.ref = "h2" }
 uuid-creator = { module = "com.github.f4b6a3:uuid-creator", version.ref = "uuidCreator" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junitPlatform" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }

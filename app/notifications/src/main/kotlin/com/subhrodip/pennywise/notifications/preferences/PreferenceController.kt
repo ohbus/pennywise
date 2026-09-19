@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import java.security.Principal
 import java.util.concurrent.ConcurrentHashMap
 
@@ -29,7 +30,7 @@ class PreferenceController(private val store: PreferenceStore) {
     }
 
     private fun subject(principal: Principal?): String = principal?.name?.trim()?.takeIf { it.isNotEmpty() }
-        ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "authenticated subject is required")
+        ?: throw ApplicationException(ErrorCode.ERR_03, "authenticated subject is required")
 }
 
 interface PreferenceStore {

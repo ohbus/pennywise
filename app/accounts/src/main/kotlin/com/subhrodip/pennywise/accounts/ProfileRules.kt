@@ -1,7 +1,8 @@
 package com.subhrodip.pennywise.accounts
-
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import org.springframework.http.HttpStatus
-import org.springframework.web.server.ResponseStatusException
+
 import java.time.DateTimeException
 import java.time.ZoneId
 
@@ -10,7 +11,7 @@ object ProfileRules {
 
     fun requireSubject(subject: String): String {
         if (!subjectPattern.matches(subject)) {
-            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated subject is invalid")
+            throw ApplicationException(ErrorCode.ERR_03, "Authenticated subject is invalid")
         }
         return subject
     }
@@ -19,7 +20,7 @@ object ProfileRules {
         try {
             ZoneId.of(timezone)
         } catch (_: DateTimeException) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "timezone must be a valid IANA zone")
+            throw ApplicationException(ErrorCode.ERR_02, "timezone must be a valid IANA zone")
         }
         return timezone
     }

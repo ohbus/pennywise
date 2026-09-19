@@ -1,5 +1,8 @@
 # Current Git and worktree task map
 
+> Historical snapshot from 2026-09-18, before the DOC-26 smoke-demo increment
+> on `master`.
+
 Audit task: DOC-17B
 
 Snapshot: `e791d7c` (`2026-09-18`), with the worktree inspected on

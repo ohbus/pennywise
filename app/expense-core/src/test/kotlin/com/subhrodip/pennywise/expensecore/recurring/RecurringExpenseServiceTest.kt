@@ -16,7 +16,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.util.UUID
@@ -129,12 +130,15 @@ class RecurringExpenseServiceTest @Autowired constructor(
     @Test
     fun `pause and resume throw 404 for non-existent schedule`() {
         val missingId = UUID.randomUUID()
-        assertThrows(ResponseStatusException::class.java) {
+        val pauseErr = assertThrows(ApplicationException::class.java) {
             service.pauseSchedule(missingId)
         }
-        assertThrows(ResponseStatusException::class.java) {
+        assertEquals(ErrorCode.ERR_05, pauseErr.errorCode)
+
+        val resumeErr = assertThrows(ApplicationException::class.java) {
             service.resumeSchedule(missingId)
         }
+        assertEquals(ErrorCode.ERR_05, resumeErr.errorCode)
     }
 
     @Test
@@ -474,7 +478,7 @@ class RecurringExpenseServiceTest @Autowired constructor(
             )
         }
 
-        assertThrows(ResponseStatusException::class.java) {
+        assertThrows(ApplicationException::class.java) {
             service.createSchedule(
                 UUID.randomUUID(),
                 CreateRecurringScheduleRequest(

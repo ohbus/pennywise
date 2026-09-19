@@ -23,8 +23,9 @@ class GroupGraphqlController(
         liveFanout.emitInvalidation(groupId, revision, changeId)
 
     @SubscriptionMapping
-    fun groupChanged(@Argument groupId: String): Flux<GroupInvalidation> =
-        liveFanout.invalidations().filter { it.groupId == groupId }
+    fun groupChanged(@Argument groupId: String, principal: Principal?): Flux<GroupInvalidation> =
+        gateway.getGroup(groupId, principal?.name)
+            .flatMapMany { liveFanout.invalidations().filter { it.groupId == groupId } }
 
     @QueryMapping
     fun groups(principal: Principal?): Mono<List<BffGroup>> = gateway.listGroups(principal?.name)

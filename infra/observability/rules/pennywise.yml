@@ -1,0 +1,39 @@
+groups:
+  - name: pennywise-availability
+    rules:
+      - alert: PennywiseServiceDown
+        expr: up{job="pennywise"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Pennywise service is unavailable
+          description: "{{ $labels.instance }} has not been scrapeable for two minutes."
+          runbook: docs/operations/production-hardening.md#service-unavailable
+      - alert: PennywiseHighServerErrorRate
+        expr: sum by (service) (rate(http_server_requests_seconds_count{job="pennywise",status=~"5.."}[5m])) / clamp_min(sum by (service) (rate(http_server_requests_seconds_count{job="pennywise"}[5m])), 0.001) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: Pennywise server error rate is high
+          description: "{{ $labels.service }} is returning more than 5% server errors."
+          runbook: docs/operations/production-hardening.md#high-error-rate
+      - alert: PennywiseHighRequestLatency
+        expr: histogram_quantile(0.95, sum by (service, le) (rate(http_server_requests_seconds_bucket{job="pennywise"}[10m]))) > 1.0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Pennywise request latency is elevated
+          description: "{{ $labels.service }} p95 request latency exceeds one second."
+          runbook: docs/operations/production-hardening.md#high-latency
+      - alert: PennywiseJvmMemoryPressure
+        expr: jvm_memory_used_bytes{job="pennywise",area="heap"} / jvm_memory_max_bytes{job="pennywise",area="heap"} > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Pennywise JVM heap pressure is high
+          description: "{{ $labels.service }} heap usage is above 85%."
+          runbook: docs/operations/production-hardening.md#jvm-pressure

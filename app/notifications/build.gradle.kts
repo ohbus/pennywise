@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":libs:errors"))
     implementation(project(":libs:ids"))
     implementation(libs.boot.actuator)
+    runtimeOnly(libs.micrometer.prometheus)
     implementation(libs.boot.amqp)
     implementation(libs.boot.validation)
     implementation(libs.boot.security)

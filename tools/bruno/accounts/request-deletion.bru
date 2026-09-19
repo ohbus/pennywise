@@ -14,3 +14,9 @@ headers {
   Authorization: Bearer {{token}}
   Content-Type: application/json
 }
+
+tests {
+  test("deletion request is accepted", function() {
+    expect(res.getStatus()).to.eql(202);
+  });
+}

@@ -4,7 +4,8 @@ import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import org.springframework.http.HttpStatus
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import com.subhrodip.pennywise.ids.UuidGenerator
 
 /**
@@ -87,7 +88,7 @@ class InMemoryExpenseStore : ExpenseStore {
             ) {
                 return existing
             }
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Expense already exists with different payload")
+            throw ApplicationException(ErrorCode.ERR_06, "Expense already exists with different payload")
         }
         expenses[expense.expenseId] = expense
         val groupPostings = postings.computeIfAbsent(groupId) { mutableListOf() }
@@ -123,12 +124,12 @@ class InMemoryExpenseStore : ExpenseStore {
     @Synchronized
     override fun update(groupId: UUID, expenseId: UUID, update: ExpenseRecord): ExpenseRecord {
         val existing = expenses[expenseId]
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Expense $expenseId not found")
+            ?: throw ApplicationException(ErrorCode.ERR_05, "Expense $expenseId not found")
         if (existing.groupId != groupId || existing.deleted) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Expense $expenseId not found in group $groupId")
+            throw ApplicationException(ErrorCode.ERR_05, "Expense $expenseId not found in group $groupId")
         }
         if (existing.version != update.version) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Stale version: expected ${existing.version}, but got ${update.version}")
+            throw ApplicationException(ErrorCode.ERR_06, "Stale version: expected ${existing.version}, but got ${update.version}")
         }
         val groupPostings = postings.computeIfAbsent(groupId) { mutableListOf() }
         val now = Instant.now()
@@ -197,12 +198,12 @@ class InMemoryExpenseStore : ExpenseStore {
     @Synchronized
     override fun delete(groupId: UUID, expenseId: UUID, version: Long?) {
         val existing = expenses[expenseId]
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Expense $expenseId not found")
+            ?: throw ApplicationException(ErrorCode.ERR_05, "Expense $expenseId not found")
         if (existing.groupId != groupId || existing.deleted) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Expense $expenseId not found in group $groupId")
+            throw ApplicationException(ErrorCode.ERR_05, "Expense $expenseId not found in group $groupId")
         }
         if (version != null && existing.version != version) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Stale version: expected ${existing.version}, but got $version")
+            throw ApplicationException(ErrorCode.ERR_06, "Stale version: expected ${existing.version}, but got $version")
         }
         val groupPostings = postings.computeIfAbsent(groupId) { mutableListOf() }
         val now = Instant.now()

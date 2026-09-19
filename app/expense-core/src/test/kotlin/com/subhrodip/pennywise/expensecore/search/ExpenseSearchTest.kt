@@ -31,6 +31,15 @@ class ExpenseSearchTest {
     }
 
     @Test
+    fun `rejects malformed cursors instead of silently changing the page`() {
+        val search = ExpenseSearch()
+        val error = assertThrows(com.subhrodip.pennywise.errors.ApplicationException::class.java) {
+            search.page(listOf(SearchExpense("1", "Dinner", "EUR", "100")), cursor = "%%%invalid%%%")
+        }
+        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_02, error.errorCode)
+    }
+
+    @Test
     fun `filters currency and quotes csv fields while bounding export`() {
         val search = ExpenseSearch()
         val data = listOf(SearchExpense("1", "Lunch, team", "eur", "200"), SearchExpense("2", "Dinner", "USD", "100"))
@@ -53,6 +62,7 @@ class ExpenseSearchTest {
 
     @Test
     fun `rejects unknown category`() {
-        assertThrows(IllegalArgumentException::class.java) { ExpenseCategory.fromKey("travel") }
+        val err = assertThrows(com.subhrodip.pennywise.errors.ApplicationException::class.java) { ExpenseCategory.fromKey("travel") }
+        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_02, err.errorCode)
     }
 }

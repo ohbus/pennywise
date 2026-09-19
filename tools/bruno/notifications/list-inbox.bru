@@ -1,0 +1,23 @@
+meta {
+  name: List Notification Inbox
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrlNotifications}}/notifications/v1/inbox
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Accept: application/json
+}
+
+tests {
+  test("notification inbox is readable", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().items).to.be.an("array");
+  });
+}

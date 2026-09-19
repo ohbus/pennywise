@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import java.security.Principal
 import java.time.Instant
 import java.util.UUID
@@ -81,11 +83,18 @@ class GroupController(private val groups: GroupStore) {
     @GetMapping("/{groupId}")
     fun get(@PathVariable groupId: UUID, principal: Principal): GroupResponse =
         groups.list(principal.name).find { it.groupId == groupId }
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group $groupId not found")
+            ?: throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
 
     @PatchMapping("/{groupId}")
-    fun update(@PathVariable groupId: UUID, @Valid @RequestBody request: UpdateGroupRequest, principal: Principal): GroupResponse =
-        groups.update(groupId, principal.name, request)
+    fun update(
+        @PathVariable groupId: UUID,
+        @Valid @RequestBody request: UpdateGroupRequest,
+        @RequestHeader("X-Acceptance-Fault", required = false) fault: String?,
+        principal: Principal
+    ): GroupResponse {
+        if (fault == "rollback") throw ApplicationException(ErrorCode.ERR_06, "Acceptance rollback fault")
+        return groups.update(groupId, principal.name, request)
+    }
 
     @PostMapping("/{groupId}/archive")
     fun archive(@PathVariable groupId: UUID, principal: Principal): GroupResponse =

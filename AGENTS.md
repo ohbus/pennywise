@@ -133,6 +133,18 @@ version baseline. Do not choose preview versions or silently lower requirements.
 
 ## Programming principles (mandatory)
 
+### Python typing rule
+
+All repository Python code, including tests and operational scripts, must use
+strong static typing. Every function and method must declare parameter and
+return types; public containers and structured payloads must use precise generic
+types or typed models rather than untyped `dict`/`list`; and new dynamic escape
+hatches require a documented justification. Use `uv`/`uvx` for Python tooling
+and isolated environments; do not install project tooling into the system
+interpreter. Run `make python-typecheck` for Python changes. CI owns the same
+gate, and future sessions must preserve this rule when adding or modifying
+Python code.
+
 All implementation and review work must follow
 [`docs/quality/programming-principles.md`](docs/quality/programming-principles.md)
 and [`docs/quality/coding-guidelines.md`](docs/quality/coding-guidelines.md).

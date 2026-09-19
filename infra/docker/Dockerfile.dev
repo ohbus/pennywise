@@ -1,5 +1,8 @@
-# Development image: dependencies are cached in a named volume by Compose.
+# Development image: use the Gradle binary shipped by the pinned base image.
+# This avoids a fresh container downloading the wrapper distribution before the
+# application can start. Dependency resolution may still use the configured
+# Gradle repositories, but the build tool itself is available offline.
 FROM gradle:9.7.1-jdk25
 WORKDIR /workspace
 COPY . .
-ENTRYPOINT ["./gradlew"]
+ENTRYPOINT ["gradle", "--no-daemon"]

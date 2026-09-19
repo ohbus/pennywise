@@ -1,0 +1,22 @@
+meta {
+  name: List Recurring Schedules
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/schedules
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+tests {
+  test("schedule persistence is readable", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().some(function(schedule) { return schedule.scheduleId === bru.getVar("scheduleId"); })).to.eql(true);
+  });
+}

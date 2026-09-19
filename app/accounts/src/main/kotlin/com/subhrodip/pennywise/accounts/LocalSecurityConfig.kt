@@ -31,7 +31,7 @@ class LocalSecurityConfig {
         http
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
-            .authorizeHttpRequests { it.anyRequest().permitAll() }
+            .authorizeHttpRequests { it.requestMatchers("/actuator/**").permitAll().anyRequest().authenticated() }
             .oauth2ResourceServer { it.opaqueToken { token -> token.introspector(localTokenIntrospector()) } }
         return http.build()
     }

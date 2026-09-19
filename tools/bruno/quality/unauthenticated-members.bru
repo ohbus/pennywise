@@ -1,0 +1,21 @@
+meta {
+  name: Unauthenticated Members Must Be Rejected
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/00000000-0000-0000-0000-000000000001/members
+  body: none
+  auth: none
+}
+
+tests {
+  test("missing authentication is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+
+  test("challenge identifies bearer authentication", function() {
+    expect(res.getHeader("WWW-Authenticate")).to.match(/^Bearer/);
+  });
+}

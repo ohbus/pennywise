@@ -11,7 +11,8 @@ import org.springframework.context.annotation.Primary
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 
 /**
  * JPA persistence adapter implementing [GroupStore] for group lifecycle operations,
@@ -57,7 +58,9 @@ class JpaGroupStore(
     @Transactional(readOnly = true)
     override fun list(subject: String): List<GroupResponse> =
         memberships.findAllBySubjectAndStatusOrderByMembershipId(subject, "ACTIVE")
-            .mapNotNull { groups.findById(it.groupId).orElse(null)?.toResponse() }
+            .mapNotNull { groups.findById(it.groupId).orElse(null) }
+            .filter { it.status == "ACTIVE" }
+            .map { it.toResponse() }
 
     /**
      * Updates an existing expense group's name and increments its revision.
@@ -89,7 +92,7 @@ class JpaGroupStore(
         checkActiveMembership(groupId, subject)
         val entity = groups.findForMembershipUpdate(groupId) ?: notFound()
         if (entity.status == "ARCHIVED") {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Group is already archived")
+            throw ApplicationException(ErrorCode.ERR_06, "Group is already archived")
         }
         entity.status = "ARCHIVED"
         entity.revision += 1
@@ -152,7 +155,7 @@ class JpaGroupStore(
         checkActiveGroup(group)
         val target = memberships.findByMembershipIdAndGroupId(membershipId, groupId) ?: notFound()
         if (target.status == "REMOVED") {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Member is already removed")
+            throw ApplicationException(ErrorCode.ERR_06, "Member is already removed")
         }
         target.status = "REMOVED"
         memberships.save(target)
@@ -176,6 +179,8 @@ class JpaGroupStore(
     @Transactional(readOnly = true)
     override fun listMembers(groupId: UUID, subject: String): List<GroupMemberResponse> {
         checkActiveMembership(groupId, subject)
+        val group = groups.findById(groupId).orElse(null) ?: notFound()
+        if (group.status != "ACTIVE") notFound()
         return memberships.findByGroupIdAndStatus(groupId, "ACTIVE").map { it.toResponse() }
     }
 
@@ -190,7 +195,7 @@ class JpaGroupStore(
         if (request.placeholderId != null) {
             val placeholder = memberships.findByMembershipIdAndGroupId(request.placeholderId, groupId)
             if (placeholder == null || !placeholder.isPlaceholder || placeholder.status != "ACTIVE" || placeholder.subject != null) {
-                throw ResponseStatusException(HttpStatus.CONFLICT, "Placeholder not found or already bound")
+                throw ApplicationException(ErrorCode.ERR_06, "Placeholder not found or already bound")
             }
         }
         val token = invitationToken()
@@ -304,7 +309,7 @@ class JpaGroupStore(
 
     private fun checkActiveGroup(group: GroupEntity) {
         if (group.status == "ARCHIVED") {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Group is archived")
+            throw ApplicationException(ErrorCode.ERR_06, "Group is archived")
         }
     }
 
@@ -347,10 +352,10 @@ class JpaGroupStore(
         UuidGenerator.next().toString().replace("-", "") + UuidGenerator.next().toString().replace("-", "")
 
     private fun conflict(message: String = "Invite is invalid, expired, or already claimed"): Nothing =
-        throw ResponseStatusException(HttpStatus.CONFLICT, message)
+        throw ApplicationException(ErrorCode.ERR_06, message)
 
     private fun notFound(): Nothing =
-        throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found")
+        throw ApplicationException(ErrorCode.ERR_05, "Group not found")
 
     private companion object {
         val INVITATION_TOKEN = Regex("^[a-f0-9]{64}$")

@@ -1,5 +1,8 @@
 # Current task-state audit (DOC-17A)
 
+> Historical snapshot from 2026-09-18. The live registry and board are
+> authoritative for current task status.
+
 Snapshot: 2026-09-18, working tree based on `e791d7c`. This report compares
 `docs/tasks/registry.yaml`, `docs/tasks/board.md`, task details, the progress
 ledger, dependency state, and committed history. It does not treat uncommitted

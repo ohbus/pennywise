@@ -47,6 +47,24 @@ data class BffGroup(
     val id: String get() = groupId
 }
 
+private data class UpstreamExpense(
+    val expenseId: String,
+    val version: Long = 1,
+    val description: String? = null,
+    val amount: BffMoney,
+    val category: String? = null,
+    val allocations: List<BffAllocation> = emptyList()
+) {
+    fun toBffExpense(fallbackDescription: String = ""): BffExpense = BffExpense(
+        expenseId = expenseId,
+        version = version,
+        description = description ?: fallbackDescription,
+        amount = amount,
+        category = category,
+        allocations = allocations
+    )
+}
+
 /**
  * Shape returned by Expense Core group endpoints. Summary responses may omit
  * aggregate collections; the BFF normalizes those omissions before exposing GraphQL.
@@ -69,6 +87,23 @@ data class BffProfile(
     val timezone: String,
     val defaultCurrency: String
 )
+
+private data class UpstreamSettlement(
+    val id: String,
+    val fromParticipantId: String? = null,
+    val toParticipantId: String? = null,
+    val amountMinor: Long? = null,
+    val status: String = "RECORDED"
+) {
+    fun toBffSettlement(currency: String): BffSettlement = BffSettlement(
+        id = id,
+        from = fromParticipantId,
+        to = toParticipantId,
+        amountMinor = amountMinor,
+        status = status,
+        currency = currency
+    )
+}
 
 data class BffSettlement(
     val id: String,
@@ -200,7 +235,8 @@ class ExpenseCoreGateway(
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
-            .bodyToFlux(BffExpense::class.java)
+            .bodyToFlux(UpstreamExpense::class.java)
+            .map { it.toBffExpense() }
             .collectList()
             .onErrorReturn(emptyList())
 
@@ -224,7 +260,8 @@ class ExpenseCoreGateway(
             .bodyValue(input)
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
-            .bodyToMono(BffExpense::class.java)
+            .bodyToMono(UpstreamExpense::class.java)
+            .map { it.toBffExpense(input.description) }
             .timeout(timeout)
 
     fun recordRepayment(groupId: String, input: RepaymentInput, bearer: String?): Mono<BffSettlement> {
@@ -238,8 +275,8 @@ class ExpenseCoreGateway(
             .bodyValue(payload)
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
-            .bodyToMono(BffSettlement::class.java)
-            .map { it.copy(currency = input.amount.currency) }
+            .bodyToMono(UpstreamSettlement::class.java)
+            .map { it.toBffSettlement(input.amount.currency) }
             .timeout(timeout)
     }
 

@@ -24,6 +24,7 @@ jobs:
           persist-credentials: false
       - run: |
           python3 tools/contracts/validate.py
+          python3 tools/contracts/validate_public_surface.py
           docker compose -f infra/local/docker-compose.yml config --quiet
           docker compose -f infra/local/docker-compose.dev.yml config --quiet
 
@@ -37,6 +38,13 @@ jobs:
         run: |
           git diff --check
           python3 tools/contracts/validate.py
+          python3 tools/contracts/validate_public_surface.py
+          python3 -m unittest discover -s tests/acceptance
+          ruby -e 'require "yaml"; Dir[".github/workflows/*.yml"].each { |file| YAML.load_file(file); puts "valid workflow: #{file}" }'
+      - name: Type-check Python tests and tools
+        uses: astral-sh/setup-uv@v6
+      - name: Run Python type checker
+        run: uvx --from mypy==1.17.1 mypy --config-file mypy.ini tests tools
 
   verify:
     name: Verify ${{ matrix.kind }} / ${{ matrix.name }}
@@ -135,7 +143,7 @@ jobs:
           --health-cmd="rabbitmq-diagnostics -q ping"
           --health-interval=5s --health-timeout=5s --health-retries=12
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -155,6 +163,8 @@ jobs:
           key: pennywise-gradle-e2e-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', '**/gradle.properties', 'gradle/libs.versions.toml') }}
           restore-keys: pennywise-gradle-e2e-${{ runner.os }}-
       - run: ./gradlew test --no-daemon
+      - name: Package application jars for the local stack
+        run: ./gradlew bootJar --no-daemon
       - name: Publish E2E test summary
         uses: test-summary/action@v2
         if: always()
@@ -171,4 +181,22 @@ jobs:
             **/build/reports/tests/test/
           if-no-files-found: ignore
           retention-days: 14
-      - run: bash tests/e2e/contract-smoke.sh
+      - name: Run contract and deployment smoke checks
+        run: bash tests/e2e/contract-smoke.sh
+      - name: Start the complete local application stack
+        run: docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
+      - name: Run public-interface acceptance and E2E suites
+        env:
+          BRUNO_ENV: local
+          BRUNO_TOKEN: test-user
+        run: |
+          make acceptance-live
+          make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"
+          make e2e-live
+          make e2e-offline
+          make e2e-concurrency
+          make e2e-chaos
+          make e2e-rest-edge
+      - name: Tear down the complete local application stack
+        if: always()
+        run: docker compose -f infra/local/docker-compose.dev.yml down -v

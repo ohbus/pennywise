@@ -21,3 +21,11 @@ body:json {
     "operationName": "Me"
   }
 }
+
+tests {
+  test("GraphQL response has no errors", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().errors).to.not.be.ok;
+    expect(res.getBody().data.me.accountId).to.be.ok;
+  });
+}

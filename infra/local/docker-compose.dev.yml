@@ -6,8 +6,10 @@ services:
   mailpit:
     extends: {file: docker-compose.yml, service: mailpit}
   accounts:
-    build: {context: ../.., dockerfile: infra/docker/Dockerfile.dev}
-    command: [":app:accounts:bootRun"]
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fast
+      args: {APP_PROJECT: accounts}
     environment:
       SPRING_PROFILES_ACTIVE: local
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pennywise_accounts
@@ -16,8 +18,10 @@ services:
     ports: ["8081:8080"]
     depends_on: {postgres: {condition: service_healthy}}
   expense-core:
-    build: {context: ../.., dockerfile: infra/docker/Dockerfile.dev}
-    command: [":app:expense-core:bootRun"]
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fast
+      args: {APP_PROJECT: expense-core}
     environment:
       SPRING_PROFILES_ACTIVE: local
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pennywise_expense_core
@@ -27,11 +31,15 @@ services:
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: pennywise
       SPRING_RABBITMQ_PASSWORD: pennywise-local-only
+      PENNYWISE_OUTBOX_ENABLED: "true"
+      PENNYWISE_OUTBOX_RABBIT_ENABLED: "true"
     ports: ["8082:8080"]
     depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}}
   notifications:
-    build: {context: ../.., dockerfile: infra/docker/Dockerfile.dev}
-    command: [":app:notifications:bootRun"]
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fast
+      args: {APP_PROJECT: notifications}
     environment:
       SPRING_PROFILES_ACTIVE: local
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pennywise_notifications
@@ -46,10 +54,16 @@ services:
     ports: ["8083:8080"]
     depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, mailpit: {condition: service_healthy}}
   bff:
-    build: {context: ../.., dockerfile: infra/docker/Dockerfile.dev}
-    command: [":app:bff:bootRun"]
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fast
+      args: {APP_PROJECT: bff}
     environment:
       SPRING_PROFILES_ACTIVE: local
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: pennywise
+      SPRING_RABBITMQ_PASSWORD: pennywise-local-only
       PENNYWISE_EXPENSE_CORE_URL: http://expense-core:8080
       PENNYWISE_ACCOUNTS_URL: http://accounts:8080
     ports: ["8080:8080"]

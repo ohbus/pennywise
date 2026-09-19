@@ -3,7 +3,8 @@ package com.subhrodip.pennywise.accounts
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 
 class ProfileRulesTest {
     @Test
@@ -14,11 +15,13 @@ class ProfileRulesTest {
 
     @Test
     fun `rejects invalid subject and timezone with defined statuses`() {
-        assertEquals(401, assertThrows(ResponseStatusException::class.java) {
+        val ex = assertThrows(ApplicationException::class.java) {
             ProfileRules.requireSubject("alice with spaces")
-        }.statusCode.value())
-        assertEquals(400, assertThrows(ResponseStatusException::class.java) {
+        }
+        assertEquals(ErrorCode.ERR_03, ex.errorCode)
+        val ex2 = assertThrows(ApplicationException::class.java) {
             ProfileRules.requireTimezone("not/a-zone")
-        }.statusCode.value())
+        }
+        assertEquals(ErrorCode.ERR_02, ex2.errorCode)
     }
 }

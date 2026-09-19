@@ -1,0 +1,18 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/rules/pennywise.yml
+
+scrape_configs:
+  - job_name: pennywise
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - accounts:8080
+          - expense-core:8080
+          - notifications:8080
+          - bff:8080
+        labels:
+          environment: production

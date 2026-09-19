@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import java.security.Principal
 import java.util.UUID
 
@@ -64,7 +65,7 @@ class SearchController(
                 limit = limit
             )
         } catch (ex: IllegalArgumentException) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, ex.message)
+            throw ApplicationException(ErrorCode.ERR_02, ex.message, ex)
         }
     }
 
@@ -100,7 +101,7 @@ class SearchController(
                 maxRows = maxRows
             )
         } catch (ex: IllegalArgumentException) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, ex.message)
+            throw ApplicationException(ErrorCode.ERR_02, ex.message, ex)
         }
 
         val filename = "expenses-$groupId.csv"
@@ -113,7 +114,7 @@ class SearchController(
     private fun ensureMembership(groupId: UUID, subject: String) {
         val groups = groupStore.list(subject)
         if (groups.none { it.groupId == groupId }) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group $groupId not found")
+            throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
         }
     }
 }

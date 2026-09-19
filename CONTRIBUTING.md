@@ -73,7 +73,7 @@ make doctor
 
 1. **Clone the repository**:
    ```sh
-   git clone https://github.com/subhrodip/pennywise.git
+   git clone https://github.com/ohbus/pennywise.git
    cd pennywise
    ```
 

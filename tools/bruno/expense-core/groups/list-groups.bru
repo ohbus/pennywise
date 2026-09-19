@@ -13,3 +13,11 @@ get {
 headers {
   Authorization: Bearer {{token}}
 }
+
+tests {
+  test("group list is persisted and readable", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody()).to.be.an("array");
+    expect(res.getBody().some(function(group) { return group.groupId === bru.getVar("groupId"); })).to.eql(true);
+  });
+}

@@ -1,5 +1,6 @@
 package com.subhrodip.pennywise.expensecore.categories
-
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 enum class ExpenseCategory(val key: String, val label: String) {
     FOOD("food", "Food"),
     LODGING("lodging", "Lodging"),
@@ -12,7 +13,7 @@ enum class ExpenseCategory(val key: String, val label: String) {
 
     companion object {
         fun fromKey(key: String): ExpenseCategory = values().firstOrNull { it.key == key.trim().lowercase() }
-            ?: throw IllegalArgumentException("Unknown expense category")
+            ?: throw ApplicationException(ErrorCode.ERR_02, "Unknown expense category")
     }
 }
 

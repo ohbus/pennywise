@@ -16,7 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.time.LocalDate
@@ -94,7 +95,7 @@ class RecurringExpenseService(
         }
 
         if (!groupRepository.existsById(groupId)) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group $groupId not found")
+            throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
         }
 
         val scheduleId = request.scheduleId ?: UuidGenerator.next()
@@ -128,10 +129,10 @@ class RecurringExpenseService(
         request: UpdateRecurringScheduleRequest
     ): RecurringExpenseSchedule {
         val schedule = scheduleRepository.findById(scheduleId).orElseThrow {
-            ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not found")
+            ApplicationException(ErrorCode.ERR_05, "Schedule $scheduleId not found")
         }
         if (schedule.groupId != groupId) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not in group $groupId")
+            throw ApplicationException(ErrorCode.ERR_05, "Schedule $scheduleId not in group $groupId")
         }
 
         require(request.description.isNotBlank()) { "description must not be blank" }
@@ -181,7 +182,7 @@ class RecurringExpenseService(
     @Transactional
     fun pauseSchedule(scheduleId: UUID): RecurringExpenseSchedule {
         val schedule = scheduleRepository.findById(scheduleId).orElseThrow {
-            ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not found")
+            ApplicationException(ErrorCode.ERR_05, "Schedule $scheduleId not found")
         }
         schedule.paused = true
         return scheduleRepository.save(schedule)
@@ -190,7 +191,7 @@ class RecurringExpenseService(
     @Transactional
     fun resumeSchedule(scheduleId: UUID): RecurringExpenseSchedule {
         val schedule = scheduleRepository.findById(scheduleId).orElseThrow {
-            ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not found")
+            ApplicationException(ErrorCode.ERR_05, "Schedule $scheduleId not found")
         }
         schedule.paused = false
         return scheduleRepository.save(schedule)

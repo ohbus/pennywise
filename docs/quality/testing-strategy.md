@@ -3,6 +3,17 @@
 Use the approved toolchain evidence in the architecture documents; earlier
 proposed version numbers are not dependencies until resolved successfully.
 
+QA-07's contract-driven public-interface matrix is maintained in
+[`public-interface-coverage.md`](public-interface-coverage.md). It is the
+required cross-layer checklist for every REST method/path pair, GraphQL field,
+and WebSocket subscription lifecycle. Contract parsing, controller tests, and
+mocked gateway tests are not interchangeable with live integration evidence;
+reports must identify the highest evidence level actually executed.
+
+For the practical test layout, commands, environment prerequisites, CI gates,
+coverage dimensions, and contribution workflow, see the
+[`test-operations-guide.md`](test-operations-guide.md).
+
 | Layer | Tooling and purpose |
 | --- | --- |
 | Domain | JUnit Jupiter and AssertJ; deterministic allocation, balances, schedule policy and authorization decisions |

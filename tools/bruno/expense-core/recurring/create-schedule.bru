@@ -1,0 +1,38 @@
+meta {
+  name: Create Recurring Schedule
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/schedules
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "description": "Monthly household rent",
+    "amount": {"currency": "EUR", "minor": "90000"},
+    "frequency": "MONTHLY",
+    "dayOfMonth": 1,
+    "startDate": "2026-10-01"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) bru.setVar("scheduleId", res.body.scheduleId);
+}
+
+tests {
+  test("schedule is created", function() {
+    expect(res.getStatus()).to.eql(201);
+    expect(res.getBody().scheduleId).to.be.ok;
+    expect(res.getBody().paused).to.eql(false);
+  });
+}

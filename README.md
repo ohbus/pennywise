@@ -1,6 +1,5 @@
 # Pennywise
 
-[![CI](https://github.com/subhrodip/pennywise/actions/workflows/ci.yml/badge.svg)](https://github.com/subhrodip/pennywise/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2+-purple.svg)](https://kotlinlang.org)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4+-brightgreen.svg)](https://spring.io/projects/spring-boot)
@@ -92,7 +91,7 @@ Ensure you have the following installed on your workstation:
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/subhrodip/pennywise.git
+   git clone https://github.com/ohbus/pennywise.git
    cd pennywise
    ```
 

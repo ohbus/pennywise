@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.RequestPostProcessor
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -47,7 +48,10 @@ class InboxControllerTest {
     @Test
     fun `rejects malformed cursor`() {
         val testInbox = NotificationInbox()
-        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException::class.java) { testInbox.page("alice", "bad", 10) }
+        val err = org.junit.jupiter.api.Assertions.assertThrows(com.subhrodip.pennywise.errors.ApplicationException::class.java) {
+            testInbox.page("alice", "bad", 10)
+        }
+        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_02, err.errorCode)
     }
 
     @Test
@@ -79,6 +83,30 @@ class InboxControllerTest {
         mvc.perform(post(ApiEndpoints.Notifications.V1.inboxMarkRead(notificationId)).with(user))
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+    }
+
+    @Test
+    fun `rejects unauthenticated inbox listing`() {
+        mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_INBOX))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
+    @Test
+    fun `rejects invalid inbox page limits as validation errors`() {
+        mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_INBOX).with(user).param("limit", "0"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+    }
+
+    @Test
+    fun `rejects malformed inbox cursors as validation errors`() {
+        mvc.perform(
+            get(ApiEndpoints.Notifications.V1.PATH_INBOX)
+                .with(user)
+                .param("cursor", "not-a-valid-cursor")
+        ).andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
     }
 
     @Test

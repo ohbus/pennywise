@@ -4,7 +4,7 @@ FROM gradle:9.7.1-jdk25 AS build
 ARG APP_PROJECT
 WORKDIR /workspace
 COPY . .
-RUN ./gradlew ":app:${APP_PROJECT}:bootJar" --no-daemon
+RUN gradle ":app:${APP_PROJECT}:bootJar" --no-daemon
 
 FROM eclipse-temurin:25-jre
 ARG APP_PROJECT

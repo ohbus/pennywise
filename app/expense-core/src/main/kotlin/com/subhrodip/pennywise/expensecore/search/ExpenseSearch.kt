@@ -1,6 +1,8 @@
 package com.subhrodip.pennywise.expensecore.search
 
+import com.subhrodip.pennywise.errors.ApplicationException
 import com.subhrodip.pennywise.expensecore.categories.ExpenseCategory
+import com.subhrodip.pennywise.errors.ErrorCode
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 import java.util.Base64
@@ -164,5 +166,5 @@ class ExpenseSearch {
 
     private fun decodeCursor(cursor: String): String = runCatching {
         String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8).also { require(it.isNotBlank()) }
-    }.getOrElse { throw IllegalArgumentException("Invalid search cursor") }
+    }.getOrElse { throw ApplicationException(ErrorCode.ERR_02, "Invalid search cursor") }
 }

@@ -13,3 +13,9 @@ post {
 headers {
   Authorization: Bearer {{token}}
 }
+
+tests {
+  test("unseeded notification read is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

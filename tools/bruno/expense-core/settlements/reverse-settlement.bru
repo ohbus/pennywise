@@ -15,6 +15,13 @@ headers {
   Content-Type: application/json
 }
 
+tests {
+  test("settlement reversal succeeds", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().status).to.eql("REVERSED");
+  });
+}
+
 body:json {
   {
     "reason": "Incorrect amount recorded"

@@ -5,16 +5,17 @@
 package com.subhrodip.pennywise.expensecore.expenses
 
 import org.springframework.http.HttpStatus
-import org.springframework.web.server.ResponseStatusException
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import java.util.UUID
 
 object ExpenseValidator {
     /** Parse and validate the amount minor unit */
     fun parseAndValidateAmount(minorStr: String, fieldName: String = "amount.minor"): Long {
         val totalMinor = minorStr.toLongOrNull()
-            ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "$fieldName must be a valid integer")
+            ?: throw ApplicationException(ErrorCode.ERR_02, "$fieldName must be a valid integer")
         if (totalMinor <= 0) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "$fieldName must be greater than zero")
+            throw ApplicationException(ErrorCode.ERR_02, "$fieldName must be greater than zero")
         }
         return totalMinor
     }
@@ -24,12 +25,12 @@ object ExpenseValidator {
         var sum = 0L
         payers.forEach { payer ->
             val pAmount = payer.amount.minor.toLongOrNull()
-                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "$fieldPrefix amount.minor must be a valid integer")
+                ?: throw ApplicationException(ErrorCode.ERR_02, "$fieldPrefix amount.minor must be a valid integer")
             if (pAmount <= 0) {
-                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "$fieldPrefix amount.minor must be positive")
+                throw ApplicationException(ErrorCode.ERR_02, "$fieldPrefix amount.minor must be positive")
             }
             if (payer.amount.currency != expenseCurrency) {
-                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "$fieldPrefix currency must match expense currency")
+                throw ApplicationException(ErrorCode.ERR_02, "$fieldPrefix currency must match expense currency")
             }
             sum += pAmount
         }

@@ -1,0 +1,40 @@
+meta {
+  name: Preview Equal Allocation
+  type: http
+  seq: 0
+}
+
+post {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/allocations/preview
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "totalMinor": "1001",
+    "participantIds": [
+      "00000000-0000-0000-0000-000000000001",
+      "00000000-0000-0000-0000-000000000002",
+      "00000000-0000-0000-0000-000000000003"
+    ]
+  }
+}
+
+tests {
+  test("allocation preview is contract-shaped", function() {
+    expect(res.getStatus()).to.eql(200);
+    expect(res.getBody().totalMinor).to.eql("1001");
+    expect(Object.keys(res.getBody().allocations)).to.have.length(3);
+  });
+
+  test("allocation preview preserves the exact total", function() {
+    const values = Object.values(res.getBody().allocations).map(Number);
+    expect(values.reduce((sum, value) => sum + value, 0)).to.eql(1001);
+  });
+}

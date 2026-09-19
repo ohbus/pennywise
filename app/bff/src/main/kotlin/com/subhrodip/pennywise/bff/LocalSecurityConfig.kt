@@ -10,6 +10,8 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNames
 import org.springframework.security.oauth2.server.resource.introspection.ReactiveOpaqueTokenIntrospector
 import org.springframework.security.web.server.SecurityWebFilterChain
+import org.springframework.http.MediaType
+import org.springframework.web.server.WebFilter
 import reactor.core.publisher.Mono
 import java.security.Principal
 
@@ -28,10 +30,24 @@ import java.security.Principal
 class LocalSecurityConfig {
 
     @Bean
+    fun localAcceptanceFaultFilter(): WebFilter = WebFilter { exchange, chain ->
+        if (exchange.request.headers.getFirst("X-Acceptance-Fault") == "fanout" &&
+            exchange.request.path.value() == "/graphql"
+        ) {
+            val body = "{\"errors\":[{\"message\":\"upstream unavailable\"}]}".toByteArray()
+            exchange.response.statusCode = org.springframework.http.HttpStatus.OK
+            exchange.response.headers.contentType = MediaType.APPLICATION_JSON
+            exchange.response.writeWith(Mono.just(exchange.response.bufferFactory().wrap(body)))
+        } else {
+            chain.filter(exchange)
+        }
+    }
+
+    @Bean
     fun localSecurityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
         http
             .csrf { it.disable() }
-            .authorizeExchange { it.anyExchange().permitAll() }
+            .authorizeExchange { it.pathMatchers("/actuator/**").permitAll().anyExchange().authenticated() }
             .oauth2ResourceServer { it.opaqueToken { token -> token.introspector(reactiveLocalTokenIntrospector()) } }
             .build()
 

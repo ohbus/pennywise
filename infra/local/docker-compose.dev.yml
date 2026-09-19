@@ -8,8 +8,8 @@ services:
   accounts:
     deploy:
       resources:
-        reservations: {memory: 192m}
-        limits: {memory: 512m}
+        reservations: {cpus: "0.25", memory: 192m}
+        limits: {cpus: "1.00", memory: 512m}
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.fast
@@ -24,8 +24,8 @@ services:
   expense-core:
     deploy:
       resources:
-        reservations: {memory: 256m}
-        limits: {memory: 768m}
+        reservations: {cpus: "0.50", memory: 256m}
+        limits: {cpus: "1.50", memory: 768m}
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.fast
@@ -46,8 +46,8 @@ services:
   notifications:
     deploy:
       resources:
-        reservations: {memory: 192m}
-        limits: {memory: 512m}
+        reservations: {cpus: "0.25", memory: 192m}
+        limits: {cpus: "1.00", memory: 512m}
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.fast
@@ -68,8 +68,8 @@ services:
   bff:
     deploy:
       resources:
-        reservations: {memory: 192m}
-        limits: {memory: 512m}
+        reservations: {cpus: "0.25", memory: 192m}
+        limits: {cpus: "1.00", memory: 512m}
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.fast

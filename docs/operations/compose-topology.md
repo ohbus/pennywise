@@ -7,26 +7,30 @@ time because each publishes the same stable host ports.
 
 ## Local resource budget
 
-Every local Compose service has an explicit memory reservation and hard limit.
+Every local Compose service has explicit CPU and memory reservations and hard
+limits. CPU reservations are the minimum scheduler share requested when
+resources are constrained; CPU limits are the maximum number of host CPU cores
+the container may consume. They are quotas, not a promise of dedicated host
+cores.
 The dependency-only file is the shared baseline inherited by standalone
 topologies; application containers add their limits in the full-stack file.
 These workstation-sized values are not production sizing:
 
-| Service | Reservation | Limit |
+| Service | CPU reservation / limit | Memory reservation / limit |
 | --- | ---: | ---: |
-| PostgreSQL | 256 MiB | 768 MiB |
-| RabbitMQ | 256 MiB | 768 MiB |
-| Mailpit | 64 MiB | 256 MiB |
-| Accounts | 192 MiB | 512 MiB |
-| Expense Core | 256 MiB | 768 MiB |
-| Notifications | 192 MiB | 512 MiB |
-| BFF | 192 MiB | 512 MiB |
+| PostgreSQL | 0.25 / 1.00 cores | 256 MiB / 768 MiB |
+| RabbitMQ | 0.25 / 1.00 cores | 256 MiB / 768 MiB |
+| Mailpit | 0.05 / 0.25 cores | 64 MiB / 256 MiB |
+| Accounts | 0.25 / 1.00 cores | 192 MiB / 512 MiB |
+| Expense Core | 0.50 / 1.50 cores | 256 MiB / 768 MiB |
+| Notifications | 0.25 / 1.00 cores | 192 MiB / 512 MiB |
+| BFF | 0.25 / 1.00 cores | 192 MiB / 512 MiB |
 
-The complete stack reserves about 1.4 GiB and is capped at about 4.0 GiB,
-before Docker overhead. Compose applies these values through
+The complete stack reserves 1.8 CPU cores and about 1.4 GiB; it is capped at
+7.75 CPU cores and about 4.0 GiB, before Docker overhead. Compose applies these values through
 `deploy.resources`; verify the effective configuration with
 `make compose-config`. If a workstation has less available memory, start a
-narrow topology or increase Docker Desktop memory rather than removing limits.
+narrow topology or increase Docker Desktop resources rather than removing limits.
 
 ## Command and service matrix
 

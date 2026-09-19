@@ -75,6 +75,9 @@ def graphql_query(query: str, variables: dict[str, Any] | None = None, bearer: s
 
 
 def run_offline_resilience_tests() -> int:
+    """Run offline replay checks with explicit UTF-8 console output."""
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     print("=" * 70)
     print("🔌 Running Offline Client Sync & Replay Resilience Test Suite")
     print("=" * 70)

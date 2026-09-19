@@ -14,7 +14,7 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 | Accounts | POST | `/me/export-request` | `requestExport` | contract + live smoke + unauthenticated edge | service failure/replay matrix |
 | Accounts | GET | `/me/export-requests` | `listExportRequests` | contract + live smoke + unauthenticated edge | pagination/service failure matrix |
 | Accounts | GET | `/profiles/{accountId}` | `getProfileById` | contract + live smoke + malformed-ID edge | failure matrix |
-| Accounts | POST | `/profiles/batch` | `getProfilesBatch` | contract + live smoke + empty/malformed-input edges | failure matrix |
+| Accounts | POST | `/profiles/batch` | `getProfilesBatch` | contract + controller + live smoke + empty/malformed/over-limit input + duplicate-ID deduplication | production dependency-failure evidence (QA-08) |
 | Expense Core | POST | `/groups` | `createGroup` | contract + GraphQL/E2E live + authentication/invalid-kind edges | failure matrix |
 | Expense Core | GET | `/groups` | `listGroups` | contract + live smoke + E2E + authentication/archived-state edges | validation/failure matrix |
 | Expense Core | GET | `/groups/{groupId}` | `getGroup` | contract + live smoke + E2E + authentication/non-member/archived edges | validation/failure matrix |
@@ -23,9 +23,9 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 | Expense Core | POST | `/groups/{groupId}/archive` | `archiveGroup` | contract + live smoke + authentication/non-member/replay edges | archived-state side-effect matrix |
 | Expense Core | GET | `/groups/{groupId}/members` | `listGroupMembers` | contract + live smoke + non-member/archived authorization | validation/failure matrix |
 | Expense Core | POST | `/groups/{groupId}/placeholders` | `createPlaceholder` | contract + live smoke + non-member/blank-input edges | resource-state matrix |
-| Expense Core | DELETE | `/groups/{groupId}/members/{membershipId}` | `removeGroupMember` | contract + live smoke + non-member/malformed-ID authorization edges | not-found/idempotency matrix |
+| Expense Core | DELETE | `/groups/{groupId}/members/{membershipId}` | `removeGroupMember` | contract + controller + live smoke + non-member/malformed-ID authorization + removal replay conflict | live replay confirmation |
 | Expense Core | POST | `/groups/{groupId}/invites` | `createInvite` | contract + live smoke + non-member authorization + expiry-boundary edges | replay matrix |
-| Expense Core | POST | `/groups/{groupId}/invites/{token}/revoke` | `revokeInvite` | contract + live success + non-member authorization + unknown/revoked-claim edges | replay matrix |
+| Expense Core | POST | `/groups/{groupId}/invites/{token}/revoke` | `revokeInvite` | contract + controller + live success + non-member authorization + unknown/revoked-claim edges + revocation replay conflict | live replay confirmation |
 | Expense Core | POST | `/invites/{token}/claim` | `claimInvite` | contract + live auth/success + invalid-token/replay/revoked edges | expiry matrix |
 | Expense Core | POST | `/groups/{groupId}/expenses` | `createExpense` | contract + persistence + live + non-member authorization + archived-state edge | retry/dependency/timeout matrix |
 | Expense Core | GET | `/groups/{groupId}/expenses` | `listExpenses` | contract + live smoke + non-member authorization | validation/failure matrix |
@@ -43,8 +43,8 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 | Expense Core | GET | `/groups/{groupId}/schedules` | `listRecurringSchedules` | contract + live smoke + non-member authorization | persistence/failure matrix |
 | Expense Core | GET | `/groups/{groupId}/schedules/{scheduleId}` | `getRecurringSchedule` | contract + live smoke + non-member authorization | not-found/failure matrix |
 | Expense Core | PUT | `/groups/{groupId}/schedules/{scheduleId}` | `updateRecurringSchedule` | contract + live smoke + explicit principal enforcement | validation/state-transition matrix |
-| Expense Core | POST | `/groups/{groupId}/schedules/{scheduleId}/pause` | `pauseRecurringSchedule` | contract + live smoke + non-member authorization | state-transition/idempotency matrix |
-| Expense Core | POST | `/groups/{groupId}/schedules/{scheduleId}/resume` | `resumeRecurringSchedule` | contract + live smoke + explicit principal enforcement | state-transition/idempotency matrix |
+| Expense Core | POST | `/groups/{groupId}/schedules/{scheduleId}/pause` | `pauseRecurringSchedule` | contract + persistence/controller lifecycle + live smoke + non-member authorization + idempotent paused replay | production dependency-failure evidence (QA-08) |
+| Expense Core | POST | `/groups/{groupId}/schedules/{scheduleId}/resume` | `resumeRecurringSchedule` | contract + persistence/controller lifecycle + live smoke + explicit principal enforcement + idempotent resumed replay | production dependency-failure evidence (QA-08) |
 | Notifications | GET | `/inbox` | `listInbox` | contract + persistence + live + auth/limit-boundary/cursor edges | failure/retry matrix |
 | Notifications | POST | `/inbox/{notificationId}/read` | `markAsRead` | contract + persistence + live + authentication/malformed-ID/unknown-resource edges | failure/retry matrix |
 | Notifications | GET | `/preferences` | `getPreferences` | contract + live smoke + unauthenticated edge | persistence/failure matrix |

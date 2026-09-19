@@ -282,6 +282,10 @@ class GroupControllerTest {
         testMvc.perform(delete(ApiEndpoints.ExpenseCore.V1.groupById(groupId) + "/members/$bobMembershipId").with(alice))
             .andExpect(status().isNoContent)
 
+        // Removing the same membership again is a conflict and does not mutate revision twice.
+        testMvc.perform(delete(ApiEndpoints.ExpenseCore.V1.groupById(groupId) + "/members/$bobMembershipId").with(alice))
+            .andExpect(status().isConflict)
+
         // Active members list now has 1 member (alice)
         testMvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupMembers(groupId)).with(alice))
             .andExpect(status().isOk)
@@ -310,6 +314,10 @@ class GroupControllerTest {
         // Revoke invite
         mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupInvites(groupId) + "/$token/revoke").with(alice))
             .andExpect(status().isNoContent)
+
+        // Revocation replay is rejected without changing the invite again.
+        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupInvites(groupId) + "/$token/revoke").with(alice))
+            .andExpect(status().isConflict)
 
         // Attempting to claim revoked invite returns 409 Conflict
         val store = InMemoryGroupStore()

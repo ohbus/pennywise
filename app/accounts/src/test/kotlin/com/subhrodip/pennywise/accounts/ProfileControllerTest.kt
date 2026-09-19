@@ -201,6 +201,33 @@ class ProfileControllerTest {
             .andExpect(status().isBadRequest)
     }
 
+    /** Verifies the public batch boundary enforces its documented maximum of 100 account IDs. */
+    @Test
+    fun `rejects batch profile lookup above maximum size`() {
+        val accountIds = (1..101).joinToString(",") { "\"${UUID.randomUUID()}\"" }
+
+        mvc.perform(post(ApiEndpoints.Accounts.V1.PATH_PROFILES_BATCH)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"accountIds\":[$accountIds]}"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+    }
+
+    /** Verifies duplicate requested IDs produce one profile rather than duplicated response rows. */
+    @Test
+    fun `deduplicates repeated profile identifiers in batch response`() {
+        mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME).with(alice))
+            .andExpect(status().isOk)
+        val aliceId = UUID.nameUUIDFromBytes("oidc|alice".toByteArray(StandardCharsets.UTF_8))
+
+        mvc.perform(post(ApiEndpoints.Accounts.V1.PATH_PROFILES_BATCH)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"accountIds\":[\"$aliceId\",\"$aliceId\"]}"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].accountId").value(aliceId.toString()))
+    }
+
     @Test
     fun `store finds profiles in batch and ignores non-existent ids`() {
         val store = InMemoryProfileStore()

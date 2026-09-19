@@ -47,8 +47,8 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 | Expense Core | POST | `/groups/{groupId}/schedules/{scheduleId}/resume` | `resumeRecurringSchedule` | contract + persistence/controller lifecycle + live smoke + explicit principal enforcement + idempotent resumed replay | production dependency-failure evidence (QA-08) |
 | Notifications | GET | `/inbox` | `listInbox` | contract + persistence + live + auth/limit-boundary/cursor edges | failure/retry matrix |
 | Notifications | POST | `/inbox/{notificationId}/read` | `markAsRead` | contract + persistence + live + authentication/malformed-ID/unknown-resource edges | failure/retry matrix |
-| Notifications | GET | `/preferences` | `getPreferences` | contract + live smoke + unauthenticated edge | persistence/failure matrix |
-| Notifications | PUT | `/preferences` | `updatePreferences` | contract + live smoke + unauthenticated edge | persistence/failure matrix |
+| Notifications | GET | `/preferences` | `getPreferences` | contract + controller/live smoke + unauthenticated and blank-subject edges | persistence/failure matrix |
+| Notifications | PUT | `/preferences` | `updatePreferences` | contract + controller/live smoke + unauthenticated and blank-subject edges | persistence/failure matrix |
 
 ## GraphQL and WebSocket operation matrix
 

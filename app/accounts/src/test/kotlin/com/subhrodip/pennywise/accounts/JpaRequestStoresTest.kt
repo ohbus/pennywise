@@ -3,6 +3,9 @@ package com.subhrodip.pennywise.accounts
 import com.subhrodip.pennywise.accounts.requests.deletion.DeletionRequestRepository
 import com.subhrodip.pennywise.accounts.requests.deletion.JpaDeletionRequestStore
 import com.subhrodip.pennywise.accounts.requests.deletion.DeletionStatus
+import com.subhrodip.pennywise.accounts.requests.export.ExportRequestRepository
+import com.subhrodip.pennywise.accounts.requests.export.ExportStatus
+import com.subhrodip.pennywise.accounts.requests.export.JpaExportRequestStore
 
 import java.time.Instant
 import java.util.UUID

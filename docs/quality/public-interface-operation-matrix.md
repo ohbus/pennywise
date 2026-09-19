@@ -20,9 +20,9 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 | Expense Core | GET | `/groups/{groupId}` | `getGroup` | contract + controller/live smoke + E2E + authentication/non-member/not-found/archived edges | production dependency-failure evidence (QA-08) |
 | Expense Core | PATCH | `/groups/{groupId}` | `updateGroup` | contract + controller/live smoke + E2E + non-member/blank-input edges + revision increment | production dependency-failure evidence (QA-08) |
 | Expense Core | POST | `/allocations/preview` | `previewAllocation` | contract + controller/live smoke + authentication and participant/percentage validation + exact-total invariants | production dependency-failure evidence (QA-08) |
-| Expense Core | POST | `/groups/{groupId}/archive` | `archiveGroup` | contract + live smoke + authentication/non-member/replay edges | archived-state side-effect matrix |
+| Expense Core | POST | `/groups/{groupId}/archive` | `archiveGroup` | contract + controller/live smoke + authentication/non-member/replay edges + archived mutation blocking | production dependency-failure evidence (QA-08) |
 | Expense Core | GET | `/groups/{groupId}/members` | `listGroupMembers` | contract + controller/live smoke + non-member/archived authorization + claimed-placeholder lifecycle | production dependency-failure evidence (QA-08) |
-| Expense Core | POST | `/groups/{groupId}/placeholders` | `createPlaceholder` | contract + live smoke + non-member/blank-input edges | resource-state matrix |
+| Expense Core | POST | `/groups/{groupId}/placeholders` | `createPlaceholder` | contract + controller/live smoke + non-member/blank-input edges + targeted invite binding | production dependency-failure evidence (QA-08) |
 | Expense Core | DELETE | `/groups/{groupId}/members/{membershipId}` | `removeGroupMember` | contract + controller + live smoke + non-member/malformed-ID authorization + removal replay conflict | live replay confirmation |
 | Expense Core | POST | `/groups/{groupId}/invites` | `createInvite` | contract + live smoke + non-member authorization + expiry-boundary edges | replay matrix |
 | Expense Core | POST | `/groups/{groupId}/invites/{token}/revoke` | `revokeInvite` | contract + controller + live success + non-member authorization + unknown/revoked-claim edges + revocation replay conflict | live replay confirmation |

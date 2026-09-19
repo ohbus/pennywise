@@ -37,8 +37,8 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 | Expense Core | GET | `/groups/{groupId}/balances` | `getBalances` | contract + persistence + live + non-member authorization | validation/failure matrix |
 | Expense Core | GET | `/groups/{groupId}/sync/snapshot` | `getSnapshot` | contract + persistence + live + malformed/expired-cursor/non-member edges | broader cursor ownership cases |
 | Expense Core | GET | `/groups/{groupId}/sync/changes` | `getChanges` | contract + persistence + live + malformed/expired-cursor/non-member edges | broader cursor ownership cases |
-| Expense Core | GET | `/groups/{groupId}/search` | `searchExpenses` | contract + persistence + live + malformed-cursor/non-member edges | broader filters; cursor is ID-based and has no expiry |
-| Expense Core | GET | `/groups/{groupId}/export` | `exportExpenses` | contract + persistence + live + non-member/media-negotiation edges | broader filters/malformed cursor cases |
+| Expense Core | GET | `/groups/{groupId}/search` | `searchExpenses` | contract + persistence + live + query/currency/category filters + cursor pagination/totals + malformed-cursor/non-member edges | production dependency-failure evidence (QA-08) |
+| Expense Core | GET | `/groups/{groupId}/export` | `exportExpenses` | contract + persistence + live + query/currency/category filters + row bounds/formula-injection protection + non-member/media-negotiation edges | production dependency-failure evidence (QA-08) |
 | Expense Core | POST | `/groups/{groupId}/schedules` | `createRecurringSchedule` | contract + live smoke + non-member authorization | recurrence validation/failure matrix |
 | Expense Core | GET | `/groups/{groupId}/schedules` | `listRecurringSchedules` | contract + live smoke + non-member authorization | persistence/failure matrix |
 | Expense Core | GET | `/groups/{groupId}/schedules/{scheduleId}` | `getRecurringSchedule` | contract + live smoke + non-member authorization | not-found/failure matrix |

@@ -45,25 +45,25 @@ data class GroupResponse(
 )
 
 data class GroupMemberResponse(
-    val membershipId: UUID,
-    val groupId: UUID,
-    val subject: String? = null,
-    val displayName: String? = null,
-    val isPlaceholder: Boolean = false,
-    val status: String = "ACTIVE"
+    @get:com.fasterxml.jackson.annotation.JsonProperty("membershipId") val membershipId: UUID,
+    @get:com.fasterxml.jackson.annotation.JsonProperty("groupId") val groupId: UUID,
+    @get:com.fasterxml.jackson.annotation.JsonProperty("subject") val subject: String? = null,
+    @get:com.fasterxml.jackson.annotation.JsonProperty("displayName") val displayName: String? = null,
+    @get:com.fasterxml.jackson.annotation.JsonProperty("isPlaceholder") val isPlaceholder: Boolean = false,
+    @get:com.fasterxml.jackson.annotation.JsonProperty("status") val status: String = "ACTIVE"
 )
 
 data class CreateInviteRequest(
     @field:Min(1)
     @field:Max(168)
     val expiresInHours: Int,
-    val placeholderId: UUID? = null
+    @get:com.fasterxml.jackson.annotation.JsonProperty("placeholderId") val placeholderId: UUID? = null
 )
 
 data class InviteResponse(
     val token: String,
     val expiresAt: Instant,
-    val placeholderId: UUID? = null
+    @get:com.fasterxml.jackson.annotation.JsonProperty("placeholderId") val placeholderId: UUID? = null
 )
 
 @RestController

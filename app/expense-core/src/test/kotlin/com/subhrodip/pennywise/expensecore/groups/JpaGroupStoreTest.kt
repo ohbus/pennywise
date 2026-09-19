@@ -85,7 +85,9 @@ class JpaGroupStoreTest @Autowired constructor(
 
         assertEquals(2, results.count { it.get() })
         executor.shutdown()
-        assertEquals(listOf(group), store.list("same-member"))
+        val memberGroups = store.list("same-member")
+        assertEquals(1, memberGroups.size)
+        assertEquals(group.groupId, memberGroups[0].groupId)
     }
 
     /**

@@ -235,35 +235,50 @@ class JpaGroupStore(
         val group = groups.findForMembershipUpdate(invitation.groupId) ?: notFound()
         checkActiveGroup(group)
 
-        val claimedAt = Instant.now()
-        if (invitations.claimIfAvailable(token, subject, claimedAt) != 1) {
-            conflict("Invite could not be claimed")
-        }
-
         if (invitation.placeholderId != null) {
             val placeholder = memberships.findByMembershipIdAndGroupId(invitation.placeholderId!!, group.groupId)
                 ?: conflict("Placeholder not found")
             if (placeholder.status != "ACTIVE" || placeholder.subject != null) {
                 conflict("Placeholder is no longer available")
             }
+            val claimedAt = Instant.now()
+            if (invitations.claimIfAvailable(token, subject, claimedAt) != 1) {
+                conflict("Invite could not be claimed")
+            }
             placeholder.subject = subject
             placeholder.isPlaceholder = false
             memberships.save(placeholder)
+            group.revision += 1
+            val saved = groups.save(group)
+            val payload = mapOf(
+                "groupId" to group.groupId.toString(),
+                "token" to token,
+                "claimedBy" to subject,
+                "placeholderId" to invitation.placeholderId?.toString(),
+                "revision" to saved.revision
+            )
+            recordMutation(group.groupId, subject, "invitation.claimed", saved.revision, payload, claimedAt, "invitation.claimed.v1")
+            return saved.toResponse()
         } else {
+            if (memberships.existsByGroupIdAndSubjectAndStatus(group.groupId, subject, "ACTIVE")) {
+                return group.toResponse()
+            }
+            val claimedAt = Instant.now()
+            if (invitations.claimIfAvailable(token, subject, claimedAt) != 1) {
+                conflict("Invite could not be claimed")
+            }
             addMembership(group.groupId, subject)
+            group.revision += 1
+            val saved = groups.save(group)
+            val payload = mapOf(
+                "groupId" to group.groupId.toString(),
+                "token" to token,
+                "claimedBy" to subject,
+                "revision" to saved.revision
+            )
+            recordMutation(group.groupId, subject, "invitation.claimed", saved.revision, payload, claimedAt, "invitation.claimed.v1")
+            return saved.toResponse()
         }
-
-        group.revision += 1
-        val saved = groups.save(group)
-        val payload = mapOf(
-            "groupId" to group.groupId.toString(),
-            "token" to token,
-            "claimedBy" to subject,
-            "placeholderId" to invitation.placeholderId?.toString(),
-            "revision" to saved.revision
-        )
-        recordMutation(group.groupId, subject, "invitation.claimed", saved.revision, payload, claimedAt, "invitation.claimed.v1")
-        return saved.toResponse()
     }
 
     private fun addMembership(groupId: UUID, subject: String) {

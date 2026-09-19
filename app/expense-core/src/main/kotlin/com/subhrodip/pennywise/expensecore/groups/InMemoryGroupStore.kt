@@ -169,37 +169,41 @@ class InMemoryGroupStore : GroupStore {
         }
         val data = invites[token]
             ?: throw ResponseStatusException(HttpStatus.CONFLICT, "Invite is invalid or already claimed")
-        if (data.claimedAt != null || data.revokedAt != null || !data.expiresAt.isAfter(Instant.now())) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Invite is invalid, expired, or already claimed/revoked")
-        }
-        val group = groups[data.groupId]
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found")
-        if (group.status == "ARCHIVED") {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Group is archived")
-        }
-
-        data.claimedAt = Instant.now()
-        data.claimedBy = subject
-
-        val memberList = memberships.computeIfAbsent(group.groupId) { CopyOnWriteArrayList() }
-        if (data.placeholderId != null) {
-            val index = memberList.indexOfFirst { it.membershipId == data.placeholderId }
-            if (index == -1) {
-                throw ResponseStatusException(HttpStatus.CONFLICT, "Placeholder not found")
+        synchronized(data) {
+            if (data.claimedAt != null || data.revokedAt != null || !data.expiresAt.isAfter(Instant.now())) {
+                throw ResponseStatusException(HttpStatus.CONFLICT, "Invite is invalid, expired, or already claimed/revoked")
             }
-            val target = memberList[index]
-            if (target.status != "ACTIVE" || target.subject != null) {
-                throw ResponseStatusException(HttpStatus.CONFLICT, "Placeholder is no longer available")
+            val group = groups[data.groupId]
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found")
+            if (group.status == "ARCHIVED") {
+                throw ResponseStatusException(HttpStatus.CONFLICT, "Group is archived")
             }
-            memberList[index] = target.copy(subject = subject, isPlaceholder = false)
-        } else {
-            if (memberList.none { it.subject == subject && it.status == "ACTIVE" }) {
+
+            val memberList = memberships.computeIfAbsent(group.groupId) { CopyOnWriteArrayList() }
+            if (data.placeholderId != null) {
+                val index = memberList.indexOfFirst { it.membershipId == data.placeholderId }
+                if (index == -1) {
+                    throw ResponseStatusException(HttpStatus.CONFLICT, "Placeholder not found")
+                }
+                val target = memberList[index]
+                if (target.status != "ACTIVE" || target.subject != null) {
+                    throw ResponseStatusException(HttpStatus.CONFLICT, "Placeholder is no longer available")
+                }
+                data.claimedAt = Instant.now()
+                data.claimedBy = subject
+                memberList[index] = target.copy(subject = subject, isPlaceholder = false)
+            } else {
+                if (memberList.any { it.subject == subject && it.status == "ACTIVE" }) {
+                    return group
+                }
+                data.claimedAt = Instant.now()
+                data.claimedBy = subject
                 memberList.add(GroupMemberResponse(UuidGenerator.next(), group.groupId, subject, null, false, "ACTIVE"))
             }
+            groupsByMember.computeIfAbsent(subject) { ConcurrentHashMap.newKeySet() }.add(group.groupId)
+            val updatedGroup = group.copy(revision = group.revision + 1)
+            groups[group.groupId] = updatedGroup
+            return updatedGroup
         }
-        groupsByMember.computeIfAbsent(subject) { ConcurrentHashMap.newKeySet() }.add(group.groupId)
-        val updatedGroup = group.copy(revision = group.revision + 1)
-        groups[group.groupId] = updatedGroup
-        return updatedGroup
     }
 }

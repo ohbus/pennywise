@@ -151,6 +151,7 @@ execution checkpoints and evidence; it does not replace task acceptance criteria
 | 2026-09-19 | CORE-21 | Completed persistent authorized search and CSV transport with formula escaping and pagination | `./gradlew :app:expense-core:test --tests "*search*"` and `make check` passed | acd0270 |
 | 2026-09-19 | CORE-19 | Completed group lifecycle and membership administration (group archive, named placeholders, soft member removal, invite revocation) | `make check` passed (contracts, Spotless code style, tests, JaCoCo coverage, builds succeeded) | acd0270 |
 | 2026-09-19 | DOC-19 | Backfilled legacy tracker ownership and specifications (DOC-08, CORE-03, DOC-11, DOC-15A, DOC-15B) | `python3 tools/contracts/validate.py` and `git diff --check` passed | 452a258 |
+| 2026-09-19 | MSG-02 | Delivered committed group changes to every BFF replica via RabbitMQ anonymous queues, deduplication LRU, and fanout | `./gradlew :app:expense-core:test :app:bff:test --no-daemon`, `python3 tools/contracts/validate.py`, and `git diff --check` passed | 2a320ca |
 
 
 ## Evidence rules

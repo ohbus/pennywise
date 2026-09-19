@@ -4599,6 +4599,41 @@
       "blocker": null
     },
     {
+      "id": "AUTH-02",
+      "parent_id": "AUTH-01",
+      "title": "Remove implicit authentication identities",
+      "phase": "security",
+      "status": "planned",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["AUTH-01", "ERR-03"],
+      "owned_paths": [
+        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseController.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseControllerTest.kt",
+        "tests/e2e/",
+        "tools/bruno/",
+        "docs/tasks/details/AUTH-02.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-02.md",
+      "acceptance_criteria": [
+        "No runtime endpoint substitutes a synthetic subject when authentication is absent or blank.",
+        "Affected REST operations return the structured unauthenticated response and perform no membership or domain side effect.",
+        "Unit/controller, REST-edge, Bruno, and live E2E tests cover missing and blank principals for all affected operations.",
+        "Task documentation records exact test commands, evidence, limitations, and commit hash."
+      ],
+      "validation_commands": [
+        "./gradlew :app:expense-core:test --tests '*ExpenseControllerTest' --rerun-tasks --no-daemon",
+        "python3 tests/e2e/test_rest_edge_cases.py",
+        "make bruno-run BRUNO_ENV=local",
+        "make acceptance-live",
+        "git diff --check"
+      ],
+      "evidence": [],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
       "id": "QA-07",
       "parent_id": "MILESTONE-QUALITY",
       "title": "Exhaustive public-interface integration coverage",

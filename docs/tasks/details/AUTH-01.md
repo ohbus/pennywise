@@ -34,18 +34,57 @@ tokens, or an equivalent secure server-side session for browser clients.
   absent; this must be removed before production authentication work is
   considered complete.
 
+## Delivery rules
+
+No child task may change runtime authentication without first updating its
+task detail, affected contracts, architecture/operations documentation, and
+test plan. Every externally visible auth behavior must be covered at all
+applicable layers:
+
+- unit tests for token, identity, credential, and policy logic;
+- controller/filter tests for HTTP and GraphQL boundaries;
+- persistence tests for expiry, uniqueness, revocation, and concurrency;
+- Bruno requests and assertions for REST/GraphQL contract behavior;
+- live E2E journeys against the configured local OIDC provider;
+- negative security tests for replay, enumeration, malformed credentials,
+  wrong issuer/audience, expiry, revocation, and authorization loss.
+
+The implementation is incomplete until the exact commands and evidence are
+recorded in `docs/tasks/progress.md`. Local passthrough-token tests cannot be
+reported as proof of real OIDC integration.
+
 ## Planned child increments
 
-1. Remove implicit identities and make missing authentication a hard 401.
-2. Add fail-closed production JWT resource-server configuration with issuer,
+1. AUTH-02 removes implicit identities and makes missing authentication a hard
+   401, with controller, REST-edge, Bruno, and E2E coverage.
+2. AUTH-03 adds fail-closed production JWT resource-server configuration with issuer,
    audience, algorithm, expiry, and subject validation.
-3. Add explicit opt-in and localhost-only safeguards for passthrough local auth.
-4. Add optional local Keycloak, realm bootstrap, and Mailpit integration.
-5. Add provider-neutral login-start, callback, email-link, and one-time-code
+3. AUTH-04 validates issuer, audience, algorithm, expiry, subject, and token
+   type, with forged-token and boundary tests.
+4. AUTH-05 adds explicit opt-in and localhost-only safeguards for passthrough
+   local auth.
+5. AUTH-06 adds optional local Keycloak, realm bootstrap, and Mailpit integration,
+   plus real-token E2E and Bruno environments.
+6. AUTH-07 adds provider-neutral login-start, callback, email-link, and one-time-code
    contracts with anti-enumeration and rate limiting.
-6. Add identity mapping, short-lived access credentials, refresh rotation,
+7. AUTH-08 implements identity mapping, short-lived access credentials, refresh rotation,
    reuse detection, logout, revocation, and session management.
-7. Add HTTP, GraphQL, WebSocket, provider-compatibility, and operational tests.
+8. AUTH-09 through AUTH-15 add HTTP, GraphQL, WebSocket, provider-compatibility,
+   abuse-resistance, operational, and recovery tests.
+
+## Required evidence per child task
+
+Each child task must record:
+
+1. exact files changed and why each is owned by the task;
+2. contract changes and backward-compatibility impact;
+3. threat model and abuse cases considered;
+4. unit/controller/persistence test names and expected assertions;
+5. Bruno request names, environment variables, and assertions;
+6. E2E journey steps, fixtures, cleanup, and provider used;
+7. validation commands with exact output summary;
+8. known limitations, production-only evidence, and follow-up task links;
+9. commit hash and clean-worktree review.
 
 ## Acceptance criteria
 

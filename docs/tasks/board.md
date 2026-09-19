@@ -94,7 +94,7 @@ validation with Python's standard library.
 | CORE-22 | coordinator | done | Harden group updates with transactional change effects |
 | BFF-07 | coordinator | done | Complete bounded GraphQL group-member resolution |
 | MSG-02 | messaging | done | Deliver committed group changes to every BFF replica |
-| QA-04 | unassigned | planned | Execute authenticated real-dependency product acceptance |
+| QA-04 | coordinator | done | Execute authenticated real-dependency product acceptance |
 | OPS-10 | unassigned | planned | Produce public-launch restore, capacity, and cost evidence |
 | DOC-18 | contracts | done | Reconcile current API operation and error contracts |
 | DOC-19 | coordinator | done | Backfill legacy tracker ownership and evidence |

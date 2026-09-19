@@ -21,9 +21,44 @@ class MockServicesHandler(http.server.BaseHTTPRequestHandler):
         # Suppress standard HTTP server console logging during tests
         pass
 
+    renames = 0
+
+    def do_PATCH(self) -> None:
+        if self.headers.get("Authorization") != "Bearer test-user":
+            self.send_response(401)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"code": "UNAUTHENTICATED"}).encode("utf-8"))
+            return
+        if self.headers.get("X-Acceptance-Fault") == "rollback":
+            self.send_response(409)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"code": "TEST_ROLLBACK"}).encode("utf-8"))
+            return
+        MockServicesHandler.renames += 1
+        status = 409 if MockServicesHandler.renames > 1 else 200
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps({"revision": 1}).encode("utf-8"))
+
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         path = parsed.path
+
+        if path.endswith("/members"):
+            if self.headers.get("Authorization") != "Bearer test-user":
+                self.send_response(401)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"code": "UNAUTHENTICATED"}).encode("utf-8"))
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"members": []}).encode("utf-8"))
+            return
 
         if path == "/actuator/health":
             self.send_response(200)
@@ -130,20 +165,36 @@ class MockServicesHandler(http.server.BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(
-                json.dumps(
-                    {
-                        "data": {
-                            "groups": [
+            parsed_body = json.loads(body) if body else {}
+            query = parsed_body.get("query", "")
+            if "fanoutFailure" in query:
+                self.wfile.write(
+                    json.dumps(
+                        {
+                            "errors": [
                                 {
-                                    "id": "00000000-0000-0000-0000-000000000001",
-                                    "name": "Acceptance Trip",
+                                    "message": "upstream service unavailable",
+                                    "extensions": {"code": "UPSTREAM_UNAVAILABLE"},
                                 }
                             ]
                         }
-                    }
-                ).encode("utf-8")
-            )
+                    ).encode("utf-8")
+                )
+            else:
+                self.wfile.write(
+                    json.dumps(
+                        {
+                            "data": {
+                                "groups": [
+                                    {
+                                        "id": "00000000-0000-0000-0000-000000000001",
+                                        "name": "Acceptance Trip",
+                                    }
+                                ]
+                            }
+                        }
+                    ).encode("utf-8")
+                )
             return
 
         self.send_response(404)
@@ -172,6 +223,7 @@ class RunnerTest(unittest.TestCase):
 
     def test_argument_parsing_defaults(self) -> None:
         args = runner.parse_args([])
+        self.assertEqual(args.task_id, "QA-04")
         self.assertFalse(args.require_services)
         self.assertEqual(args.timeout, 2.0)
         self.assertEqual(args.bff_url, "http://localhost:8080")
@@ -180,12 +232,14 @@ class RunnerTest(unittest.TestCase):
 
     def test_argument_parsing_custom(self) -> None:
         args = runner.parse_args([
+            "--task-id", "QA-01",
             "--require-services",
             "--timeout", "4.5",
             "--bff-url", "http://bff:9000",
             "--expense-core-url", "http://expense:9002",
             "--report-path", "custom-report.json",
         ])
+        self.assertEqual(args.task_id, "QA-01")
         self.assertTrue(args.require_services)
         self.assertEqual(args.timeout, 4.5)
         self.assertEqual(args.bff_url, "http://bff:9000")
@@ -213,7 +267,7 @@ class RunnerTest(unittest.TestCase):
     def test_all_scenarios_pass_against_mock_services(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
         with tempfile.TemporaryDirectory() as tmpdir:
-            temp_report = Path(tmpdir) / "qa-01.json"
+            temp_report = Path(tmpdir) / "qa-04.json"
             exit_code, report = runner.run_acceptance_suite(
                 repo_root=repo_root,
                 bff_url=self.server_url,
@@ -221,10 +275,11 @@ class RunnerTest(unittest.TestCase):
                 timeout=2.0,
                 require_services=True,
                 report_path=temp_report,
+                task_id="QA-04",
             )
             self.assertEqual(exit_code, 0)
             self.assertTrue(temp_report.exists())
-            self.assertEqual(report["task"], "QA-01")
+            self.assertEqual(report["task"], "QA-04")
 
             statuses = {r["id"]: r["status"] for r in report["results"]}
             self.assertEqual(statuses["QA-CONTRACTS"], "passed")
@@ -232,6 +287,11 @@ class RunnerTest(unittest.TestCase):
             self.assertEqual(statuses["QA-GROUP-EXPENSE-SETTLEMENT"], "passed")
             self.assertEqual(statuses["QA-OFFLINE-REPLAY"], "passed")
             self.assertEqual(statuses["QA-WEBSOCKET-RESYNC"], "passed")
+            self.assertEqual(statuses["QA05-ROLLBACK"], "passed")
+            self.assertEqual(statuses["QA05-CONCURRENCY"], "passed")
+            self.assertEqual(statuses["QA05-AUTHORIZATION"], "passed")
+            self.assertEqual(statuses["QA05-BFF-FANOUT"], "passed")
+            self.assertEqual(statuses["QA05-RECOVERY"], "passed")
 
     def test_offline_services_without_require_services(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]

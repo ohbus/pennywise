@@ -61,6 +61,11 @@ Shared ID primitives are likewise grouped by concern under `libs/ids`:
 endpoint contracts, event constants, and UUID generation. Their existing public
 package remains stable so application imports do not need a breaking migration.
 
+Shared error handling follows the same concern grouping under `libs/errors`:
+domain error definitions, HTTP problem mapping, and request-correlation
+plumbing are separated physically while retaining the established public
+package for consumers.
+
 Future `app/web` chooses tooling in a separate UI task. Its README explains the
 GraphQL endpoint, authentication integration decision still required, subscription
 and reconnect behavior, money-as-string representation, and pending offline

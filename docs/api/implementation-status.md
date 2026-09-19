@@ -25,6 +25,10 @@ Current authorization and lifecycle invariants include:
 - notification inbox and preference operations reject missing authentication;
 - malformed cursors, invalid pagination bounds, malformed identifiers, and
   incompatible media negotiation have explicit problem/status coverage.
+- settlement responses expose `fromParticipantId` and `toParticipantId`
+  consistently across implementation and OpenAPI; reversing an unknown or
+  cross-group settlement returns the structured not-found problem rather than
+  an internal error.
 
 The operation-level evidence and remaining dimensions are maintained in
 [`public-interface-operation-matrix.md`](../quality/public-interface-operation-matrix.md).

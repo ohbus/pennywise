@@ -31,9 +31,9 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 | Expense Core | GET | `/groups/{groupId}/expenses` | `listExpenses` | contract + live smoke + non-member authorization | validation/failure matrix |
 | Expense Core | PUT | `/groups/{groupId}/expenses/{expenseId}` | `updateExpense` | contract + persistence + live + non-member authorization | retry/dependency/timeout matrix |
 | Expense Core | DELETE | `/groups/{groupId}/expenses/{expenseId}` | `deleteExpense` | contract + live smoke + non-member authorization | validation/failure matrix |
-| Expense Core | POST | `/groups/{groupId}/settlements` | `recordSettlement` | contract + persistence + live + non-member authorization | validation/conflict/retry matrix |
-| Expense Core | GET | `/groups/{groupId}/settlements/suggestions` | `getSettlementSuggestions` | contract + GraphQL/E2E live + non-member authorization | empty/timeout/failure matrix |
-| Expense Core | POST | `/groups/{groupId}/settlements/{settlementId}/reversal` | `reverseSettlement` | contract + persistence + live + non-member authorization | not-found/idempotency/retry matrix |
+| Expense Core | POST | `/groups/{groupId}/settlements` | `recordSettlement` | contract + controller/persistence + live + non-member authorization + non-numeric/zero/same-participant validation | production dependency-failure evidence (QA-08) |
+| Expense Core | GET | `/groups/{groupId}/settlements/suggestions` | `getSettlementSuggestions` | contract + controller/GraphQL/E2E live + empty-result + non-member authorization | production timeout/failure evidence (QA-08) |
+| Expense Core | POST | `/groups/{groupId}/settlements/{settlementId}/reversal` | `reverseSettlement` | contract + controller/persistence + live authorization + not-found + idempotent replay preserving original reason | production dependency-failure evidence (QA-08) |
 | Expense Core | GET | `/groups/{groupId}/balances` | `getBalances` | contract + persistence + live + non-member authorization | validation/failure matrix |
 | Expense Core | GET | `/groups/{groupId}/sync/snapshot` | `getSnapshot` | contract + persistence + live + malformed/expired-cursor/non-member edges | broader cursor ownership cases |
 | Expense Core | GET | `/groups/{groupId}/sync/changes` | `getChanges` | contract + persistence + live + malformed/expired-cursor/non-member edges | broader cursor ownership cases |

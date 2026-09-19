@@ -88,4 +88,58 @@ class SettlementControllerTest {
             get(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions(UUID.randomUUID())).with(nonMember)
         ).andExpect(status().isNotFound)
     }
+
+    /** Verifies recording, reversal, and reversal replay through the public REST boundary. */
+    @Test
+    fun `records and idempotently reverses settlement`() {
+        val groupId = UUID.randomUUID()
+        val from = UUID.randomUUID()
+        val to = UUID.randomUUID()
+        val recorded = mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1250\"}")
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.fromParticipantId").value(from.toString()))
+            .andExpect(jsonPath("$.toParticipantId").value(to.toString()))
+            .andExpect(jsonPath("$.amountMinor").value(1250))
+            .andExpect(jsonPath("$.status").value("RECORDED"))
+            .andReturn().response.contentAsString
+        val settlementId = Regex("\\\"id\\\":\\\"([^\\\"]+)\\\"").find(recorded)!!.groupValues[1]
+        val reversalPath = ApiEndpoints.ExpenseCore.V1.groupSettlementReversal(groupId, settlementId)
+
+        mvc.perform(post(reversalPath).with(user).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"reason\":\"paid externally\"}"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("REVERSED"))
+            .andExpect(jsonPath("$.reason").value("paid externally"))
+
+        mvc.perform(post(reversalPath).with(user).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"reason\":\"retry must not overwrite\"}"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("REVERSED"))
+            .andExpect(jsonPath("$.reason").value("paid externally"))
+    }
+
+    /** Verifies invalid settlement invariants and unknown reversals use public client errors. */
+    @Test
+    fun `rejects invalid settlements and returns not found for unknown reversal`() {
+        val groupId = UUID.randomUUID()
+        val participant = UUID.randomUUID()
+        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"fromParticipantId\":\"$participant\",\"toParticipantId\":\"$participant\",\"amountMinor\":\"100\"}"))
+            .andExpect(status().isBadRequest)
+
+        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"fromParticipantId\":\"${UUID.randomUUID()}\",\"toParticipantId\":\"${UUID.randomUUID()}\",\"amountMinor\":\"0\"}"))
+            .andExpect(status().isBadRequest)
+
+        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlementReversal(groupId, UUID.randomUUID())).with(user)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"unknown\"}"))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+    }
 }

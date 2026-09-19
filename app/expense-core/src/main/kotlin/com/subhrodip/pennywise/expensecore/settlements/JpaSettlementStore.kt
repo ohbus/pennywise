@@ -46,13 +46,13 @@ class JpaSettlementStore(
      * @param settlementId the UUID of the settlement to reverse
      * @param reason explanation for the reversal
      * @return the updated domain settlement with REVERSED status
-     * @throws IllegalStateException if the settlement cannot be found
+     * @throws ApplicationException with [ErrorCode.ERR_05] if the settlement cannot be found
      */
     @Transactional
     override fun reverse(groupId: UUID, settlementId: UUID, reason: String): Settlement {
         checkActiveGroup(groupId)
         val entity = repository.findForUpdate(settlementId, groupId)
-            ?: error("Settlement not found")
+            ?: throw ApplicationException(ErrorCode.ERR_05, "Settlement not found")
         if (entity.status == SettlementStatus.REVERSED) return entity.toDomain()
         entity.status = SettlementStatus.REVERSED
         entity.reversalReason = reason

@@ -49,6 +49,19 @@ class GraphqlHttpTransportTest {
     @MockitoBean
     private lateinit var expenseCoreGateway: ExpenseCoreGateway
 
+    private fun expectGraphqlError(query: String, privateDetail: String) {
+        client.post().uri("/graphql")
+            .bodyValue(mapOf("query" to query))
+            .exchange()
+            .expectStatus().isOk
+            .expectBody()
+            .jsonPath("$.errors").isArray
+            .jsonPath("$.data").isEqualTo(null)
+            .jsonPath("$.errors[0].message").value<String> { message ->
+                assert(!message.contains(privateDetail))
+            }
+    }
+
     @Test
     fun `graphql route returns data for a profile query`() {
         `when`(accountsGateway.getMe(null)).thenReturn(
@@ -232,5 +245,97 @@ class GraphqlHttpTransportTest {
             .jsonPath("$.errors[0].message").value<String> { message ->
                 assert(!message.contains("private malformed payload"))
             }
+    }
+
+    /** Verifies every GraphQL query converts upstream failures into redacted HTTP 200 error envelopes. */
+    @Test
+    fun `query operations redact upstream timeout and failure details`() {
+        `when`(accountsGateway.getMe(null))
+            .thenReturn(Mono.error(TimeoutException("private profile timeout")))
+        expectGraphqlError(
+            query = "{ me { accountId } }",
+            privateDetail = "private profile timeout"
+        )
+
+        `when`(expenseCoreGateway.listGroups(null))
+            .thenReturn(Mono.error(TimeoutException("private groups timeout")))
+        expectGraphqlError(
+            query = "{ groups { id } }",
+            privateDetail = "private groups timeout"
+        )
+
+        `when`(expenseCoreGateway.getSettlementSuggestions("group-failure", null))
+            .thenReturn(Mono.error(UpstreamServiceException(503, "private suggestions failure")))
+        expectGraphqlError(
+            query = "{ settlementSuggestions(groupId: \"group-failure\") { fromParticipantId } }",
+            privateDetail = "private suggestions failure"
+        )
+    }
+
+    /** Verifies settlement suggestions preserve an upstream empty result as successful query data. */
+    @Test
+    fun `settlement suggestions expose empty upstream result`() {
+        `when`(expenseCoreGateway.getSettlementSuggestions("group-empty", null)).thenReturn(Mono.just(emptyList()))
+
+        client.post().uri("/graphql")
+            .bodyValue(mapOf("query" to "{ settlementSuggestions(groupId: \"group-empty\") { fromParticipantId } }"))
+            .exchange()
+            .expectStatus().isOk
+            .expectBody()
+            .jsonPath("$.data.settlementSuggestions").isArray
+            .jsonPath("$.data.settlementSuggestions").isEmpty
+    }
+
+    /** Verifies every GraphQL mutation converts upstream failures into redacted HTTP 200 error envelopes. */
+    @Test
+    fun `mutation operations redact upstream conflict timeout and dependency failures`() {
+        val createGroupInput = BffCreateGroup("Conflict", "TRIP", "EUR")
+        `when`(expenseCoreGateway.createGroup(createGroupInput, null))
+            .thenReturn(Mono.error(UpstreamServiceException(409, "private group conflict")))
+        expectGraphqlError(
+            query = "mutation { createGroup(input: { name: \"Conflict\", kind: TRIP, currency: \"EUR\" }) { id } }",
+            privateDetail = "private group conflict"
+        )
+
+        `when`(expenseCoreGateway.updateGroup("group-timeout", "Renamed", null))
+            .thenReturn(Mono.error(TimeoutException("private update timeout")))
+        expectGraphqlError(
+            query = "mutation { updateGroup(groupId: \"group-timeout\", name: \"Renamed\") { id } }",
+            privateDetail = "private update timeout"
+        )
+
+        val expenseId = UUID.randomUUID().toString()
+        val expenseInput = CreateExpenseInput(
+            expenseId,
+            "Failure",
+            MoneyInput("EUR", "100"),
+            listOf(PayerInput("alice", MoneyInput("EUR", "100"))),
+            AllocationInput("EQUAL", listOf(AllocationItemInput("alice", "1")))
+        )
+        `when`(expenseCoreGateway.createExpense("group-failure", expenseInput, "dependency-failure-key", null))
+            .thenReturn(Mono.error(UpstreamServiceException(503, "private expense dependency")))
+        expectGraphqlError(
+            query = "mutation { createExpense(groupId: \"group-failure\", input: { expenseId: \"$expenseId\", " +
+                "description: \"Failure\", amount: { currency: \"EUR\", minor: \"100\" }, " +
+                "payers: [{ participantId: \"alice\", amount: { currency: \"EUR\", minor: \"100\" } }], " +
+                "allocation: { mode: \"EQUAL\", items: [{ participantId: \"alice\", value: \"1\" }] } }, " +
+                "idempotencyKey: \"dependency-failure-key\") { id } }",
+            privateDetail = "private expense dependency"
+        )
+
+        val repaymentInput = RepaymentInput(
+            "group-conflict",
+            "alice",
+            "bob",
+            MoneyInput("EUR", "100"),
+            "conflict"
+        )
+        `when`(expenseCoreGateway.recordRepayment("group-conflict", repaymentInput, null))
+            .thenReturn(Mono.error(UpstreamServiceException(409, "private repayment conflict")))
+        expectGraphqlError(
+            query = "mutation { recordRepayment(input: { groupId: \"group-conflict\", fromParticipantId: \"alice\", " +
+                "toParticipantId: \"bob\", amount: { currency: \"EUR\", minor: \"100\" }, reason: \"conflict\" }) { id } }",
+            privateDetail = "private repayment conflict"
+        )
     }
 }

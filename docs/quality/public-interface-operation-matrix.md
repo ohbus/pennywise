@@ -54,17 +54,20 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 
 | Surface | Operation | Current evidence | Remaining dimension work |
 |---|---|---|---|
-| GraphQL query | `me` | schema + resolver/controller + HTTP success + live authenticated/unauthenticated journey | upstream timeout/failure |
-| GraphQL query | `groups` | schema + resolver/controller + HTTP success + live empty-result journey + live Expense Core outage error envelope and recovery | upstream retry/timeout semantics |
-| GraphQL query | `group` | schema + resolver/controller + HTTP success + live malformed-ID/not-found/non-member error envelopes + auth/validation/timeout/error transport tests | dependency retry live evidence |
-| GraphQL query | `settlementSuggestions` | schema + resolver/controller + HTTP success + live malformed-ID/non-member error envelopes + live journey | empty/timeout/failure matrix |
-| GraphQL mutation | `createGroup` | schema + resolver/controller + HTTP success + live malformed-enum validation + live journey | upstream conflict/retry |
-| GraphQL mutation | `updateGroup` | schema + resolver/controller + HTTP success + validation/error transport + live non-member authorization | conflict/timeout live evidence |
-| GraphQL mutation | `createExpense` | schema + resolver/controller + HTTP success + malformed-input/error transport + live idempotent/tampered-replay edges + REST side-effect E2E | dependency failure |
-| GraphQL mutation | `recordRepayment` | schema + resolver/controller + HTTP success + live malformed-money validation/non-member authorization + live journey | conflict/failure matrix |
-| GraphQL subscription | `groupChanged` | schema + resolver authorization + fanout unit tests + malformed-operation, authenticated/non-member, disconnect/reconnect, resubscription, and completed-subscription filtering WebSocket E2E | reconnect replay semantics, backpressure live matrix |
-| WebSocket transport | `graphql-transport-ws` connection lifecycle | protocol handshake, subscribe, malformed-operation error frame, event delivery, authenticated resubscription after disconnect, and concurrent invalidation E2E | malformed frames, duplicate subscribe behavior (probe produced no observable frame), timeout and backpressure matrix |
+| GraphQL query | `me` | schema + resolver/controller + HTTP success + live authenticated/unauthenticated journey + redacted upstream-timeout HTTP envelope | production retry/timeout policy evidence (QA-08) |
+| GraphQL query | `groups` | schema + resolver/controller + HTTP success + live empty-result journey + redacted timeout transport + live Expense Core outage envelope and recovery | production retry/timeout policy evidence (QA-08) |
+| GraphQL query | `group` | schema + resolver/controller + HTTP success + live malformed-ID/not-found/non-member error envelopes + auth/validation/timeout/malformed-upstream transport tests | production retry policy evidence (QA-08) |
+| GraphQL query | `settlementSuggestions` | schema + resolver/controller + HTTP success/empty/upstream-failure envelopes + live malformed-ID/non-member errors + live journey | production retry/timeout policy evidence (QA-08) |
+| GraphQL mutation | `createGroup` | schema + resolver/controller + HTTP success + redacted conflict envelope + live malformed-enum validation/journey | production retry policy evidence (QA-08) |
+| GraphQL mutation | `updateGroup` | schema + resolver/controller + HTTP success + validation/timeout error transport + live non-member authorization | production retry policy evidence (QA-08) |
+| GraphQL mutation | `createExpense` | schema + resolver/controller + HTTP success + malformed-input/dependency-failure transport + live idempotent/tampered-replay edges + REST side-effect E2E | production retry policy evidence (QA-08) |
+| GraphQL mutation | `recordRepayment` | schema + resolver/controller + HTTP success + conflict transport + live malformed-money/non-member authorization/journey | production retry policy evidence (QA-08) |
+| GraphQL subscription | `groupChanged` | schema + resolver authorization + fanout unit tests + malformed-operation, authenticated/non-member, disconnect/reconnect, resubscription, and completed-subscription filtering WebSocket E2E | production replay/backpressure protocol evidence (QA-08) |
+| WebSocket transport | `graphql-transport-ws` connection lifecycle | protocol handshake, subscribe, malformed-operation error frame, event delivery, authenticated resubscription after disconnect, and concurrent invalidation E2E | malformed frames, duplicate subscribe, timeout, and sustained backpressure evidence (QA-08) |
 
-The same remaining-dimension rule applies: schema parity and a successful
-resolver test do not prove live upstream failure, authorization, retry, or
-reconnection behavior.
+The local QA-07 package now covers success, validation, authorization, upstream
+error/timeout conversion, redaction, empty results, replay, and observable side
+effects across every GraphQL HTTP operation. The remaining GraphQL/WebSocket
+items require production-like retry, timing, reconnect replay, and sustained
+pressure evidence and are owned explicitly by QA-08; schema parity and mocked
+transport tests are not presented as that evidence.

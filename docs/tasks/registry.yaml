@@ -4528,6 +4528,43 @@
       "blocker": null
     },
     {
+      "id": "OPS-24",
+      "parent_id": "MILESTONE-OPERATIONS",
+      "title": "Harden lightweight and E2E CI portability",
+      "phase": "operations",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["OPS-20"],
+      "owned_paths": [
+        ".github/workflows/",
+        "Makefile",
+        "docs/operations/",
+        "docs/tasks/details/OPS-24.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/OPS-24.md",
+      "acceptance_criteria": [
+        "Lightweight CI validates workflow YAML without relying on Ruby being installed on the runner.",
+        "E2E Compose startup does not collide with job-level PostgreSQL or RabbitMQ host-port bindings.",
+        "Local workflow-validation and Compose commands remain documented and reproducible."
+      ],
+      "validation_commands": [
+        "make workflow-validate",
+        "make compose-config",
+        "python3 tools/contracts/validate.py",
+        "python3 tools/contracts/validate_public_surface.py",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Lightweight CI now installs uv before invoking a pinned yamllint workflow syntax check; no Ruby executable is required.",
+        "The E2E job no longer declares PostgreSQL or RabbitMQ Actions services, leaving the complete Compose topology as the sole host-port owner.",
+        "Contract and public-surface validation, all six Compose config renders, available PyYAML workflow parsing, and git diff --check passed locally; exact uvx and live stack startup were unavailable because uvx and the Docker daemon were absent."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
       "id": "QA-07",
       "parent_id": "MILESTONE-QUALITY",
       "title": "Exhaustive public-interface integration coverage",

@@ -34,15 +34,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with: { persist-credentials: false }
+      - name: Set up isolated Python tooling
+        uses: astral-sh/setup-uv@v6
       - name: Check formatting and contracts
         run: |
           git diff --check
           python3 tools/contracts/validate.py
           python3 tools/contracts/validate_public_surface.py
           python3 -m unittest discover -s tests/acceptance
-          ruby -e 'require "yaml"; Dir[".github/workflows/*.yml"].each { |file| YAML.load_file(file); puts "valid workflow: #{file}" }'
-      - name: Type-check Python tests and tools
-        uses: astral-sh/setup-uv@v6
+          make workflow-validate
       - name: Run Python type checker
         run: uvx --from mypy==1.17.1 mypy --config-file mypy.ini tests tools
 
@@ -128,20 +128,6 @@ jobs:
   e2e:
     if: inputs.run_e2e
     needs: preflight
-    services:
-      postgres:
-        image: postgres:17
-        env: { POSTGRES_DB: pennywise, POSTGRES_USER: pennywise, POSTGRES_PASSWORD: pennywise }
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd="pg_isready -U pennywise -d pennywise"
-          --health-interval=5s --health-timeout=5s --health-retries=12
-      rabbitmq:
-        image: rabbitmq:4.3-management
-        ports: ['5672:5672']
-        options: >-
-          --health-cmd="rabbitmq-diagnostics -q ping"
-          --health-interval=5s --health-timeout=5s --health-retries=12
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:

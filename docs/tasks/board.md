@@ -17,6 +17,7 @@ validation with Python's standard library.
 
 | ID | Owner | Status | Deliverable |
 | --- | --- | --- | --- |
+| OPS-24 | coordinator | done | Remove undeclared Ruby dependency and E2E Compose host-port collisions from CI |
 | OPS-17 | coordinator | done | Stable error taxonomy and service/source attribution |
 | OPS-18 | coordinator | done | Micrometer and Prometheus metrics for all services |
 | OPS-19 | operations | done | Dashboards, alerts, SLOs, and runbooks baseline |

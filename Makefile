@@ -87,7 +87,7 @@ bruno-run: ## Run the ordered Bruno collection; override BRUNO_ENV, BRUNO_TOKEN,
 		echo "Bruno report: $$report"
 
 workflow-validate: ## Parse all GitHub Actions workflow YAML files
-	@ruby -e 'require "yaml"; Dir[".github/workflows/*.yml"].each { |file| YAML.load_file(file); puts "valid workflow: #{file}" }'
+	@uvx --from yamllint==1.37.1 yamllint -d '{extends: relaxed, rules: {truthy: disable, line-length: disable}}' .github/workflows
 
 observability-validate: ## Validate Prometheus rules and Grafana dashboard assets
 	@ruby -e 'require "yaml"; %w[infra/observability/prometheus.yml infra/observability/rules/pennywise.yml].each { |file| YAML.load_file(file); puts "valid observability YAML: #{file}" }'

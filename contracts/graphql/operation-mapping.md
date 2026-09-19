@@ -11,7 +11,18 @@ request ID. Query depth, page size, aliases and subscription counts are bounded.
 
 ## Current implementation status
 
-The BFF currently wires `groups` and `createGroup` through the Expense Core REST
-gateway. `me`, `group`, `createExpense`, and `recordRepayment` remain planned
-contract operations; retaining them in the schema reserves the reviewed MVP
-surface without claiming that their public transport handlers exist.
+The BFF wires GraphQL operations to their respective service REST gateways:
+- **Queries**:
+  - `me`: Maps to Accounts `GET /accounts/v1/me` via `AccountsGateway`.
+  - `groups`: Maps to Expense Core `GET /expense-core/v1/groups` with bounded member resolution (`flatMapSequential`).
+  - `group(id)`: Maps to Expense Core `GET /expense-core/v1/groups/{groupId}` including members.
+  - `settlementSuggestions(groupId)`: Maps to Expense Core `GET /expense-core/v1/groups/{groupId}/settlements/suggestions`.
+- **Mutations**:
+  - `createGroup`: Maps to Expense Core `POST /expense-core/v1/groups`.
+  - `updateGroup`: Maps to Expense Core `PATCH /expense-core/v1/groups/{groupId}` and emits a live group invalidation.
+  - `createExpense`: Maps to Expense Core `POST /expense-core/v1/groups/{groupId}/expenses` with idempotency forwarding and invalidation emission.
+  - `recordRepayment`: Maps to Expense Core `POST /expense-core/v1/groups/{groupId}/settlements` and invalidation emission.
+- **Subscriptions**:
+  - `groupChanged(groupId)`: Subscribes to per-replica `LiveUpdateFanout` filtered by authorized `groupId`.
+
+Error mapping preserves REST problem codes (e.g. `VALIDATION_FAILED`, `CONFLICT`, `UNAUTHORIZED`) in `extensions.code` along with `extensions.requestId`.

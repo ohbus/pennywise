@@ -6,11 +6,4 @@ planned`. Operations marked `implemented-in-memory` are callable in the current
 scaffold, but their state is process-local until the documented PostgreSQL
 adapters and transactional boundaries are completed.
 
-Current slices include Accounts profile/export requests and profile lookup,
-Expense Core groups/members/invites, allocation preview, expenses, balances,
-settlements, synchronization, and recurrence, plus Notifications preferences,
-inbox, delivery, and email consumption. The BFF exposes `me`, group queries and
-mutations, expense/repayment operations, settlement suggestions, and change
-subscriptions. Coverage and persistence maturity remain task-specific; CORE-18
-and BFF-06 are still in progress, and the registry—not this summary—controls
-completion status.
+Current slices include Accounts profile/export requests, single and batch profile lookup (ACC-05 with duplicate deduplication), Expense Core groups/members/invites, allocation preview, expenses, balances, settlements, synchronization, and recurrence, plus Notifications preferences, inbox (including idempotent mark-as-read via NOT-09), delivery, and email consumption. The BFF exposes `me`, group queries and mutations (including group renaming via CORE-18/CORE-22 and bounded member fanout via BFF-06/BFF-07), expense/repayment operations, settlement suggestions, and live change subscriptions. Coverage and persistence maturity are tracked authoritatively in `docs/tasks/registry.yaml`.

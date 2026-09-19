@@ -12,7 +12,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-REPORT = Path("build/reports/acceptance/qa-01.json")
+try:
+    from . import qa05
+except ImportError:
+    import qa05
 
 
 class ServiceOfflineError(Exception):
@@ -414,6 +417,8 @@ def run_acceptance_suite(
     timeout: float = 2.0,
     require_services: bool = False,
     report_path: Path | None = None,
+    task_id: str = "QA-04",
+    include_edge_cases: bool = True,
 ) -> tuple[int, dict[str, Any]]:
     results = []
 
@@ -433,9 +438,27 @@ def run_acceptance_suite(
     # 5. QA-WEBSOCKET-RESYNC
     results.append(check_websocket_resync(bff_url, timeout))
 
-    target_report = report_path or (repo_root / REPORT)
+    # 6. Edge-case journeys (QA-05 / QA-04)
+    if include_edge_cases:
+        try:
+            edge_results = qa05.run_qa05_journeys(bff_url)
+            for r in edge_results:
+                results.append({
+                    "id": r.id,
+                    "status": r.status,
+                    "detail": r.detail,
+                })
+        except Exception as err:
+            for case_id in ("QA05-ROLLBACK", "QA05-CONCURRENCY", "QA05-AUTHORIZATION", "QA05-BFF-FANOUT", "QA05-RECOVERY"):
+                results.append({
+                    "id": case_id,
+                    "status": "blocked",
+                    "detail": f"Services offline or probe error: {err}",
+                })
+
+    target_report = report_path or (repo_root / f"build/reports/acceptance/{task_id.lower()}.json")
     report = {
-        "task": "QA-01",
+        "task": task_id,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "base_url": bff_url,
         "bff_url": bff_url,
@@ -461,12 +484,14 @@ def run_acceptance_suite(
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Multi-service acceptance harness for Pennywise")
+    parser.add_argument("--task-id", default="QA-04", help="Task ID for acceptance report (e.g. QA-01, QA-04)")
     parser.add_argument("--require-services", action="store_true", help="Fail if services are unavailable")
     parser.add_argument("--timeout", type=float, default=2.0, help="HTTP request timeout in seconds")
     parser.add_argument("--bff-url", default=os.environ.get("BFF_BASE_URL", "http://localhost:8080"), help="Base URL for BFF")
     parser.add_argument("--base-url", dest="bff_url_alias", default=None, help="Alias for --bff-url")
     parser.add_argument("--expense-core-url", default=os.environ.get("EXPENSE_CORE_BASE_URL", "http://localhost:8082"), help="Base URL for Expense Core")
     parser.add_argument("--report-path", type=Path, default=None, help="Custom path for json report output")
+    parser.add_argument("--no-edge-cases", action="store_true", help="Skip edge-case probes")
     return parser.parse_args(argv)
 
 
@@ -483,6 +508,8 @@ def main(argv: list[str] | None = None) -> int:
         timeout=args.timeout,
         require_services=args.require_services,
         report_path=args.report_path,
+        task_id=args.task_id,
+        include_edge_cases=not args.no_edge_cases,
     )
 
     print(json.dumps(report, indent=2))

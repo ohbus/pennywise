@@ -27,6 +27,13 @@ data class OutboxRelayProperties(
 class OutboxMessagingConfiguration {
 
     @Bean
+    @ConditionalOnProperty(prefix = "pennywise.outbox", name = ["rabbit-enabled"], havingValue = "true")
+    fun rabbitBrokerPublisher(
+        rabbitTemplate: org.springframework.amqp.rabbit.core.RabbitTemplate,
+        objectMapper: tools.jackson.databind.ObjectMapper
+    ): BrokerPublisher = RabbitBrokerPublisher(rabbitTemplate, objectMapper)
+
+    @Bean
     @ConditionalOnMissingBean(BrokerPublisher::class)
     fun defaultBrokerPublisher(): BrokerPublisher = InMemoryBroker()
 

@@ -7,9 +7,12 @@ import com.subhrodip.pennywise.expensecore.expenses.ExpenseRecord
 import com.subhrodip.pennywise.expensecore.expenses.ExpenseStore
 import com.subhrodip.pennywise.expensecore.groups.GroupMembershipEntity
 import com.subhrodip.pennywise.expensecore.groups.GroupRepository
+import com.subhrodip.pennywise.expensecore.messaging.OutboxMessage
+import com.subhrodip.pennywise.expensecore.messaging.OutboxStore
 import com.subhrodip.pennywise.ids.UuidGenerator
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -33,13 +36,31 @@ data class CreateRecurringScheduleRequest(
     val allocations: List<ExpenseAllocation>? = null
 )
 
+data class UpdateRecurringScheduleRequest(
+    val description: String,
+    val amountMinor: Long,
+    val currency: String,
+    val frequency: RecurrenceFrequency,
+    val dayOfMonth: Int? = null,
+    val startDate: LocalDate,
+    val endDate: LocalDate? = null,
+    val payers: List<ExpensePayer>? = null,
+    val allocations: List<ExpenseAllocation>? = null
+)
+
+/**
+ * Service managing database-backed recurring expense schedule lifecycle operations,
+ * due occurrence generation, bounded worker catch-up execution, and pause notification outbox events.
+ */
 @Service
 class RecurringExpenseService(
     private val scheduleRepository: RecurringExpenseScheduleRepository,
     private val occurrenceRepository: RecurringExpenseOccurrenceRepository,
     private val expenseStore: ExpenseStore,
     private val groupRepository: GroupRepository,
-    @PersistenceContext private val entityManager: EntityManager
+    @PersistenceContext private val entityManager: EntityManager,
+    @Autowired(required = false)
+    private val outboxStore: OutboxStore? = null
 ) {
     private val customSpecifications = ConcurrentHashMap<UUID, Pair<List<ExpensePayer>, List<ExpenseAllocation>>>()
 
@@ -101,6 +122,63 @@ class RecurringExpenseService(
     }
 
     @Transactional
+    fun updateSchedule(
+        groupId: UUID,
+        scheduleId: UUID,
+        request: UpdateRecurringScheduleRequest
+    ): RecurringExpenseSchedule {
+        val schedule = scheduleRepository.findById(scheduleId).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not found")
+        }
+        if (schedule.groupId != groupId) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not in group $groupId")
+        }
+
+        require(request.description.isNotBlank()) { "description must not be blank" }
+        require(request.amountMinor > 0) { "amountMinor must be positive" }
+        require(request.currency.matches(Regex("^[A-Z]{3}$"))) { "currency must be 3 uppercase letters" }
+        require(request.dayOfMonth == null || request.dayOfMonth in 1..31) {
+            "dayOfMonth must be between 1 and 31"
+        }
+        require(request.frequency == RecurrenceFrequency.MONTHLY || request.dayOfMonth == null) {
+            "dayOfMonth is only supported for monthly schedules"
+        }
+        if (request.endDate != null) {
+            require(!request.endDate.isBefore(request.startDate)) {
+                "endDate must not be before startDate"
+            }
+        }
+        if (request.payers != null) {
+            require(request.payers.isNotEmpty()) { "payers must not be empty if provided" }
+            require(request.payers.sumOf { it.amountMinor } == request.amountMinor) {
+                "sum of payer amounts must equal schedule amount"
+            }
+        }
+        if (request.allocations != null) {
+            require(request.allocations.isNotEmpty()) { "allocations must not be empty if provided" }
+            require(request.allocations.sumOf { it.allocatedMinor } == request.amountMinor) {
+                "sum of allocation amounts must equal schedule amount"
+            }
+        }
+
+        schedule.description = request.description.trim()
+        schedule.amountMinor = request.amountMinor
+        schedule.currency = request.currency.uppercase()
+        schedule.frequency = request.frequency
+        schedule.dayOfMonth = request.dayOfMonth
+        schedule.startDate = request.startDate
+        schedule.endDate = request.endDate
+
+        if (request.payers != null || request.allocations != null) {
+            customSpecifications[scheduleId] = (request.payers ?: emptyList()) to (request.allocations ?: emptyList())
+        } else {
+            customSpecifications.remove(scheduleId)
+        }
+
+        return scheduleRepository.save(schedule)
+    }
+
+    @Transactional
     fun pauseSchedule(scheduleId: UUID): RecurringExpenseSchedule {
         val schedule = scheduleRepository.findById(scheduleId).orElseThrow {
             ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule $scheduleId not found")
@@ -119,11 +197,14 @@ class RecurringExpenseService(
     }
 
     @Transactional
-    fun processDueOccurrences(asOfDate: LocalDate = LocalDate.now()): Int {
+    fun processDueOccurrences(
+        asOfDate: LocalDate = LocalDate.now(),
+        maxCatchUpOccurrences: Int = 12
+    ): Int {
         val dueSchedules = scheduleRepository.findDueSchedules(asOfDate)
         var count = 0
         for (schedule in dueSchedules) {
-            count += processScheduleOccurrences(schedule, asOfDate)
+            count += processScheduleOccurrences(schedule, asOfDate, maxCatchUpOccurrences)
         }
         return count
     }
@@ -140,12 +221,25 @@ class RecurringExpenseService(
     fun getOccurrences(scheduleId: UUID): List<RecurringExpenseOccurrence> =
         occurrenceRepository.findByScheduleId(scheduleId)
 
-    private fun processScheduleOccurrences(schedule: RecurringExpenseSchedule, asOfDate: LocalDate): Int {
+    private fun processScheduleOccurrences(
+        schedule: RecurringExpenseSchedule,
+        asOfDate: LocalDate,
+        maxCatchUpOccurrences: Int = 12
+    ): Int {
         var generated = 0
-        while (!schedule.paused && !schedule.nextOccurrenceDate.isAfter(asOfDate)) {
+        while (!schedule.paused && !schedule.nextOccurrenceDate.isAfter(asOfDate) && generated < maxCatchUpOccurrences) {
             if (schedule.endDate != null && schedule.nextOccurrenceDate.isAfter(schedule.endDate)) {
                 break
             }
+
+            val members = getGroupMembers(schedule.groupId)
+            if (members.isEmpty() || !validateMembership(schedule, members)) {
+                schedule.paused = true
+                scheduleRepository.save(schedule)
+                emitSchedulePausedNotification(schedule, "invalid_membership")
+                break
+            }
+
             val occurrenceDate = schedule.nextOccurrenceDate
             val occurrenceId = OccurrenceIdentity.id(schedule.scheduleId, occurrenceDate)
 
@@ -153,18 +247,25 @@ class RecurringExpenseService(
                 occurrenceRepository.existsByScheduleIdAndOccurrenceDate(schedule.scheduleId, occurrenceDate)
 
             if (!alreadyExists) {
-                val expenseRecord = buildExpenseRecord(schedule, occurrenceDate, occurrenceId)
-                expenseStore.create(schedule.groupId, expenseRecord, occurrenceId.toString())
+                try {
+                    val expenseRecord = buildExpenseRecord(schedule, occurrenceDate, occurrenceId, members)
+                    expenseStore.create(schedule.groupId, expenseRecord, occurrenceId.toString())
 
-                val occurrence = RecurringExpenseOccurrence(
-                    occurrenceId = occurrenceId,
-                    scheduleId = schedule.scheduleId,
-                    occurrenceDate = occurrenceDate,
-                    expenseId = expenseRecord.expenseId,
-                    createdAt = Instant.now()
-                )
-                occurrenceRepository.save(occurrence)
-                generated++
+                    val occurrence = RecurringExpenseOccurrence(
+                        occurrenceId = occurrenceId,
+                        scheduleId = schedule.scheduleId,
+                        occurrenceDate = occurrenceDate,
+                        expenseId = expenseRecord.expenseId,
+                        createdAt = Instant.now()
+                    )
+                    occurrenceRepository.save(occurrence)
+                    generated++
+                } catch (e: Exception) {
+                    schedule.paused = true
+                    scheduleRepository.save(schedule)
+                    emitSchedulePausedNotification(schedule, "generation_error")
+                    break
+                }
             }
 
             val nextDate = RecurrencePolicy.nextAfter(occurrenceDate, schedule)
@@ -174,25 +275,62 @@ class RecurringExpenseService(
         return generated
     }
 
+    private fun validateMembership(schedule: RecurringExpenseSchedule, members: List<UUID>): Boolean {
+        if (members.isEmpty()) return false
+        val memberSet = members.toSet()
+        val custom = customSpecifications[schedule.scheduleId] ?: return true
+        val (payers, allocations) = custom
+        if (payers.isNotEmpty() && payers.any { it.participantId !in memberSet }) {
+            return false
+        }
+        if (allocations.isNotEmpty() && allocations.any { it.participantId !in memberSet }) {
+            return false
+        }
+        return true
+    }
+
+    private fun emitSchedulePausedNotification(schedule: RecurringExpenseSchedule, reason: String) {
+        val outbox = outboxStore ?: return
+        val eventId = UuidGenerator.next()
+        val message = "Recurring schedule '${schedule.description}' in group ${schedule.groupId} paused due to $reason."
+        val payload = mapOf<String, Any?>(
+            "scheduleId" to schedule.scheduleId.toString(),
+            "groupId" to schedule.groupId.toString(),
+            "reason" to reason,
+            "subject" to schedule.groupId.toString(),
+            "message" to message,
+            "description" to message
+        )
+        outbox.append(
+            OutboxMessage(
+                eventId = eventId,
+                eventType = "recurring.schedule.paused",
+                aggregateId = schedule.scheduleId,
+                groupId = schedule.groupId,
+                groupRevision = 1L,
+                occurredAt = Instant.now(),
+                payload = payload
+            )
+        )
+    }
+
     private fun buildExpenseRecord(
         schedule: RecurringExpenseSchedule,
         occurrenceDate: LocalDate,
-        occurrenceId: UUID
+        occurrenceId: UUID,
+        members: List<UUID>
     ): ExpenseRecord {
         val custom = customSpecifications[schedule.scheduleId]
         val (payers, allocations) = if (custom != null && (custom.first.isNotEmpty() || custom.second.isNotEmpty())) {
             val customPayers = custom.first.ifEmpty {
-                val members = getGroupMembers(schedule.groupId)
                 val payerId = members.firstOrNull() ?: schedule.groupId
                 listOf(ExpensePayer(payerId, schedule.amountMinor))
             }
             val customAllocations = custom.second.ifEmpty {
-                val members = getGroupMembers(schedule.groupId)
                 splitEqually(schedule.amountMinor, members.ifEmpty { listOf(schedule.groupId) })
             }
             customPayers to customAllocations
         } else {
-            val members = getGroupMembers(schedule.groupId)
             val participantIds = members.ifEmpty { listOf(schedule.groupId) }
             val payers = listOf(ExpensePayer(participantIds.first(), schedule.amountMinor))
             val allocations = splitEqually(schedule.amountMinor, participantIds)

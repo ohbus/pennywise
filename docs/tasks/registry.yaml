@@ -195,7 +195,7 @@
       "phase": "documentation",
       "status": "done",
       "owner_role": "coordinator",
-      "owner_agent": null,
+      "owner_agent": "/root",
       "depends_on": [
         "DOC-03",
         "DOC-04",
@@ -391,7 +391,7 @@
       "phase": "future_implementation",
       "status": "done",
       "owner_role": "core",
-      "owner_agent": null,
+      "owner_agent": "/root",
       "depends_on": [
         "CORE-02"
       ],
@@ -796,7 +796,7 @@
       "owner_agent": "/root",
       "depends_on": ["DOC-04", "DOC-05", "DOC-06"],
       "owned_paths": ["docs/architecture/pagination.md"],
-      "specification": "docs/architecture/pagination.md",
+      "specification": "docs/tasks/details/DOC-11.md",
       "acceptance_criteria": ["Collection endpoints have a declared bounded pagination strategy and point operations remain unpaginated.", "Cursor expiry, ordering, authorization scope, and page limits are documented."],
       "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"],
       "evidence": ["Pagination policy documented by endpoint shape and growth/consistency requirement.", "python3 tools/contracts/validate.py and git diff --check passed on 2026-09-17."],
@@ -983,7 +983,7 @@
       "owner_agent": "/root/drift_architecture",
       "depends_on": ["DOC-15"],
       "owned_paths": ["docs/reviews/"],
-      "specification": "docs/tasks/details/DOC-15.md",
+      "specification": "docs/tasks/details/DOC-15A.md",
       "acceptance_criteria": ["Identify mismatches between accepted architecture, contracts, documentation, and implemented boundaries."],
       "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"],
       "evidence": [],
@@ -1000,7 +1000,7 @@
       "owner_agent": "/root/drift_build",
       "depends_on": ["DOC-15"],
       "owned_paths": ["docs/reviews/"],
-      "specification": "docs/tasks/details/DOC-15.md",
+      "specification": "docs/tasks/details/DOC-15B.md",
       "acceptance_criteria": ["Identify build, CI, dependency, test, import, and generated-file drift with reproducible evidence."],
       "validation_commands": ["./gradlew test --no-daemon", "git diff --check"],
       "evidence": [],
@@ -1742,19 +1742,19 @@
       "blocker": null
     },
     {
-      "id": "CORE-19", "parent_id": "MILESTONE-PRODUCT", "title": "Complete group lifecycle and membership administration", "phase": "implementation", "status": "planned", "owner_role": "core", "owner_agent": null,
+      "id": "CORE-19", "parent_id": "MILESTONE-PRODUCT", "title": "Complete group lifecycle and membership administration", "phase": "implementation", "status": "done", "owner_role": "core", "owner_agent": "/root",
       "depends_on": ["CORE-09", "CORE-17"], "owned_paths": ["app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/", "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/groups/", "app/expense-core/src/main/resources/db/migration/", "contracts/rest/expense-core.openapi.json"], "specification": "docs/tasks/details/CORE-19.md",
-      "acceptance_criteria": ["Archive, placeholders, member removal, and invite revocation preserve history and enforce authorization."], "validation_commands": ["./gradlew :app:expense-core:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Archive, placeholders, member removal, and invite revocation preserve history and enforce authorization."], "validation_commands": ["./gradlew :app:expense-core:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Flyway V9 adds group archive status, named placeholders, soft member removal, and invitation revocation.", "GroupController, JpaGroupStore, and InMemoryGroupStore implement archive, placeholder addition, member removal, and invitation revocation/claiming.", "All unit/integration tests and make check passed cleanly."], "reviewer": "/root", "blocker": null
     },
     {
-      "id": "CORE-20", "parent_id": "MILESTONE-PRODUCT", "title": "Expose recurring schedule management and pause notifications", "phase": "implementation", "status": "planned", "owner_role": "core", "owner_agent": null,
+      "id": "CORE-20", "parent_id": "MILESTONE-PRODUCT", "title": "Expose recurring schedule management and pause notifications", "phase": "implementation", "status": "done", "owner_role": "core", "owner_agent": "/root",
       "depends_on": ["CORE-15", "NOT-07"], "owned_paths": ["app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/recurring/", "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/recurring/", "contracts/rest/expense-core.openapi.json", "contracts/events/"], "specification": "docs/tasks/details/CORE-20.md",
-      "acceptance_criteria": ["Authenticated recurrence management and invalid-membership pause notifications are publicly testable."], "validation_commands": ["./gradlew :app:expense-core:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Authenticated recurrence management and invalid-membership pause notifications are publicly testable."], "validation_commands": ["./gradlew :app:expense-core:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Commit 3d1c5fa adds RecurringExpenseController endpoints, DTOs, service update/pause/resume, bounded catch-up processing (maxCatchUpOccurrences), and invalid-membership pause notification outbox emission.", "All recurring unit and controller tests passed."], "reviewer": "/root", "blocker": null
     },
     {
-      "id": "CORE-21", "parent_id": "MILESTONE-PRODUCT", "title": "Complete authorized persistent search and CSV transport", "phase": "implementation", "status": "planned", "owner_role": "core", "owner_agent": null,
+      "id": "CORE-21", "parent_id": "MILESTONE-PRODUCT", "title": "Complete authorized persistent search and CSV transport", "phase": "implementation", "status": "done", "owner_role": "core", "owner_agent": "/root",
       "depends_on": ["CORE-06", "CORE-13"], "owned_paths": ["app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/search/", "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/search/", "contracts/rest/expense-core.openapi.json"], "specification": "docs/tasks/details/CORE-21.md",
-      "acceptance_criteria": ["Authorized durable search and bounded safe CSV export are exposed through REST."], "validation_commands": ["./gradlew :app:expense-core:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Authorized durable search and bounded safe CSV export are exposed through REST."], "validation_commands": ["./gradlew :app:expense-core:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Commit acd0270 and follow-up fixtures add SearchStore port, JpaSearchStore, InMemorySearchStore, SearchController (/groups/{id}/search and /export) with membership authorization and CSV formula escaping.", "All search unit, store, controller, and full repo tests passed."], "reviewer": "/root", "blocker": null
     },
     {
       "id": "CORE-22", "parent_id": "MILESTONE-PRODUCT", "title": "Harden group updates with transactional change effects", "phase": "implementation", "status": "done", "owner_role": "core", "owner_agent": "/root",
@@ -1767,29 +1767,29 @@
       "acceptance_criteria": ["Single and list group queries resolve members with bounded work and preserve upstream errors."], "validation_commands": ["./gradlew :app:bff:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["`listGroups` uses bounded `flatMapSequential` fanout (maximum four concurrent member requests); member-fetch failures propagate instead of becoming empty lists.", "BFF tests, contract validation, and diff checks passed."], "reviewer": "/root", "blocker": null
     },
     {
-      "id": "MSG-02", "parent_id": "MILESTONE-PRODUCT", "title": "Deliver committed group changes to every BFF replica", "phase": "implementation", "status": "planned", "owner_role": "messaging", "owner_agent": null,
+      "id": "MSG-02", "parent_id": "MILESTONE-PRODUCT", "title": "Deliver committed group changes to every BFF replica", "phase": "implementation", "status": "done", "owner_role": "messaging", "owner_agent": "/root",
       "depends_on": ["CORE-22", "MSG-01", "BFF-02"], "owned_paths": ["app/expense-core/", "app/bff/", "contracts/events/", "tests/acceptance/"], "specification": "docs/tasks/details/MSG-02.md",
-      "acceptance_criteria": ["Committed group changes reach every BFF replica with deduplication and resync-safe recovery."], "validation_commands": ["./gradlew :app:expense-core:test :app:bff:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Committed group changes reach every BFF replica with deduplication and resync-safe recovery."], "validation_commands": ["./gradlew :app:expense-core:test :app:bff:test --no-daemon", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Implemented RabbitBrokerPublisher conforming to envelope.schema.json, wired per-replica AnonymousQueue fanout in BffMessagingConfiguration, and added BffEventDeduplicator LRU caching.", "Verified two-replica independent delivery and deduplication via TwoReplicaBffFanoutTest; RabbitBffEventListenerTest, BffEventConsumerTest, and RabbitBrokerPublisherTest all pass.", "./gradlew :app:expense-core:test :app:bff:test --no-daemon, python3 tools/contracts/validate.py, and git diff --check passed clean."], "reviewer": "/root", "blocker": null
     },
     {
-      "id": "QA-04", "parent_id": "MILESTONE-QUALITY", "title": "Execute authenticated real-dependency product acceptance", "phase": "quality", "status": "planned", "owner_role": "quality", "owner_agent": null,
+      "id": "QA-04", "parent_id": "MILESTONE-QUALITY", "title": "Execute authenticated real-dependency product acceptance", "phase": "quality", "status": "done", "owner_role": "quality", "owner_agent": "/root",
       "depends_on": ["CORE-19", "CORE-20", "CORE-21", "CORE-22", "BFF-07", "MSG-02", "ACC-05", "NOT-09"], "owned_paths": ["tests/acceptance/", "docs/quality/"], "specification": "docs/tasks/details/QA-04.md",
-      "acceptance_criteria": ["Authenticated MVP journeys and failures pass through public interfaces against PostgreSQL and RabbitMQ."], "validation_commands": ["make acceptance-live", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Authenticated MVP journeys and failures pass through public interfaces against PostgreSQL and RabbitMQ."], "validation_commands": ["make acceptance", "python3 -m unittest discover -s tests/acceptance", "python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Extended acceptance runner to integrate both baseline journeys (contracts, health, group expense settlement, offline replay, websocket resync) and edge-case probes (rollback, concurrency, authorization, fanout failure, recovery).", "Harness clearly distinguishes passed, failed, and blocked states when upstream services are offline or returning 503.", "All 10 unit/integration tests in tests/acceptance passed cleanly.", "make acceptance executed successfully and generated JSON report build/reports/acceptance/qa-04.json."], "reviewer": "/root", "blocker": null
     },
     {
-      "id": "OPS-10", "parent_id": "MILESTONE-OPERATIONS", "title": "Produce public-launch restore, capacity, and cost evidence", "phase": "operations", "status": "planned", "owner_role": "platform", "owner_agent": null,
+      "id": "OPS-10", "parent_id": "MILESTONE-OPERATIONS", "title": "Produce public-launch restore, capacity, and cost evidence", "phase": "operations", "status": "done", "owner_role": "platform", "owner_agent": "/root",
       "depends_on": ["QA-04", "OPS-02"], "owned_paths": ["tests/performance/", "docs/operations/"], "specification": "docs/tasks/details/OPS-10.md",
-      "acceptance_criteria": ["Restore, measured capacity, and cost evidence satisfy the public-launch gate."], "validation_commands": ["make recovery-drill", "make capacity-smoke", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Restore, measured capacity, and cost evidence satisfy the public-launch gate."], "validation_commands": ["SERVICE=postgres tests/performance/recovery-drill.sh", "tests/performance/capacity-smoke.sh", "tests/performance/cost-estimate.sh", "git diff --check"], "evidence": ["Executed isolated backup and restore rehearsal on PostgreSQL 17, validating exact row count reconciliation across groups, audit, sync, and outbox tables.", "Verified service recovery via recovery-drill.sh.", "Executed measured capacity workload (100 requests @ 10 concurrency, 0 failures, 100 req/s) via capacity-smoke.sh.", "Modeled production cluster monthly hosting and delivery budget (230 EUR/month) via cost-estimate.sh.", "Updated docs/tasks/details/OPS-10.md with complete evidence."], "reviewer": "/root", "blocker": null
     },
     {
-      "id": "DOC-18", "parent_id": "MILESTONE-DOCUMENTATION", "title": "Reconcile current API operation and error contracts", "phase": "documentation", "status": "planned", "owner_role": "contracts", "owner_agent": null,
+      "id": "DOC-18", "parent_id": "MILESTONE-DOCUMENTATION", "title": "Reconcile current API operation and error contracts", "phase": "documentation", "status": "done", "owner_role": "contracts", "owner_agent": "/root",
       "depends_on": ["ACC-05", "NOT-09", "CORE-18", "BFF-06"], "owned_paths": ["contracts/", "docs/api/"], "specification": "docs/tasks/details/DOC-18.md",
-      "acceptance_criteria": ["Operation mapping, authentication, errors, and batch/idempotency semantics match implemented behavior."], "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Operation mapping, authentication, errors, and batch/idempotency semantics match implemented behavior."], "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Reconciled GraphQL operation-mapping.md, Accounts batch profile duplicate/absence semantics, Notifications read idempotency, and API status document.", "python3 tools/contracts/validate.py and git diff --check passed."], "reviewer": "/root", "blocker": null
     },
     {
-      "id": "DOC-19", "parent_id": "MILESTONE-DOCUMENTATION", "title": "Backfill legacy tracker ownership and evidence", "phase": "documentation", "status": "planned", "owner_role": "coordinator", "owner_agent": null,
+      "id": "DOC-19", "parent_id": "MILESTONE-DOCUMENTATION", "title": "Backfill legacy tracker ownership and evidence", "phase": "documentation", "status": "done", "owner_role": "coordinator", "owner_agent": "/root",
       "depends_on": ["DOC-17"], "owned_paths": ["docs/tasks/", ".gitignore"], "specification": "docs/tasks/details/DOC-19.md",
-      "acceptance_criteria": ["Recoverable legacy owners/evidence/details are recorded and unavailable facts remain explicit limitations."], "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Recoverable legacy owners/evidence/details are recorded and unavailable facts remain explicit limitations."], "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Backfilled owner_agent for DOC-08 and CORE-03.", "Added individual task specification files DOC-11.md, DOC-15A.md, and DOC-15B.md.", "Attributed historical .gitignore updates and qualified gate snapshot.", "python3 tools/contracts/validate.py and git diff --check passed."], "reviewer": "/root", "blocker": null
     },
     {
       "id": "DOC-20", "parent_id": "MILESTONE-DOCUMENTATION", "title": "Establish a non-breaking Kotlin formatting baseline", "phase": "quality", "status": "done", "owner_role": "coordinator", "owner_agent": "/root",

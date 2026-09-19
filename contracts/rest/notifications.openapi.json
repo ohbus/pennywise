@@ -68,6 +68,7 @@
     "/inbox/{notificationId}/read": {
       "post": {
         "operationId": "markAsRead",
+        "description": "Marks a single inbox notification as read. Repeated calls on an already-read notification are idempotent and succeed with 204 No Content.",
         "parameters": [
           {
             "$ref": "#/components/parameters/NotificationId"

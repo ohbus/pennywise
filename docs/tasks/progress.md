@@ -146,7 +146,14 @@ execution checkpoints and evidence; it does not replace task acceptance criteria
 | 2026-09-18 | QA-05 | Attempted live acceptance runner; contract validation passed but service probes were blocked because local BFF and Expense Core ports were offline | `make acceptance-live` exit 2; no Compose services running | environment limitation |
 | 2026-09-18 | BFF-06 | Reconciled stale status after bounded member resolution and strict upstream error propagation were completed by BFF-07 | `./gradlew :app:bff:test --no-daemon`, `python3 tools/contracts/validate.py`, and `git diff --check` passed | tracker reconciliation |
 | 2026-09-18 | DOC-12 | Replaced incompatible ktlint gate with centrally versioned Spotless/ktfmt baseline and wired `make lint` to contracts, formatting, and Gradle checks | `make lint`, `./gradlew spotlessCheck --no-daemon`, contract validation, and `git diff --check` passed | current increment |
-
+| 2026-09-19 | DOC-18 | Reconciled GraphQL operation mapping, batch profile duplicate semantics, and notification read idempotency across OpenAPI contracts | `python3 tools/contracts/validate.py` and `git diff --check` passed | acd0270 |
+| 2026-09-19 | CORE-20 | Implemented recurring schedule management transport, bounded catch-up processing, and pause notifications | `./gradlew :app:expense-core:test --tests "*com.subhrodip.pennywise.expensecore.recurring.*"` passed | 3d1c5fa |
+| 2026-09-19 | CORE-21 | Completed persistent authorized search and CSV transport with formula escaping and pagination | `./gradlew :app:expense-core:test --tests "*search*"` and `make check` passed | acd0270 |
+| 2026-09-19 | CORE-19 | Completed group lifecycle and membership administration (group archive, named placeholders, soft member removal, invite revocation) | `make check` passed (contracts, Spotless code style, tests, JaCoCo coverage, builds succeeded) | acd0270 |
+| 2026-09-19 | DOC-19 | Backfilled legacy tracker ownership and specifications (DOC-08, CORE-03, DOC-11, DOC-15A, DOC-15B) | `python3 tools/contracts/validate.py` and `git diff --check` passed | 452a258 |
+| 2026-09-19 | MSG-02 | Delivered committed group changes to every BFF replica via RabbitMQ anonymous queues, deduplication LRU, and fanout | `./gradlew :app:expense-core:test :app:bff:test --no-daemon`, `python3 tools/contracts/validate.py`, and `git diff --check` passed | 2a320ca |
+| 2026-09-19 | QA-04 | Integrated authenticated acceptance suite and edge-case journeys with machine-readable passed/failed/blocked reporting | `make acceptance`, `python3 -m unittest discover -s tests/acceptance`, `python3 tools/contracts/validate.py`, and `git diff --check` passed | e3e62eb |
+| 2026-09-19 | OPS-10 | Produced public-launch restore rehearsal, recovery drill, measured capacity, and hosting cost evidence | `tests/performance/recovery-drill.sh`, `capacity-smoke.sh`, `cost-estimate.sh`, backup/restore rehearsal, and `git diff --check` passed | 0993510 |
 
 
 ## Evidence rules

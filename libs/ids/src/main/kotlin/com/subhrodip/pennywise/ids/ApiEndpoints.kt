@@ -77,6 +77,19 @@ object ApiEndpoints {
 
             const val GROUP_SYNC_SNAPSHOT: String = "/groups/{groupId}/sync/snapshot"
             const val GROUP_SYNC_CHANGES: String = "/groups/{groupId}/sync/changes"
+            const val SEARCH_SUBPATH: String = "/search"
+            const val EXPORT_SUBPATH: String = "/export"
+            const val GROUP_SEARCH: String = "/groups/{groupId}$SEARCH_SUBPATH"
+            const val GROUP_EXPORT: String = "/groups/{groupId}$EXPORT_SUBPATH"
+
+            const val SCHEDULES_SUBPATH: String = "/schedules"
+            const val SCHEDULE_BY_ID_SUBPATH: String = "/schedules/{scheduleId}"
+            const val SCHEDULE_PAUSE_SUBPATH: String = "/schedules/{scheduleId}/pause"
+            const val SCHEDULE_RESUME_SUBPATH: String = "/schedules/{scheduleId}/resume"
+            const val GROUP_SCHEDULES: String = "/groups/{groupId}$SCHEDULES_SUBPATH"
+            const val GROUP_SCHEDULE_BY_ID: String = "/groups/{groupId}$SCHEDULE_BY_ID_SUBPATH"
+            const val GROUP_SCHEDULE_PAUSE: String = "/groups/{groupId}$SCHEDULE_PAUSE_SUBPATH"
+            const val GROUP_SCHEDULE_RESUME: String = "/groups/{groupId}$SCHEDULE_RESUME_SUBPATH"
 
             // Absolute application paths starting with BASE
             const val PATH_GROUPS: String = "$BASE$GROUPS"
@@ -93,6 +106,12 @@ object ApiEndpoints {
             const val PATH_GROUP_SETTLEMENT_SUGGESTIONS: String = "$BASE$GROUP_SETTLEMENT_SUGGESTIONS"
             const val PATH_GROUP_SYNC_SNAPSHOT: String = "$BASE$GROUP_SYNC_SNAPSHOT"
             const val PATH_GROUP_SYNC_CHANGES: String = "$BASE$GROUP_SYNC_CHANGES"
+            const val PATH_GROUP_SEARCH: String = "$BASE$GROUP_SEARCH"
+            const val PATH_GROUP_EXPORT: String = "$BASE$GROUP_EXPORT"
+            const val PATH_GROUP_SCHEDULES: String = "$BASE$GROUP_SCHEDULES"
+            const val PATH_GROUP_SCHEDULE_BY_ID: String = "$BASE$GROUP_SCHEDULE_BY_ID"
+            const val PATH_GROUP_SCHEDULE_PAUSE: String = "$BASE$GROUP_SCHEDULE_PAUSE"
+            const val PATH_GROUP_SCHEDULE_RESUME: String = "$BASE$GROUP_SCHEDULE_RESUME"
 
             fun groupById(groupId: Any): String = "$BASE/groups/$groupId"
             fun groupMembers(groupId: Any): String = "$BASE/groups/$groupId/members"
@@ -106,6 +125,12 @@ object ApiEndpoints {
             fun groupSettlementSuggestions(groupId: Any): String = "$BASE/groups/$groupId/settlements/suggestions"
             fun groupSyncSnapshot(groupId: Any): String = "$BASE/groups/$groupId/sync/snapshot"
             fun groupSyncChanges(groupId: Any): String = "$BASE/groups/$groupId/sync/changes"
+            fun groupSearch(groupId: Any): String = "$BASE/groups/$groupId/search"
+            fun groupExport(groupId: Any): String = "$BASE/groups/$groupId/export"
+            fun groupSchedules(groupId: Any): String = "$BASE/groups/$groupId/schedules"
+            fun groupScheduleById(groupId: Any, scheduleId: Any): String = "$BASE/groups/$groupId/schedules/$scheduleId"
+            fun groupSchedulePause(groupId: Any, scheduleId: Any): String = "$BASE/groups/$groupId/schedules/$scheduleId/pause"
+            fun groupScheduleResume(groupId: Any, scheduleId: Any): String = "$BASE/groups/$groupId/schedules/$scheduleId/resume"
         }
     }
 

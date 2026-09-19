@@ -19,7 +19,7 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 | Expense Core | GET | `/groups` | `listGroups` | contract + controller/live smoke + E2E + authentication/archived-state edges | production dependency-failure evidence (QA-08) |
 | Expense Core | GET | `/groups/{groupId}` | `getGroup` | contract + controller/live smoke + E2E + authentication/non-member/not-found/archived edges | production dependency-failure evidence (QA-08) |
 | Expense Core | PATCH | `/groups/{groupId}` | `updateGroup` | contract + controller/live smoke + E2E + non-member/blank-input edges + revision increment | production dependency-failure evidence (QA-08) |
-| Expense Core | POST | `/allocations/preview` | `previewAllocation` | contract + live smoke + authentication/validation edges | failure matrix |
+| Expense Core | POST | `/allocations/preview` | `previewAllocation` | contract + controller/live smoke + authentication and participant/percentage validation + exact-total invariants | production dependency-failure evidence (QA-08) |
 | Expense Core | POST | `/groups/{groupId}/archive` | `archiveGroup` | contract + live smoke + authentication/non-member/replay edges | archived-state side-effect matrix |
 | Expense Core | GET | `/groups/{groupId}/members` | `listGroupMembers` | contract + controller/live smoke + non-member/archived authorization + claimed-placeholder lifecycle | production dependency-failure evidence (QA-08) |
 | Expense Core | POST | `/groups/{groupId}/placeholders` | `createPlaceholder` | contract + live smoke + non-member/blank-input edges | resource-state matrix |

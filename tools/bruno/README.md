@@ -1,5 +1,8 @@
 # Bruno API collection
 
+The repository runner is pinned to `@usebruno/cli@4.1.0` (Bruno CLI v4) for
+consistent local and CI behavior.
+
 Import `tools/bruno/` into Bruno and select an environment. The collection
 covers the Accounts, Expense Core, Notifications, and GraphQL BFF HTTP
 surfaces currently defined by the repository contracts, including recurring

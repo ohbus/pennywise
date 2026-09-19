@@ -10,7 +10,7 @@ def main() -> int:
     for name in files:
         path = ROOT / name
         if path.suffix not in {".yml", ".yaml", ".json", ".properties", ".env", ".md", ".kt", ".kts", ".py"}: continue
-        try: lines = path.read_text().splitlines()
+        try: lines = path.read_text(encoding="utf-8").splitlines()
         except UnicodeDecodeError: continue
         for number, line in enumerate(lines, 1):
             if "local-only" in line or "example" in str(path) or "${" in line or "changeme" in line.lower(): continue

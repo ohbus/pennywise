@@ -29,7 +29,7 @@ def validate_bruno_rest(errors: list[str], operations: dict[tuple[str, str], str
     requests: set[tuple[str, str]] = set()
     asserted = 0
     for path in Path("tools/bruno").rglob("*.bru"):
-        contents = path.read_text()
+        contents = path.read_text(encoding="utf-8")
         for method, url in BRUNO_REQUEST.findall(contents):
             requests.add((method.upper(), normalized_route(url)))
             asserted += "tests {" in contents
@@ -48,7 +48,7 @@ def validate_operation_matrix(errors: list[str], operations: dict[tuple[str, str
     if not matrix_path.exists():
         errors.append(f"missing operation evidence matrix: {matrix_path}")
         return
-    listed = set(MATRIX_OPERATION.findall(matrix_path.read_text()))
+    listed = set(MATRIX_OPERATION.findall(matrix_path.read_text(encoding="utf-8")))
     expected = set(operations.values())
     for operation_id in sorted(expected - listed):
         errors.append(f"operation evidence matrix is missing: {operation_id}")
@@ -69,8 +69,10 @@ def graphql_fields(schema: str) -> dict[str, set[str]]:
 def validate_graphql(errors: list[str]) -> int:
     """Ensure every declared root field has exactly one annotated BFF resolver."""
     schema_path = Path("contracts/graphql/schema.graphqls")
-    sources = "\n".join(path.read_text() for path in Path("app/bff/src/main/kotlin").rglob("*.kt"))
-    declared = graphql_fields(schema_path.read_text())
+    sources = "\n".join(
+        path.read_text(encoding="utf-8") for path in Path("app/bff/src/main/kotlin").rglob("*.kt")
+    )
+    declared = graphql_fields(schema_path.read_text(encoding="utf-8"))
     implemented: dict[str, list[str]] = {root: [] for root in GRAPHQL_ROOTS}
     for root, function in GRAPHQL_RESOLVER.findall(sources):
         implemented[root].append(function)
@@ -88,7 +90,7 @@ def main() -> int:
     operation_count = 0
     operations: dict[tuple[str, str], str] = {}
     for path in sorted(Path("contracts/rest").glob("*.json")):
-        document = json.loads(path.read_text())
+        document = json.loads(path.read_text(encoding="utf-8"))
         paths = document.get("paths", {})
         if not isinstance(paths, dict):
             errors.append(f"{path}: paths must be an object")

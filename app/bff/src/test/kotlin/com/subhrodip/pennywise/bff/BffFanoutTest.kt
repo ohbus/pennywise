@@ -15,6 +15,9 @@ import java.net.InetSocketAddress
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -33,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class BffFanoutTest {
 
     private lateinit var server: HttpServer
+    private lateinit var serverExecutor: ExecutorService
     private lateinit var gateway: ExpenseCoreGateway
     private var port: Int = 0
 
@@ -44,21 +48,26 @@ class BffFanoutTest {
     @BeforeEach
     fun setUp() {
         server = HttpServer.create(InetSocketAddress(0), 0)
-        server.executor = java.util.concurrent.Executors.newCachedThreadPool()
+        serverExecutor = Executors.newCachedThreadPool()
+        server.executor = serverExecutor
         port = server.address.port
         server.start()
 
-        val builder = WebClient.builder()
-        gateway = ExpenseCoreGateway(
-            builder = builder,
-            baseUrl = "http://localhost:$port",
-            timeout = Duration.ofMillis(800)
-        )
+        gateway = gatewayWithTimeout(Duration.ofSeconds(5))
     }
+
+    private fun gatewayWithTimeout(timeout: Duration): ExpenseCoreGateway =
+        ExpenseCoreGateway(
+            builder = WebClient.builder(),
+            baseUrl = "http://localhost:$port",
+            timeout = timeout
+        )
 
     @AfterEach
     fun tearDown() {
         server.stop(0)
+        serverExecutor.shutdownNow()
+        serverExecutor.awaitTermination(5, TimeUnit.SECONDS)
     }
 
     private fun registerHandler(path: String, handler: (HttpExchange) -> Unit) {
@@ -259,16 +268,17 @@ class BffFanoutTest {
      */
     @Test
     fun `times out when upstream member resolution exceeds configured duration`() {
+        val shortTimeoutGateway = gatewayWithTimeout(Duration.ofMillis(100))
         registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
             respondJson(exchange, 200, "[${groupJson("g-1", "Group 1")}]")
         }
         registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-1")) { exchange ->
-            Thread.sleep(1200)
+            Thread.sleep(500)
             respondJson(exchange, 200, "[]")
         }
 
         val ex = assertThrows<RuntimeException> {
-            gateway.listGroups("bearer-token").block()
+            shortTimeoutGateway.listGroups("bearer-token").block()
         }
         val cause = Exceptions.unwrap(ex)
         assertThat(cause).isInstanceOf(java.util.concurrent.TimeoutException::class.java)

@@ -1,9 +1,9 @@
 # Pennywise
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.2+-purple.svg)](https://kotlinlang.org)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4+-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![Java](https://img.shields.io/badge/Java-25+-orange.svg)](https://adoptium.net)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20-purple.svg)](https://kotlinlang.org)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://adoptium.net)
 
 A permanently free, privacy-centric expense-sharing platform for households, couples, roommates, and travel groups. Pennywise is built as a modular Kotlin/Spring Boot ecosystem with REST domain services, an asynchronous event mesh, a GraphQL BFF, and contract-driven API guarantees.
 
@@ -67,8 +67,8 @@ flowchart LR
 
 ## Tech Stack
 
-- **Language & Runtime**: [Kotlin](https://kotlinlang.org/) with JVM 25.
-- **Framework**: [Spring Boot 3.4+](https://spring.io/projects/spring-boot) (Spring Data JPA, Spring Web / WebFlux, Spring GraphQL).
+- **Language & Runtime**: [Kotlin 2.4.20](https://kotlinlang.org/) with JVM 25.
+- **Framework**: [Spring Boot 4.1.1](https://spring.io/projects/spring-boot) (Spring Data JPA, Spring Web / WebFlux, Spring GraphQL).
 - **Build Tool**: [Gradle Kotlin DSL](https://gradle.org/) with centralized version catalog (`gradle/libs.versions.toml`).
 - **Database**: [PostgreSQL 17](https://www.postgresql.org/) with [Flyway](https://flywaydb.org/) schema migrations and Hibernate validation.
 - **Messaging & Events**: [RabbitMQ 4.3](https://www.rabbitmq.com/) with Transactional Outbox pattern.
@@ -82,7 +82,7 @@ flowchart LR
 ### Prerequisites
 
 Ensure you have the following installed on your workstation:
-- **Java 25+** (e.g. via [SDKMAN!](https://sdkman.io/): `sdk install java 25-open`)
+- **Java 25** (for example, via [SDKMAN!](https://sdkman.io/): `sdk install java 25-open`)
 - **Docker & Docker Compose v2** (e.g. Docker Desktop or OrbStack)
 - **Python 3.11+** (for contract validation)
 - **Make** (standard on macOS and Linux)

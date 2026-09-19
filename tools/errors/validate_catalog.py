@@ -10,7 +10,7 @@ def main() -> int:
         print(f"Error: {catalog_path} does not exist", file=sys.stderr)
         sys.exit(1)
 
-    text = catalog_path.read_text()
+    text = catalog_path.read_text(encoding="utf-8")
     # Simple line-based or YAML-parser validation without external dependencies
     # Each entry in error-catalog.yaml has code, service, component, operation, httpStatus, severity, retryable, safeDetail
     import re

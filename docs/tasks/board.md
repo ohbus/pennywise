@@ -97,7 +97,7 @@ validation with Python's standard library.
 | QA-04 | unassigned | planned | Execute authenticated real-dependency product acceptance |
 | OPS-10 | unassigned | planned | Produce public-launch restore, capacity, and cost evidence |
 | DOC-18 | contracts | done | Reconcile current API operation and error contracts |
-| DOC-19 | unassigned | planned | Backfill legacy tracker ownership and evidence |
+| DOC-19 | coordinator | done | Backfill legacy tracker ownership and evidence |
 | DOC-20 | coordinator | done | Establish a non-breaking Kotlin formatting baseline |
 | OPS-11 | coordinator | done | Fix Buildx GHA cache export for main image publishing |
 | DOC-22 | coordinator | done | Apply programming principles and reconcile current documentation |

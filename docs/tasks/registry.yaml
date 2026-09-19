@@ -195,7 +195,7 @@
       "phase": "documentation",
       "status": "done",
       "owner_role": "coordinator",
-      "owner_agent": null,
+      "owner_agent": "/root",
       "depends_on": [
         "DOC-03",
         "DOC-04",
@@ -391,7 +391,7 @@
       "phase": "future_implementation",
       "status": "done",
       "owner_role": "core",
-      "owner_agent": null,
+      "owner_agent": "/root",
       "depends_on": [
         "CORE-02"
       ],
@@ -796,7 +796,7 @@
       "owner_agent": "/root",
       "depends_on": ["DOC-04", "DOC-05", "DOC-06"],
       "owned_paths": ["docs/architecture/pagination.md"],
-      "specification": "docs/architecture/pagination.md",
+      "specification": "docs/tasks/details/DOC-11.md",
       "acceptance_criteria": ["Collection endpoints have a declared bounded pagination strategy and point operations remain unpaginated.", "Cursor expiry, ordering, authorization scope, and page limits are documented."],
       "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"],
       "evidence": ["Pagination policy documented by endpoint shape and growth/consistency requirement.", "python3 tools/contracts/validate.py and git diff --check passed on 2026-09-17."],
@@ -983,7 +983,7 @@
       "owner_agent": "/root/drift_architecture",
       "depends_on": ["DOC-15"],
       "owned_paths": ["docs/reviews/"],
-      "specification": "docs/tasks/details/DOC-15.md",
+      "specification": "docs/tasks/details/DOC-15A.md",
       "acceptance_criteria": ["Identify mismatches between accepted architecture, contracts, documentation, and implemented boundaries."],
       "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"],
       "evidence": [],
@@ -1000,7 +1000,7 @@
       "owner_agent": "/root/drift_build",
       "depends_on": ["DOC-15"],
       "owned_paths": ["docs/reviews/"],
-      "specification": "docs/tasks/details/DOC-15.md",
+      "specification": "docs/tasks/details/DOC-15B.md",
       "acceptance_criteria": ["Identify build, CI, dependency, test, import, and generated-file drift with reproducible evidence."],
       "validation_commands": ["./gradlew test --no-daemon", "git diff --check"],
       "evidence": [],
@@ -1787,9 +1787,9 @@
       "acceptance_criteria": ["Operation mapping, authentication, errors, and batch/idempotency semantics match implemented behavior."], "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Reconciled GraphQL operation-mapping.md, Accounts batch profile duplicate/absence semantics, Notifications read idempotency, and API status document.", "python3 tools/contracts/validate.py and git diff --check passed."], "reviewer": "/root", "blocker": null
     },
     {
-      "id": "DOC-19", "parent_id": "MILESTONE-DOCUMENTATION", "title": "Backfill legacy tracker ownership and evidence", "phase": "documentation", "status": "planned", "owner_role": "coordinator", "owner_agent": null,
+      "id": "DOC-19", "parent_id": "MILESTONE-DOCUMENTATION", "title": "Backfill legacy tracker ownership and evidence", "phase": "documentation", "status": "done", "owner_role": "coordinator", "owner_agent": "/root",
       "depends_on": ["DOC-17"], "owned_paths": ["docs/tasks/", ".gitignore"], "specification": "docs/tasks/details/DOC-19.md",
-      "acceptance_criteria": ["Recoverable legacy owners/evidence/details are recorded and unavailable facts remain explicit limitations."], "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"], "evidence": [], "reviewer": "/root", "blocker": null
+      "acceptance_criteria": ["Recoverable legacy owners/evidence/details are recorded and unavailable facts remain explicit limitations."], "validation_commands": ["python3 tools/contracts/validate.py", "git diff --check"], "evidence": ["Backfilled owner_agent for DOC-08 and CORE-03.", "Added individual task specification files DOC-11.md, DOC-15A.md, and DOC-15B.md.", "Attributed historical .gitignore updates and qualified gate snapshot.", "python3 tools/contracts/validate.py and git diff --check passed."], "reviewer": "/root", "blocker": null
     },
     {
       "id": "DOC-20", "parent_id": "MILESTONE-DOCUMENTATION", "title": "Establish a non-breaking Kotlin formatting baseline", "phase": "quality", "status": "done", "owner_role": "coordinator", "owner_agent": "/root",

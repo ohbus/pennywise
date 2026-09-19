@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import base64
 import os
+import sys
 import urllib.error
 import urllib.request
 import uuid
@@ -76,6 +77,8 @@ def expect(label: str, actual: int, *allowed: int) -> None:
 
 
 def main() -> None:
+    """Run live REST edge checks with deterministic UTF-8 console output."""
+    sys.stdout.reconfigure(encoding="utf-8")
     print("Running live REST edge-case checks")
 
     status, _ = request_json(f"{ACCOUNTS_URL}{ACCOUNTS_ME}", token=None)

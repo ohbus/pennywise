@@ -1,0 +1,85 @@
+# Authentication hardening plan
+
+## Current assessment
+
+Pennywise has a sound service-level authorization boundary and uses Spring
+Security resource-server APIs, but its concrete authentication is currently a
+local acceptance harness. Under the `local` profile, any bearer token is
+accepted literally as the user subject. This is intentionally non-production
+behavior and does not prove OIDC integration.
+
+There is currently no committed Keycloak service, realm, issuer/JWK
+configuration, passwordless login flow, refresh-token lifecycle, or verified
+production resource-server configuration.
+
+## Target architecture
+
+The application owns the login UX and identity mapping; an OIDC provider owns
+identity proof and token signing. The provider is selected by configuration:
+
+```text
+Client -> Pennywise auth endpoints -> configured OIDC provider
+                                      |-- local Keycloak
+                                      |-- Auth0
+                                      |-- Okta / Entra / other OIDC
+```
+
+Core code must depend on a narrow provider-neutral port. No domain code may
+inspect Keycloak realm roles or provider-specific claim names. The durable
+identity key is a provider-qualified subject, never an email address.
+
+## Login experience
+
+The default path should be a Pennywise-branded email magic link. A short-lived,
+single-use email code is the fallback for mobile or interrupted browser flows.
+Both paths require generic responses, request throttling, resend cooldowns,
+attempt limits, hashed credential storage, expiry, audit events, and no raw
+credential logging. Provider-hosted screens are used only for MFA, recovery,
+consent, or other step-up actions that genuinely require them.
+
+## Credential lifecycle
+
+Browser clients should preferably receive a secure, HttpOnly, Secure,
+SameSite-controlled application session. Native/API clients should use
+short-lived access tokens and rotating refresh tokens. Refresh-token families
+must be hashed at rest, revoked on reuse detection, and invalidated by logout or
+security events. A reasonable initial policy is 5–10 minute access tokens,
+5–10 minute login credentials, and bounded 14–30 day refresh sessions.
+
+## Local versus production
+
+`local-demo` may retain the passthrough principal only as an explicit,
+localhost-only developer mode with a startup warning. `local-oidc` must use real
+Keycloak-issued JWTs and the same validation path as production. Production must
+use generic issuer discovery/JWK validation and fail startup if required issuer,
+audience, or client settings are missing.
+
+## Implementation tracker
+
+| ID | Deliverable | Priority | Dependency | Status |
+|---|---|---:|---|---|
+| AUTH-01 | Provider-neutral architecture and tracker | P0 | — | Planned |
+| AUTH-02 | Remove implicit `test-user` identity fallback | P0 | AUTH-01 | Planned |
+| AUTH-03 | Fail-closed production JWT resource server | P0 | AUTH-01 | Planned |
+| AUTH-04 | Issuer, audience, algorithm, expiry, and subject validation | P0 | AUTH-03 | Planned |
+| AUTH-05 | Explicit opt-in/localhost safeguards for local demo auth | P0 | AUTH-01 | Planned |
+| AUTH-06 | Optional local Keycloak realm and Mailpit bootstrap | P1 | AUTH-03 | Planned |
+| AUTH-07 | Pennywise-owned login start/callback contracts | P1 | AUTH-01 | Planned |
+| AUTH-08 | Magic-link and one-time-code implementation | P1 | AUTH-07 | Planned |
+| AUTH-09 | Rate limiting and email-enumeration protection | P0 | AUTH-08 | Planned |
+| AUTH-10 | Identity mapping using provider-qualified subjects | P0 | AUTH-03 | Planned |
+| AUTH-11 | Short-lived access credentials and rotating refresh tokens | P0 | AUTH-10 | Planned |
+| AUTH-12 | Logout, revocation, reuse detection, and session management | P0 | AUTH-11 | Planned |
+| AUTH-13 | Secure browser cookies and CSRF policy | P0 | AUTH-11 | Planned |
+| AUTH-14 | GraphQL HTTP/WebSocket authentication parity | P0 | AUTH-03 | Planned |
+| AUTH-15 | Real-provider integration and security regression suites | P0 | AUTH-06, AUTH-12 | Planned |
+| AUTH-16 | Operations, key rotation, incident response, and recovery runbooks | P1 | AUTH-12 | Planned |
+
+## Immediate risk controls
+
+1. Remove every fallback subject, including `test-user`.
+2. Do not expose passthrough authentication outside localhost.
+3. Require explicit production OIDC issuer and audience configuration.
+4. Test forged, expired, wrong-issuer, wrong-audience, and malformed tokens.
+5. Replace acceptance tests that use arbitrary bearer strings with real local
+   OIDC tokens once `local-oidc` exists.

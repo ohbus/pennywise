@@ -4565,6 +4565,40 @@
       "blocker": null
     },
     {
+      "id": "AUTH-01",
+      "parent_id": "MILESTONE-SECURITY",
+      "title": "Define provider-neutral authentication hardening baseline",
+      "phase": "security",
+      "status": "planned",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [],
+      "owned_paths": [
+        "docs/security/authentication-hardening.md",
+        "docs/implementation/technology-decisions.md",
+        "docs/tasks/details/AUTH-01.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-01.md",
+      "acceptance_criteria": [
+        "Provider-neutral OIDC, optional local Keycloak, passwordless login, short-lived access credentials, refresh rotation, and security validation are documented with executable follow-up increments.",
+        "The current passthrough local authentication and implicit test-user identity are explicitly recorded as non-production limitations."
+      ],
+      "validation_commands": [
+        "python3 tools/contracts/validate.py",
+        "python3 tools/contracts/validate_public_surface.py",
+        "./gradlew test --rerun-tasks --no-daemon",
+        "make security-hygiene",
+        "make check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Authentication implementation audit recorded in docs/security/authentication-hardening.md; implementation remains planned."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
       "id": "QA-07",
       "parent_id": "MILESTONE-QUALITY",
       "title": "Exhaustive public-interface integration coverage",

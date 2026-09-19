@@ -38,10 +38,15 @@ balances. Every BFF replica has its own temporary fan-out queue.
 
 ## Security and operations
 
-Production deployments use an OIDC provider and Spring Security resource-server
-validation in every service. The `local` profile intentionally uses a
-passthrough bearer-token principal for reproducible development and acceptance
-tests; local evidence therefore does not prove production OIDC integration.
+Production deployments use a provider-neutral OIDC configuration and Spring
+Security resource-server validation in every service. Keycloak is permitted as
+an optional local OIDC provider for realistic integration testing, but is not an
+application dependency and no domain code may depend on Keycloak-specific APIs
+or claims. The existing passthrough bearer-token principal remains a narrowly
+scoped local-demo mechanism only; it accepts no proof of identity and therefore
+does not constitute production or OIDC evidence. See
+`docs/security/authentication-hardening.md` and task `AUTH-01` for the staged
+hardening plan.
 Services enforce membership authorization themselves. Use Actuator,
 Micrometer and OpenTelemetry-compatible tracing; structured logs exclude money
 payloads, invitation secrets and tokens. Docker Compose supports local

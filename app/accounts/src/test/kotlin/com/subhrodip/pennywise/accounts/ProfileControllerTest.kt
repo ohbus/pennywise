@@ -1,5 +1,6 @@
 package com.subhrodip.pennywise.accounts
 
+import com.subhrodip.pennywise.accounts.requests.deletion.DeletionRequestService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

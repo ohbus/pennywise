@@ -1,5 +1,6 @@
 package com.subhrodip.pennywise.accounts
 
+import com.subhrodip.pennywise.accounts.requests.deletion.DeletionRequestService
 import com.subhrodip.pennywise.ids.ApiEndpoints
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank

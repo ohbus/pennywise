@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.accounts
+package com.subhrodip.pennywise.accounts.requests.deletion
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.accounts
+package com.subhrodip.pennywise.accounts.requests.deletion
 
 import java.time.Instant
 import org.springframework.beans.factory.annotation.Autowired

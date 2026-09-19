@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.accounts
+package com.subhrodip.pennywise.accounts.requests.deletion
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository

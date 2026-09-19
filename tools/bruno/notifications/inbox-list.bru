@@ -1,0 +1,16 @@
+meta {
+  name: List Notification Inbox
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrlNotifications}}/notifications/v1/inbox?limit=50
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Accept: application/json
+}

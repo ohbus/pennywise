@@ -1,0 +1,16 @@
+meta {
+  name: Request Data Export
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrlAccounts}}/accounts/v1/me/export-request
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}

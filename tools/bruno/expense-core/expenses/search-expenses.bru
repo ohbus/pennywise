@@ -1,0 +1,22 @@
+meta {
+  name: Search Expenses
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/search
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+query {
+  query: groceries
+  currency: EUR
+  category: food
+  limit: 50
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Get Profile By ID
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrlAccounts}}/accounts/v1/profiles/{{accountId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+vars:pre-request {
+  accountId: 00000000-0000-0000-0000-000000000001
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Create Group
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Demo Household",
+    "kind": "HOUSEHOLD",
+    "currency": "EUR"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("groupId", res.body.groupId);
+  }
+}

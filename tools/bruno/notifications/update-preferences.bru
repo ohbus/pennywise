@@ -1,0 +1,23 @@
+meta {
+  name: Update Notification Preferences
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrlNotifications}}/notifications/v1/preferences
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "emailEnabled": true,
+    "pushEnabled": false
+  }
+}

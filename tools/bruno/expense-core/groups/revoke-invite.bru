@@ -1,0 +1,15 @@
+meta {
+  name: Revoke Invite
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/invites/{{inviteToken}}/revoke
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

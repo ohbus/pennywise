@@ -1,0 +1,15 @@
+meta {
+  name: Mark Notification Read
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrlNotifications}}/notifications/v1/inbox/{{notificationId}}/read
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

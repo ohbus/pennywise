@@ -1,0 +1,15 @@
+meta {
+  name: Archive Group
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/archive
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

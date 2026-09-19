@@ -1,0 +1,15 @@
+meta {
+  name: Delete Expense
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/expenses/{{expenseId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

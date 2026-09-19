@@ -1,0 +1,25 @@
+meta {
+  name: Batch Get Profiles
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrlAccounts}}/accounts/v1/profiles/batch
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "accountIds": [
+      "00000000-0000-0000-0000-000000000001",
+      "00000000-0000-0000-0000-000000000002"
+    ]
+  }
+}

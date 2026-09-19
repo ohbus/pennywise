@@ -1,0 +1,30 @@
+meta {
+  name: Record Settlement
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/settlements
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "fromParticipantId": "00000000-0000-0000-0000-000000000002",
+    "toParticipantId": "00000000-0000-0000-0000-000000000001",
+    "amountMinor": "2100"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("settlementId", res.body.id);
+  }
+}

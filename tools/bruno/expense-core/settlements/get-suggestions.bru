@@ -1,0 +1,15 @@
+meta {
+  name: Get Settlement Suggestions
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/settlements/suggestions
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

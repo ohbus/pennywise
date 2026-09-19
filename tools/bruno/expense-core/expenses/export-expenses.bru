@@ -1,0 +1,21 @@
+meta {
+  name: Export Expenses CSV
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/export
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Accept: text/csv
+}
+
+query {
+  currency: EUR
+  maxRows: 1000
+}

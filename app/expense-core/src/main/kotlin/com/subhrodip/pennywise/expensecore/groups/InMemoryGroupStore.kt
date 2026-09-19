@@ -30,7 +30,7 @@ class InMemoryGroupStore : GroupStore {
     )
 
     override fun create(subject: String, request: CreateGroupRequest): GroupResponse {
-        val group = GroupResponse(UuidGenerator.next(), request.name.trim(), 0, "ACTIVE")
+        val group = GroupResponse(UuidGenerator.next(), request.name.trim(), request.kind, 0, "ACTIVE")
         groups[group.groupId] = group
         groupsByMember.computeIfAbsent(subject) { ConcurrentHashMap.newKeySet() }.add(group.groupId)
         memberships.computeIfAbsent(group.groupId) { CopyOnWriteArrayList() }

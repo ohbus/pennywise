@@ -40,6 +40,7 @@ data class CreatePlaceholderRequest(
 data class GroupResponse(
     val groupId: UUID,
     val name: String,
+    val kind: String,
     val revision: Long,
     val status: String = "ACTIVE"
 )

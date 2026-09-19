@@ -1,0 +1,16 @@
+meta {
+  name: Get Notification Preferences
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrlNotifications}}/notifications/v1/preferences
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Accept: application/json
+}

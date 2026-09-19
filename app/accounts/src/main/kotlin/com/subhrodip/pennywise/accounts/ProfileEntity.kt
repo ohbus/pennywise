@@ -34,7 +34,7 @@ class ProfileEntity(
     @Column(name = "timezone", nullable = false, length = 80)
     var timezone: String,
 
-    @Column(name = "default_currency", nullable = false, columnDefinition = "CHAR(3)")
+    @Column(name = "default_currency", nullable = false, length = 3)
     var defaultCurrency: String,
 
     @Column(name = "deletion_requested", nullable = false)

@@ -1,0 +1,16 @@
+meta {
+  name: Request Account Deletion
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrlAccounts}}/accounts/v1/me/deletion-request
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}

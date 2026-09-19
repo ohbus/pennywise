@@ -1,0 +1,28 @@
+meta {
+  name: Add Named Placeholder
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/placeholders
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bob (offline member)"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("membershipId", res.body.membershipId);
+  }
+}

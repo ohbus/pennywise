@@ -1,0 +1,20 @@
+meta {
+  name: List Expenses
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/expenses
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+query {
+  cursor:
+  category:
+}

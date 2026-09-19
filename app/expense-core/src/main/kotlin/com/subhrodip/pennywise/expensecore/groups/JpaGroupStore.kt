@@ -357,7 +357,7 @@ class JpaGroupStore(
     }
 }
 
-private fun GroupEntity.toResponse() = GroupResponse(groupId, name, revision, status)
+private fun GroupEntity.toResponse() = GroupResponse(groupId, name, kind, revision, status)
 
 private fun GroupMembershipEntity.toResponse() =
     GroupMemberResponse(membershipId, groupId, subject, displayName, isPlaceholder, status)

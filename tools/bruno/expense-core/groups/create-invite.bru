@@ -1,0 +1,28 @@
+meta {
+  name: Create Invite
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/invites
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "expiresInHours": 48
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("inviteToken", res.body.token);
+  }
+}

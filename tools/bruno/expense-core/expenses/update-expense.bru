@@ -1,0 +1,50 @@
+meta {
+  name: Update Expense
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/expenses/{{expenseId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "version": 1,
+    "description": "Updated: Groceries from Billa + Penny",
+    "category": "food",
+    "amount": {
+      "currency": "EUR",
+      "minor": "5000"
+    },
+    "payers": [
+      {
+        "participantId": "00000000-0000-0000-0000-000000000001",
+        "amount": {
+          "currency": "EUR",
+          "minor": "5000"
+        }
+      }
+    ],
+    "allocation": {
+      "mode": "EQUAL",
+      "items": [
+        {
+          "participantId": "00000000-0000-0000-0000-000000000001",
+          "value": "1"
+        },
+        {
+          "participantId": "00000000-0000-0000-0000-000000000002",
+          "value": "1"
+        }
+      ]
+    }
+  }
+}

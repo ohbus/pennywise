@@ -46,6 +46,14 @@ Run `make compose-config` after editing any local Compose file. The full command
 service, port, credential, health-check, and startup-order matrix is in
 [Compose topology](compose-topology.md).
 
+### Bruno API collection
+
+The checked-in `tools/bruno/` collection provides local requests for all four
+HTTP services, including the GraphQL BFF and Notifications endpoints. Import
+that directory into Bruno, select its `local` environment, and start the stack
+with `make full-up` before sending requests. The collection uses only the
+local `test-user` bearer token and contains no production credentials.
+
 ## Live acceptance testing
 
 When the development stack or local services are up, validate the integrated multi-service workflow with:

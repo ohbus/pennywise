@@ -1,0 +1,15 @@
+meta {
+  name: Remove Group Member
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/members/{{membershipId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

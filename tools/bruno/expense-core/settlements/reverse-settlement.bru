@@ -1,0 +1,22 @@
+meta {
+  name: Reverse Settlement
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/settlements/{{settlementId}}/reversal
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "reason": "Incorrect amount recorded"
+  }
+}

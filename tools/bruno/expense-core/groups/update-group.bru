@@ -1,0 +1,22 @@
+meta {
+  name: Update Group
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Updated Household Name"
+  }
+}

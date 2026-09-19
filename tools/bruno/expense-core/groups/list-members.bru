@@ -1,0 +1,15 @@
+meta {
+  name: List Group Members
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/members
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

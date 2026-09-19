@@ -1,0 +1,15 @@
+meta {
+  name: Claim Invite
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/invites/{{inviteToken}}/claim
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

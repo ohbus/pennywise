@@ -32,18 +32,33 @@ data class BffBalancesResponse(
     val balances: List<BffBalance> = emptyList()
 )
 
-data class BffMember(val membershipId: String, val subject: String)
+data class BffMember(val membershipId: String, val subject: String, val displayName: String? = null, val isPlaceholder: Boolean? = null)
 
 data class BffGroup(
     val groupId: String,
     val name: String,
-    val kind: String = "TRIP",
+    val kind: String? = null,
+    val status: String? = null,
     val revision: Long = 0,
     val balances: List<BffBalance> = emptyList(),
     val expenses: List<BffExpense> = emptyList(),
     val members: List<BffMember> = emptyList()
 ) {
     val id: String get() = groupId
+}
+
+/**
+ * Shape returned by Expense Core group endpoints. Summary responses may omit
+ * aggregate collections; the BFF normalizes those omissions before exposing GraphQL.
+ */
+private data class UpstreamGroup(
+    val groupId: String,
+    val name: String,
+    val kind: String? = null,
+    val status: String? = null,
+    val revision: Long = 0
+) {
+    fun toBffGroup(): BffGroup = BffGroup(groupId, name, kind, status, revision)
 }
 
 data class BffCreateGroup(val name: String, val kind: String, val currency: String)
@@ -127,14 +142,15 @@ class ExpenseCoreGateway(
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .bodyValue(input).retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
-            .bodyToMono(BffGroup::class.java).timeout(timeout)
+            .bodyToMono(UpstreamGroup::class.java).map { it.toBffGroup() }.timeout(timeout)
 
     fun listGroups(bearer: String?): Mono<List<BffGroup>> =
         client.get().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
-            .bodyToFlux(BffGroup::class.java)
+            .bodyToFlux(UpstreamGroup::class.java)
+            .map { it.toBffGroup() }
             .collectList()
             .flatMap { groups ->
                 Flux.fromIterable(groups)
@@ -152,7 +168,7 @@ class ExpenseCoreGateway(
             .bodyValue(mapOf("name" to name))
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
-            .bodyToMono(BffGroup::class.java)
+            .bodyToMono(UpstreamGroup::class.java).map { it.toBffGroup() }
             .timeout(timeout)
 
     fun listMembers(groupId: String, bearer: String?): Mono<List<BffMember>> =
@@ -169,7 +185,8 @@ class ExpenseCoreGateway(
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
-            .bodyToMono(BffGroup::class.java)
+            .bodyToMono(UpstreamGroup::class.java)
+            .map { it.toBffGroup() }
 
         val balancesMono = client.get().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_BALANCES, groupId)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }

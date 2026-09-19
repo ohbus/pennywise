@@ -1,0 +1,15 @@
+meta {
+  name: Get Sync Snapshot
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups/{{groupId}}/sync/snapshot
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

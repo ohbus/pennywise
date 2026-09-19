@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.observability
+package com.subhrodip.pennywise.observability.logging
 
 import org.slf4j.MDC
 

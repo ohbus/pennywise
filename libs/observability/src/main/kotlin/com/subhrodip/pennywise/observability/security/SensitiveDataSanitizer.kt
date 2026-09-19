@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.observability
+package com.subhrodip.pennywise.observability.security
 
 /** Redacts credentials and masks personal data before values reach logs. */
 object SensitiveDataSanitizer {

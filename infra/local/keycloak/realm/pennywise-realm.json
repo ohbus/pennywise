@@ -11,12 +11,13 @@
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": true,
-      "directAccessGrantsEnabled": true,
-      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "serviceAccountsEnabled": false,
       "attributes": {
-        "access.token.signed.response.alg": "RS256"
+        "access.token.signed.response.alg": "RS256",
+        "pkce.code.challenge.method": "S256"
       }
     }
   ],

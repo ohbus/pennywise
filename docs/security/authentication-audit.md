@@ -96,6 +96,16 @@ The planned OAuth flow follows [RFC 9700](https://www.rfc-editor.org/rfc/rfc9700
 The local Keycloak password-grant fixture must therefore remain test-only and
 must not be used by the Pennywise product flow.
 
+### Environment parity invariant
+
+Local, staging, and production use the same Pennywise-owned login/session
+contracts, the same provider-neutral JWT policy, and the same authorization
+checks. Only the configured OIDC issuer, client registration, email delivery,
+and operational secrets vary. Local Keycloak is an infrastructure substitute,
+not a reduced-security profile. No environment may enable a passthrough
+identity, implicit grant, resource-owner-password grant, wildcard redirect,
+or weaker token validation for convenience.
+
 - `auth.login` owns start, callback, magic-link request, code verification,
   resend, logout, and session operations.
 - `auth.identity` maps `(issuer, subject)` to a local account. Email is mutable

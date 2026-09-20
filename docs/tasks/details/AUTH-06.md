@@ -71,3 +71,13 @@ port.
 - Full-stack application startup under `local-oidc`, real REST/GraphQL/
   WebSocket journeys, passwordless Mailpit delivery, and invalid/expired-token
   rejection remain required before AUTH-06 can close.
+
+## Environment parity decision
+
+Local, staging, and production must use the same authentication flow shape and
+the same resource-server validation policy. Local Keycloak is only an issuer
+replacement and test infrastructure; it is not a reason to enable a weaker
+grant. The local client therefore uses authorization code plus PKCE (`S256`),
+with direct access/password grants disabled. Any deterministic local test
+token must be obtained through the same supported flow or a dedicated test
+adapter that is never enabled in deployed application profiles.

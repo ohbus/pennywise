@@ -16,7 +16,8 @@ object ReactiveOidcJwtDecoderFactory {
         decoder.setJwtValidator(
             DelegatingOAuth2TokenValidator(
                 JwtValidators.createDefaultWithIssuer(issuerUri),
-                JwtClaimValidator<Collection<String>>("aud") { values -> values?.contains(audience) == true }
+                JwtClaimValidator<Collection<String>>("aud") { values -> values.contains(audience) },
+                OidcJwtClaimPolicy.subjectValidator()
             )
         )
         return decoder

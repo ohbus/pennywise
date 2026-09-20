@@ -73,3 +73,31 @@ subject and independently checks group membership in the owning service.
 - Real Keycloak issuer availability, signed-token integration tests, and
   invalid-token REST/GraphQL/WebSocket E2E remain open and must not be inferred
   from compilation.
+
+## Next implementation increment
+
+The shared security library will add one provider-neutral claim-policy port and
+reuse it from both servlet and reactive decoder factories. This increment will
+enforce a bounded, non-blank `sub` claim before identity reaches application
+code, preserve issuer/audience/time validation, and add direct validator tests
+for valid, missing, blank, and overlong subjects. It will not introduce
+Keycloak SDKs or domain dependencies. Algorithm allow-list, bearer token type,
+real signed-token, key-rotation, GraphQL, WebSocket, and full invalid-token
+boundary evidence remain explicit follow-up gates in this task.
+
+Planned evidence for this increment:
+
+- `./gradlew.bat :libs:security:test --rerun-tasks --no-daemon`
+- `./gradlew.bat compileKotlin --no-daemon`
+- `git diff --check`
+- exact validator test names and limitations recorded in `docs/tasks/progress.md`
+
+## Implementation notes: bounded subject policy
+
+- Added `OidcJwtClaimPolicy` to `libs/security` as the shared claim-policy
+  adapter used by both decoder factories.
+- `sub` must be a non-empty, whitespace-free string no longer than 256
+  characters. Email, username, and display claims remain ignored.
+- Added tests for valid, missing, blank, whitespace-containing, and overlong
+  subjects. This increment does not claim algorithm allow-list or live provider
+  evidence.

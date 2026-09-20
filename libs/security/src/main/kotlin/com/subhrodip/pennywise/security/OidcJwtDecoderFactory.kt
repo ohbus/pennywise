@@ -1,7 +1,6 @@
 package com.subhrodip.pennywise.security
 
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
-import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtDecoders
 import org.springframework.security.oauth2.jwt.JwtClaimValidator
@@ -25,12 +24,13 @@ object OidcJwtDecoderFactory {
 
         val decoder = JwtDecoders.fromIssuerLocation(issuerUri) as NimbusJwtDecoder
         val audienceValidator = JwtClaimValidator<Collection<String>>("aud") { values ->
-            values?.contains(audience) == true
+            values.contains(audience)
         }
         decoder.setJwtValidator(
             DelegatingOAuth2TokenValidator(
                 JwtValidators.createDefaultWithIssuer(issuerUri),
-                audienceValidator
+                audienceValidator,
+                OidcJwtClaimPolicy.subjectValidator()
             )
         )
         return decoder

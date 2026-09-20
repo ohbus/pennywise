@@ -4,7 +4,9 @@ This checklist records evidence from the host-native local stack on 2026-09-19.
 It is a pre-deployment verification record and does not authorize production
 promotion.
 
-- [x] All four applications start with authenticated REST/GraphQL flows.
+- [ ] All four applications start with authenticated REST/GraphQL flows; Accounts
+  and Expense Core are live-verified, while the BFF GraphQL HTTP boundary still
+  returns HTTP 400 in the current Compose probe and requires follow-up.
 - [x] Docker full-stack startup is reproducible from host-built JARs without runtime Gradle downloads (`make package`, `docker compose ... build`, `up -d --wait`).
 - [x] Accounts, Expense Core, Notifications, and BFF readiness probes pass.
 - [x] Prometheus scrapes all four services; Grafana datasource and overview dashboard are provisioned.

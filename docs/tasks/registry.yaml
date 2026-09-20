@@ -4680,6 +4680,43 @@
       "blocker": null
     },
     {
+      "id": "AUTH-04",
+      "parent_id": "AUTH-01",
+      "title": "Validate OIDC JWT issuer, audience, signature, expiry, algorithm, and subject",
+      "phase": "security",
+      "status": "planned",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["AUTH-03", "ERR-03"],
+      "owned_paths": [
+        "libs/security/",
+        "app/accounts/src/test/kotlin/**/*Security*",
+        "app/expense-core/src/test/kotlin/**/*Security*",
+        "app/notifications/src/test/kotlin/**/*Security*",
+        "app/bff/src/test/kotlin/**/*Security*",
+        "tests/e2e/",
+        "tools/bruno/quality/",
+        "docs/tasks/details/AUTH-04.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-04.md",
+      "acceptance_criteria": [
+        "All four applications reject arbitrary, malformed, forged, expired, wrong-issuer, wrong-audience, unsupported-algorithm, and subject-invalid bearer tokens.",
+        "Validated sub is the only durable identity input and downstream services retain independent membership authorization.",
+        "Servlet, reactive, REST, GraphQL HTTP, and WebSocket invalid-token evidence is executable and documented."
+      ],
+      "validation_commands": [
+        "./gradlew test --tests '*Security*' --rerun-tasks --no-daemon",
+        "py -3 tools/contracts/validate.py",
+        "py -3 tools/contracts/validate_public_surface.py",
+        "make security-hygiene",
+        "git diff --check"
+      ],
+      "evidence": [],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
       "id": "QA-07",
       "parent_id": "MILESTONE-QUALITY",
       "title": "Exhaustive public-interface integration coverage",

@@ -148,6 +148,13 @@ canonical recipient, link/code template, bounded encrypted credential, and
 expiry. Encryption and key-management adapters must be implemented before the
 event is published; a plaintext fallback is explicitly prohibited.
 
+The first protection implementation adds `CredentialEnvelopeProtector` and an
+AES-GCM adapter. Each envelope uses a fresh 96-bit nonce, a 256-bit configured
+key, an explicit format version, and authenticated recipient/template context.
+Tampering, wrong-context decryption, malformed envelopes, and invalid key
+sizes fail closed. The adapter is intentionally a port-level primitive and is
+not yet wired to an outbox or Notifications consumer.
+
 `LoginStartService` is the application orchestration boundary. It derives the
 trusted abuse key, acquires the atomic request slot, issues a link/code, and
 hands the delivery-only plaintext to `AuthEmailSender`. Invalid email,

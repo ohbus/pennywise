@@ -274,6 +274,17 @@ jobs:
           # isolated invalid-subject phase remain valid for the following E2E run.
           docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml down
           docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
+          fresh_token() {
+            curl --fail-with-body --silent --show-error \
+              --connect-to idp-keycloak:8080:127.0.0.1:8090 \
+              --data "grant_type=client_credentials&client_id=$1&client_secret=$2" \
+              http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])'
+          }
+          export PENNYWISE_E2E_TOKEN_A="$(fresh_token pennywise-ci pennywise-ci-local-only)"
+          export PENNYWISE_E2E_TOKEN_B="$(fresh_token pennywise-ci-e2e-bob pennywise-ci-e2e-bob-local-only)"
+          export PENNYWISE_E2E_TOKEN_NONMEMBER="$(fresh_token pennywise-ci-e2e-nonmember pennywise-ci-e2e-nonmember-local-only)"
+          test -n "$PENNYWISE_E2E_TOKEN_A" -a -n "$PENNYWISE_E2E_TOKEN_B" -a -n "$PENNYWISE_E2E_TOKEN_NONMEMBER"
           make e2e-live
           make e2e-offline
           make e2e-concurrency

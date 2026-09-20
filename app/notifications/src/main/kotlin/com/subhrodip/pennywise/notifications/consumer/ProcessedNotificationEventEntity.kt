@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.consumer
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.inbox
 
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service

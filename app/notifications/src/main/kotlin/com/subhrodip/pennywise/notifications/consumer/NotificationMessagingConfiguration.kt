@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.consumer
 
 import com.subhrodip.pennywise.ids.EventConstants
 import org.springframework.amqp.core.Binding

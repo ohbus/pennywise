@@ -1,13 +1,12 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.consumer
 
-import com.subhrodip.pennywise.notifications.email.EmailDeliveryOutcome
 import com.subhrodip.pennywise.notifications.email.EmailDispatcher
+import com.subhrodip.pennywise.notifications.preferences.PreferenceStore
 
 import org.hibernate.exception.ConstraintViolationException
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.util.UUID
 

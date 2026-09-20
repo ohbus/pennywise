@@ -1,5 +1,6 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.delivery
 
+import com.subhrodip.pennywise.notifications.consumer.ProcessedNotificationEventEntity
 import jakarta.persistence.EntityManager
 import org.hibernate.exception.ConstraintViolationException
 import org.springframework.stereotype.Service

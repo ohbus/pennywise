@@ -1,9 +1,10 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.delivery
 
 /**
  * Defines the delivery policy for notification events.
  */
 
+import com.subhrodip.pennywise.notifications.preferences.PreferenceStore
 import java.util.UUID
 
 enum class DeliveryChannel { EMAIL, PUSH }

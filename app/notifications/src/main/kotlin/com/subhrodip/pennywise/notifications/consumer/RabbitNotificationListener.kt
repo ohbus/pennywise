@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.consumer
 
 /**
  * RabbitMQ listener that parses incoming broker envelopes and forwards them to the

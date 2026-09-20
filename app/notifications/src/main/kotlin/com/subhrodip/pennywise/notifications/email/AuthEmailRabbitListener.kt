@@ -1,7 +1,7 @@
 package com.subhrodip.pennywise.notifications.email
 
 import com.rabbitmq.client.Channel
-import com.subhrodip.pennywise.notifications.InvalidEnvelopeException
+import com.subhrodip.pennywise.notifications.consumer.InvalidEnvelopeException
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 import java.time.Instant

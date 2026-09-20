@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.inbox
 
 import com.subhrodip.pennywise.errors.GlobalErrorHandler
 import com.subhrodip.pennywise.ids.ApiEndpoints

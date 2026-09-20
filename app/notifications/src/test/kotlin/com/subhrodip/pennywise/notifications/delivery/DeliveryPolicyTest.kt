@@ -1,5 +1,7 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.delivery
 
+import com.subhrodip.pennywise.notifications.preferences.InMemoryPreferenceStore
+import com.subhrodip.pennywise.notifications.preferences.NotificationPreferences
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test

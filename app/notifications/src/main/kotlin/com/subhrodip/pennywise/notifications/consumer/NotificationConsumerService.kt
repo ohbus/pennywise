@@ -1,4 +1,6 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.consumer
+
+import com.subhrodip.pennywise.notifications.preferences.PreferenceStore
 
 /**
  * Type aliases for Notification consumer and preference store abstractions,

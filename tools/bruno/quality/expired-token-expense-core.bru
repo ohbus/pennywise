@@ -1,0 +1,21 @@
+meta {
+  name: Expired token is rejected by Expense Core
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{expiredToken}}
+}
+
+tests {
+  test("expired token is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

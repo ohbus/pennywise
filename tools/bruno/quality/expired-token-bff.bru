@@ -1,0 +1,28 @@
+meta {
+  name: Expired token is rejected by BFF
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrlBff}}/graphql
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{expiredToken}}
+}
+
+body:json {
+  {
+    "query": "{ groups { id name } }"
+  }
+}
+
+tests {
+  test("expired token is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

@@ -5,6 +5,8 @@ import com.subhrodip.pennywise.accounts.auth.credential.HmacCredentialDigest
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialRepository
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialService
 import com.subhrodip.pennywise.accounts.auth.credential.OneTimeCredentialIssuer
+import com.subhrodip.pennywise.accounts.auth.delivery.AesGcmCredentialEnvelopeProtector
+import com.subhrodip.pennywise.accounts.auth.delivery.CredentialEnvelopeProtector
 import java.util.Base64
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -16,7 +18,9 @@ import org.springframework.context.annotation.Profile
 @Profile("local-oidc", "staging", "production")
 class AuthenticationCredentialConfiguration(
     @Value("\${PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET}")
-    private val encodedDigestSecret: String
+    private val encodedDigestSecret: String,
+    @Value("\${PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY}")
+    private val encodedEnvelopeKey: String
 ) {
     /** Creates the HMAC digest adapter from a deployment-only base64 secret. */
     @Bean
@@ -34,8 +38,18 @@ class AuthenticationCredentialConfiguration(
         issuer: OneTimeCredentialIssuer
     ): LoginCredentialService = LoginCredentialService(repository, issuer)
 
+    /** Creates the fail-closed AES-GCM protector for auth-email handoffs. */
+    @Bean
+    fun credentialEnvelopeProtector(): CredentialEnvelopeProtector =
+        AesGcmCredentialEnvelopeProtector(decodeEnvelopeKey())
+
     private fun decodeSecret(): ByteArray = runCatching {
         Base64.getDecoder().decode(encodedDigestSecret)
     }.getOrElse { throw IllegalArgumentException("Credential digest secret must be base64", it) }
         .also { require(it.size >= 32) { "Credential digest secret must contain at least 32 bytes" } }
+
+    private fun decodeEnvelopeKey(): ByteArray = runCatching {
+        Base64.getDecoder().decode(encodedEnvelopeKey)
+    }.getOrElse { throw IllegalArgumentException("Auth email envelope key must be base64", it) }
+        .also { require(it.size == 32) { "Auth email envelope key must contain exactly 32 bytes" } }
 }

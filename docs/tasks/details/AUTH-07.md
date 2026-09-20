@@ -114,6 +114,12 @@ server-derived HMAC of canonical email plus a separately derived network
 partition, never raw email or an untrusted client identifier. This state is
 operational throttling data, not an authorization identity store.
 
+Key derivation is isolated in `LoginRateLimitKeyDeriver`: it receives the
+already-canonical email and a server-derived network partition, joins them with
+a versioned delimiter, and HMACs the result with the deployment secret. The
+repository sees only the resulting digest. Raw IP addresses, forwarded headers,
+emails, and user-controlled rate-limit keys never reach persistence.
+
 The service slice now owns the orchestration boundary: canonicalize email,
 issue and persist only a digest-backed credential, and verify through the
 conditional repository transition. It returns generic outcomes so controllers

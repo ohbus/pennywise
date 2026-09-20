@@ -113,6 +113,13 @@ conditional repository transition. It returns generic outcomes so controllers
 cannot accidentally disclose whether an email or credential exists. Email
 delivery and HTTP mapping remain adapters.
 
+Before the login-start controller is exposed, AUTH-07 adds an abuse-policy
+port. It evaluates canonical email/network keys against a configured request
+window, resend cooldown, and attempt budget, returning only a generic allow or
+deny decision. The state store is an adapter boundary: local may use the
+database, while production may use a shared atomic store. No controller may
+implement ad-hoc counters.
+
 Deployment wiring for the credential core is profile-gated and fail-closed:
 `PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET` is required in `local-oidc`,
 `staging`, and `production`. It has no application default and is never

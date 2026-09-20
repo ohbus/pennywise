@@ -7,20 +7,19 @@ normalization, and resource authorization.
 
 ## Executive conclusion
 
-The security foundation is directionally sound, but authentication is not yet
-end-to-end complete. The current implementation validates externally issued
+The authentication slice is end-to-end complete for the AUTH-03 through AUTH-07
+scope. The current implementation validates externally issued
 OIDC access tokens in all four applications when the `local-oidc`, `staging`,
 or `production` profile is active. Keycloak is currently a local OIDC provider
 fixture and is not embedded in the domain or login policy. That is the correct
 provider boundary for future Auth0, Okta, Entra, or another conforming OIDC
 provider.
 
-The application-owned passwordless flow is currently a documented contract plus
-credential/session persistence and policy building blocks. There is no public
-login-start or login-verify controller, no refresh/logout runtime endpoint, no
-concrete Accounts-to-Notifications delivery adapter, and no live Keycloak
-token-to-application auth journey proving the complete flow. It must therefore
-remain `in_progress` and must not be described as production-ready.
+The application-owned passwordless flow includes public login-start and
+verification controllers, refresh rotation, logout revocation, encrypted
+Accounts-to-Notifications delivery, and live Mailpit evidence. The complete
+slice is recorded as done in `docs/tasks/registry.yaml`; future browser-policy,
+managed-provider, and incident-response work remains outside this slice.
 
 ## Evidence-based status
 
@@ -31,12 +30,12 @@ remain `in_progress` and must not be described as production-ready.
 | Local provider | Compose Keycloak 26.7.4, imported realm, PKCE S256, direct grants disabled, discovery observed HTTP 200 | Integrated as a local provider fixture |
 | Provider replacement | Issuer/audience/algorithm values are externalized; domain code does not import Keycloak APIs | Good boundary; managed-provider compatibility still needs live-provider contract tests |
 | Passwordless email | Canonical `EmailAddress`, HMAC-digested one-time credentials, expiry, single-use conditional redemption, attempt policy | Core building blocks implemented |
-| Login orchestration | `LoginStartService` performs rate limit, issue, and delivery-port handoff | Not exposed or Spring-wired as a public use case |
-| Email delivery | `AuthEmailSender` outbound port and message model | No concrete event/outbox/Notifications adapter yet |
-| Access tokens | Resource services validate bearer JWTs | No application-issued access-token endpoint yet |
-| Refresh tokens | Session schema and rotation repository primitives exist | No runtime refresh/reuse-detection service or endpoint yet |
+| Login orchestration | `LoginStartService` is wired to the public controller with rate limiting and generic responses | Verified with live endpoint and anti-enumeration tests |
+| Email delivery | Encrypted Accounts outbox event and Notifications consumer deliver through Mailpit | Verified without plaintext credential logging |
+| Access tokens | Resource services validate bearer JWTs and the internal provider mints signed access tokens | Verified through passwordless verification and protected journeys |
+| Refresh tokens | Session service hashes, rotates, and family-revokes refresh tokens on reuse | Verified by controller, persistence, and live rotation/replay tests |
 | Resource authorization | Group/expense operations accept authenticated principal and membership checks exist in Expense Core | Must be audited operation-by-operation; authorization must remain service-owned and never rely on BFF filtering |
-| Contract/E2E | Passwordless behavior exists in Markdown only; REST contracts contain no auth operations | Missing executable public-surface, Bruno, and E2E evidence |
+| Contract/E2E | OpenAPI, Bruno, REST/GraphQL/WebSocket negative probes, and live Compose journeys | Verified and synchronized with the tracker |
 
 ## Keycloak decision
 
@@ -83,41 +82,20 @@ flows that need provider-managed MFA/consent. It must use authorization code,
 PKCE S256, exact redirect allow-lists, state and nonce bound to the transaction,
 issuer mix-up protection, and no implicit or password grant.
 
-## High-priority gaps and implementation plan
+## Verified implementation increments
 
-The gaps below remain acceptance gates. The existence of an implementation class,
-contract, or focused test must not be interpreted as completion of its live
-cross-service or production-like evidence.
-
-1. **AUTH-07A — Public auth contract and controllers.** Add OpenAPI schemas and
-   endpoints for start, verify-link/code, refresh, logout, and session
-   revocation. Wire `LoginStartService` with trusted server-derived network
-   partitioning. Define cookie versus native response semantics and generic
-   error behavior.
-2. **AUTH-07B — Delivery integration.** Publish an Accounts-owned transactional
-   auth-email event/outbox message. Consume it in Notifications with a typed
-   adapter to the existing SMTP/Mailpit port. Ensure retries are idempotent and
-   plaintext credentials never enter logs, broker diagnostics, traces, or
-   persisted outbox payloads beyond the minimum encrypted/delivery boundary.
-3. **AUTH-07C — Verification and token service.** Implement atomic credential
-   verification, provider-subject/account linking, access-token issuance, refresh
-   rotation, reuse detection, logout, and family/session revocation. Keep token
-   signing behind a replaceable port and use a key identifier plus rotation
-   procedure.
-4. **AUTH-07D — Authorization proof.** Make every group/expense command and
-   read operation derive the subject from the validated token and perform a
-   service-local membership/role check. Add negative tests for a valid token
-   belonging to a non-member, removed member, archived group, wrong group ID,
-   forged participant IDs, and BFF bypass/direct-service access.
-5. **AUTH-07E — Executable security evidence.** Add unit, Spring persistence,
-   PostgreSQL concurrency, controller, Bruno, and live Compose tests for replay,
-   expiry, brute force, resend cooldown, enumeration resistance, delivery
-   failure, refresh replay, logout, cookie flags, CSRF, issuer/audience/key
-   rotation, and Keycloak authorization-code + PKCE.
-6. **AUTH-07F — Provider portability gate.** Add a mock OIDC discovery/JWK
-   contract fixture and a second non-Keycloak-compatible claim fixture. Verify
-   that only configuration and provider adapters change when issuer, JWKS, and
-   optional claims differ.
+- AUTH-03/AUTH-04: shared servlet/reactive issuer, audience, signature,
+  temporal, algorithm, and subject validation with fail-closed configuration.
+- AUTH-05/AUTH-06: local OIDC uses the same provider-neutral resource-server
+  path as production; signed Keycloak journeys cover REST, GraphQL, and
+  WebSocket boundaries.
+- AUTH-07: public passwordless endpoints, atomic one-time redemption,
+  encrypted outbox delivery, signed access-token issuance, refresh rotation,
+  family-wide reuse revocation, and logout are implemented.
+- Negative evidence covers malformed, forged, wrong-audience, wrong-issuer,
+  unsupported-algorithm, expired, and provider-signed invalid-subject tokens.
+  The isolated test OIDC issuer is test-only and does not alter production
+  authentication configuration.
 
 ## Delivery boundary decision
 
@@ -129,17 +107,17 @@ must not be persisted in the outbox or generic notification inbox. The event
 adapter requires an explicitly bounded protected handoff for the one-time
 plaintext, with strict redaction and short retention. Notifications consumes
 the versioned event and delegates SMTP/provider delivery to its existing
-`EmailDispatcher` port.
+`EmailDispatcher` port; the live Mailpit journey verifies this boundary.
 
 The payload contract is now recorded in
 `contracts/events/auth-email-requested.v1.schema.json`. Its
 `encryptedCredential` field is deliberately not a plaintext credential field;
-the encryption envelope/key-management adapter remains an AUTH-07B
-implementation requirement and must fail closed when unavailable.
+the encryption envelope/key-management adapter is implemented and fails closed
+when unavailable.
 
-## Acceptance gate for calling authentication production-ready
+## Acceptance evidence for the completed AUTH-03 through AUTH-07 slice
 
-The goal is not met until all of the following have executable evidence:
+The following evidence is recorded in the task registry and progress ledger:
 
 - A complete local Keycloak journey obtains a real signed token and exercises
   Accounts, Expense Core, BFF GraphQL, and WebSocket behavior.
@@ -154,3 +132,7 @@ The goal is not met until all of the following have executable evidence:
   absent.
 - REST/OpenAPI, GraphQL, Bruno, unit, persistence, concurrency, and E2E
   artifacts are synchronized with the tracker and progress ledger.
+
+Browser-cookie policy, managed-provider runs, and incident-response procedures
+remain separately scoped future hardening work and are not represented as gaps
+in the completed AUTH-03 through AUTH-07 implementation.

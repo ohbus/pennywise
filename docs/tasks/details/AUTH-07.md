@@ -153,6 +153,12 @@ The AES-GCM key is required through
 and local Compose. It has no default and must be exactly 32 decoded bytes;
 missing or malformed configuration fails startup.
 
+The Accounts-owned `auth_email_outbox` migration and persistence boundary now
+store an idempotent event ID, canonical recipient, template, expiry, delivery
+state, and only the protected envelope. The table is deliberately separate from
+Expense Core's outbox. Publication, lease/claim semantics, and Notifications
+consumption remain the next implementation increment.
+
 The first protection implementation adds `CredentialEnvelopeProtector` and an
 AES-GCM adapter. Each envelope uses a fresh 96-bit nonce, a 256-bit configured
 key, an explicit format version, and authenticated recipient/template context.

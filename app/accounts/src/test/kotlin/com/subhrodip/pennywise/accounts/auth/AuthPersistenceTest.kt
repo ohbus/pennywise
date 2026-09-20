@@ -2,6 +2,8 @@ package com.subhrodip.pennywise.accounts.auth
 
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialEntity
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialRepository
+import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailOutboxEntity
+import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailOutboxRepository
 import com.subhrodip.pennywise.accounts.auth.session.AuthSessionEntity
 import com.subhrodip.pennywise.accounts.auth.session.AuthSessionRepository
 import java.time.Instant
@@ -18,7 +20,8 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class AuthPersistenceTest @Autowired constructor(
     private val credentialRepository: LoginCredentialRepository,
-    private val sessionRepository: AuthSessionRepository
+    private val sessionRepository: AuthSessionRepository,
+    private val authEmailOutboxRepository: AuthEmailOutboxRepository
 ) {
     @Test
     fun `only one caller can consume an active credential`() {
@@ -68,5 +71,21 @@ class AuthPersistenceTest @Autowired constructor(
         assertEquals(0, sessionRepository.rotateIfActive(sessionId, UUID.randomUUID(), now.plusSeconds(2)))
         assertEquals(1, sessionRepository.revokeFamily(familyId, now.plusSeconds(3)))
         assertEquals(0, sessionRepository.revokeFamily(familyId, now.plusSeconds(4)))
+    }
+
+    @Test
+    fun `auth email outbox stores only protected delivery material`() {
+        val now = Instant.now()
+        val eventId = UUID.randomUUID()
+        val record = authEmailOutboxRepository.save(AuthEmailOutboxEntity(
+            outboxId = UUID.randomUUID(), eventId = eventId,
+            recipient = "user@example.com", template = "LOGIN_LINK",
+            encryptedCredential = "v1-protected-envelope", expiresAt = now.plusSeconds(600),
+            createdAt = now, availableAt = now
+        ))
+
+        val loaded = authEmailOutboxRepository.findByEventId(eventId)
+        assertEquals(record.encryptedCredential, loaded?.encryptedCredential)
+        assertEquals("PENDING", loaded?.status)
     }
 }

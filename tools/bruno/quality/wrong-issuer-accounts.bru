@@ -1,0 +1,21 @@
+meta {
+  name: Wrong issuer is rejected by Accounts
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrlAccounts}}/accounts/v1/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{wrongIssuerToken}}
+}
+
+tests {
+  test("wrong issuer is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

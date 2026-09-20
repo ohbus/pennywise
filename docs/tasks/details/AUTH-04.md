@@ -88,30 +88,17 @@ validator rejects expired and not-yet-valid JWT claims and accepts a token
 inside its validity window. Live provider-issued expiry and invalid-subject
 journeys remain separate acceptance evidence and are still open.
 
-## Next implementation increment
+## Delivered policy increments
 
-The shared security library will add one provider-neutral claim-policy port and
-reuse it from both servlet and reactive decoder factories. This increment will
-enforce a bounded, non-blank `sub` claim before identity reaches application
-code, preserve issuer/audience/time validation, and add direct validator tests
-for valid, missing, blank, and overlong subjects. It will not introduce
-Keycloak SDKs or domain dependencies. Algorithm allow-list, bearer token type,
-real signed-token, key-rotation, GraphQL, WebSocket, and full invalid-token
-boundary evidence remain explicit follow-up gates in this task.
-
-Planned evidence for this increment:
-
-- `./gradlew.bat :libs:security:test --rerun-tasks --no-daemon`
-- `./gradlew.bat compileKotlin --no-daemon`
-- `git diff --check`
-- exact validator test names and limitations recorded in `docs/tasks/progress.md`
-
-The following increment extends the same policy with a configuration-driven
-algorithm allow-list. `PENNYWISE_SECURITY_OIDC_ALLOWED_ALGORITHMS` defaults to
-`RS256`; applications may explicitly select a compatible asymmetric algorithm
-set when their configured OIDC provider requires it. Symmetric algorithms and
-blank/absent algorithm headers are rejected. This is a policy guard in addition to
-JWK signature verification, not a replacement for it.
+The shared security library now exposes one provider-neutral claim policy and
+reuses it from both servlet and reactive decoder factories. It enforces a
+bounded, non-blank `sub` claim before identity reaches application code,
+preserves issuer/audience/time validation, and rejects unsupported algorithms.
+`PENNYWISE_SECURITY_OIDC_ALLOWED_ALGORITHMS` defaults to `RS256`; applications
+may explicitly select a compatible asymmetric algorithm set for their provider.
+Symmetric algorithms and blank/absent algorithm headers are rejected. This is
+a policy guard in addition to JWK signature verification, not a replacement
+for it.
 
 ## Implementation notes: bounded subject policy
 
@@ -120,5 +107,5 @@ JWK signature verification, not a replacement for it.
 - `sub` must be a non-empty, whitespace-free string no longer than 256
   characters. Email, username, and display claims remain ignored.
 - Added tests for valid, missing, blank, whitespace-containing, and overlong
-  subjects. This increment does not claim algorithm allow-list or live provider
-  evidence.
+  subjects.
+- Added provider-neutral tests for expired, not-yet-valid, and in-window tokens.

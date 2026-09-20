@@ -1,0 +1,21 @@
+meta {
+  name: Wrong issuer is rejected by Notifications
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrlNotifications}}/notifications/v1/preferences
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{wrongIssuerToken}}
+}
+
+tests {
+  test("wrong issuer is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

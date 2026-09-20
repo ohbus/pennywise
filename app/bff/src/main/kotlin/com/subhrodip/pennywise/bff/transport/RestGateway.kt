@@ -4,6 +4,10 @@ import com.subhrodip.pennywise.ids.ApiEndpoints
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.ClientRequest
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction
+import org.springframework.security.core.context.ReactiveSecurityContextHolder
+import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken
 import reactor.core.publisher.Mono
 import reactor.core.publisher.Flux
 import java.time.Duration
@@ -147,13 +151,31 @@ data class RepaymentInput(
 
 class UpstreamServiceException(val status: Int, message: String = "Upstream service returned HTTP $status") : RuntimeException(message)
 
+/** Forwards the authenticated signed token to service-to-service REST calls. */
+private val bearerPropagationFilter = ExchangeFilterFunction.ofRequestProcessor { request ->
+    ReactiveSecurityContextHolder.getContext()
+        .flatMap { context ->
+            val authentication = context.authentication
+            if (authentication is AbstractOAuth2TokenAuthenticationToken<*>) {
+                Mono.just(
+                    ClientRequest.from(request)
+                        .headers { headers -> headers.setBearerAuth(authentication.token.tokenValue) }
+                        .build()
+                )
+            } else {
+                Mono.empty()
+            }
+        }
+        .switchIfEmpty(Mono.just(request))
+}
+
 @Component
 class AccountsGateway(
     builder: WebClient.Builder,
     @Value("${'$'}{pennywise.accounts-url:http://localhost:8081}") baseUrl: String,
     @Value("${'$'}{pennywise.bff.upstream-timeout:2s}") private val timeout: Duration
 ) {
-    private val client = builder.baseUrl(baseUrl).build()
+    private val client = builder.filter(bearerPropagationFilter).baseUrl(baseUrl).build()
 
     fun getMe(bearer: String?): Mono<BffProfile> =
         client.get().uri(ApiEndpoints.Accounts.V1.PATH_ME)
@@ -170,7 +192,7 @@ class ExpenseCoreGateway(
     @Value("${'$'}{pennywise.expense-core-url:http://localhost:8082}") baseUrl: String,
     @Value("${'$'}{pennywise.bff.upstream-timeout:2s}") private val timeout: Duration
 ) {
-    private val client = builder.baseUrl(baseUrl).build()
+    private val client = builder.filter(bearerPropagationFilter).baseUrl(baseUrl).build()
 
     fun createGroup(input: BffCreateGroup, bearer: String?): Mono<BffGroup> =
         client.post().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS)

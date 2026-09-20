@@ -6,9 +6,10 @@ import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.graphql.data.method.annotation.SubscriptionMapping
 import org.springframework.stereotype.Controller
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import java.security.Principal
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.security.Principal
 
 @Controller
 class GroupGraphqlController(
@@ -24,32 +25,32 @@ class GroupGraphqlController(
         liveFanout.emitInvalidation(groupId, revision, changeId)
 
     @SubscriptionMapping
-    fun groupChanged(@Argument groupId: String, principal: Principal?): Flux<GroupInvalidation> =
-        gateway.getGroup(groupId, principal?.name)
+    fun groupChanged(@Argument groupId: String, @AuthenticationPrincipal(expression = "tokenValue") principal: Any?): Flux<GroupInvalidation> =
+        gateway.getGroup(groupId, bearerToken(principal))
             .flatMapMany { liveFanout.invalidations().filter { it.groupId == groupId } }
 
     @QueryMapping
-    fun groups(principal: Principal?): Mono<List<BffGroup>> = gateway.listGroups(principal?.name)
+    fun groups(@AuthenticationPrincipal(expression = "tokenValue") principal: Any?): Mono<List<BffGroup>> = gateway.listGroups(bearerToken(principal))
 
     @QueryMapping
-    fun group(@Argument id: String, principal: Principal?): Mono<BffGroup> =
-        gateway.getGroup(id, principal?.name)
+    fun group(@Argument id: String, @AuthenticationPrincipal(expression = "tokenValue") principal: Any?): Mono<BffGroup> =
+        gateway.getGroup(id, bearerToken(principal))
 
     @QueryMapping
-    fun settlementSuggestions(@Argument groupId: String, principal: Principal?): Mono<List<BffSuggestedSettlement>> =
-        gateway.getSettlementSuggestions(groupId, principal?.name)
+    fun settlementSuggestions(@Argument groupId: String, @AuthenticationPrincipal(expression = "tokenValue") principal: Any?): Mono<List<BffSuggestedSettlement>> =
+        gateway.getSettlementSuggestions(groupId, bearerToken(principal))
 
     @MutationMapping
-    fun createGroup(@Argument input: CreateGroupInput, principal: Principal?): Mono<BffGroup> =
-        gateway.createGroup(BffCreateGroup(input.name, input.kind, input.currency), principal?.name)
+    fun createGroup(@Argument input: CreateGroupInput, @AuthenticationPrincipal(expression = "tokenValue") principal: Any?): Mono<BffGroup> =
+        gateway.createGroup(BffCreateGroup(input.name, input.kind, input.currency), bearerToken(principal))
 
     @MutationMapping
     fun updateGroup(
         @Argument groupId: String,
         @Argument name: String,
-        principal: Principal?
+        @AuthenticationPrincipal(expression = "tokenValue") principal: Any?
     ): Mono<BffGroup> =
-        gateway.updateGroup(groupId, name, principal?.name)
+        gateway.updateGroup(groupId, name, bearerToken(principal))
             .doOnSuccess { group ->
                 if (group != null) {
                     emitInvalidation(groupId, group.revision)
@@ -61,9 +62,9 @@ class GroupGraphqlController(
         @Argument groupId: String,
         @Argument input: CreateExpenseInput,
         @Argument idempotencyKey: String,
-        principal: Principal?
+        @AuthenticationPrincipal(expression = "tokenValue") principal: Any?
     ): Mono<BffExpense> =
-        gateway.createExpense(groupId, input, idempotencyKey, principal?.name)
+        gateway.createExpense(groupId, input, idempotencyKey, bearerToken(principal))
             .doOnSuccess { expense ->
                 if (expense != null) {
                     emitInvalidation(groupId, expense.version)
@@ -73,11 +74,11 @@ class GroupGraphqlController(
     @MutationMapping
     fun recordRepayment(
         @Argument input: RepaymentInput,
-        principal: Principal?
+        @AuthenticationPrincipal(expression = "tokenValue") principal: Any?
     ): Mono<BffSettlement> {
         val groupId = input.groupId
             ?: return Mono.error(IllegalArgumentException("groupId is required for recording a repayment"))
-        return gateway.recordRepayment(groupId, input, principal?.name)
+        return gateway.recordRepayment(groupId, input, bearerToken(principal))
             .doOnSuccess { settlement ->
                 if (settlement != null) {
                     emitInvalidation(groupId, 1L)

@@ -80,10 +80,10 @@ acceptance: ## Run the public-interface acceptance harness and write a JSON repo
 acceptance-live: ## Run the acceptance test harness requiring live running services
 	@python3 tests/acceptance/runner.py --require-services
 
-bruno-run: ## Run the ordered Bruno collection; override BRUNO_ENV, BRUNO_TOKEN, and BRUNO_REPORT
+bruno-run: ## Run the ordered Bruno collection; override BRUNO_ENV, BRUNO_TOKEN, negative tokens, and BRUNO_REPORT
 	@command -v npx >/dev/null || (echo "Node.js/npm is required for Bruno CLI"; exit 1)
 	@report="$${BRUNO_REPORT:-/tmp/pennywise-bruno-$$(date +%s).json}"; mkdir -p "$$(dirname "$$report")"; \
-		(cd tools/bruno && npx --yes @usebruno/cli@4.1.0 run accounts bff expense-core/groups expense-core/expenses expense-core/settlements expense-core/sync expense-core/recurring notifications expense-core/lifecycle quality -r --env "$${BRUNO_ENV:-local}" --env-var "token=$${BRUNO_TOKEN:-test-user}" --reporter-json "$$report" --reporter-skip-headers --reporter-skip-body); \
+		(cd tools/bruno && npx --yes @usebruno/cli@4.1.0 run accounts bff expense-core/groups expense-core/expenses expense-core/settlements expense-core/sync expense-core/recurring notifications expense-core/lifecycle quality -r --env "$${BRUNO_ENV:-local}" --env-var "token=$${BRUNO_TOKEN:-test-user}" --env-var "wrongAudienceToken=$${BRUNO_WRONG_AUDIENCE_TOKEN:-$${PENNYWISE_BRUNO_WRONG_AUDIENCE_TOKEN}}" --env-var "wrongIssuerToken=$${BRUNO_WRONG_ISSUER_TOKEN:-$${PENNYWISE_BRUNO_WRONG_ISSUER_TOKEN}}" --reporter-json "$$report" --reporter-skip-headers --reporter-skip-body); \
 		echo "Bruno report: $$report"
 
 workflow-validate: ## Parse all GitHub Actions workflow YAML files

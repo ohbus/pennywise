@@ -87,9 +87,9 @@ that single policy vocabulary.
 
 Provider-neutral temporal regression tests now prove that the default issuer
 validator rejects expired and not-yet-valid JWT claims and accepts a token
-inside its validity window. Live provider-issued expiry and invalid-subject
-expiry is now also covered by a real provider-issued token; invalid-subject
-journeys remain separate acceptance evidence and are still open.
+inside its validity window. Live provider-issued expiry is also covered by a
+real provider-issued token; invalid-subject journeys remain separate acceptance
+evidence and are still open.
 
 ## Delivered policy increments
 

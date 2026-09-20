@@ -68,9 +68,10 @@ port.
 
 - Seeded-user token acquisition and replacement of every legacy E2E fixture
   identity with valid signed tokens are still open.
-- Full-stack `local-oidc` WebSocket journeys, passwordless Mailpit delivery, and
-  wrong-issuer/expired-token rejection remain required before AUTH-06 can close;
-  malformed-bearer rejection is verified for all four applications.
+- Full-stack `local-oidc` WebSocket journeys, passwordless Mailpit delivery,
+  malformed-bearer, wrong-issuer, and expired-token rejection are verified;
+  seeded-user replacement and invalid-subject provider coverage remain required
+  before AUTH-06 can close.
 
 ## Environment parity decision
 

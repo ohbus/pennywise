@@ -22,7 +22,7 @@ open class LoginCredentialService(
      * @return delivery envelope; callers must hand plaintext only to an email adapter.
      */
     @Transactional
-    fun issue(
+    open fun issue(
         email: String,
         kind: CredentialKind,
         now: Instant,
@@ -55,7 +55,7 @@ open class LoginCredentialService(
      * @return generic verification outcome.
      */
     @Transactional
-    fun verify(plaintext: String, now: Instant): VerificationOutcome {
+    open fun verify(plaintext: String, now: Instant): VerificationOutcome {
         return if (redeem(plaintext, now) != null) {
             VerificationOutcome.ACCEPTED
         } else {
@@ -72,7 +72,7 @@ open class LoginCredentialService(
      * @return redeemed entity or null if redemption did not succeed.
      */
     @Transactional
-    fun redeem(plaintext: String, now: Instant): LoginCredentialEntity? {
+    open fun redeem(plaintext: String, now: Instant): LoginCredentialEntity? {
         if (plaintext.isBlank()) return null
         val digest = issuer.digest(plaintext)
         val updated = repository.consumeIfActive(digest, now)

@@ -48,7 +48,7 @@ open class TokenSessionService(
      * @return [TokenResponse] containing signed access token and new opaque refresh token.
      */
     @Transactional
-    fun createSession(
+    open fun createSession(
         accountId: UUID,
         subject: String,
         email: String,
@@ -98,7 +98,7 @@ open class TokenSessionService(
      * @throws ApplicationException with [ErrorCode.ERR_03] when invalid, expired, revoked, or reused.
      */
     @Transactional
-    fun rotateSession(
+    open fun rotateSession(
         rawRefreshToken: String,
         clientKind: String,
         deviceLabel: String?,
@@ -172,7 +172,7 @@ open class TokenSessionService(
      * @param now Revocation timestamp.
      */
     @Transactional
-    fun revokeSessionByRefreshToken(rawRefreshToken: String, now: Instant) {
+    open fun revokeSessionByRefreshToken(rawRefreshToken: String, now: Instant) {
         if (rawRefreshToken.isBlank()) return
         val digest = credentialDigest.digest(rawRefreshToken)
         val session = sessionRepository.findByRefreshTokenDigest(digest) ?: return
@@ -186,7 +186,7 @@ open class TokenSessionService(
      * @param now Revocation timestamp.
      */
     @Transactional
-    fun revokeFamily(familyId: UUID, now: Instant) {
+    open fun revokeFamily(familyId: UUID, now: Instant) {
         sessionRepository.revokeFamily(familyId, now)
     }
 

@@ -41,7 +41,7 @@ open class LoginVerificationService(
      * @throws ApplicationException with [ErrorCode.ERR_03] on invalid, expired, or replayed credentials.
      */
     @Transactional
-    fun verify(
+    open fun verify(
         credential: String,
         clientKind: String,
         deviceLabel: String?,

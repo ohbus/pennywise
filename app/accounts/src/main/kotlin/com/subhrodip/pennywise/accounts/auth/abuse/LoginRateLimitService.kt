@@ -22,7 +22,7 @@ open class LoginRateLimitService(
      * @return true when allowed; false is a generic denial.
      */
     @Transactional
-    fun tryAcquire(email: String, networkPartition: String, now: Instant): Boolean {
+    open fun tryAcquire(email: String, networkPartition: String, now: Instant): Boolean {
         val key = keyDeriver.derive(email, networkPartition)
         val updated = repository.acquireAtomically(
             key = key,

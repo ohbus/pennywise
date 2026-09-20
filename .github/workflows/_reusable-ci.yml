@@ -289,6 +289,11 @@ jobs:
           make e2e-offline
           make e2e-concurrency
           make e2e-chaos
+          export BEARER_TOKEN="$(fresh_token pennywise-ci pennywise-ci-local-only)"
+          export PENNYWISE_E2E_TOKEN_A="$BEARER_TOKEN"
+          export PENNYWISE_E2E_TOKEN_B="$(fresh_token pennywise-ci-e2e-bob pennywise-ci-e2e-bob-local-only)"
+          export PENNYWISE_E2E_TOKEN_NONMEMBER="$(fresh_token pennywise-ci-e2e-nonmember pennywise-ci-e2e-nonmember-local-only)"
+          test -n "$BEARER_TOKEN" -a -n "$PENNYWISE_E2E_TOKEN_B" -a -n "$PENNYWISE_E2E_TOKEN_NONMEMBER"
           make e2e-rest-edge
       - name: Tear down the complete local application stack
         if: always()

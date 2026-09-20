@@ -120,8 +120,11 @@ def run_e2e_tests() -> int:
 
     # 2. User profiles in Accounts & GraphQL me
     print("\n[Step 2] Testing User Profiles (Alice & Bob)...")
-    user_a = f"alice-{uuid.uuid4().hex[:8]}"
-    user_b = f"bob-{uuid.uuid4().hex[:8]}"
+    user_a = os.environ.get("PENNYWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
+    user_b = os.environ.get("PENNYWISE_E2E_TOKEN_B", user_a)
+    user_nonmember = os.environ.get("PENNYWISE_E2E_TOKEN_NONMEMBER", user_b)
+    if not user_a or not user_b or not user_nonmember:
+        raise RuntimeError("E2E persona variables must contain signed tokens")
 
     # Query 'me' for Alice via Accounts API
     status_a, profile_a = request_json(f"{ACCOUNTS_URL}/accounts/v1/me", bearer=user_a)
@@ -205,7 +208,7 @@ def run_e2e_tests() -> int:
         f"{BASE_URL}/graphql",
         method="POST",
         body={"query": "query { groups { id name } }"},
-        bearer=f"empty-groups-{uuid.uuid4().hex[:8]}",
+        bearer=user_nonmember,
     )
     assert empty_groups_status == 200, (
         f"Empty GraphQL groups query returned HTTP {empty_groups_status}: {empty_groups_response}"
@@ -248,7 +251,7 @@ def run_e2e_tests() -> int:
                 "{ id name } }"
             )
         },
-        bearer=f"outsider-{uuid.uuid4().hex[:8]}",
+        bearer=user_nonmember,
     )
     assert outsider_update_status == 200, (
         f"Unauthorized GraphQL update returned HTTP {outsider_update_status}: "
@@ -263,7 +266,7 @@ def run_e2e_tests() -> int:
         f"{BASE_URL}/graphql",
         method="POST",
         body={"query": f'query {{ group(id: "{group_id}") {{ id name }} }}'},
-        bearer=f"outsider-{uuid.uuid4().hex[:8]}",
+        bearer=user_nonmember,
     )
     assert outsider_group_status == 200, (
         f"Unauthorized GraphQL group query returned HTTP {outsider_group_status}: "
@@ -281,7 +284,7 @@ def run_e2e_tests() -> int:
         f"{BASE_URL}/graphql",
         method="POST",
         body={"query": f'query {{ settlementSuggestions(groupId: "{group_id}") {{ fromParticipantId }} }}'},
-        bearer=f"outsider-{uuid.uuid4().hex[:8]}",
+        bearer=user_nonmember,
     )
     assert outsider_suggestions_status == 200, (
         f"Unauthorized GraphQL suggestions returned HTTP {outsider_suggestions_status}: "
@@ -303,7 +306,7 @@ def run_e2e_tests() -> int:
                 "{ id } }"
             )
         },
-        bearer=f"outsider-{uuid.uuid4().hex[:8]}",
+        bearer=user_nonmember,
     )
     assert outsider_repayment_status == 200, (
         f"Unauthorized GraphQL repayment returned HTTP {outsider_repayment_status}: "
@@ -365,8 +368,8 @@ def run_e2e_tests() -> int:
     )
     assert status_members == 200, f"Failed to list members: {members}"
     subjects = [m.get("subject") for m in members]
-    assert user_a in subjects, f"Expected {user_a} in members: {subjects}"
-    assert user_b in subjects, f"Expected {user_b} in members: {subjects}"
+    assert profile_a["displayName"] in subjects, f"Expected Alice subject in members: {subjects}"
+    assert bob_me["displayName"] in subjects, f"Expected Bob subject in members: {subjects}"
     print(f"  ✓ Group members verified: {subjects}")
 
     # 5. Add Expense via GraphQL createExpense
@@ -540,7 +543,7 @@ def run_e2e_tests() -> int:
     for attempt in range(1, 10):
         status_inbox, inbox_data = request_json(
             f"{NOTIFICATIONS_URL}/notifications/v1/inbox",
-            bearer=group_id
+            bearer=user_a
         )
         if status_inbox == 200 and inbox_data.get("items"):
             items = inbox_data["items"]

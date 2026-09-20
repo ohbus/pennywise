@@ -93,7 +93,7 @@ class ExpenseController(
             allocations = domainAllocations
         )
 
-        val saved = expenseStore.create(groupId, record, idempotencyKey)
+        val saved = expenseStore.create(groupId, record, idempotencyKey, principal?.name)
 
         return ExpenseResponse(
             expenseId = saved.expenseId,

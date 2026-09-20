@@ -1,6 +1,6 @@
 # API implementation status
 
-The REST OpenAPI documents describe the reviewed public surface. All 41 current
+The REST OpenAPI documents describe the reviewed public surface. All 45 current
 REST operations are wired to controllers, and stateful operation families use
 the documented PostgreSQL/JPA adapters and transaction boundaries. Contract
 path items that carry `x-implementation-status` are marked
@@ -32,6 +32,8 @@ Current authorization and lifecycle invariants include:
 
 The operation-level evidence and remaining dimensions are maintained in
 [`public-interface-operation-matrix.md`](../quality/public-interface-operation-matrix.md).
-The latest local Docker evidence includes 86 live REST edge checks, but this
+The latest local Docker evidence includes 86 live REST edge checks, plus the
+acceptance and signed-persona product, offline, WebSocket/concurrency, and chaos
+recovery journeys, but this
 does not claim production OIDC, production-scale capacity, restore, multi-region
 failover, security-scan, or deployment-rollback evidence.

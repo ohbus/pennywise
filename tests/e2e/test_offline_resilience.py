@@ -87,8 +87,10 @@ def run_offline_resilience_tests() -> int:
 
     # Step 1: Provision two users and a group
     print("\n[Step 1] Provisioning test users and active group...")
-    user_a = f"alice-{uuid.uuid4().hex[:8]}"
-    user_b = f"bob-{uuid.uuid4().hex[:8]}"
+    user_a = os.environ.get("PENNYWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
+    user_b = os.environ.get("PENNYWISE_E2E_TOKEN_B", user_a)
+    if not user_a or not user_b:
+        raise RuntimeError("PENNYWISE_E2E_TOKEN_A and PENNYWISE_E2E_TOKEN_B must contain signed tokens")
 
     status, profile_a = request_json(f"{ACCOUNTS_URL}/accounts/v1/me", bearer=user_a)
     assert status == 200, f"Failed to get profile for Alice: {profile_a}"

@@ -2,7 +2,8 @@
 
 This is the operation-level companion to
 [`public-interface-coverage.md`](public-interface-coverage.md). The operation
-inventory is contract-generated; a row is not complete merely because its
+inventory is contract-generated; the current validator reports 45 REST
+operations. A row is not complete merely because its
 request is present in Bruno. “Remaining dimension work” is an explicit gap list
 and must be reduced with endpoint-specific tests before QA-07 can close.
 

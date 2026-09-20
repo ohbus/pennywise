@@ -87,6 +87,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - name: Set up isolated Python tooling
+        uses: astral-sh/setup-uv@v6
       - uses: actions/setup-java@v6
         with:
           distribution: microsoft
@@ -185,6 +187,20 @@ jobs:
           token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$token_response")"
           test -n "$token" || { echo "Keycloak returned no access token"; exit 2; }
           echo "token=$token" >> "$GITHUB_OUTPUT"
+          e2e_bob_response="$(curl --fail-with-body --silent --show-error \
+            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
+            --data 'grant_type=client_credentials&client_id=pennywise-ci-e2e-bob&client_secret=pennywise-ci-e2e-bob-local-only' \
+            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
+          e2e_bob_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$e2e_bob_response")"
+          test -n "$e2e_bob_token" || { echo "Keycloak returned no E2E second-persona token"; exit 2; }
+          echo "e2e_bob_token=$e2e_bob_token" >> "$GITHUB_OUTPUT"
+          e2e_nonmember_response="$(curl --fail-with-body --silent --show-error \
+            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
+            --data 'grant_type=client_credentials&client_id=pennywise-ci-e2e-nonmember&client_secret=pennywise-ci-e2e-nonmember-local-only' \
+            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
+          e2e_nonmember_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$e2e_nonmember_response")"
+          test -n "$e2e_nonmember_token" || { echo "Keycloak returned no E2E non-member token"; exit 2; }
+          echo "e2e_nonmember_token=$e2e_nonmember_token" >> "$GITHUB_OUTPUT"
           wrong_audience_response="$(curl --fail-with-body --silent --show-error \
             --connect-to idp-keycloak:8080:127.0.0.1:8090 \
             --data 'grant_type=client_credentials&client_id=pennywise-ci-wrong-audience&client_secret=pennywise-ci-wrong-audience-local-only' \
@@ -224,6 +240,9 @@ jobs:
           PENNYWISE_BRUNO_WRONG_ISSUER_TOKEN: ${{ steps.oidc-token.outputs.wrong_issuer_token }}
           PENNYWISE_BRUNO_EXPIRED_TOKEN: ${{ steps.oidc-token.outputs.expired_token }}
           BEARER_TOKEN: ${{ steps.oidc-token.outputs.token }}
+          PENNYWISE_E2E_TOKEN_A: ${{ steps.oidc-token.outputs.token }}
+          PENNYWISE_E2E_TOKEN_B: ${{ steps.oidc-token.outputs.e2e_bob_token }}
+          PENNYWISE_E2E_TOKEN_NONMEMBER: ${{ steps.oidc-token.outputs.e2e_nonmember_token }}
           WRONG_ISSUER_TOKEN: ${{ steps.oidc-token.outputs.wrong_issuer_token }}
           EXPIRED_TOKEN: ${{ steps.oidc-token.outputs.expired_token }}
         run: |

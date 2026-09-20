@@ -173,7 +173,7 @@ class SimpleGraphQLWSClient:
             if not chunk:
                 raise ConnectionError("Socket closed while reading frame")
             buf.extend(chunk)
-        return buf
+        return bytes(buf)
 
     def _listen_loop(self) -> None:
         while self.running:
@@ -214,8 +214,11 @@ def run_concurrency_and_subscriptions_test() -> None:
 
     # Step 1: Provision Users and Group
     print("\n[Step 1] Provisioning test users and active group...")
-    user_a = f"alice-{uuid.uuid4().hex[:8]}"
-    user_b = f"bob-{uuid.uuid4().hex[:8]}"
+    user_a = os.environ.get("PENNYWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
+    user_b = os.environ.get("PENNYWISE_E2E_TOKEN_B", user_a)
+    user_nonmember = os.environ.get("PENNYWISE_E2E_TOKEN_NONMEMBER", user_b)
+    if not user_a or not user_b or not user_nonmember:
+        raise RuntimeError("E2E persona variables must contain signed tokens")
 
     status, profile_a = request_json(f"http://localhost:8081/accounts/v1/me", bearer=user_a)
     assert status == 200, f"Failed to get profile for Alice: {profile_a}"
@@ -275,7 +278,7 @@ def run_concurrency_and_subscriptions_test() -> None:
     assert ws_client.errors, f"Expected a GraphQL error frame for malformed subscription; messages={ws_client.messages!r}"
     print("  ✓ Malformed subscription produced a protocol error frame")
 
-    outsider_ws = SimpleGraphQLWSClient(WS_HOST, WS_PORT, GRAPHQL_PATH, f"outsider-{uuid.uuid4().hex[:8]}")
+    outsider_ws = SimpleGraphQLWSClient(WS_HOST, WS_PORT, GRAPHQL_PATH, user_nonmember)
     outsider_ws.connect()
     outsider_ws.subscribe("outsider-sub", sub_query, {"groupId": group_id})
     time.sleep(0.4)

@@ -20,7 +20,12 @@ interface ExpenseStore {
      * @param idempotencyKey idempotency key provided with the request
      * @return persisted expense record
      */
-    fun create(groupId: UUID, expense: ExpenseRecord, idempotencyKey: String): ExpenseRecord
+    fun create(
+        groupId: UUID,
+        expense: ExpenseRecord,
+        idempotencyKey: String,
+        actorSubject: String? = null
+    ): ExpenseRecord
 
     /**
      * Updates an existing expense record, updating double-entry ledger postings with net reversals.
@@ -77,7 +82,12 @@ class InMemoryExpenseStore : ExpenseStore {
     private val postings = ConcurrentHashMap<UUID, MutableList<BalancePostingEntity>>()
 
     @Synchronized
-    override fun create(groupId: UUID, expense: ExpenseRecord, idempotencyKey: String): ExpenseRecord {
+    override fun create(
+        groupId: UUID,
+        expense: ExpenseRecord,
+        idempotencyKey: String,
+        actorSubject: String?
+    ): ExpenseRecord {
         val existing = expenses[expense.expenseId]
         if (existing != null) {
             if (existing.amountMinor == expense.amountMinor &&

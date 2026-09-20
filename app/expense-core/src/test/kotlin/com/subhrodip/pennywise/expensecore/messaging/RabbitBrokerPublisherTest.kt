@@ -58,15 +58,15 @@ class RabbitBrokerPublisherTest {
         val bodyJson = String(sentMessage.body, Charsets.UTF_8)
         val envelope = objectMapper.readTree(bodyJson)
 
-        assertEquals(eventId.toString(), envelope.get("eventId").asText())
-        assertEquals("group.created", envelope.get("eventType").asText())
+        assertEquals(eventId.toString(), envelope.get("eventId").asString())
+        assertEquals("group.created", envelope.get("eventType").asString())
         assertEquals(1, envelope.get("schemaVersion").asInt())
-        assertEquals(aggregateId.toString(), envelope.get("aggregateId").asText())
-        assertEquals(groupId.toString(), envelope.get("groupId").asText())
+        assertEquals(aggregateId.toString(), envelope.get("aggregateId").asString())
+        assertEquals(groupId.toString(), envelope.get("groupId").asString())
         assertEquals(3L, envelope.get("groupRevision").asLong())
-        assertEquals(occurredAt.toString(), envelope.get("occurredAt").asText())
-        assertEquals("Euro Trip", envelope.get("payload").get("name").asText())
-        assertEquals("EUR", envelope.get("payload").get("currency").asText())
+        assertEquals(occurredAt.toString(), envelope.get("occurredAt").asString())
+        assertEquals("Euro Trip", envelope.get("payload").get("name").asString())
+        assertEquals("EUR", envelope.get("payload").get("currency").asString())
     }
 
     @Test

@@ -137,7 +137,7 @@ class GlobalErrorHandler(
             ErrorCode.ERR_07 -> HttpStatus.INTERNAL_SERVER_ERROR
             ErrorCode.ERR_08 -> HttpStatus.BAD_GATEWAY
             ErrorCode.ERR_09 -> HttpStatus.CONFLICT
-            ErrorCode.ERR_10 -> HttpStatus.UNPROCESSABLE_ENTITY
+            ErrorCode.ERR_10 -> HttpStatusCode.valueOf(422)
             ErrorCode.ERR_11 -> HttpStatus.TOO_MANY_REQUESTS
             ErrorCode.ERR_12 -> HttpStatus.OK
             else -> HttpStatus.INTERNAL_SERVER_ERROR

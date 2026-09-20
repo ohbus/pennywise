@@ -118,8 +118,14 @@ class GroupController(private val groups: GroupStore) {
     }
 
     @GetMapping("/{groupId}/members")
-    fun listMembers(@PathVariable groupId: UUID, principal: Principal): List<GroupMemberResponse> =
-        groups.listMembers(groupId, principal.name)
+    fun listMembers(
+        @PathVariable groupId: UUID,
+        @RequestHeader("X-Acceptance-Fault", required = false) fault: String?,
+        principal: Principal
+    ): List<GroupMemberResponse> {
+        if (fault == "fanout") throw ApplicationException(ErrorCode.ERR_08, "Acceptance fanout fault")
+        return groups.listMembers(groupId, principal.name)
+    }
 
     @PostMapping("/{groupId}/invites")
     @ResponseStatus(HttpStatus.CREATED)

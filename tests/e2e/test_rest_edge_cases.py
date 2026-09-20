@@ -17,6 +17,13 @@ ACCOUNTS_URL = os.environ.get("ACCOUNTS_URL", "http://localhost:8081")
 EXPENSE_CORE_URL = os.environ.get("EXPENSE_CORE_URL", "http://localhost:8082")
 NOTIFICATIONS_URL = os.environ.get("NOTIFICATIONS_URL", "http://localhost:8083")
 TOKEN = os.environ.get("BEARER_TOKEN")
+SECONDARY_TOKEN = os.environ.get("PENNYWISE_E2E_TOKEN_B", TOKEN)
+NON_MEMBER_TOKEN = os.environ.get("PENNYWISE_E2E_TOKEN_NONMEMBER", SECONDARY_TOKEN)
+SIGNED_SECONDARY_PERSONAS = frozenset({
+    "invite-claim-user",
+    "invite-replay-user",
+    "revoked-claim-user",
+})
 
 ACCOUNTS_ME = "/accounts/v1/me"
 ACCOUNTS_DELETION = "/accounts/v1/me/deletion-request"
@@ -52,6 +59,10 @@ NOTIFICATIONS_PREFERENCES = "/notifications/v1/preferences"
 
 def request_json(url: str, method: str = "GET", body: object | None = None, token: str | None = TOKEN,
                 headers: dict[str, str] | None = None) -> tuple[int, object]:
+    if token in SIGNED_SECONDARY_PERSONAS:
+        token = SECONDARY_TOKEN
+    elif token == "non-member":
+        token = NON_MEMBER_TOKEN
     request_headers = {"Accept": "application/json", "Content-Type": "application/json"}
     if token is not None:
         request_headers["Authorization"] = f"Bearer {token}"

@@ -14,6 +14,7 @@ Verifies:
 """
 
 import json
+import os
 import subprocess
 import io
 import sys
@@ -27,7 +28,9 @@ BFF_URL = "http://localhost:8080"
 ACCOUNTS_URL = "http://localhost:8081"
 EXPENSE_CORE_URL = "http://localhost:8082"
 NOTIFICATIONS_URL = "http://localhost:8083"
-EXPENSE_CORE_CONTAINER = "local-expense-core-1"
+EXPENSE_CORE_CONTAINER = os.environ.get("PENNYWISE_EXPENSE_CORE_CONTAINER", "local-expense-core-1")
+RABBITMQ_CONTAINER = os.environ.get("PENNYWISE_RABBITMQ_CONTAINER", "local-rabbitmq-1")
+POSTGRES_CONTAINER = os.environ.get("PENNYWISE_POSTGRES_CONTAINER", "local-postgres-1")
 
 
 def run_cmd(cmd: str) -> str:
@@ -38,7 +41,7 @@ def run_cmd(cmd: str) -> str:
 
 
 def query_postgres(sql: str) -> str:
-    cmd = f'docker exec -i local-postgres-1 psql -U pennywise -d pennywise_expense_core -t -A -c "{sql}"'
+    cmd = f'docker exec -i {POSTGRES_CONTAINER} psql -U pennywise -d pennywise_expense_core -t -A -c "{sql}"'
     return run_cmd(cmd)
 
 
@@ -81,8 +84,10 @@ def run_chaos_recovery_tests() -> None:
 
     # Step 1: Provision test users and active group
     print("\n[Step 1] Provisioning test users and active group...")
-    user_a = f"chaos_alice_{uuid.uuid4().hex[:6]}"
-    user_b = f"chaos_bob_{uuid.uuid4().hex[:6]}"
+    user_a = os.environ.get("PENNYWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
+    user_b = os.environ.get("PENNYWISE_E2E_TOKEN_B", user_a)
+    if not user_a or not user_b:
+        raise RuntimeError("PENNYWISE_E2E_TOKEN_A and PENNYWISE_E2E_TOKEN_B must contain signed tokens")
 
     status, profile_a = request_json(f"{ACCOUNTS_URL}/accounts/v1/me", bearer=user_a)
     assert status == 200, f"Failed Alice profile: {profile_a}"
@@ -146,7 +151,7 @@ def run_chaos_recovery_tests() -> None:
 
     # Step 3: Simulate RabbitMQ Outage (Pause container)
     print("\n[Step 3] Injecting fault: pausing RabbitMQ broker container...")
-    run_cmd("docker pause local-rabbitmq-1")
+    run_cmd(f"docker pause {RABBITMQ_CONTAINER}")
     print("  ✓ RabbitMQ is now PAUSED (outage injected)")
 
     expense_id = str(uuid.uuid4())
@@ -202,7 +207,7 @@ def run_chaos_recovery_tests() -> None:
     finally:
         # Step 6: Heal RabbitMQ Container
         print("\n[Step 6] Healing fault: unpausing RabbitMQ broker container...")
-        run_cmd("docker unpause local-rabbitmq-1")
+        run_cmd(f"docker unpause {RABBITMQ_CONTAINER}")
         print("  ✓ RabbitMQ is now UNPAUSED (broker healthy)")
 
     # Step 7: Verify Outbox Relay Drain to PUBLISHED
@@ -222,7 +227,7 @@ def run_chaos_recovery_tests() -> None:
     print("\n[Step 8] Verifying downstream event delivery in Notifications inbox...")
     delivered = False
     for attempt in range(1, 10):
-        status_inbox, inbox_data = request_json(f"{NOTIFICATIONS_URL}/notifications/v1/inbox", bearer=group_id)
+        status_inbox, inbox_data = request_json(f"{NOTIFICATIONS_URL}/notifications/v1/inbox", bearer=user_a)
         if status_inbox == 200 and inbox_data.get("items"):
             items = inbox_data["items"]
             matching = [item for item in items if expense_id in str(item.get("notificationId")) or group_id in str(item.get("message"))]
@@ -248,7 +253,7 @@ if __name__ == "__main__":
         traceback.print_exc()
         # Guarantee container is unpaused on failure
         try:
-            run_cmd("docker unpause local-rabbitmq-1")
+            run_cmd(f"docker unpause {RABBITMQ_CONTAINER}")
         except Exception:
             pass
         sys.exit(1)

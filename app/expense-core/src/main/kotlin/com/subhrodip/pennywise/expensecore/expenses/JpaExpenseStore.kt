@@ -35,7 +35,12 @@ class JpaExpenseStore(
      * emits an outbox event, and creates a sync record.
      */
     @Transactional
-    override fun create(groupId: UUID, expense: ExpenseRecord, idempotencyKey: String): ExpenseRecord {
+    override fun create(
+        groupId: UUID,
+        expense: ExpenseRecord,
+        idempotencyKey: String,
+        actorSubject: String?
+    ): ExpenseRecord {
         val existing = expenseRepository.findById(expense.expenseId).orElse(null)
         if (existing != null) {
             val existingRecord = existing.toRecord()
@@ -121,6 +126,7 @@ class JpaExpenseStore(
         val outboxPayload = mapOf<String, Any?>(
             "expenseId" to saved.expenseId.toString(),
             "groupId" to groupId.toString(),
+            "subject" to actorSubject,
             "amountMinor" to saved.amountMinor,
             "currency" to saved.currency,
             "version" to saved.version

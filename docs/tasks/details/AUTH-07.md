@@ -78,3 +78,12 @@ The provider-neutral endpoint contract is recorded in
 implementation. It is intentionally application-owned so users remain on a
 Pennywise-branded flow; provider-hosted interaction is reserved for MFA,
 recovery, consent, or step-up requirements.
+
+## Implementation increment: one-time credential core
+
+The next slice introduces provider-neutral auth ports and domain policy for
+one-time credentials. A cryptographically random raw credential is returned
+only to the email-delivery adapter; persistence receives only a keyed digest,
+expiry, attempt budget, and consumed state. Verification is constant-time and
+must be completed by a later atomic persistence adapter. This slice does not
+claim endpoint, database, rate-limit, or delivery completion.

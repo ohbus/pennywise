@@ -4,10 +4,13 @@ import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialEntity
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialRepository
 import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailOutboxEntity
 import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailOutboxRepository
+import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailOutboxService
+import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailTemplate
 import com.subhrodip.pennywise.accounts.auth.session.AuthSessionEntity
 import com.subhrodip.pennywise.accounts.auth.session.AuthSessionRepository
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.time.Duration
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -21,7 +24,8 @@ import org.springframework.transaction.annotation.Transactional
 class AuthPersistenceTest @Autowired constructor(
     private val credentialRepository: LoginCredentialRepository,
     private val sessionRepository: AuthSessionRepository,
-    private val authEmailOutboxRepository: AuthEmailOutboxRepository
+    private val authEmailOutboxRepository: AuthEmailOutboxRepository,
+    private val authEmailOutboxService: AuthEmailOutboxService
 ) {
     @Test
     fun `only one caller can consume an active credential`() {
@@ -87,5 +91,21 @@ class AuthPersistenceTest @Autowired constructor(
         val loaded = authEmailOutboxRepository.findByEventId(eventId)
         assertEquals(record.encryptedCredential, loaded?.encryptedCredential)
         assertEquals("PENDING", loaded?.status)
+    }
+
+    @Test
+    fun `auth email outbox claim leases the oldest event`() {
+        val now = Instant.now()
+        authEmailOutboxService.append(
+            eventId = UUID.randomUUID(), recipient = "first@example.com",
+            template = AuthEmailTemplate.LOGIN_CODE, encryptedCredential = "v1-a",
+            expiresAt = now.plusSeconds(600), now = now
+        )
+        val claimed = authEmailOutboxService.claim(now.plusMillis(1), Duration.ofSeconds(30))
+
+        assertEquals("CLAIMED", claimed?.status)
+        assertEquals(1, claimed?.attempts)
+        assertEquals("first@example.com", claimed?.recipient)
+        assertEquals(null, authEmailOutboxService.claim(now.plusMillis(2), Duration.ofSeconds(30)))
     }
 }

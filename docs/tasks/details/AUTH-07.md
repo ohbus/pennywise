@@ -156,8 +156,10 @@ missing or malformed configuration fails startup.
 The Accounts-owned `auth_email_outbox` migration and persistence boundary now
 store an idempotent event ID, canonical recipient, template, expiry, delivery
 state, and only the protected envelope. The table is deliberately separate from
-Expense Core's outbox. Publication, lease/claim semantics, and Notifications
-consumption remain the next implementation increment.
+Expense Core's outbox. Publication and Notifications consumption remain open.
+The outbox service now uses a pessimistic row lock and bounded lease timestamp
+so one worker claims an available event at a time; expired claims become
+eligible for retry.
 
 The first protection implementation adds `CredentialEnvelopeProtector` and an
 AES-GCM adapter. Each envelope uses a fresh 96-bit nonce, a 256-bit configured

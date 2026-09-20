@@ -107,6 +107,13 @@ Spring integration tests now prove single-consumer redemption, expiry
 rejection, one-time refresh rotation, and family revocation against the actual
 Flyway/JPA persistence context rather than mocks.
 
+The abuse-policy storage adapter uses an Accounts-owned PostgreSQL bucket and
+conditional updates. A request increments only when its window is active and
+cooldown has elapsed; an expired window resets atomically. The key is a
+server-derived HMAC of canonical email plus a separately derived network
+partition, never raw email or an untrusted client identifier. This state is
+operational throttling data, not an authorization identity store.
+
 The service slice now owns the orchestration boundary: canonicalize email,
 issue and persist only a digest-backed credential, and verify through the
 conditional repository transition. It returns generic outcomes so controllers

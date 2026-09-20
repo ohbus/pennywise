@@ -1,6 +1,7 @@
 package com.subhrodip.pennywise.expensecore
 
 import com.subhrodip.pennywise.security.OidcJwtDecoderFactory
+import com.subhrodip.pennywise.security.OidcSecurityConstants
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -18,10 +19,12 @@ import org.springframework.security.web.SecurityFilterChain
 class ProductionSecurityConfig(
     @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}") private val issuerUri: String,
     @Value("\${pennywise.security.oidc.audience}") private val audience: String,
-    @Value("\${pennywise.security.oidc.allowed-algorithms:RS256}") private val allowedAlgorithms: String
+    @Value("\${pennywise.security.oidc.allowed-algorithms:}") private val allowedAlgorithms: String
 ) {
     @Bean
-    fun jwtDecoder(): JwtDecoder = OidcJwtDecoderFactory.create(issuerUri, audience, allowedAlgorithms.split(',').toSet())
+    fun jwtDecoder(): JwtDecoder = OidcJwtDecoderFactory.create(
+        issuerUri, audience, OidcSecurityConstants.configuredSigningAlgorithms(allowedAlgorithms)
+    )
 
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain = http

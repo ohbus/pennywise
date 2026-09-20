@@ -20,6 +20,19 @@ object OidcSecurityConstants {
     /** Default asymmetric algorithm accepted by local and production policy. */
     const val DEFAULT_SIGNING_ALGORITHM: String = "RS256"
 
+    /**
+     * Parses the optional deployment allow-list and applies the shared default.
+     *
+     * @param configured comma-separated configured algorithms.
+     * @return normalized non-empty algorithm allow-list.
+     */
+    fun configuredSigningAlgorithms(configured: String): Set<String> = configured
+        .split(',')
+        .map(String::trim)
+        .filter(String::isNotEmpty)
+        .toSet()
+        .ifEmpty { setOf(DEFAULT_SIGNING_ALGORITHM) }
+
     /** Prefix identifying symmetric HMAC algorithms, which are disallowed. */
     const val SYMMETRIC_ALGORITHM_PREFIX: String = "HS"
 

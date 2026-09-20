@@ -6,6 +6,7 @@ import os
 import sys
 import base64
 import json
+import argparse
 from dataclasses import dataclass
 from http.client import HTTPResponse
 from typing import Final
@@ -73,7 +74,7 @@ def status_for(probe: Probe, token: str) -> int:
             return response.status
     except HTTPError as error:
         return error.code
-    except RemoteDisconnected:
+    except (RemoteDisconnected, ConnectionResetError):
         return EXPECTED_STATUS
 
 
@@ -89,17 +90,27 @@ def run_variant(name: str, token: str) -> list[str]:
 
 
 def main() -> int:
-    """Run forged-signature and unsupported-algorithm probes."""
+    """Run selected invalid-token probes across every protected boundary."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--variant",
+        choices=("all", "forged-signature", "unsupported-algorithm", "provider"),
+        default="all",
+    )
+    args = parser.parse_args()
     if not TOKEN:
         print("BEARER_TOKEN must contain a signed access token", file=sys.stderr)
         return 2
-    failures = run_variant("forged-signature", tamper_signature(TOKEN))
-    failures.extend(run_variant("unsupported-algorithm", tamper_algorithm(TOKEN)))
-    if WRONG_ISSUER_TOKEN:
+    failures: list[str] = []
+    if args.variant in ("all", "forged-signature"):
+        failures.extend(run_variant("forged-signature", tamper_signature(TOKEN)))
+    if args.variant in ("all", "unsupported-algorithm"):
+        failures.extend(run_variant("unsupported-algorithm", tamper_algorithm(TOKEN)))
+    if args.variant in ("all", "provider") and WRONG_ISSUER_TOKEN:
         failures.extend(run_variant("wrong-issuer", WRONG_ISSUER_TOKEN))
-    if EXPIRED_TOKEN:
+    if args.variant in ("all", "provider") and EXPIRED_TOKEN:
         failures.extend(run_variant("expired", EXPIRED_TOKEN))
-    if INVALID_SUBJECT_TOKEN:
+    if args.variant in ("all", "provider") and INVALID_SUBJECT_TOKEN:
         failures.extend(run_variant("invalid-subject", INVALID_SUBJECT_TOKEN))
     if failures:
         raise AssertionError("; ".join(failures))

@@ -104,6 +104,12 @@ second terminal for `make full-status` or `make acceptance-live`.
 
 ## Images and validation
 
+The full local topology assigns stable meaningful internal hostnames:
+`postgres-db`, `message-broker`, `mailpit-email`, `accounts-api`,
+`expense-core-api`, `notifications-api`, and `pennywise-bff`. Container-to-
+container URLs should use these names; `localhost` is reserved for host-native
+development. The future Keycloak service uses `idp-keycloak` under AUTH-06.
+
 The full and BFF prerequisite topologies use
 `infra/docker/Dockerfile.dev` and Gradle `bootRun`. For fast runtime images from
 already packaged jars, use `make docker-fast-all`; for production-style

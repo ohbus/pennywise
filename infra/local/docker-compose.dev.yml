@@ -6,6 +6,7 @@ services:
   mailpit:
     extends: {file: docker-compose.yml, service: mailpit}
   accounts:
+    hostname: accounts-api
     deploy:
       resources:
         reservations: {cpus: "0.25", memory: 192m}
@@ -16,12 +17,13 @@ services:
       args: {APP_PROJECT: accounts}
     environment:
       SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pennywise_accounts
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/pennywise_accounts
       SPRING_DATASOURCE_USERNAME: pennywise
       SPRING_DATASOURCE_PASSWORD: pennywise-local-only
     ports: ["8081:8080"]
     depends_on: {postgres: {condition: service_healthy}}
   expense-core:
+    hostname: expense-core-api
     deploy:
       resources:
         reservations: {cpus: "0.50", memory: 256m}
@@ -32,10 +34,10 @@ services:
       args: {APP_PROJECT: expense-core}
     environment:
       SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pennywise_expense_core
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/pennywise_expense_core
       SPRING_DATASOURCE_USERNAME: pennywise
       SPRING_DATASOURCE_PASSWORD: pennywise-local-only
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_HOST: message-broker
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: pennywise
       SPRING_RABBITMQ_PASSWORD: pennywise-local-only
@@ -44,6 +46,7 @@ services:
     ports: ["8082:8080"]
     depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}}
   notifications:
+    hostname: notifications-api
     deploy:
       resources:
         reservations: {cpus: "0.25", memory: 192m}
@@ -54,18 +57,19 @@ services:
       args: {APP_PROJECT: notifications}
     environment:
       SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pennywise_notifications
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/pennywise_notifications
       SPRING_DATASOURCE_USERNAME: pennywise
       SPRING_DATASOURCE_PASSWORD: pennywise-local-only
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_HOST: message-broker
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: pennywise
       SPRING_RABBITMQ_PASSWORD: pennywise-local-only
-      PENNYWISE_NOTIFICATIONS_EMAIL_HOST: mailpit
+      PENNYWISE_NOTIFICATIONS_EMAIL_HOST: mailpit-email
       PENNYWISE_NOTIFICATIONS_EMAIL_PORT: 1025
     ports: ["8083:8080"]
     depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, mailpit: {condition: service_healthy}}
   bff:
+    hostname: pennywise-bff
     deploy:
       resources:
         reservations: {cpus: "0.25", memory: 192m}
@@ -76,11 +80,11 @@ services:
       args: {APP_PROJECT: bff}
     environment:
       SPRING_PROFILES_ACTIVE: local
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_HOST: message-broker
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: pennywise
       SPRING_RABBITMQ_PASSWORD: pennywise-local-only
-      PENNYWISE_EXPENSE_CORE_URL: http://expense-core:8080
-      PENNYWISE_ACCOUNTS_URL: http://accounts:8080
+      PENNYWISE_EXPENSE_CORE_URL: http://expense-core-api:8080
+      PENNYWISE_ACCOUNTS_URL: http://accounts-api:8080
     ports: ["8080:8080"]
     depends_on: [accounts, expense-core, notifications]

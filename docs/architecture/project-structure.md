@@ -43,6 +43,13 @@ is consumed only from test configurations. Generated clients/types belong under
 build output and derive from approved contracts; do not hand-maintain a shared
 business-model library.
 
+Every application and technical library follows package-by-feature with
+internal layering, modular DDD, Hexagonal Architecture, and Screaming
+Architecture. Top-level packages reveal business or technical capabilities;
+domain/application code depends on ports, while frameworks and external
+providers remain replaceable adapters. Technical libraries must use the same
+structure and must not become catch-all utility packages.
+
 Persistence and service implementations must adhere to enterprise file separation:
 persistent entities (`@Entity`), Spring Data repository interfaces (`@Repository`),
 and service/adapter classes (`@Service`) must reside in individual source files,

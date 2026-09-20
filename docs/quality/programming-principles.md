@@ -14,6 +14,17 @@ registered task and its contracts.
 
 ## Boundaries and behavior
 
+- **Screaming Architecture and feature ownership:** every application and
+  library must be organized so top-level packages reveal business capabilities
+  or explicit technical capabilities, not framework or vendor names. Use
+  package-by-feature with internal layering.
+- **Modular DDD:** each feature owns its domain concepts, application use
+  cases, ports, adapters, tests, and contracts; cross-feature dependencies pass
+  through narrow published interfaces.
+- **Hexagonal Architecture:** domain/application code depends inward on ports;
+  HTTP, GraphQL, messaging, persistence, security providers, email, clocks,
+  and framework configuration are replaceable outer adapters.
+
 - **Separation of concerns, SRP, and Curly's Law:** each module, class, file, and function has one coherent responsibility. In enterprise code, persistent entities (`@Entity`), Spring Data repositories (`@Repository`), and business services or persistence store adapters (`@Service`) must never share a single file; each belongs in its own dedicated source file.
 - **Cohesion and low coupling:** keep related behavior together and expose the narrowest interface; apply the Law of Demeter.
 - **Orthogonality:** unrelated concerns must not share accidental state, dependencies, or lifecycle rules.

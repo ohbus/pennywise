@@ -4725,7 +4725,7 @@
       "parent_id": "AUTH-01",
       "title": "Add Keycloak environment and meaningful Compose hostnames",
       "phase": "security",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["AUTH-04", "NOT-06", "OPS-09"],
@@ -4751,7 +4751,10 @@
         "py -3 tools/contracts/validate.py",
         "git diff --check"
       ],
-      "evidence": [],
+      "evidence": [
+        "Full local Compose services now have meaningful stable hostnames and application-to-dependency URLs use them in docker-compose.dev.yml.",
+        "Compose render and contract validation passed; Keycloak service/realm bootstrap remains open."
+      ],
       "reviewer": "/root",
       "blocker": null
     },

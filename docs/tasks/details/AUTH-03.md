@@ -66,3 +66,31 @@ subject, and key rotation.
 - Issuer and audience are externally configurable and required where needed.
 - Security configuration and tests are modular, reusable, and documented.
 - No claim or token secret is emitted through logs, errors, metrics, or traces.
+
+## Implementation notes
+
+- Added the reusable `libs/security` OIDC configuration guard.
+- Imported the guard into Accounts, Expense Core, Notifications, and the BFF.
+- The guard activates only under explicit `production` or `staging` profiles
+  and requires an HTTPS issuer and non-empty audience.
+- All environments may use Keycloak as the current provider; the guard accepts
+  only provider-neutral issuer/audience configuration and contains no Keycloak
+  SDK or claim coupling.
+- Actual JWT decoder wiring and signature/issuer/audience/expiry/algorithm
+  validation remain AUTH-04 work and are not claimed complete here.
+- Compose operations must use meaningful, stable hostnames for all auth and
+  service endpoints (for example `idp-keycloak`, `accounts-api`,
+  `expense-core-api`, `notifications-api`, and `pennywise-bff`). Issuer and
+  internal service URLs must use those names rather than `localhost`, random
+  container names, or ambiguous abbreviations. Hostname changes require
+  synchronized Compose, environment, operations, and E2E documentation.
+
+## Current verification
+
+- `./gradlew.bat compileKotlin --no-daemon` passed for all applications and
+  libraries.
+- `./gradlew.bat :libs:security:test --rerun-tasks --no-daemon` passed all four
+  guard tests.
+- `py -3 tools/contracts/validate.py` and `git diff --check` passed.
+- Full JWT decoder validation, Keycloak Compose provisioning, Bruno invalid-token
+  coverage, and real-provider E2E remain open for AUTH-04/AUTH-06.

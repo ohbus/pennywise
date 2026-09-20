@@ -6,6 +6,7 @@ plugins {
 }
 kotlin { jvmToolchain(25) }
 dependencies {
+    implementation(project(":libs:security"))
     implementation(project(":libs:ids"))
     implementation(libs.boot.actuator)
     runtimeOnly(libs.micrometer.prometheus)

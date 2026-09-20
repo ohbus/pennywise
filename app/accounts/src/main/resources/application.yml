@@ -18,3 +18,8 @@ management:
   metrics:
     tags:
       service: accounts
+
+pennywise:
+  security:
+    oidc:
+      audience: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:}

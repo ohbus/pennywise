@@ -4574,6 +4574,7 @@
       "owner_agent": "/root",
       "depends_on": [],
       "owned_paths": [
+        "libs/security/",
         "docs/security/authentication-hardening.md",
         "docs/implementation/technology-decisions.md",
         "docs/tasks/details/AUTH-01.md",
@@ -4642,11 +4643,12 @@
       "parent_id": "AUTH-01",
       "title": "Implement fail-closed provider-neutral OIDC resource-server validation",
       "phase": "security",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["AUTH-01", "ERR-03"],
       "owned_paths": [
+        "libs/security/",
         "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/security/",
         "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/",
         "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/",
@@ -4670,7 +4672,10 @@
         "make security-hygiene",
         "git diff --check"
       ],
-      "evidence": [],
+      "evidence": [
+        "Added and imported a reusable production/staging OIDC configuration guard across all four applications.",
+        "Guard tests and full Kotlin compilation are pending final validation in this increment; actual JWT claim validation remains AUTH-04."
+      ],
       "reviewer": "/root",
       "blocker": null
     },

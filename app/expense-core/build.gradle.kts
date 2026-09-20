@@ -7,6 +7,7 @@ plugins {
 }
 kotlin { jvmToolchain(25) }
 dependencies {
+    implementation(project(":libs:security"))
     implementation(libs.kotlin.reflect)
     implementation(project(":libs:errors"))
     implementation(project(":libs:ids"))

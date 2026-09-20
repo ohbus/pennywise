@@ -8,7 +8,6 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -142,6 +141,6 @@ class GroupController(private val groups: GroupStore) {
 @RequestMapping(ApiEndpoints.ExpenseCore.V1.BASE + "/invites")
 class InviteClaimController(private val groups: GroupStore) {
     @PostMapping("/{token}/claim")
-    fun claim(@PathVariable token: String, @AuthenticationPrincipal principal: Principal): GroupResponse =
+    fun claim(@PathVariable token: String, principal: Principal): GroupResponse =
         groups.claim(token, principal.name)
 }

@@ -10,7 +10,6 @@ import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.http.ResponseEntity
 import com.subhrodip.pennywise.errors.ApiProblem
@@ -71,12 +70,12 @@ class ProfileController(
     private val serviceName: String = "accounts"
 
     @GetMapping(ApiEndpoints.Accounts.V1.ME)
-    fun get(@AuthenticationPrincipal principal: Principal): ProfileResponse =
+    fun get(principal: Principal): ProfileResponse =
         profiles.get(principal.name)
 
     @PatchMapping(ApiEndpoints.Accounts.V1.ME)
     fun update(
-        @AuthenticationPrincipal principal: Principal,
+        principal: Principal,
         @Valid @RequestBody request: ProfilePatchRequest
     ): ProfileResponse {
         request.validateNotEmpty()
@@ -118,20 +117,20 @@ class ProfileController(
 
     @PostMapping(ApiEndpoints.Accounts.V1.ME_DELETION_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    fun requestDeletion(@AuthenticationPrincipal principal: Principal) {
+    fun requestDeletion(principal: Principal) {
         deletionService.request(principal.name)
     }
 
     @PostMapping(ApiEndpoints.Accounts.V1.ME_EXPORT_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    fun requestExport(@AuthenticationPrincipal principal: Principal?): ExportRequestResponse {
+    fun requestExport(principal: Principal?): ExportRequestResponse {
         val subject = principal?.name ?: throw ApplicationException(ErrorCode.ERR_03, "Authenticated subject is required")
         val request = exportService.request(subject)
         return ExportRequestResponse(request.exportId, request.status, request.requestedAt)
     }
 
     @GetMapping(ApiEndpoints.Accounts.V1.ME_EXPORT_REQUESTS)
-    fun listExportRequests(@AuthenticationPrincipal principal: Principal?): List<ExportRequestResponse> {
+    fun listExportRequests(principal: Principal?): List<ExportRequestResponse> {
         val subject = principal?.name ?: throw ApplicationException(ErrorCode.ERR_03, "Authenticated subject is required")
         return exportService.listBySubject(subject).map {
             ExportRequestResponse(it.exportId, it.status, it.requestedAt)

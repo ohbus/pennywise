@@ -18,12 +18,16 @@ object OidcJwtDecoderFactory {
      * @return configured JWT decoder.
      * @throws IllegalArgumentException when the issuer or audience is blank.
      */
-    fun create(issuerUri: String, audience: String, allowedAlgorithms: Set<String> = setOf("RS256")): JwtDecoder {
-        require(issuerUri.isNotBlank()) { "OIDC issuer URI is required" }
-        require(audience.isNotBlank()) { "OIDC audience is required" }
+    fun create(
+        issuerUri: String,
+        audience: String,
+        allowedAlgorithms: Set<String> = setOf(OidcSecurityConstants.DEFAULT_SIGNING_ALGORITHM)
+    ): JwtDecoder {
+        require(issuerUri.isNotBlank()) { OidcSecurityConstants.ISSUER_REQUIRED_MESSAGE }
+        require(audience.isNotBlank()) { OidcSecurityConstants.AUDIENCE_REQUIRED_MESSAGE }
 
         val decoder = JwtDecoders.fromIssuerLocation(issuerUri) as NimbusJwtDecoder
-        val audienceValidator = JwtClaimValidator<Collection<String>>("aud") { values ->
+        val audienceValidator = JwtClaimValidator<Collection<String>>(OidcSecurityConstants.AUDIENCE_CLAIM) { values ->
             values.contains(audience)
         }
         decoder.setJwtValidator(

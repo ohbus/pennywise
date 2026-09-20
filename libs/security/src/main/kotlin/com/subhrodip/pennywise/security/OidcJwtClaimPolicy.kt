@@ -9,7 +9,7 @@ object OidcJwtClaimPolicy {
     /** Maximum subject length accepted as a durable provider identity. */
     const val MAX_SUBJECT_LENGTH: Int = 256
 
-    private val subjectPattern = Regex("^[^\\s]{1,256}$")
+    private val subjectPattern = Regex("^[^\\s]{1,$MAX_SUBJECT_LENGTH}$")
 
     /**
      * Creates the subject validator used by servlet and reactive decoders.
@@ -20,7 +20,7 @@ object OidcJwtClaimPolicy {
      *
      * @return validator that fails closed for absent or malformed subjects.
      */
-    fun subjectValidator(): OAuth2TokenValidator<Jwt> = JwtClaimValidator<Any>("sub") { subject ->
+    fun subjectValidator(): OAuth2TokenValidator<Jwt> = JwtClaimValidator<Any>(OidcSecurityConstants.SUBJECT_CLAIM) { subject ->
         subject is String && subjectPattern.matches(subject)
     }
 }

@@ -17,12 +17,16 @@ class OidcJwtAlgorithmPolicy(
     }
 
     override fun validate(token: Jwt): OAuth2TokenValidatorResult {
-        val algorithm = token.headers["alg"] as? String
+        val algorithm = token.headers[OidcSecurityConstants.ALGORITHM_HEADER] as? String
         return if (algorithm != null && algorithm in allowed) {
             OAuth2TokenValidatorResult.success()
         } else {
             OAuth2TokenValidatorResult.failure(
-                OAuth2Error("invalid_token", "JWT signing algorithm is not allowed", null)
+                OAuth2Error(
+                    OidcSecurityConstants.INVALID_TOKEN_ERROR_CODE,
+                    OidcSecurityConstants.ALGORITHM_REJECTED_DESCRIPTION,
+                    null
+                )
             )
         }
     }

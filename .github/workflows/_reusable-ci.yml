@@ -13,7 +13,7 @@ env:
   # Ephemeral CI-only values used to render and boot the local fixture. They
   # are not deployment credentials and must never be reused outside CI.
   PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET: 'AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8='
-  PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY: 'ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9'
+  PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY: 'ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8='
 
 jobs:
   preflight:
@@ -179,8 +179,9 @@ jobs:
         id: oidc-token
         run: |
           token_response="$(curl --fail-with-body --silent --show-error \
+            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
             --data 'grant_type=client_credentials&client_id=pennywise-ci&client_secret=pennywise-ci-local-only' \
-            http://localhost:8090/realms/pennywise/protocol/openid-connect/token)"
+            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
           token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$token_response")"
           test -n "$token" || { echo "Keycloak returned no access token"; exit 2; }
           echo "token=$token" >> "$GITHUB_OUTPUT"

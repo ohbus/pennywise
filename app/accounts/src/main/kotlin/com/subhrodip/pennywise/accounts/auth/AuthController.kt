@@ -18,7 +18,6 @@ import java.security.Principal
 import java.time.Instant
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -127,7 +126,7 @@ class AuthController(
      */
     @PostMapping(ApiEndpoints.Accounts.V1.LOGOUT)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun logout(@AuthenticationPrincipal principal: Principal?) {
+    fun logout(principal: Principal?) {
         if (principal == null || principal.name.isBlank()) {
             throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
         }

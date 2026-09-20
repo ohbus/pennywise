@@ -28,7 +28,7 @@ not merely hidden behind a weaker opt-in profile.
 
 ## Status
 
-In progress. Runtime passthrough classes have been removed and local live
-acceptance/load entry points now require signed bearer injection; final closure
-remains tracked by AUTH-06 for seeded-user fixture replacement and by AUTH-07
-for the complete passwordless journey evidence.
+Complete. Runtime passthrough classes have been removed, local live
+acceptance/load entry points require signed bearer injection, and the local
+OIDC, negative-token, and passwordless journeys use the provider-neutral
+validation path.

@@ -92,7 +92,6 @@ subject, and key rotation.
 - `./gradlew.bat :libs:security:test --rerun-tasks --no-daemon` passed all four
   guard tests.
 - `py -3 tools/contracts/validate.py` and `git diff --check` passed.
-- Full invalid-token matrix and WebSocket-specific rejection remain AUTH-04/AUTH-06
-  follow-up evidence. Provider-backed REST and GraphQL HTTP boundaries are now
-  verified through the local Keycloak fixture, including centralized BFF bearer
-  forwarding and readiness-gated startup.
+- Provider-backed REST, GraphQL HTTP, and WebSocket boundaries are verified
+  through the local Keycloak fixture and the isolated malformed-subject issuer,
+  including centralized BFF bearer forwarding and readiness-gated startup.

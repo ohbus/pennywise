@@ -16,7 +16,7 @@ Verifies:
 
 import base64
 import json
-from typing import TextIO, cast
+import io
 import os
 import socket
 import struct
@@ -204,8 +204,10 @@ class SimpleGraphQLWSClient:
 
 def run_concurrency_and_subscriptions_test() -> None:
     """Run concurrency and subscription checks with explicit UTF-8 output."""
-    cast(TextIO, sys.stdout).reconfigure(encoding="utf-8")
-    cast(TextIO, sys.stderr).reconfigure(encoding="utf-8")
+    if isinstance(sys.stdout, io.TextIOWrapper):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if isinstance(sys.stderr, io.TextIOWrapper):
+        sys.stderr.reconfigure(encoding="utf-8")
     print("=" * 70)
     print("⚡ Running Concurrent Member Conflicts & GraphQL Subscriptions Test")
     print("=" * 70)

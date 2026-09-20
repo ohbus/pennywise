@@ -16,7 +16,7 @@ Verifies the entire product lifecycle across all four microservices
 """
 
 import json
-from typing import TextIO, cast
+import io
 import os
 import sys
 import time
@@ -86,8 +86,10 @@ def graphql_query(
 
 def run_e2e_tests() -> int:
     """Run the product lifecycle journey with explicit UTF-8 console output."""
-    cast(TextIO, sys.stdout).reconfigure(encoding="utf-8")
-    cast(TextIO, sys.stderr).reconfigure(encoding="utf-8")
+    if isinstance(sys.stdout, io.TextIOWrapper):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if isinstance(sys.stderr, io.TextIOWrapper):
+        sys.stderr.reconfigure(encoding="utf-8")
     print("=" * 70)
     print("🚀 Running Pennywise End-to-End Multi-Service Production Test Suite")
     print("=" * 70)

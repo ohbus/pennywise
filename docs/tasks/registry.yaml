@@ -4874,7 +4874,7 @@
       "parent_id": "AUTH-01",
       "title": "Remove weaker local authentication modes",
       "phase": "security",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["AUTH-03", "AUTH-04"],
@@ -4897,7 +4897,7 @@
         "git diff --check"
       ],
       "evidence": [
-        "Removed the four local passthrough security configurations; local signed-token E2E remains AUTH-06 evidence."
+        "Removed the four local passthrough security configurations; local acceptance, load, negative-token, and passwordless E2E use signed provider tokens, while compatibility-only seeded fixtures remain outside live runtime paths."
       ],
       "reviewer": "/root",
       "blocker": null

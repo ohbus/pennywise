@@ -28,6 +28,7 @@ not merely hidden behind a weaker opt-in profile.
 
 ## Status
 
-In progress. The passthrough classes are being removed in this increment;
-real local signed-token and Pennywise-owned passwordless E2E evidence remains
-tracked by AUTH-06 and AUTH-07.
+In progress. Runtime passthrough classes have been removed and local live
+acceptance/load entry points now require signed bearer injection; final closure
+remains tracked by AUTH-06 for seeded-user fixture replacement and by AUTH-07
+for the complete passwordless journey evidence.

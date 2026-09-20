@@ -130,6 +130,13 @@ never raw credentials in logs or generic errors. A Notifications/RabbitMQ
 adapter can deliver through the existing SMTP/Mailpit infrastructure; a future
 managed provider adapter can replace it without changing login policy.
 
+`LoginStartService` is the application orchestration boundary. It derives the
+trusted abuse key, acquires the atomic request slot, issues a link/code, and
+hands the delivery-only plaintext to `AuthEmailSender`. Invalid email,
+unknown account, throttled request, and delivery failure all map to the same
+accepted public outcome; only internal metrics/audit state may distinguish
+operational causes, without storing the credential.
+
 The service slice now owns the orchestration boundary: canonicalize email,
 issue and persist only a digest-backed credential, and verify through the
 conditional repository transition. It returns generic outcomes so controllers

@@ -177,6 +177,12 @@ jobs:
         run: bash tests/e2e/contract-smoke.sh
       - name: Start the complete local application stack
         run: docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
+      - name: Diagnose local stack startup failure
+        if: failure()
+        run: |
+          docker compose -f infra/local/docker-compose.dev.yml ps -a
+          docker compose -f infra/local/docker-compose.dev.yml logs --no-color --tail=300 \
+            accounts expense-core notifications bff postgres rabbitmq mailpit idp-keycloak
       - name: Acquire ephemeral signed local OIDC token
         id: oidc-token
         run: |

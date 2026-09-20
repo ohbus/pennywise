@@ -39,5 +39,7 @@ Automated post-run financial reconciliation is implemented and verified via
 `tools/ops/reconcile_mutation_fixture.py` and `make load-mutation-check`. The tool
 queries Expense Core endpoints to verify zero-sum balance invariant across currencies,
 monotonic sync changes, idempotent replay behavior without revision bumps (HTTP 201),
-and rejection of mismatched idempotent replays with HTTP 409 conflict. All acceptance
-criteria for OPS-23 are verified and complete.
+and rejection of mismatched idempotent replays with HTTP 409 conflict. This closes
+the bounded local fixture and reconciliation increment for OPS-23. It does not
+close representative production-like write-capacity evidence, multi-replica
+contention, or target-environment SLO validation; those remain owned by QA-08.

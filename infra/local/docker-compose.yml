@@ -1,6 +1,9 @@
 services:
   postgres:
     hostname: ${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}
+    networks:
+      default:
+        aliases: ["${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}"]
     image: ${POSTGRES_IMAGE:-postgres:17}
     deploy:
       resources:
@@ -20,6 +23,9 @@ services:
       retries: 20
   rabbitmq:
     hostname: ${PENNYWISE_RABBITMQ_HOSTNAME:-message-broker}
+    networks:
+      default:
+        aliases: ["${PENNYWISE_RABBITMQ_HOSTNAME:-message-broker}"]
     image: ${RABBITMQ_IMAGE:-rabbitmq:4.3-management}
     deploy:
       resources:
@@ -36,6 +42,9 @@ services:
       retries: 20
   mailpit:
     hostname: ${PENNYWISE_MAILPIT_HOSTNAME:-mailpit-email}
+    networks:
+      default:
+        aliases: ["${PENNYWISE_MAILPIT_HOSTNAME:-mailpit-email}"]
     image: ${MAILPIT_IMAGE:-axllent/mailpit:v1.27}
     deploy:
       resources:

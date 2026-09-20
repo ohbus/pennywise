@@ -110,7 +110,9 @@ The full local topology assigns stable meaningful internal hostnames:
 `postgres-db`, `message-broker`, `mailpit-email`, `accounts-api`,
 `expense-core-api`, `notifications-api`, and `pennywise-bff`. Container-to-
 container URLs should use these names; `localhost` is reserved for host-native
-development. The local Keycloak OIDC provider uses `idp-keycloak`; its issuer
+development. The dependency services declare these names as explicit network
+aliases, because a Compose `hostname` alone does not guarantee service-DNS
+resolution. The local Keycloak OIDC provider uses `idp-keycloak`; its issuer
 and audience are injected through the `local-oidc` profile under AUTH-06.
 
 The full and BFF prerequisite topologies use

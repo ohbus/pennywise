@@ -22,6 +22,7 @@ A permanently free, privacy-centric expense-sharing platform for households, cou
 - [Services & Port Mapping](#services--port-mapping)
 - [API & Schema Documentation](#api--schema-documentation)
 - [Quality & Verification](#quality--verification)
+- [Production Readiness](#production-readiness)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 - [License](#license)
@@ -33,14 +34,6 @@ A permanently free, privacy-centric expense-sharing platform for households, cou
 Pennywise provides a modern alternative to proprietary expense splitters with:
 - **Fair Financial Allocations**: Equal splits, exact minor amounts, and percentage allocations (with basis-point rounding guarantees).
 - **Passwordless Native Authentication**: The Accounts passwordless slice includes email magic-link/code contracts, a decoupled token-minting SPI (`IdentityProviderPort`), refresh-token family policy, and provider-neutral delivery boundaries. AUTH-03 through AUTH-07 are implemented and verified with live OIDC, broker/Mailpit, REST, GraphQL, WebSocket, Bruno, and CI evidence.
-- **Group Collaboration**: Invite-based membership, role permissions, and group revisions.
-- **Audit & History**: Immutable postings and synchronized balance ledgers.
-- **Zero Lock-In**: Complete data export and account lifecycle controls.
-- **Documentation-First & Contract-Driven**: Strict API specifications verified against OpenAPI and GraphQL schemas before implementation.
-
----
-
-## Architecture & Services
 
 Pennywise is structured into four focused applications and technical libraries:
 

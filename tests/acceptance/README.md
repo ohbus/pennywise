@@ -23,7 +23,7 @@ fanout failure requires controlled upstream failure.
    - `GET /expense-core/v1/groups/{groupId}/sync/snapshot` to verify snapshot schema and items.
    - `GET /expense-core/v1/groups/{groupId}/sync/changes` to verify changes feed.
 5. **QA-WEBSOCKET-RESYNC**:
-   - `POST /graphql` with query `query { groups { id name } }` (with header `Authorization: Bearer test-user`).
+   - `POST /graphql` with query `query { groups { id name } }` using the injected signed `BEARER_TOKEN`.
    - Verifies HTTP 200 and presence of the `data` field.
 
 ## Execution

@@ -35,7 +35,8 @@ group in k6 teardown, but retain and review the reconciliation output; do not
 use this scenario against production data until the OPS-23 gate is approved.
 
 Configure `BASE_URL`, `ACCOUNTS_URL`, `EXPENSE_CORE_URL`,
-`NOTIFICATIONS_URL`, and `BEARER_TOKEN` for the target environment. The default
+`NOTIFICATIONS_URL`, and `BEARER_TOKEN` for the target environment. A signed
+`BEARER_TOKEN` is required; the load harness has no legacy placeholder fallback.
 rates and thresholds are provisional starting points; OPS-20 requires replacing
 them with measured capacity and SLO evidence. Run mutation scenarios separately
 with unique fixture data and idempotency keys; these read-focused scripts are

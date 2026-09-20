@@ -1,0 +1,27 @@
+meta {
+  name: Refresh Token
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrlAccounts}}/accounts/v1/auth/token/refresh
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "refreshToken": "{{refreshToken}}"
+  }
+}
+
+tests {
+  test("refresh token returns tokens or unauthorized", function() {
+    expect([200, 401]).to.include(res.getStatus());
+  });
+}

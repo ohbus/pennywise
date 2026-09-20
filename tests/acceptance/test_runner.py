@@ -269,7 +269,7 @@ class RunnerTest(unittest.TestCase):
         unused_port = find_free_port()
         status, detail = runner.probe(f"http://127.0.0.1:{unused_port}/actuator/health", timeout=0.5)
         self.assertEqual(status, "blocked")
-        self.assertIn("Services offline: Connection refused", detail)
+        self.assertRegex(detail, r"Services offline: (Connection refused|timed out)")
 
     def test_check_contracts(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]

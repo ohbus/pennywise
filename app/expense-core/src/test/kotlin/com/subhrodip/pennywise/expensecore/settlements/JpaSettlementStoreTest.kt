@@ -1,5 +1,7 @@
 package com.subhrodip.pennywise.expensecore.settlements
 
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -39,8 +41,9 @@ class JpaSettlementStoreTest @Autowired constructor(
         )
         store.record(groupId, settlement)
 
-        assertThrows(IllegalStateException::class.java) {
+        val error = assertThrows(ApplicationException::class.java) {
             store.reverse(UUID.randomUUID(), settlement.id, "wrong group")
         }
+        assertEquals(ErrorCode.ERR_05, error.errorCode)
     }
 }

@@ -7,6 +7,7 @@ plugins {
 }
 kotlin { jvmToolchain(25) }
 dependencies {
+    implementation(project(":libs:security"))
     implementation(project(":libs:errors"))
     implementation(project(":libs:ids"))
     implementation(libs.boot.actuator)
@@ -14,6 +15,7 @@ dependencies {
     implementation(libs.boot.validation)
     implementation(libs.boot.security)
     implementation(libs.boot.resource.server)
+    implementation(libs.boot.amqp)
     implementation(libs.boot.data.jpa)
     implementation(libs.kotlin.reflect)
     runtimeOnly(libs.postgresql)

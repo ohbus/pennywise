@@ -73,10 +73,14 @@ class RecurringExpenseControllerTest @Autowired constructor(
         // 5. Pause schedule
         val paused = controller.pauseSchedule(group.groupId, created.scheduleId, alice)
         assertTrue(paused.paused)
+        val pausedReplay = controller.pauseSchedule(group.groupId, created.scheduleId, alice)
+        assertTrue(pausedReplay.paused)
 
         // 6. Resume schedule
         val resumed = controller.resumeSchedule(group.groupId, created.scheduleId, alice)
         assertFalse(resumed.paused)
+        val resumedReplay = controller.resumeSchedule(group.groupId, created.scheduleId, alice)
+        assertFalse(resumedReplay.paused)
     }
 
     @Test

@@ -10,6 +10,8 @@ import java.util.Optional
 import java.lang.reflect.Proxy
 import org.mockito.Mockito.`when`
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
@@ -19,10 +21,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
-import org.springframework.web.method.support.HandlerMethodArgumentResolver
-import org.springframework.web.method.support.ModelAndViewContainer
-import org.springframework.core.MethodParameter
-import org.springframework.web.context.request.NativeWebRequest
+import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder
+import jakarta.servlet.Filter
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequestWrapper
 import com.subhrodip.pennywise.ids.ApiEndpoints
 
 class ExpenseControllerTest {
@@ -43,21 +45,31 @@ class ExpenseControllerTest {
             Optional.of(GroupEntity(groupId, "Test", "TRIP", "EUR", if (groupId in archivedGroups) "ARCHIVED" else "ACTIVE"))
         } else null
     } as GroupRepository
-    private val mvcBuilder = MockMvcBuilders.standaloneSetup(ExpenseController(store, memberships, groups))
+    private val controller = ExpenseController(store, memberships, groups)
+    private val authenticatedPrincipalFilter = Filter { request, response, chain ->
+        val authenticatedRequest = object : HttpServletRequestWrapper(request as HttpServletRequest) {
+            override fun getUserPrincipal(): Principal =
+                super.getUserPrincipal() ?: Principal { "test-user" }
+        }
+        chain.doFilter(authenticatedRequest, response)
+    }
+    private val mvcBuilder: StandaloneMockMvcBuilder = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(GlobalErrorHandler())
-        .setCustomArgumentResolvers(object : HandlerMethodArgumentResolver {
-            override fun supportsParameter(parameter: MethodParameter): Boolean =
-                parameter.parameterType == Principal::class.java
+    private val mvc: MockMvc =
+        (mvcBuilder.addFilters(authenticatedPrincipalFilter) as StandaloneMockMvcBuilder).build()
 
-            override fun resolveArgument(
-                parameter: MethodParameter,
-                mavContainer: ModelAndViewContainer?,
-                webRequest: NativeWebRequest,
-                binderFactory: org.springframework.web.bind.support.WebDataBinderFactory?
-            ): Any = webRequest.userPrincipal ?: Principal { "test-user" }
-        })
+    @Test
+    fun `rejects missing and blank authenticated subjects before membership lookup`() {
+        val missing = assertThrows<com.subhrodip.pennywise.errors.ApplicationException> {
+            controller.getBalances(UUID.randomUUID(), null)
+        }
+        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_03, missing.errorCode)
 
-    private val mvc: MockMvc = mvcBuilder.build()
+        val blank = assertThrows<com.subhrodip.pennywise.errors.ApplicationException> {
+            controller.getBalances(UUID.randomUUID(), Principal { "   " })
+        }
+        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_03, blank.errorCode)
+    }
 
     @Test
     fun `rejects expense creation for non-member`() {
@@ -457,5 +469,19 @@ class ExpenseControllerTest {
         mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(0))
+    }
+
+    /** Verifies expense collection limits reject unbounded or empty pages at the public boundary. */
+    @Test
+    fun `rejects invalid expense list limits`() {
+        val groupId = UUID.randomUUID()
+
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId)).param("limit", "0"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId)).param("limit", "101"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
     }
 }

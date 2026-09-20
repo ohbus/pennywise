@@ -1,9 +1,9 @@
 # Pennywise
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.2+-purple.svg)](https://kotlinlang.org)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4+-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![Java](https://img.shields.io/badge/Java-25+-orange.svg)](https://adoptium.net)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20-purple.svg)](https://kotlinlang.org)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://adoptium.net)
 
 A permanently free, privacy-centric expense-sharing platform for households, couples, roommates, and travel groups. Pennywise is built as a modular Kotlin/Spring Boot ecosystem with REST domain services, an asynchronous event mesh, a GraphQL BFF, and contract-driven API guarantees.
 
@@ -22,6 +22,7 @@ A permanently free, privacy-centric expense-sharing platform for households, cou
 - [Services & Port Mapping](#services--port-mapping)
 - [API & Schema Documentation](#api--schema-documentation)
 - [Quality & Verification](#quality--verification)
+- [Production Readiness](#production-readiness)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 - [License](#license)
@@ -32,14 +33,7 @@ A permanently free, privacy-centric expense-sharing platform for households, cou
 
 Pennywise provides a modern alternative to proprietary expense splitters with:
 - **Fair Financial Allocations**: Equal splits, exact minor amounts, and percentage allocations (with basis-point rounding guarantees).
-- **Group Collaboration**: Invite-based membership, role permissions, and group revisions.
-- **Audit & History**: Immutable postings and synchronized balance ledgers.
-- **Zero Lock-In**: Complete data export and account lifecycle controls.
-- **Documentation-First & Contract-Driven**: Strict API specifications verified against OpenAPI and GraphQL schemas before implementation.
-
----
-
-## Architecture & Services
+- **Passwordless Native Authentication**: The Accounts passwordless slice includes email magic-link/code contracts, a decoupled token-minting SPI (`IdentityProviderPort`), refresh-token family policy, and provider-neutral delivery boundaries. AUTH-03 through AUTH-07 are implemented and verified with live OIDC, broker/Mailpit, REST, GraphQL, WebSocket, Bruno, and CI evidence.
 
 Pennywise is structured into four focused applications and technical libraries:
 
@@ -67,8 +61,8 @@ flowchart LR
 
 ## Tech Stack
 
-- **Language & Runtime**: [Kotlin](https://kotlinlang.org/) with JVM 25.
-- **Framework**: [Spring Boot 3.4+](https://spring.io/projects/spring-boot) (Spring Data JPA, Spring Web / WebFlux, Spring GraphQL).
+- **Language & Runtime**: [Kotlin 2.4.20](https://kotlinlang.org/) with JVM 25.
+- **Framework**: [Spring Boot 4.1.1](https://spring.io/projects/spring-boot) (Spring Data JPA, Spring Web / WebFlux, Spring GraphQL).
 - **Build Tool**: [Gradle Kotlin DSL](https://gradle.org/) with centralized version catalog (`gradle/libs.versions.toml`).
 - **Database**: [PostgreSQL 17](https://www.postgresql.org/) with [Flyway](https://flywaydb.org/) schema migrations and Hibernate validation.
 - **Messaging & Events**: [RabbitMQ 4.3](https://www.rabbitmq.com/) with Transactional Outbox pattern.
@@ -82,7 +76,7 @@ flowchart LR
 ### Prerequisites
 
 Ensure you have the following installed on your workstation:
-- **Java 25+** (e.g. via [SDKMAN!](https://sdkman.io/): `sdk install java 25-open`)
+- **Java 25** (for example, via [SDKMAN!](https://sdkman.io/): `sdk install java 25-open`)
 - **Docker & Docker Compose v2** (e.g. Docker Desktop or OrbStack)
 - **Python 3.11+** (for contract validation)
 - **Make** (standard on macOS and Linux)

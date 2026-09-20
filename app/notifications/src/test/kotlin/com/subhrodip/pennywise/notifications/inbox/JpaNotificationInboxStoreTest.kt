@@ -1,5 +1,7 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.inbox
 
+import com.subhrodip.pennywise.notifications.consumer.ProcessedNotificationEventRepository
+import com.subhrodip.pennywise.notifications.delivery.JpaEventDeduplicator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue

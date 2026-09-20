@@ -8,7 +8,6 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -119,8 +118,14 @@ class GroupController(private val groups: GroupStore) {
     }
 
     @GetMapping("/{groupId}/members")
-    fun listMembers(@PathVariable groupId: UUID, principal: Principal): List<GroupMemberResponse> =
-        groups.listMembers(groupId, principal.name)
+    fun listMembers(
+        @PathVariable groupId: UUID,
+        @RequestHeader("X-Acceptance-Fault", required = false) fault: String?,
+        principal: Principal
+    ): List<GroupMemberResponse> {
+        if (fault == "fanout") throw ApplicationException(ErrorCode.ERR_08, "Acceptance fanout fault")
+        return groups.listMembers(groupId, principal.name)
+    }
 
     @PostMapping("/{groupId}/invites")
     @ResponseStatus(HttpStatus.CREATED)
@@ -142,6 +147,6 @@ class GroupController(private val groups: GroupStore) {
 @RequestMapping(ApiEndpoints.ExpenseCore.V1.BASE + "/invites")
 class InviteClaimController(private val groups: GroupStore) {
     @PostMapping("/{token}/claim")
-    fun claim(@PathVariable token: String, @AuthenticationPrincipal principal: Principal): GroupResponse =
+    fun claim(@PathVariable token: String, principal: Principal): GroupResponse =
         groups.claim(token, principal.name)
 }

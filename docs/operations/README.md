@@ -11,11 +11,52 @@ largest stack for every task. See [Compose topology](compose-topology.md) for th
 dependency-only stack, each native application's prerequisites, the complete
 containerized stack, ports, credentials, health checks, and matching Make
 commands. [Clone and run](quickstart.md) is the shortest path for a new checkout;
-
-Production observability, error attribution, metric cardinality, and release
-hardening requirements are maintained in
-[production-hardening.md](production-hardening.md).
 the repository-wide command catalogue is always available through `make help`.
+
+## Production readiness
+
+> [!IMPORTANT]
+> The backend is targeting **1–10 million DAU**. The production readiness
+> assessment is maintained across four interconnected documents. An intern or
+> new team member should read them in this order to understand the complete
+> picture.
+
+### Document map
+
+```mermaid
+flowchart TD
+    A["1. Production Readiness Audit<br/>(Current state + findings)"] --> B["2. Production Readiness Roadmap<br/>(8-phase fix plan)"]
+    B --> C["3. Production Readiness Tracker<br/>(17 workstreams + ownership)"]
+    B --> D["4. Production Readiness Plan<br/>(Release gate checklist)"]
+    C --> E["registry.yaml<br/>(Authoritative task state)"]
+```
+
+| # | Document | What it answers | Location |
+|:---:|---|---|---|
+| 1 | **Production Readiness Audit** | "What is wrong and why?" — 5 critical + 24 high-severity findings with code references, scale impact analysis, and design pattern remediation guidance | [`docs/reviews/production-readiness-audit.md`](../reviews/production-readiness-audit.md) |
+| 2 | **Production Readiness Roadmap** | "How do we fix it?" — 8 phases with dependencies, deliverables, exit criteria, and ~11–17 week critical path estimate | [`docs/implementation/production-readiness-roadmap.md`](../implementation/production-readiness-roadmap.md) |
+| 3 | **Production Readiness Tracker** | "Who is doing what, when?" — 17 workstreams (PR-00 through PR-16) with owner roles, acceptance criteria, cross-cutting rules, and dependency graph | [`docs/tasks/production-readiness-tracker.md`](../tasks/production-readiness-tracker.md) |
+| 4 | **Production Readiness Plan** | "Is it ready to ship?" — 9-section pre-launch gate checklist with measurable pass/fail criteria and release approval form | [production-readiness-plan.md](production-readiness-plan.md) |
+
+### Current status
+
+The production-readiness audit **does not approve** production launch. The
+current classification is:
+
+> Feature-rich backend under active hardening; suitable for continued
+> development and controlled testing. Not approved for public production or
+> a 1M+ user capacity guarantee.
+
+### Additional operations documents
+
+| Document | Purpose |
+|---|---|
+| [Production hardening](production-hardening.md) | Observability, error attribution, metric cardinality, and release hardening requirements |
+| [Compose topology](compose-topology.md) | Local development Docker Compose topology |
+| [Quickstart](quickstart.md) | Clone-and-run guide for new developers |
+| [CI](ci.md) | Continuous integration pipeline documentation |
+
+## Production deployment
 
 Production begins as stateless pinned containers behind a load balancer, with
 managed PostgreSQL and RabbitMQ where possible. The deployment must provide TLS,

@@ -16,6 +16,7 @@ Verifies:
 
 import base64
 import json
+import io
 import os
 import socket
 import struct
@@ -80,6 +81,19 @@ class SimpleGraphQLWSClient:
         self._listener_thread: threading.Thread | None = None
 
     def connect(self) -> None:
+        """Open the socket and retry transient startup races before subscribing."""
+        for attempt in range(3):
+            try:
+                self._connect_once()
+                return
+            except (TimeoutError, ConnectionResetError, ConnectionError):
+                self.close()
+                if attempt == 2:
+                    raise
+                time.sleep(1)
+
+    def _connect_once(self) -> None:
+        """Perform one WebSocket handshake and GraphQL connection acknowledgement."""
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(SOCKET_SETUP_TIMEOUT_SECONDS)
         self.sock.connect((self.host, self.port))
@@ -172,7 +186,7 @@ class SimpleGraphQLWSClient:
             if not chunk:
                 raise ConnectionError("Socket closed while reading frame")
             buf.extend(chunk)
-        return buf
+        return bytes(buf)
 
     def _listen_loop(self) -> None:
         while self.running:
@@ -202,14 +216,22 @@ class SimpleGraphQLWSClient:
 
 
 def run_concurrency_and_subscriptions_test() -> None:
+    """Run concurrency and subscription checks with explicit UTF-8 output."""
+    if isinstance(sys.stdout, io.TextIOWrapper):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if isinstance(sys.stderr, io.TextIOWrapper):
+        sys.stderr.reconfigure(encoding="utf-8")
     print("=" * 70)
     print("⚡ Running Concurrent Member Conflicts & GraphQL Subscriptions Test")
     print("=" * 70)
 
     # Step 1: Provision Users and Group
     print("\n[Step 1] Provisioning test users and active group...")
-    user_a = f"alice-{uuid.uuid4().hex[:8]}"
-    user_b = f"bob-{uuid.uuid4().hex[:8]}"
+    user_a = os.environ.get("PENNYWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
+    user_b = os.environ.get("PENNYWISE_E2E_TOKEN_B", user_a)
+    user_nonmember = os.environ.get("PENNYWISE_E2E_TOKEN_NONMEMBER", user_b)
+    if not user_a or not user_b or not user_nonmember:
+        raise RuntimeError("E2E persona variables must contain signed tokens")
 
     status, profile_a = request_json(f"http://localhost:8081/accounts/v1/me", bearer=user_a)
     assert status == 200, f"Failed to get profile for Alice: {profile_a}"
@@ -269,7 +291,7 @@ def run_concurrency_and_subscriptions_test() -> None:
     assert ws_client.errors, f"Expected a GraphQL error frame for malformed subscription; messages={ws_client.messages!r}"
     print("  ✓ Malformed subscription produced a protocol error frame")
 
-    outsider_ws = SimpleGraphQLWSClient(WS_HOST, WS_PORT, GRAPHQL_PATH, f"outsider-{uuid.uuid4().hex[:8]}")
+    outsider_ws = SimpleGraphQLWSClient(WS_HOST, WS_PORT, GRAPHQL_PATH, user_nonmember)
     outsider_ws.connect()
     outsider_ws.subscribe("outsider-sub", sub_query, {"groupId": group_id})
     time.sleep(0.4)

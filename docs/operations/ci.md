@@ -15,9 +15,12 @@ Workflows declare `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'` in their top-leve
 `env` blocks, ensuring all runner steps and composite JavaScript actions run on
 Node 24 ahead of runner deprecation deadlines.
 
-Verification and E2E jobs each receive isolated PostgreSQL 17 and RabbitMQ
-4.3 services. Docker health checks (`pg_isready` and `rabbitmq-diagnostics ping`)
-must pass before job steps begin; no service state is shared between matrix jobs.
+Each verification-matrix job receives isolated PostgreSQL 17 and RabbitMQ 4.3
+service containers. Docker health checks (`pg_isready` and
+`rabbitmq-diagnostics ping`) must pass before job steps begin, and no service
+state is shared between matrix jobs. The E2E job instead lets the complete local
+Compose topology exclusively own PostgreSQL and RabbitMQ; declaring duplicate
+job services would contend for host ports `5432` and `5672`.
 
 The matrix tests every application and library in parallel after a single
 preflight, validates contracts, REST path structure, GraphQL schema/resolver
@@ -60,7 +63,8 @@ fan out only after every verification matrix job succeeds. Local image builds
 are available independently through `make docker-build-all` or
 `make docker-build-<service>` and never push to a registry.
 
-Workflow files are parsed with Ruby's YAML parser as part of CI maintenance.
+Workflow files are syntax-checked with a pinned `yamllint` invocation installed
+ephemerally through `uvx`; CI does not assume Ruby is present on slim runners.
 The reusable workflow is the single source for action versions, Microsoft
 OpenJDK setup, and verification matrix membership; `ci-master.yml` owns GHCR
 delivery policy once verification succeeds. Trigger workflows only select event

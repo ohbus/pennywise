@@ -63,6 +63,31 @@ The task registry contains the complete implementation DAG and task detail links
 Future UI work will choose a framework separately and consume the GraphQL schema.
 Hosting selection, operating budget and launch-market retention policy are public
 launch prerequisites; they do not block portable contracts and the scaffold.
+
+## Production-readiness delivery basis
+
+The backend is targeting 1–10 million DAU. A production-readiness audit has
+identified 5 critical and 24 high-severity findings that must be resolved before
+any public launch decision. The audit, roadmap, tracker, and release checklist
+form a four-document execution basis:
+
+| Document | Purpose | Location |
+|---|---|---|
+| **Production Readiness Audit** | Current-state decision with evidence-backed findings (WHAT is wrong) | [`docs/reviews/production-readiness-audit.md`](../reviews/production-readiness-audit.md) |
+| **Production Readiness Roadmap** | 8-phase execution plan with design patterns and scale context (HOW to fix it) | [`production-readiness-roadmap.md`](production-readiness-roadmap.md) |
+| **Production Readiness Tracker** | 17 workstreams with ownership, dependencies, and acceptance criteria (WHO does WHAT, WHEN) | [`docs/tasks/production-readiness-tracker.md`](../tasks/production-readiness-tracker.md) |
+| **Production Readiness Plan** | Pre-launch gate checklist with measurable pass/fail criteria (IS IT READY?) | [`docs/operations/production-readiness-plan.md`](../operations/production-readiness-plan.md) |
+
+The workstreams cover: domain/API reconciliation, authorization matrix,
+authentication hardening, financial concurrency and correctness, idempotency and
+replay, messaging reliability, code quality and design enforcement, configuration
+hygiene, CI and supply-chain controls, capacity proof, disaster recovery, and
+final release approval.
+
+These documents are planning artifacts until the coordinator registers the
+workstreams in `docs/tasks/registry.yaml` and `docs/tasks/board.md`. The audit
+decision — **do not approve production launch** — remains in effect until
+evidence is produced in an approved production-like environment.
 # Error reporting hardening plan
 
 The existing `ErrorCode` vocabulary is intentionally treated as a compatibility

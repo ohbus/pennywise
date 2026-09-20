@@ -1,0 +1,43 @@
+package com.subhrodip.pennywise.security
+
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
+import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.security.oauth2.jwt.JwtDecoders
+import org.springframework.security.oauth2.jwt.JwtClaimValidator
+import org.springframework.security.oauth2.jwt.JwtValidators
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
+
+/** Builds a standards-based JWT decoder for the configured OIDC issuer. */
+object OidcJwtDecoderFactory {
+    /**
+     * Creates a decoder using issuer-discovered keys and validators for issuer,
+     * expiry, not-before, and configured audience.
+     *
+     * @param issuerUri trusted OIDC issuer URI.
+     * @param audience required API audience claim.
+     * @return configured JWT decoder.
+     * @throws IllegalArgumentException when the issuer or audience is blank.
+     */
+    fun create(
+        issuerUri: String,
+        audience: String,
+        allowedAlgorithms: Set<String> = setOf(OidcSecurityConstants.DEFAULT_SIGNING_ALGORITHM)
+    ): JwtDecoder {
+        require(issuerUri.isNotBlank()) { OidcSecurityConstants.ISSUER_REQUIRED_MESSAGE }
+        require(audience.isNotBlank()) { OidcSecurityConstants.AUDIENCE_REQUIRED_MESSAGE }
+
+        val decoder = JwtDecoders.fromIssuerLocation(issuerUri) as NimbusJwtDecoder
+        val audienceValidator = JwtClaimValidator<Collection<String>>(OidcSecurityConstants.AUDIENCE_CLAIM) { values ->
+            values.contains(audience)
+        }
+        decoder.setJwtValidator(
+            DelegatingOAuth2TokenValidator(
+                JwtValidators.createDefaultWithIssuer(issuerUri),
+                audienceValidator,
+                OidcJwtClaimPolicy.subjectValidator(),
+                OidcJwtAlgorithmPolicy(allowedAlgorithms)
+            )
+        )
+        return decoder
+    }
+}

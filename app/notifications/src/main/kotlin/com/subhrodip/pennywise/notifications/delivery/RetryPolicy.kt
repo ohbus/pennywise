@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.delivery
 
 import java.time.Duration
 

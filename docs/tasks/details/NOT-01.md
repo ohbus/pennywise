@@ -53,3 +53,7 @@ timestamp and notification-ID sort key. Invalid cursors and out-of-range page
 limits are rejected through the shared error flow. Preference reads and writes
 now reject blank authenticated subjects. Verified with
 `./gradlew :app:notifications:test --no-daemon` (exit 0).
+
+Aligned package declarations across the Notifications module (`consumer`, `delivery`,
+`inbox`, and `preferences`) with directory paths to match domain subpackage structure,
+consistent with `NotificationPreferenceEntity`. Verified with `./gradlew :app:notifications:test --no-daemon` (exit 0).

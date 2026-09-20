@@ -1,10 +1,10 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.preferences
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * JPA implementation of [PreferenceStore] backed by [NotificationPreferenceRepository].
+ * JPA implementation of [com.subhrodip.pennywise.notifications.preferences.PreferenceStore] backed by [com.subhrodip.pennywise.notifications.preferences.NotificationPreferenceRepository].
  *
  * Persists and retrieves user delivery preferences, defaulting to enabled preferences
  * if no custom preference record exists yet.

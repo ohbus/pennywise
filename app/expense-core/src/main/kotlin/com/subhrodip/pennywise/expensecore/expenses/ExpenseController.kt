@@ -93,7 +93,7 @@ class ExpenseController(
             allocations = domainAllocations
         )
 
-        val saved = expenseStore.create(groupId, record, idempotencyKey)
+        val saved = expenseStore.create(groupId, record, idempotencyKey, principal?.name)
 
         return ExpenseResponse(
             expenseId = saved.expenseId,
@@ -206,6 +206,9 @@ class ExpenseController(
         principal: Principal?
     ): List<ExpenseResponse> {
         ensureActiveMember(groupId, principal)
+        if (limit !in 1..100) {
+            throw ApplicationException(ErrorCode.ERR_02, "limit must be between 1 and 100")
+        }
         val list = expenseStore.list(groupId, category, cursor, limit)
         return list.map { expense ->
             ExpenseResponse(
@@ -231,7 +234,9 @@ class ExpenseController(
     }
 
     private fun ensureActiveMember(groupId: UUID, principal: Principal?) {
-        val subject = principal?.name ?: "test-user"
+        val subject = principal?.name?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: throw ApplicationException(ErrorCode.ERR_03, "Authenticated subject is required")
         if (!membershipRepository.existsByGroupIdAndSubject(groupId, subject)) {
             throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
         }

@@ -12,6 +12,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+
+AUTH_TOKEN = os.environ.get("BEARER_TOKEN", "test-user")
+
 try:
     from . import qa05
 except ImportError:
@@ -139,7 +142,7 @@ def check_health(bff_url: str, expense_core_url: str, timeout: float) -> dict[st
 
 def check_group_expense_settlement(expense_core_url: str, timeout: float) -> tuple[dict[str, Any], str | None]:
     scenario_id = "QA-GROUP-EXPENSE-SETTLEMENT"
-    auth_headers = {"Authorization": "Bearer test-user"}
+    auth_headers = {"Authorization": f"Bearer {AUTH_TOKEN}"}
     try:
         # 1. POST /expense-core/v1/groups to create a group
         group_name = f"Acceptance Trip {uuid.uuid4().hex[:8]}"
@@ -275,7 +278,7 @@ def check_group_expense_settlement(expense_core_url: str, timeout: float) -> tup
 
 def check_offline_replay(expense_core_url: str, group_id: str | None, timeout: float) -> dict[str, Any]:
     scenario_id = "QA-OFFLINE-REPLAY"
-    auth_headers = {"Authorization": "Bearer test-user"}
+    auth_headers = {"Authorization": f"Bearer {AUTH_TOKEN}"}
     try:
         if not group_id:
             group_payload = {
@@ -364,7 +367,7 @@ def check_websocket_resync(bff_url: str, timeout: float) -> dict[str, Any]:
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "Authorization": "Bearer test-user",
+        "Authorization": f"Bearer {AUTH_TOKEN}",
     }
     body = {
         "query": "query { groups { id name } }"
@@ -441,7 +444,7 @@ def run_acceptance_suite(
     # 6. Edge-case journeys (QA-05 / QA-04)
     if include_edge_cases:
         try:
-            edge_results = qa05.run_qa05_journeys(bff_url, expense_core_url)
+            edge_results = qa05.run_qa05_journeys(bff_url, expense_core_url, bearer_token=AUTH_TOKEN)
             for r in edge_results:
                 results.append({
                     "id": r.id,
@@ -497,6 +500,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    if args.require_services and not os.environ.get("BEARER_TOKEN"):
+        print("BEARER_TOKEN must contain a signed token when --require-services is used", file=sys.stderr)
+        return 2
     bff_url = (args.bff_url_alias or args.bff_url).rstrip("/")
     expense_core_url = args.expense_core_url.rstrip("/")
 

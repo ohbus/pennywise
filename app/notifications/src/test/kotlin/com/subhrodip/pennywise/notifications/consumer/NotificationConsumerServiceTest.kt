@@ -1,9 +1,10 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.consumer
 
 import com.subhrodip.pennywise.notifications.email.EmailDeliveryOutcome
 import com.subhrodip.pennywise.notifications.email.EmailDispatcher
+import com.subhrodip.pennywise.notifications.preferences.NotificationPreferences
+import com.subhrodip.pennywise.notifications.preferences.PreferenceStore
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString

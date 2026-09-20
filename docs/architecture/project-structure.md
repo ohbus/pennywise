@@ -43,10 +43,39 @@ is consumed only from test configurations. Generated clients/types belong under
 build output and derive from approved contracts; do not hand-maintain a shared
 business-model library.
 
+Every application and technical library follows package-by-feature with
+internal layering, modular DDD, Hexagonal Architecture, and Screaming
+Architecture. Top-level packages reveal business or technical capabilities;
+domain/application code depends on ports, while frameworks and external
+providers remain replaceable adapters. Technical libraries must use the same
+structure and must not become catch-all utility packages.
+
 Persistence and service implementations must adhere to enterprise file separation:
 persistent entities (`@Entity`), Spring Data repository interfaces (`@Repository`),
 and service/adapter classes (`@Service`) must reside in individual source files,
 never bundled together in a single file.
+
+Application source packages follow feature slices, as demonstrated by
+`app/expense-core`: controllers, domain models, persistence ports, repositories,
+and adapters for one capability stay under that capability's package. Other
+applications and libraries should use the same convention; cross-cutting
+configuration belongs in an explicit `security`, `messaging`, or equivalent
+technical package rather than at the application package root. The Accounts
+security configuration and OIDC subject validator now follow this convention
+under `accounts.security`.
+
+Shared ID primitives are likewise grouped by concern under `libs/ids`:
+endpoint contracts, event constants, and UUID generation. Their existing public
+package remains stable so application imports do not need a breaking migration.
+
+Shared error handling follows the same concern grouping under `libs/errors`:
+domain error definitions, HTTP problem mapping, and request-correlation
+plumbing are separated physically while retaining the established public
+package for consumers.
+
+The BFF keeps GraphQL, REST transport, realtime fanout, and messaging concerns
+in separate source folders so transport adapters do not sit beside application
+startup code.
 
 Future `app/web` chooses tooling in a separate UI task. Its README explains the
 GraphQL endpoint, authentication integration decision still required, subscription

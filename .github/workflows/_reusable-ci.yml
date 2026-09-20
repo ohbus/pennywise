@@ -10,6 +10,10 @@ permissions:
 env:
   JAVA_VERSION: '25'
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  # Ephemeral CI-only values used to render and boot the local fixture. They
+  # are not deployment credentials and must never be reused outside CI.
+  PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET: 'AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=' # local-only CI fixture
+  PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY: 'ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8='
 
 jobs:
   preflight:
@@ -34,15 +38,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with: { persist-credentials: false }
+      - name: Set up isolated Python tooling
+        uses: astral-sh/setup-uv@v6
       - name: Check formatting and contracts
         run: |
           git diff --check
           python3 tools/contracts/validate.py
           python3 tools/contracts/validate_public_surface.py
           python3 -m unittest discover -s tests/acceptance
-          ruby -e 'require "yaml"; Dir[".github/workflows/*.yml"].each { |file| YAML.load_file(file); puts "valid workflow: #{file}" }'
-      - name: Type-check Python tests and tools
-        uses: astral-sh/setup-uv@v6
+          make workflow-validate
       - name: Run Python type checker
         run: uvx --from mypy==1.17.1 mypy --config-file mypy.ini tests tools
 
@@ -83,6 +87,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - name: Set up isolated Python tooling
+        uses: astral-sh/setup-uv@v6
       - uses: actions/setup-java@v6
         with:
           distribution: microsoft
@@ -128,20 +134,6 @@ jobs:
   e2e:
     if: inputs.run_e2e
     needs: preflight
-    services:
-      postgres:
-        image: postgres:17
-        env: { POSTGRES_DB: pennywise, POSTGRES_USER: pennywise, POSTGRES_PASSWORD: pennywise }
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd="pg_isready -U pennywise -d pennywise"
-          --health-interval=5s --health-timeout=5s --health-retries=12
-      rabbitmq:
-        image: rabbitmq:4.3-management
-        ports: ['5672:5672']
-        options: >-
-          --health-cmd="rabbitmq-diagnostics -q ping"
-          --health-interval=5s --health-timeout=5s --health-retries=12
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -185,17 +177,123 @@ jobs:
         run: bash tests/e2e/contract-smoke.sh
       - name: Start the complete local application stack
         run: docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
+      - name: Diagnose local stack startup failure
+        if: failure()
+        run: |
+          docker compose -f infra/local/docker-compose.dev.yml ps -a
+          docker compose -f infra/local/docker-compose.dev.yml logs --no-color --tail=300 \
+            accounts expense-core notifications bff postgres rabbitmq mailpit idp-keycloak
+      - name: Acquire ephemeral signed local OIDC token
+        id: oidc-token
+        run: |
+          token_response="$(curl --fail-with-body --silent --show-error \
+            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
+            --data 'grant_type=client_credentials&client_id=pennywise-ci&client_secret=pennywise-ci-local-only' \
+            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
+          token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$token_response")"
+          test -n "$token" || { echo "Keycloak returned no access token"; exit 2; }
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+          e2e_bob_response="$(curl --fail-with-body --silent --show-error \
+            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
+            --data 'grant_type=client_credentials&client_id=pennywise-ci-e2e-bob&client_secret=pennywise-ci-e2e-bob-local-only' \
+            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
+          e2e_bob_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$e2e_bob_response")"
+          test -n "$e2e_bob_token" || { echo "Keycloak returned no E2E second-persona token"; exit 2; }
+          echo "e2e_bob_token=$e2e_bob_token" >> "$GITHUB_OUTPUT"
+          e2e_nonmember_response="$(curl --fail-with-body --silent --show-error \
+            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
+            --data 'grant_type=client_credentials&client_id=pennywise-ci-e2e-nonmember&client_secret=pennywise-ci-e2e-nonmember-local-only' \
+            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
+          e2e_nonmember_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$e2e_nonmember_response")"
+          test -n "$e2e_nonmember_token" || { echo "Keycloak returned no E2E non-member token"; exit 2; }
+          echo "e2e_nonmember_token=$e2e_nonmember_token" >> "$GITHUB_OUTPUT"
+          wrong_audience_response="$(curl --fail-with-body --silent --show-error \
+            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
+            --data 'grant_type=client_credentials&client_id=pennywise-ci-wrong-audience&client_secret=pennywise-ci-wrong-audience-local-only' \
+            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
+          wrong_audience_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$wrong_audience_response")"
+          test -n "$wrong_audience_token" || { echo "Keycloak returned no negative-audience token"; exit 2; }
+          echo "wrong_audience_token=$wrong_audience_token" >> "$GITHUB_OUTPUT"
+          wrong_issuer_response="$(curl --fail-with-body --silent --show-error \
+            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
+            --data 'grant_type=client_credentials&client_id=pennywise-ci-wrong-issuer&client_secret=pennywise-ci-wrong-issuer-local-only' \
+            http://idp-keycloak:8080/realms/pennywise-other/protocol/openid-connect/token)"
+          wrong_issuer_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$wrong_issuer_response")"
+          test -n "$wrong_issuer_token" || { echo "Keycloak returned no negative-issuer token"; exit 2; }
+          echo "wrong_issuer_token=$wrong_issuer_token" >> "$GITHUB_OUTPUT"
+          docker compose -f infra/local/docker-compose.dev.yml exec -T idp-keycloak \
+            /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 \
+            --realm master --user local-admin --password local-admin-only
+          docker compose -f infra/local/docker-compose.dev.yml exec -T idp-keycloak \
+            /opt/keycloak/bin/kcadm.sh update realms/pennywise -s accessTokenLifespan=1
+          expiring_response="$(curl --fail-with-body --silent --show-error \
+            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
+            --data 'grant_type=client_credentials&client_id=pennywise-ci&client_secret=pennywise-ci-local-only' \
+            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
+          expiring_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$expiring_response")"
+          test -n "$expiring_token" || { echo "Keycloak returned no short-lived token"; exit 2; }
+          docker compose -f infra/local/docker-compose.dev.yml exec -T idp-keycloak \
+            /opt/keycloak/bin/kcadm.sh update realms/pennywise -s accessTokenLifespan=300
+          # Spring's default bounded clock skew is 60 seconds; wait beyond it.
+          sleep 65
+          echo "expired_token=$expiring_token" >> "$GITHUB_OUTPUT"
       - name: Run public-interface acceptance and E2E suites
         env:
-          BRUNO_ENV: local
-          BRUNO_TOKEN: test-user
+          BRUNO_ENV: local-oidc
+          BRUNO_TOKEN: ${{ steps.oidc-token.outputs.token }}
+          PENNYWISE_BRUNO_TOKEN: ${{ steps.oidc-token.outputs.token }}
+          PENNYWISE_BRUNO_WRONG_AUDIENCE_TOKEN: ${{ steps.oidc-token.outputs.wrong_audience_token }}
+          PENNYWISE_BRUNO_WRONG_ISSUER_TOKEN: ${{ steps.oidc-token.outputs.wrong_issuer_token }}
+          PENNYWISE_BRUNO_EXPIRED_TOKEN: ${{ steps.oidc-token.outputs.expired_token }}
+          BEARER_TOKEN: ${{ steps.oidc-token.outputs.token }}
+          PENNYWISE_E2E_TOKEN_A: ${{ steps.oidc-token.outputs.token }}
+          PENNYWISE_E2E_TOKEN_B: ${{ steps.oidc-token.outputs.e2e_bob_token }}
+          PENNYWISE_E2E_TOKEN_NONMEMBER: ${{ steps.oidc-token.outputs.e2e_nonmember_token }}
+          WRONG_ISSUER_TOKEN: ${{ steps.oidc-token.outputs.wrong_issuer_token }}
+          EXPIRED_TOKEN: ${{ steps.oidc-token.outputs.expired_token }}
         run: |
           make acceptance-live
           make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"
+          python3 tests/e2e/test_oidc_negative.py --variant forged-signature &
+          forged_pid=$!
+          python3 tests/e2e/test_oidc_negative.py --variant unsupported-algorithm &
+          algorithm_pid=$!
+          wait "$forged_pid"
+          wait "$algorithm_pid"
+          python3 tests/e2e/test_oidc_negative.py --variant provider
+          python3 tests/e2e/test_oidc_websocket_negative.py
+          docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml up -d --build --wait
+          invalid_subject_token="$(curl --fail-with-body --silent --show-error -X POST http://localhost:8091/token | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')"
+          test -n "$invalid_subject_token"
+          INVALID_SUBJECT_TOKEN="$invalid_subject_token" python3 tests/e2e/test_oidc_negative.py --variant provider
+          INVALID_SUBJECT_TOKEN="$invalid_subject_token" BEARER_TOKEN="$BEARER_TOKEN" python3 tests/e2e/test_oidc_websocket_negative.py
+          for request in tools/bruno/quality/invalid-subject-accounts.bru tools/bruno/quality/invalid-subject-expense-core.bru tools/bruno/quality/invalid-subject-notifications.bru tools/bruno/quality/invalid-subject-bff.bru; do
+            (cd tools/bruno && npx --yes @usebruno/cli@4.1.0 run "../../$request" -r --env local-oidc --env-var "invalidSubjectToken=$invalid_subject_token")
+          done
+          # Preserve the Keycloak/PostgreSQL volumes so tokens minted before the
+          # isolated invalid-subject phase remain valid for the following E2E run.
+          docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml down
+          docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
+          fresh_token() {
+            curl --fail-with-body --silent --show-error \
+              --connect-to idp-keycloak:8080:127.0.0.1:8090 \
+              --data "grant_type=client_credentials&client_id=$1&client_secret=$2" \
+              http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])'
+          }
+          export PENNYWISE_E2E_TOKEN_A="$(fresh_token pennywise-ci pennywise-ci-local-only)"
+          export PENNYWISE_E2E_TOKEN_B="$(fresh_token pennywise-ci-e2e-bob pennywise-ci-e2e-bob-local-only)"
+          export PENNYWISE_E2E_TOKEN_NONMEMBER="$(fresh_token pennywise-ci-e2e-nonmember pennywise-ci-e2e-nonmember-local-only)"
+          test -n "$PENNYWISE_E2E_TOKEN_A" -a -n "$PENNYWISE_E2E_TOKEN_B" -a -n "$PENNYWISE_E2E_TOKEN_NONMEMBER"
           make e2e-live
           make e2e-offline
           make e2e-concurrency
           make e2e-chaos
+          export BEARER_TOKEN="$(fresh_token pennywise-ci pennywise-ci-local-only)"
+          export PENNYWISE_E2E_TOKEN_A="$BEARER_TOKEN"
+          export PENNYWISE_E2E_TOKEN_B="$(fresh_token pennywise-ci-e2e-bob pennywise-ci-e2e-bob-local-only)"
+          export PENNYWISE_E2E_TOKEN_NONMEMBER="$(fresh_token pennywise-ci-e2e-nonmember pennywise-ci-e2e-nonmember-local-only)"
+          test -n "$BEARER_TOKEN" -a -n "$PENNYWISE_E2E_TOKEN_B" -a -n "$PENNYWISE_E2E_TOKEN_NONMEMBER"
           make e2e-rest-edge
       - name: Tear down the complete local application stack
         if: always()

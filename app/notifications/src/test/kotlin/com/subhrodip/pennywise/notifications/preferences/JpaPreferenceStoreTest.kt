@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.preferences
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

@@ -30,6 +30,14 @@ For the complete containerized environment, run:
 make full-up
 ```
 
+Before the first local start, provide the required credential-digest secret
+and auth-email envelope key without committing either secret. Copy
+`infra/local/auth.env.example` to a private env file or export
+`PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET` with at least 32 random bytes and
+`PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY` with exactly 32 random bytes,
+encoded as base64. The Compose profile fails closed when either is missing;
+local authentication intentionally does not use a shared default.
+
 This builds and runs PostgreSQL 17, RabbitMQ 4.3, Mailpit, Accounts, Expense
 Core, Notifications, and BFF from `infra/local/docker-compose.dev.yml`. Stop it
 with `make full-down`; `compose-dev-up`, `compose-dev-down`, `compose-up`, and
@@ -56,11 +64,23 @@ compile inside Docker.
 
 The checked-in `tools/bruno/` collection provides local requests for all four
 HTTP services, including the GraphQL BFF and Notifications endpoints. Import
-that directory into Bruno, select its `local` environment, and start the stack
-with `make full-up` before sending requests. For a repeatable CLI run use
-`make bruno-run BRUNO_ENV=local BRUNO_TOKEN=test-user`; override the four base
-URL variables and token centrally for CI or staging rather than editing request
-files. The collection contains no production credentials.
+that directory into Bruno and start the stack with `make full-up` before
+sending requests. The legacy `local` environment is retained only for isolated
+compatibility tests and is not an application deployment profile. For the
+Keycloak-backed topology, select
+`local-oidc` and inject a real signed token through `PENNYWISE_BRUNO_TOKEN`;
+never place credentials in request files. Override base URLs and tokens
+centrally for CI or staging. The collection contains no production
+credentials.
+
+The hosted E2E workflow follows the same rule: after starting Compose it uses
+the fixture's non-user `pennywise-ci` service account with the OAuth
+client-credentials grant to obtain a short-lived signed token. It deliberately
+does not use the legacy `test-user` placeholder or require a manually copied
+token. The service account is local-CI-only and cannot perform password grants.
+The required-services acceptance mode also fails immediately when
+`BEARER_TOKEN` is absent; it never silently falls back to the legacy
+`test-user` value.
 
 ## Live acceptance testing
 

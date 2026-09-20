@@ -1,0 +1,21 @@
+meta {
+  name: Invalid subject token is rejected by Accounts
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{baseUrlAccounts}}/accounts/v1/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{invalidSubjectToken}}
+}
+
+tests {
+  test("invalid subject token is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

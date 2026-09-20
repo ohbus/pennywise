@@ -4,8 +4,10 @@
 
 Use Kotlin on the JVM, Spring Boot, Gradle Kotlin DSL, Spring MVC for stateful
 REST services, and WebFlux/Spring GraphQL for the database-free BFF. Version
-selection is performed by FND-01 from stable artifact metadata; Java 25 is
-currently installed locally, while Java 26 remains the candidate target.
+selection is verified through dependency resolution and centralized in
+`gradle/libs.versions.toml`. The current baseline is Java 25, Kotlin 2.4.20,
+Spring Boot 4.1.1, and Gradle 9.7.1. The earlier Java 26 proposal was superseded;
+future baseline changes require a separately verified technology decision.
 
 ## Persistence
 
@@ -36,10 +38,21 @@ balances. Every BFF replica has its own temporary fan-out queue.
 
 ## Security and operations
 
-Use an OIDC provider and Spring Security resource-server JWT validation in every
-service. Services enforce membership authorization themselves. Use Actuator,
+Production deployments currently use Keycloak as the selected OIDC provider,
+with a provider-neutral configuration and Spring Security resource-server
+validation in every service. Keycloak is also the optional local OIDC provider
+for realistic integration testing. It is an infrastructure choice rather than
+a domain dependency: no application code may depend on Keycloak-specific APIs
+or claims, so Auth0, Okta, Entra ID, or another OIDC provider can be selected in
+future through configuration and an adapter boundary. The existing passthrough
+bearer-token principal remains a narrowly scoped local-demo mechanism only; it
+accepts no proof of identity and therefore does not constitute production or
+OIDC evidence. See
+`docs/security/authentication-hardening.md` and task `AUTH-01` for the staged
+hardening plan.
+Services enforce membership authorization themselves. Use Actuator,
 Micrometer and OpenTelemetry-compatible tracing; structured logs exclude money
 payloads, invitation secrets and tokens. Docker Compose supports local
-PostgreSQL, RabbitMQ, OIDC and SMTP capture. Kubernetes, Kafka, Redis, JPA
+PostgreSQL, RabbitMQ and SMTP capture. Kubernetes, Kafka, Redis, JPA
 second-level caching, multi-region writes and sharding are deferred until
 measured requirements justify them.

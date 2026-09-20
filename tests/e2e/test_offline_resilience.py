@@ -16,6 +16,7 @@ Verifies offline simulation, idempotency guarantees, and sync recovery (OFF-01 t
 
 import json
 import os
+import io
 import sys
 import time
 import urllib.error
@@ -75,14 +76,21 @@ def graphql_query(query: str, variables: dict[str, Any] | None = None, bearer: s
 
 
 def run_offline_resilience_tests() -> int:
+    """Run offline replay checks with explicit UTF-8 console output."""
+    if isinstance(sys.stdout, io.TextIOWrapper):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if isinstance(sys.stderr, io.TextIOWrapper):
+        sys.stderr.reconfigure(encoding="utf-8")
     print("=" * 70)
     print("🔌 Running Offline Client Sync & Replay Resilience Test Suite")
     print("=" * 70)
 
     # Step 1: Provision two users and a group
     print("\n[Step 1] Provisioning test users and active group...")
-    user_a = f"alice-{uuid.uuid4().hex[:8]}"
-    user_b = f"bob-{uuid.uuid4().hex[:8]}"
+    user_a = os.environ.get("PENNYWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
+    user_b = os.environ.get("PENNYWISE_E2E_TOKEN_B", user_a)
+    if not user_a or not user_b:
+        raise RuntimeError("PENNYWISE_E2E_TOKEN_A and PENNYWISE_E2E_TOKEN_B must contain signed tokens")
 
     status, profile_a = request_json(f"{ACCOUNTS_URL}/accounts/v1/me", bearer=user_a)
     assert status == 200, f"Failed to get profile for Alice: {profile_a}"

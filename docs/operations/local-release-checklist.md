@@ -4,7 +4,9 @@ This checklist records evidence from the host-native local stack on 2026-09-19.
 It is a pre-deployment verification record and does not authorize production
 promotion.
 
-- [x] All four applications start with authenticated REST/GraphQL flows.
+- [x] All four applications start with authenticated REST/GraphQL flows; a real
+  Keycloak client-credentials token was verified through BFF GraphQL to Expense
+  Core after readiness-gated startup and centralized bearer propagation.
 - [x] Docker full-stack startup is reproducible from host-built JARs without runtime Gradle downloads (`make package`, `docker compose ... build`, `up -d --wait`).
 - [x] Accounts, Expense Core, Notifications, and BFF readiness probes pass.
 - [x] Prometheus scrapes all four services; Grafana datasource and overview dashboard are provisioned.
@@ -12,7 +14,7 @@ promotion.
 - [x] Duplicate expense replay is idempotent at the persistence-effect level without revision bumps; conflicting payloads return HTTP 409.
 - [x] Full ordered Bruno collection executed 43 requests with the local environment and centralized token override.
 - [x] Bruno response assertions cover identity, persistence, contract-shaped bodies, GraphQL errors, structured API errors, and authentication challenges.
-- [x] A seeded RabbitMQ notification appeared in the test-user inbox and was marked read through the public Notifications API.
+- [x] A seeded RabbitMQ notification appeared in the authenticated fixture account inbox and was marked read through the public Notifications API.
 - [x] Recurring schedule create/list/get/update/pause/resume flow passed through the public Expense Core API.
 - [x] Public acceptance journeys passed, including rollback, authorization, fanout, and recovery probes.
 - [x] RabbitMQ loss/recovery restored the Notifications consumer in 11 seconds.

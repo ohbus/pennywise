@@ -5,9 +5,9 @@
 Help roommates, couples and travel groups record shared spending, understand every
 balance, and record settling up without ambiguity. All features remain free.
 There is no guaranteed success formula: validate usefulness, retention and cost
-with real groups before widening launch. This phase delivers contracts and a
-partially implemented backend slices with UI screens still deferred; this is
-not evidence of a launch-ready product.
+with real groups before widening launch. The contracted backend MVP operations
+are implemented, while exhaustive QA-07 coverage, production validation, and UI
+screens remain incomplete; this is not evidence of a launch-ready product.
 
 ## Capability and ownership matrix
 

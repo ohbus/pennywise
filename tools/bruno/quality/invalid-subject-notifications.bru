@@ -1,0 +1,21 @@
+meta {
+  name: Invalid subject token is rejected by Notifications
+  type: http
+  seq: 21
+}
+
+get {
+  url: {{baseUrlNotifications}}/notifications/v1/preferences
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{invalidSubjectToken}}
+}
+
+tests {
+  test("invalid subject token is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

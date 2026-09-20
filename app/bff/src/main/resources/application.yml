@@ -1,6 +1,11 @@
 spring:
   application:
     name: bff
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${PENNYWISE_SECURITY_OIDC_ISSUER_URI:}
   graphql:
     path: /graphql
     schema:
@@ -20,3 +25,8 @@ management:
   metrics:
     tags:
       service: bff
+
+pennywise:
+  security:
+    oidc:
+      audience: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:}

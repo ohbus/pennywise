@@ -1,5 +1,7 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.consumer
 
+import com.subhrodip.pennywise.notifications.inbox.NotificationInboxEntity
+import com.subhrodip.pennywise.notifications.inbox.NotificationInboxRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test

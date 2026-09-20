@@ -1,0 +1,28 @@
+meta {
+  name: Wrong audience is rejected by BFF
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrlBff}}/graphql
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{wrongAudienceToken}}
+}
+
+body:json {
+  {
+    "query": "{ groups { id name } }"
+  }
+}
+
+tests {
+  test("wrong audience is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

@@ -4528,6 +4528,239 @@
       "blocker": null
     },
     {
+      "id": "OPS-24",
+      "parent_id": "MILESTONE-OPERATIONS",
+      "title": "Harden lightweight and E2E CI portability",
+      "phase": "operations",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["OPS-20"],
+      "owned_paths": [
+        ".github/workflows/",
+        "Makefile",
+        "docs/operations/",
+        "docs/tasks/details/OPS-24.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/OPS-24.md",
+      "acceptance_criteria": [
+        "Lightweight CI validates workflow YAML without relying on Ruby being installed on the runner.",
+        "E2E Compose startup does not collide with job-level PostgreSQL or RabbitMQ host-port bindings.",
+        "Local workflow-validation and Compose commands remain documented and reproducible."
+      ],
+      "validation_commands": [
+        "make workflow-validate",
+        "make compose-config",
+        "python3 tools/contracts/validate.py",
+        "python3 tools/contracts/validate_public_surface.py",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Lightweight CI now installs uv before invoking a pinned yamllint workflow syntax check; no Ruby executable is required.",
+        "The E2E job no longer declares PostgreSQL or RabbitMQ Actions services, leaving the complete Compose topology as the sole host-port owner.",
+        "Contract and public-surface validation, all six Compose config renders, available PyYAML workflow parsing, and git diff --check passed locally; exact uvx and live stack startup were unavailable because uvx and the Docker daemon were absent."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "AUTH-01",
+      "parent_id": "MILESTONE-SECURITY",
+      "title": "Define provider-neutral authentication hardening baseline",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [],
+      "owned_paths": [
+        "libs/security/",
+        "docs/security/authentication-hardening.md",
+        "docs/implementation/technology-decisions.md",
+        "docs/tasks/details/AUTH-01.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-01.md",
+      "acceptance_criteria": [
+        "Provider-neutral OIDC, optional local Keycloak, passwordless login, short-lived access credentials, refresh rotation, and security validation are documented with executable follow-up increments.",
+        "The current passthrough local authentication and implicit test-user identity are explicitly recorded as non-production limitations."
+      ],
+      "validation_commands": [
+        "python3 tools/contracts/validate.py",
+        "python3 tools/contracts/validate_public_surface.py",
+        "./gradlew test --rerun-tasks --no-daemon",
+        "make security-hygiene",
+        "make check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Provider-neutral architecture and exhaustive implementation tracker recorded in docs/security/authentication-hardening.md and docs/security/authentication-audit.md; runtime work remains explicitly delegated to AUTH-03 through AUTH-16."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "AUTH-02",
+      "parent_id": "AUTH-01",
+      "title": "Remove implicit authentication identities",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["AUTH-01", "ERR-03"],
+      "owned_paths": [
+        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseController.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseControllerTest.kt",
+        "tests/e2e/",
+        "tools/bruno/",
+        "docs/tasks/details/AUTH-02.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-02.md",
+      "acceptance_criteria": [
+        "No runtime endpoint substitutes a synthetic subject when authentication is absent or blank.",
+        "Affected REST operations return the structured unauthenticated response and perform no membership or domain side effect.",
+        "Unit/controller, REST-edge, Bruno, and live E2E tests cover missing and blank principals for all affected operations.",
+        "Task documentation records exact test commands, evidence, limitations, and commit hash."
+      ],
+      "validation_commands": [
+        "./gradlew :app:expense-core:test --tests '*ExpenseControllerTest' --rerun-tasks --no-daemon",
+        "python3 tests/e2e/test_rest_edge_cases.py",
+        "make bruno-run BRUNO_ENV=local",
+        "make acceptance-live",
+        "git diff --check"
+      ],
+      "evidence": [
+        "ExpenseControllerTest focused suite passed 14 tests after removing the implicit identity fallback.",
+        "Contract and REST public-surface validators passed; Bruno inventory reports 46 requests and 47 assertion-backed requests.",
+        "REST-edge and Bruno live execution are recorded as environment-dependent follow-up evidence in AUTH-02."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "AUTH-03",
+      "parent_id": "AUTH-01",
+      "title": "Implement fail-closed provider-neutral OIDC resource-server validation",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["AUTH-01", "ERR-03"],
+      "owned_paths": [
+        "libs/security/",
+        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/security/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/",
+        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/",
+        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/config/",
+        "app/*/src/test/kotlin/**/*Security*",
+        "docs/operations/",
+        "docs/tasks/details/AUTH-03.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-03.md",
+      "acceptance_criteria": [
+        "All four applications use configurable JWT/OIDC resource-server validation outside explicitly opted-in local-demo mode.",
+        "Missing production issuer/audience configuration fails closed and never activates passthrough authentication.",
+        "Focused servlet/reactive security tests and documentation prove profile separation and token-derived identity behavior.",
+        "Contract, Bruno, and eventual real-provider E2E evidence is recorded without claiming local passthrough as OIDC evidence."
+      ],
+      "validation_commands": [
+        "./gradlew test --tests '*Security*' --rerun-tasks --no-daemon",
+        "py -3 tools/contracts/validate.py",
+        "py -3 tools/contracts/validate_public_surface.py",
+        "make security-hygiene",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Added and imported a reusable production/staging OIDC configuration guard across all four applications.",
+        "Guard tests and full Kotlin compilation pass; missing issuer/audience and non-HTTPS production-like configuration fail closed across the shared guard imported by all four applications, while AUTH-04 supplies the claim-validation matrix."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "AUTH-04",
+      "parent_id": "AUTH-01",
+      "title": "Validate OIDC JWT issuer, audience, signature, expiry, algorithm, and subject",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["AUTH-03", "ERR-03"],
+      "owned_paths": [
+        "libs/security/",
+        "app/accounts/src/test/kotlin/**/*Security*",
+        "app/expense-core/src/test/kotlin/**/*Security*",
+        "app/notifications/src/test/kotlin/**/*Security*",
+        "app/bff/src/test/kotlin/**/*Security*",
+        "tests/e2e/",
+        "tools/bruno/quality/",
+        "docs/tasks/details/AUTH-04.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-04.md",
+      "acceptance_criteria": [
+        "All four applications reject arbitrary, malformed, forged, expired, wrong-issuer, wrong-audience, unsupported-algorithm, and subject-invalid bearer tokens.",
+        "Validated sub is the only durable identity input and downstream services retain independent membership authorization.",
+        "Servlet, reactive, REST, GraphQL HTTP, and WebSocket invalid-token evidence is executable and documented."
+      ],
+      "validation_commands": [
+        "./gradlew test --tests '*Security*' --rerun-tasks --no-daemon",
+        "py -3 tools/contracts/validate.py",
+        "py -3 tools/contracts/validate_public_surface.py",
+        "make security-hygiene",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Shared servlet/reactive decoder factories and production/staging security chains compile across all four applications.",
+        "Issuer and audience are externalized through PENNYWISE_SECURITY_OIDC_ISSUER_URI and PENNYWISE_SECURITY_OIDC_AUDIENCE.",
+        "Real signed-token REST/GraphQL HTTP journeys, malformed-bearer, wrong-audience, wrong-issuer, forged-signature, unsupported-algorithm, forged-token WebSocket, expired-token, and provider-signed whitespace-only-subject 401 coverage pass across the normal Keycloak stack and isolated OIDC fixture."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "AUTH-06",
+      "parent_id": "AUTH-01",
+      "title": "Add Keycloak environment and meaningful Compose hostnames",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["AUTH-04", "NOT-06", "OPS-09"],
+      "owned_paths": [
+        "infra/local/",
+        "tools/bruno/environments/",
+        "tests/e2e/",
+        "docs/operations/",
+        "docs/tasks/details/AUTH-06.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-06.md",
+      "acceptance_criteria": [
+        "Keycloak is a real OIDC provider in local and production-like Compose configurations with meaningful stable hostnames.",
+        "Real signed-token REST, GraphQL, and WebSocket journeys are executable and documented.",
+        "Provider configuration remains replaceable without domain or authorization code changes."
+      ],
+      "validation_commands": [
+        "make compose-config",
+        "make full-up",
+        "make acceptance-live",
+        "make bruno-run BRUNO_ENV=local-oidc",
+        "py -3 tools/contracts/validate.py",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Full local Compose services now have meaningful stable hostnames and application-to-dependency URLs use them in docker-compose.dev.yml.",
+        "Pinned Keycloak 26.7.4 service and local realm import fixture added; Compose render and contract validation passed.",
+        "Live Keycloak startup imported the pennywise realm and OIDC discovery returned HTTP 200 at the local realm discovery endpoint.",
+        "Real token acquisition and REST/GraphQL HTTP validation pass against local Keycloak; forged-token WebSocket rejection, malformed bearer, wrong-audience, wrong-issuer, forged-signature, unsupported-algorithm, expired-token, and isolated provider-signed invalid-subject checks are executable, while compatibility-only seeded-user fixtures remain isolated from live CI."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
       "id": "QA-07",
       "parent_id": "MILESTONE-QUALITY",
       "title": "Exhaustive public-interface integration coverage",
@@ -4548,6 +4781,22 @@
         "tests/acceptance/",
         "tests/e2e/",
         "tools/contracts/",
+        "tools/errors/validate_catalog.py",
+        "tools/ops/check_security_hygiene.py",
+        "tools/ops/validate_release_gate.py",
+        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/BffFanoutTest.kt",
+        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/GraphqlHttpTransportTest.kt",
+        "app/accounts/src/test/kotlin/com/subhrodip/pennywise/accounts/ProfileControllerTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/groups/GroupControllerTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/recurring/RecurringExpenseControllerTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/settlements/SettlementControllerTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/settlements/JpaSettlementStoreTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseControllerTest.kt",
+        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseController.kt",
+        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/InMemorySettlementStore.kt",
+        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/JpaSettlementStore.kt",
+        "README.md",
+        "docs/implementation/technology-decisions.md",
         "docs/quality/",
         "docs/api/implementation-status.md",
         "docs/tasks/details/QA-07.md",
@@ -4619,6 +4868,75 @@
       "evidence": [],
       "reviewer": "/root",
       "blocker": "Requires production-like environment and approved operational test procedures."
+    },
+    {
+      "id": "AUTH-05",
+      "parent_id": "AUTH-01",
+      "title": "Remove weaker local authentication modes",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["AUTH-03", "AUTH-04"],
+      "owned_paths": [
+        "app/*/src/main/kotlin/**/*SecurityConfig.kt",
+        "docs/operations/",
+        "docs/tasks/details/AUTH-05.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-05.md",
+      "acceptance_criteria": [
+        "No runtime application path accepts an arbitrary bearer string as an identity.",
+        "Local applications use local-oidc and the same provider-neutral validation policy as staging and production.",
+        "Missing local OIDC configuration fails closed."
+      ],
+      "validation_commands": [
+        "./gradlew.bat compileKotlin --no-daemon",
+        "./gradlew.bat :libs:security:test --rerun-tasks --no-daemon",
+        "docker compose -f infra/local/docker-compose.yml -f infra/local/docker-compose.dev.yml config --quiet",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Removed the four local passthrough security configurations; local acceptance, load, negative-token, and passwordless E2E use signed provider tokens, while compatibility-only seeded fixtures remain outside live runtime paths."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "AUTH-07",
+      "parent_id": "AUTH-01",
+      "title": "Define Pennywise-owned passwordless authentication contract",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["AUTH-05", "NOT-06"],
+      "owned_paths": [
+        "contracts/rest/",
+        "app/accounts/src/main/kotlin/**/*auth*/",
+        "app/notifications/src/main/kotlin/**/*email*/",
+        "docs/tasks/details/AUTH-07.md",
+        "docs/security/",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-07.md",
+      "acceptance_criteria": [
+        "Pennywise-owned magic-link and one-time-code endpoints are provider-neutral and environment-parity compliant.",
+        "Email normalization, generic responses, expiry, hashing, single-use redemption, throttling, and anti-enumeration are specified before implementation.",
+        "RFC 9700 authorization-code, PKCE, redirect, state, nonce, and refresh-token constraints are represented in contracts and tests."
+      ],
+      "validation_commands": [
+        "python3 tools/contracts/validate.py",
+        "python3 tools/contracts/validate_public_surface.py",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Readiness audit confirms Keycloak is isolated to local OIDC provider configuration and fixture usage; no domain code depends on Keycloak APIs.",
+        "Email normalization, one-time credential/session persistence, abuse policy, delivery port, and LoginStartService increments are implemented and recorded in docs/tasks/progress.md.",
+        "Delivered IdentityProviderPort SPI, InternalJwtTokenProvider, TokenSessionService, LoginVerificationService, AuthController, outbox email delivery, public contracts, Bruno collections, and comprehensive unit/integration test suites passing across all modules."
+      ],
+      "reviewer": "/root",
+      "blocker": null
     }
   ]
 }

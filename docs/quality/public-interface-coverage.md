@@ -115,3 +115,9 @@ The latest local `make e2e-all` execution passed all four suites. This confirms
 the listed local live-integration/E2E dimensions while leaving production-scale
 capacity, multi-region ordering, restore rehearsal, security scanning, and
 deployment rollback as environment-dependent evidence.
+
+Every GraphQL HTTP query and mutation now has direct transport evidence for
+upstream failure or timeout conversion and detail redaction. Settlement
+suggestions additionally cover an empty upstream result. Retry timing and policy
+under production-like dependencies remain QA-08 evidence rather than a QA-07
+local claim.

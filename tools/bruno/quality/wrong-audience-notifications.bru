@@ -1,0 +1,21 @@
+meta {
+  name: Wrong audience is rejected by Notifications
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrlNotifications}}/notifications/v1/preferences
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{wrongAudienceToken}}
+}
+
+tests {
+  test("wrong audience is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

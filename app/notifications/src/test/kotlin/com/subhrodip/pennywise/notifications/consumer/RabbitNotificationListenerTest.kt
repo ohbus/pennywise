@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.notifications
+package com.subhrodip.pennywise.notifications.consumer
 
 import com.rabbitmq.client.Channel
 import org.junit.jupiter.api.Assertions.assertEquals

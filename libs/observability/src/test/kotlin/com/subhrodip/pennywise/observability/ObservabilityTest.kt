@@ -1,5 +1,7 @@
 package com.subhrodip.pennywise.observability
 
+import com.subhrodip.pennywise.observability.logging.LoggingContext
+import com.subhrodip.pennywise.observability.security.SensitiveDataSanitizer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.slf4j.MDC

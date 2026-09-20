@@ -28,18 +28,18 @@ def main() -> int:
     for path in required:
         require_file(path)
 
-    compose = (ROOT / "infra/deploy/docker-compose.prod.yml").read_text()
+    compose = (ROOT / "infra/deploy/docker-compose.prod.yml").read_text(encoding="utf-8")
     for marker in ("read_only: true", "no-new-privileges:true", "healthcheck:", "prometheus"):
         if marker not in compose:
             raise AssertionError(f"production Compose is missing safety marker: {marker}")
 
     dashboard = json.loads(
-        (ROOT / "infra/observability/grafana/dashboards/pennywise-overview.json").read_text()
+        (ROOT / "infra/observability/grafana/dashboards/pennywise-overview.json").read_text(encoding="utf-8")
     )
     if not dashboard.get("panels"):
         raise AssertionError("Grafana dashboard has no panels")
 
-    checklist = (ROOT / "docs/operations/release-hardening-checklist.md").read_text()
+    checklist = (ROOT / "docs/operations/release-hardening-checklist.md").read_text(encoding="utf-8")
     required_evidence = ("backup", "secret", "load", "rollback", "scan")
     missing = [word for word in required_evidence if word not in checklist.lower()]
     if missing:

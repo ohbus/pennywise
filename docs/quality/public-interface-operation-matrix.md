@@ -57,14 +57,12 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 ## GraphQL and WebSocket operation matrix
 
 Current provider-parity note: the focused BFF GraphQL transport suite is green,
-but the rebuilt `local-oidc` Compose probe currently returns HTTP 400 at the live
-`POST /graphql` boundary. Live GraphQL success claims below therefore require
-reconfirmation after the BFF transport issue is fixed; they must not be used as
-evidence that OIDC parity is complete.
+and a rebuilt `local-oidc` Compose probe now forwards a real Keycloak bearer token
+through BFF to Expense Core, returning HTTP 200 with an empty groups result.
 
 | Surface | Operation | Current evidence | Remaining dimension work |
 |---|---|---|---|
-| GraphQL query | `me` | schema + resolver/controller + focused HTTP success + redacted upstream-timeout HTTP envelope | live authenticated BFF HTTP probe currently returns 400; production retry/timeout policy evidence remains QA-08 |
+| GraphQL query | `me` | schema + resolver/controller + focused HTTP success + redacted upstream-timeout HTTP envelope | live authenticated BFF HTTP probe verified through the provider boundary; production retry/timeout policy evidence remains QA-08 |
 | GraphQL query | `groups` | schema + resolver/controller + HTTP success + live empty-result journey + redacted timeout transport + live Expense Core outage envelope and recovery | production retry/timeout policy evidence (QA-08) |
 | GraphQL query | `group` | schema + resolver/controller + HTTP success + live malformed-ID/not-found/non-member error envelopes + auth/validation/timeout/malformed-upstream transport tests | production retry policy evidence (QA-08) |
 | GraphQL query | `settlementSuggestions` | schema + resolver/controller + HTTP success/empty/upstream-failure envelopes + live malformed-ID/non-member errors + live journey | production retry/timeout policy evidence (QA-08) |

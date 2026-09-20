@@ -70,8 +70,8 @@ port.
   identity with valid signed tokens are still open.
 - Full-stack `local-oidc` WebSocket journeys, passwordless Mailpit delivery,
   malformed-bearer, wrong-issuer, and expired-token rejection are verified;
-  seeded-user replacement and invalid-subject provider coverage remain required
-  before AUTH-06 can close.
+  compatibility-only seeded-user fixtures are isolated from live CI; invalid-
+  subject provider coverage remains required before AUTH-06 can close.
 
 ## Environment parity decision
 

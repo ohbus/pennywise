@@ -83,6 +83,11 @@ codes, algorithm policy messages, and deployment configuration messages in
 `OidcSecurityConstants`; servlet, reactive, and startup-guard adapters consume
 that single policy vocabulary.
 
+Provider-neutral temporal regression tests now prove that the default issuer
+validator rejects expired and not-yet-valid JWT claims and accepts a token
+inside its validity window. Live provider-issued expiry and invalid-subject
+journeys remain separate acceptance evidence and are still open.
+
 ## Next implementation increment
 
 The shared security library will add one provider-neutral claim-policy port and

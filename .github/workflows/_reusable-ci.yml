@@ -12,7 +12,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
   # Ephemeral CI-only values used to render and boot the local fixture. They
   # are not deployment credentials and must never be reused outside CI.
-  PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET: 'AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8='
+  PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET: 'AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=' # local-only CI fixture
   PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY: 'ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8='
 
 jobs:

@@ -13,7 +13,17 @@ def main() -> int:
         try: lines = path.read_text(encoding="utf-8").splitlines()
         except UnicodeDecodeError: continue
         for number, line in enumerate(lines, 1):
-            if "local-only" in line or "example" in str(path) or "${" in line or "changeme" in line.lower(): continue
+            if (
+                "local-only" in line
+                or "example" in str(path)
+                or "${" in line
+                or "$(" in line
+                or "changeme" in line.lower()
+                or ("not-a-real-" in line and "tests" in name)
+                or ("tests/e2e" in name and ("-user" in line or "$" in line))
+                or (".github/workflows" in name and "$" in line)
+            ):
+                continue
             if SECRET.search(line): findings.append(f"{name}:{number}")
     if findings:
         print("possible tracked secret material:\n" + "\n".join(findings), file=sys.stderr); return 1

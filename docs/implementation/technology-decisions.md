@@ -38,13 +38,16 @@ balances. Every BFF replica has its own temporary fan-out queue.
 
 ## Security and operations
 
-Production deployments use a provider-neutral OIDC configuration and Spring
-Security resource-server validation in every service. Keycloak is permitted as
-an optional local OIDC provider for realistic integration testing, but is not an
-application dependency and no domain code may depend on Keycloak-specific APIs
-or claims. The existing passthrough bearer-token principal remains a narrowly
-scoped local-demo mechanism only; it accepts no proof of identity and therefore
-does not constitute production or OIDC evidence. See
+Production deployments currently use Keycloak as the selected OIDC provider,
+with a provider-neutral configuration and Spring Security resource-server
+validation in every service. Keycloak is also the optional local OIDC provider
+for realistic integration testing. It is an infrastructure choice rather than
+a domain dependency: no application code may depend on Keycloak-specific APIs
+or claims, so Auth0, Okta, Entra ID, or another OIDC provider can be selected in
+future through configuration and an adapter boundary. The existing passthrough
+bearer-token principal remains a narrowly scoped local-demo mechanism only; it
+accepts no proof of identity and therefore does not constitute production or
+OIDC evidence. See
 `docs/security/authentication-hardening.md` and task `AUTH-01` for the staged
 hardening plan.
 Services enforce membership authorization themselves. Use Actuator,

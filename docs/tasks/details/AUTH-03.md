@@ -4,10 +4,11 @@
 
 Replace the implicit production-security assumption with explicit, reusable
 servlet and reactive resource-server configuration. Every deployed service must
-validate signed OIDC JWTs using configured issuer discovery/JWKs and audience
-constraints. Missing or invalid production configuration must fail startup or
-reject all protected requests; it must never silently fall back to local
-passthrough authentication.
+validate signed Keycloak-issued OIDC JWTs using configured issuer discovery/JWKs
+and audience constraints. The configuration must remain generic OIDC so a
+managed provider can replace Keycloak later. Missing or invalid production
+configuration must fail startup or reject all protected requests; it must never
+silently fall back to local passthrough authentication.
 
 ## Dependencies and ownership
 

@@ -11,9 +11,10 @@ Microsoft Entra ID, or another standards-compliant OIDC provider.
 
 Pennywise will not depend on Keycloak-specific APIs or claims. Services consume
 validated OIDC identities through Spring Security resource-server support.
-Keycloak is an optional local identity provider and test fixture, not an
-application runtime dependency. Provider-specific issuer, audience, discovery,
-client, and email settings are deployment configuration.
+Keycloak is the current production and local identity provider, but remains an
+infrastructure choice rather than an application/domain dependency. Provider-
+specific issuer, audience, discovery, client, and email settings are deployment
+configuration so a managed OIDC provider can replace it later.
 
 The user-facing login surface remains Pennywise-owned. Passwordless email links
 and one-time codes may be implemented behind an OIDC/provider adapter. Provider

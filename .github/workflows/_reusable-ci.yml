@@ -175,16 +175,22 @@ jobs:
         run: bash tests/e2e/contract-smoke.sh
       - name: Start the complete local application stack
         run: docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
+      - name: Acquire ephemeral signed local OIDC token
+        id: oidc-token
+        run: |
+          token_response="$(curl --fail-with-body --silent --show-error \
+            --data 'grant_type=client_credentials&client_id=pennywise-ci&client_secret=pennywise-ci-local-only' \
+            http://localhost:8090/realms/pennywise/protocol/openid-connect/token)"
+          token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$token_response")"
+          test -n "$token" || { echo "Keycloak returned no access token"; exit 2; }
+          echo "token=$token" >> "$GITHUB_OUTPUT"
       - name: Run public-interface acceptance and E2E suites
         env:
           BRUNO_ENV: local-oidc
-          # A signed token must be provisioned as a repository/environment
-          # secret; the local-oidc stack must never receive a placeholder.
-          BRUNO_TOKEN: ${{ secrets.CI_BEARER_TOKEN }}
-          PENNYWISE_BRUNO_TOKEN: ${{ secrets.CI_BEARER_TOKEN }}
-          BEARER_TOKEN: ${{ secrets.CI_BEARER_TOKEN }}
+          BRUNO_TOKEN: ${{ steps.oidc-token.outputs.token }}
+          PENNYWISE_BRUNO_TOKEN: ${{ steps.oidc-token.outputs.token }}
+          BEARER_TOKEN: ${{ steps.oidc-token.outputs.token }}
         run: |
-          test -n "$BEARER_TOKEN" || { echo "CI_BEARER_TOKEN must contain a signed local-oidc access token"; exit 2; }
           make acceptance-live
           make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"
           make e2e-live

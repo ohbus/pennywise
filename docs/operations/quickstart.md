@@ -73,10 +73,11 @@ never place credentials in request files. Override base URLs and tokens
 centrally for CI or staging. The collection contains no production
 credentials.
 
-The hosted E2E workflow follows the same rule: configure the short-lived
-signed local-provider token as the protected `CI_BEARER_TOKEN` repository or
-environment secret. It deliberately does not use the legacy `test-user`
-placeholder, because the Compose services run with `local-oidc`.
+The hosted E2E workflow follows the same rule: after starting Compose it uses
+the fixture's non-user `pennywise-ci` service account with the OAuth
+client-credentials grant to obtain a short-lived signed token. It deliberately
+does not use the legacy `test-user` placeholder or require a manually copied
+token. The service account is local-CI-only and cannot perform password grants.
 
 ## Live acceptance testing
 

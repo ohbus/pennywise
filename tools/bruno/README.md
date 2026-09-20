@@ -25,7 +25,7 @@ editing the collection:
 
 ```sh
 make bruno-run BRUNO_ENV=local-oidc BRUNO_TOKEN="${PENNYWISE_BRUNO_TOKEN}"
-make bruno-run BRUNO_ENV=ci BRUNO_TOKEN="${CI_BRUNO_TOKEN}"
+make bruno-run BRUNO_ENV=local-oidc BRUNO_TOKEN="${PENNYWISE_BRUNO_TOKEN}"
 ```
 
 Base URLs are likewise environment variables (`baseUrlBff`,

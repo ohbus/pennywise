@@ -1,0 +1,21 @@
+meta {
+  name: Invalid bearer is rejected by Accounts
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrlAccounts}}/accounts/v1/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer not-a-signed-jwt
+}
+
+tests {
+  test("malformed bearer is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

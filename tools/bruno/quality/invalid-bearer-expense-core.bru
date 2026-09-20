@@ -1,0 +1,21 @@
+meta {
+  name: Invalid bearer is rejected by Expense Core
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer not-a-signed-jwt
+}
+
+tests {
+  test("malformed bearer is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

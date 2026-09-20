@@ -500,6 +500,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    if args.require_services and not os.environ.get("BEARER_TOKEN"):
+        print("BEARER_TOKEN must contain a signed token when --require-services is used", file=sys.stderr)
+        return 2
     bff_url = (args.bff_url_alias or args.bff_url).rstrip("/")
     expense_core_url = args.expense_core_url.rstrip("/")
 

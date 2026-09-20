@@ -78,6 +78,9 @@ the fixture's non-user `pennywise-ci` service account with the OAuth
 client-credentials grant to obtain a short-lived signed token. It deliberately
 does not use the legacy `test-user` placeholder or require a manually copied
 token. The service account is local-CI-only and cannot perform password grants.
+The required-services acceptance mode also fails immediately when
+`BEARER_TOKEN` is absent; it never silently falls back to the legacy
+`test-user` value.
 
 ## Live acceptance testing
 

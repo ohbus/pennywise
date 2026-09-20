@@ -56,9 +56,12 @@ implicit or password grants, following RFC 9700.
 
 ## Status
 
-Done. The provider-neutral passwordless authentication architecture, REST endpoints,
-token minting SPI, session family lifecycle, AES-GCM protected delivery outbox,
-abuse throttling, and full test suites are verified:
+The provider-neutral passwordless authentication slice is implemented through the
+Accounts application boundary and has focused unit/persistence evidence. This is
+not a production-readiness claim: broker publication, concrete Notifications
+consumption, end-to-end delivery, refresh/logout boundary evidence, and live
+provider journeys remain tracked gates in AUTH-03 through AUTH-06 and the
+readiness review. The verified implementation currently includes:
 1. `IdentityProviderPort` SPI isolates token issuance; `InternalJwtTokenProvider`
    issues RFC 7519 HMAC-SHA256 JWT access tokens while allowing external OIDC
    delegation via configuration.
@@ -69,8 +72,10 @@ abuse throttling, and full test suites are verified:
 4. `AuthController` exposes `POST /auth/login/start`, `POST /auth/login/verify`,
    `POST /auth/token/refresh`, and `POST /auth/logout` under `/accounts/v1`.
 5. Public surface matrix and Bruno collections are validated and in parity.
-6. All unit and integration test suites in `:app:accounts`, `:app:notifications`,
-   `:app:expense-core`, and `:app:bff` pass with green status.
+6. Focused Accounts persistence and controller tests, plus the repository-wide
+   JVM test gate recorded in `docs/tasks/progress.md`, pass for the implemented
+   paths. This evidence does not replace live Compose, broker, Mailpit, or real
+   OIDC-token verification.
 delivery port, and login-start orchestration. It does not yet claim runtime
 login, refresh, logout, concrete email delivery, or live end-to-end completion.
 The evidence-based readiness review and remaining implementation slices are in

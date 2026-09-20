@@ -16,6 +16,7 @@ Verifies offline simulation, idempotency guarantees, and sync recovery (OFF-01 t
 
 import json
 import os
+from typing import TextIO, cast
 import sys
 import time
 import urllib.error
@@ -76,8 +77,8 @@ def graphql_query(query: str, variables: dict[str, Any] | None = None, bearer: s
 
 def run_offline_resilience_tests() -> int:
     """Run offline replay checks with explicit UTF-8 console output."""
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
+    cast(TextIO, sys.stdout).reconfigure(encoding="utf-8")
+    cast(TextIO, sys.stderr).reconfigure(encoding="utf-8")
     print("=" * 70)
     print("🔌 Running Offline Client Sync & Replay Resilience Test Suite")
     print("=" * 70)

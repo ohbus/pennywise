@@ -85,6 +85,10 @@ issuer mix-up protection, and no implicit or password grant.
 
 ## High-priority gaps and implementation plan
 
+The gaps below remain acceptance gates. The existence of an implementation class,
+contract, or focused test must not be interpreted as completion of its live
+cross-service or production-like evidence.
+
 1. **AUTH-07A — Public auth contract and controllers.** Add OpenAPI schemas and
    endpoints for start, verify-link/code, refresh, logout, and session
    revocation. Wire `LoginStartService` with trusted server-derived network

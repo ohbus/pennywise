@@ -7,6 +7,7 @@ import json
 import base64
 import os
 import sys
+from typing import TextIO, cast
 import urllib.error
 import urllib.request
 import uuid
@@ -80,7 +81,7 @@ def main() -> None:
     """Run live REST edge checks with deterministic UTF-8 console output."""
     if not TOKEN:
         raise RuntimeError("BEARER_TOKEN must contain a signed access token for authenticated checks")
-    sys.stdout.reconfigure(encoding="utf-8")
+    cast(TextIO, sys.stdout).reconfigure(encoding="utf-8")
     print("Running live REST edge-case checks")
 
     status, _ = request_json(f"{ACCOUNTS_URL}{ACCOUNTS_ME}", token=None)

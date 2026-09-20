@@ -13,6 +13,8 @@ use those names rather than localhost or ambiguous container identifiers.
 - Realm/client/bootstrap configuration is externalized and contains no
   production secrets.
 - Mailpit is the local SMTP sink for passwordless-link/code tests.
+- The local Keycloak image is pinned centrally in `infra/versions.env.example`
+  and imports `infra/local/keycloak/realm/pennywise-realm.json`.
 - Keycloak issuer, JWKS, and application audience are configured through
   environment variables.
 - Compose hostnames use `idp-keycloak`, `accounts-api`, `expense-core-api`,

@@ -47,3 +47,14 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+  idp-keycloak:
+    hostname: idp-keycloak
+    image: ${KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.7.4}
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-local-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-local-admin-only}
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./keycloak/realm:/opt/keycloak/data/import:ro
+    ports: ["127.0.0.1:8090:8080"]

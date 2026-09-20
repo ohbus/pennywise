@@ -1,0 +1,38 @@
+{
+  "realm": "pennywise",
+  "enabled": true,
+  "displayName": "Pennywise Local",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "clients": [
+    {
+      "clientId": "pennywise-api",
+      "name": "Pennywise API",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "attributes": {
+        "access.token.signed.response.alg": "RS256"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "test-user",
+      "enabled": true,
+      "email": "test-user@pennywise.local",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test-user-local-only",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

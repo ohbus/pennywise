@@ -41,7 +41,7 @@ narrow topology or increase Docker Desktop resources rather than removing limits
 | Native Expense Core | `infra/local/docker-compose.expense-core.yml` | PostgreSQL, RabbitMQ | `make expense-core-deps-up` | `make expense-core-deps-status`, `make expense-core-deps-logs` | `make expense-core-deps-down` |
 | Native Notifications | `infra/local/docker-compose.notifications.yml` | PostgreSQL, RabbitMQ, Mailpit | `make notifications-deps-up` | `make notifications-deps-status`, `make notifications-deps-logs` | `make notifications-deps-down` |
 | Native BFF | `infra/local/docker-compose.bff.yml` | Accounts and Expense Core upstreams, PostgreSQL, RabbitMQ | `make bff-deps-up` | `make bff-deps-status`, `make bff-deps-logs` | `make bff-deps-down` |
-| Complete stack | `infra/local/docker-compose.dev.yml` | All four applications plus PostgreSQL, RabbitMQ, Mailpit | `make full-up` | `make full-status`, `make full-logs` | `make full-down` |
+| Complete stack | `infra/local/docker-compose.dev.yml` | All four applications plus PostgreSQL, RabbitMQ, Mailpit, and Keycloak (`idp-keycloak`) | `make full-up` | `make full-status`, `make full-logs` | `make full-down` |
 
 Every row also has a `-config` target. `make compose-config` validates all six
 files without starting containers. `make help` lists these commands and the
@@ -62,6 +62,7 @@ included in this narrow topology.
 | RabbitMQ management | 15672 | 15672 | `http://localhost:15672` with the RabbitMQ local credentials |
 | Mailpit SMTP | 1025 | 1025 | no authentication |
 | Mailpit web UI | 8025 | 8025 | `http://localhost:8025` |
+| Keycloak OIDC | 8080 | 8090 | `http://localhost:8090` (`idp-keycloak` inside Compose) |
 | BFF | 8080 | 8080 | `http://localhost:8080` |
 | Accounts | 8080 | 8081 | `http://localhost:8081` |
 | Expense Core | 8080 | 8082 | `http://localhost:8082` |

@@ -4753,7 +4753,8 @@
       ],
       "evidence": [
         "Full local Compose services now have meaningful stable hostnames and application-to-dependency URLs use them in docker-compose.dev.yml.",
-        "Compose render and contract validation passed; Keycloak service/realm bootstrap remains open."
+        "Pinned Keycloak 26.7.4 service and local realm import fixture added; Compose render and contract validation passed.",
+        "Real Keycloak startup, token acquisition, and application E2E validation remain open."
       ],
       "reviewer": "/root",
       "blocker": null

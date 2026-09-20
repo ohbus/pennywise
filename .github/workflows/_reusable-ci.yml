@@ -177,9 +177,14 @@ jobs:
         run: docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
       - name: Run public-interface acceptance and E2E suites
         env:
-          BRUNO_ENV: local
-          BRUNO_TOKEN: test-user
+          BRUNO_ENV: local-oidc
+          # A signed token must be provisioned as a repository/environment
+          # secret; the local-oidc stack must never receive a placeholder.
+          BRUNO_TOKEN: ${{ secrets.CI_BEARER_TOKEN }}
+          PENNYWISE_BRUNO_TOKEN: ${{ secrets.CI_BEARER_TOKEN }}
+          BEARER_TOKEN: ${{ secrets.CI_BEARER_TOKEN }}
         run: |
+          test -n "$BEARER_TOKEN" || { echo "CI_BEARER_TOKEN must contain a signed local-oidc access token"; exit 2; }
           make acceptance-live
           make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"
           make e2e-live

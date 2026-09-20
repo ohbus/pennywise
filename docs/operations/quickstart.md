@@ -73,6 +73,11 @@ never place credentials in request files. Override base URLs and tokens
 centrally for CI or staging. The collection contains no production
 credentials.
 
+The hosted E2E workflow follows the same rule: configure the short-lived
+signed local-provider token as the protected `CI_BEARER_TOKEN` repository or
+environment secret. It deliberately does not use the legacy `test-user`
+placeholder, because the Compose services run with `local-oidc`.
+
 ## Live acceptance testing
 
 When the development stack or local services are up, validate the integrated multi-service workflow with:

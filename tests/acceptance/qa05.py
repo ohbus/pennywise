@@ -42,10 +42,14 @@ def request_json(base_url: str, path: str, method: str = "GET", body: dict[str, 
         return 503, {"error": str(error)}
 
 
-def run_qa05_journeys(base_url: str, expense_core_url: str | None = None) -> list[JourneyResult]:
+def run_qa05_journeys(
+    base_url: str,
+    expense_core_url: str | None = None,
+    bearer_token: str = "test-user",
+) -> list[JourneyResult]:
     """Run rollback, concurrency, authorization, fanout, and recovery probes."""
     expense_core_url = expense_core_url or base_url
-    group_status, groups = request_json(expense_core_url, "/expense-core/v1/groups")
+    group_status, groups = request_json(expense_core_url, "/expense-core/v1/groups", token=bearer_token)
     group_id = groups[0].get("groupId") if group_status == 200 and isinstance(groups, list) and groups else None
     if not group_id:
         # Deterministic mock servers used by the unit harness predate the list
@@ -54,12 +58,13 @@ def run_qa05_journeys(base_url: str, expense_core_url: str | None = None) -> lis
         group_id = "00000000-0000-0000-0000-000000000001"
     group = f"/expense-core/v1/groups/{group_id}"
     status, _ = request_json(expense_core_url, group, "PATCH", {"name": "QA rollback"},
+                             token=bearer_token,
                              extra_headers={"X-Acceptance-Fault": "rollback"})
     results = [JourneyResult("QA05-ROLLBACK", "blocked" if status == 503 else ("passed" if status == 409 else "failed"),
                              f"PATCH rollback probe returned HTTP {status}")]
 
     def rename(name: str) -> int:
-        return request_json(expense_core_url, group, "PATCH", {"name": name})[0]
+        return request_json(expense_core_url, group, "PATCH", {"name": name}, token=bearer_token)[0]
 
     with ThreadPoolExecutor(max_workers=2) as pool:
         statuses = list(pool.map(rename, ("QA concurrent A", "QA concurrent B")))
@@ -70,11 +75,12 @@ def run_qa05_journeys(base_url: str, expense_core_url: str | None = None) -> lis
     results.append(JourneyResult("QA05-AUTHORIZATION", "blocked" if status == 503 else ("passed" if status in (401, 403) else "failed"),
                                 f"Unauthenticated members response: HTTP {status}"))
     status, body = request_json(base_url, "/graphql", "POST", {"query": "query fanoutFailure { groups { id members { subject } } }"},
+                                token=bearer_token,
                                 extra_headers={"X-Acceptance-Fault": "fanout"})
     results.append(JourneyResult("QA05-BFF-FANOUT", "blocked" if status in (501, 503) else
                                 ("passed" if status == 200 and body.get("errors") else "failed"),
                                 f"BFF fanout failure response: HTTP {status}"))
-    status, body = request_json(base_url, "/graphql", "POST", {"query": "query recovery { groups { id name } }"})
+    status, body = request_json(base_url, "/graphql", "POST", {"query": "query recovery { groups { id name } }"}, token=bearer_token)
     results.append(JourneyResult("QA05-RECOVERY", "blocked" if status == 503 else ("passed" if status == 200 and body.get("data") else "failed"),
                                 "BFF query recovered with a data payload" if status == 200 and body.get("data") else f"BFF recovery returned HTTP {status}"))
     return results

@@ -18,6 +18,7 @@ class EdgeCaseHandler(http.server.BaseHTTPRequestHandler):
     """Contract-shaped server used without application internals."""
 
     renames = 0
+    expected_token = "test-user"
 
     def log_message(self, _format: str, *_args: object) -> None:
         pass
@@ -29,7 +30,7 @@ class EdgeCaseHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(body).encode())
 
     def do_PATCH(self) -> None:
-        if self.headers.get("Authorization") != "Bearer test-user":
+        if self.headers.get("Authorization") != f"Bearer {self.expected_token}":
             self._reply(401, {"code": "UNAUTHENTICATED"})
             return
         if self.headers.get("X-Acceptance-Fault") == "rollback":
@@ -39,7 +40,7 @@ class EdgeCaseHandler(http.server.BaseHTTPRequestHandler):
         self._reply(409 if EdgeCaseHandler.renames > 1 else 200, {"revision": 1})
 
     def do_GET(self) -> None:
-        if self.headers.get("Authorization") != "Bearer test-user":
+        if self.headers.get("Authorization") != f"Bearer {self.expected_token}":
             self._reply(401, {"code": "UNAUTHENTICATED"})
         elif self.path == "/expense-core/v1/groups":
             self._reply(200, [{"groupId": "00000000-0000-0000-0000-000000000001"}])
@@ -71,7 +72,11 @@ class Qa05Test(unittest.TestCase):
         cls.server.server_close()
 
     def test_edge_case_journeys(self) -> None:
-        results = qa05.run_qa05_journeys(f"http://127.0.0.1:{self.server.server_port}")
+        EdgeCaseHandler.expected_token = "ci-signed-token"
+        results = qa05.run_qa05_journeys(
+            f"http://127.0.0.1:{self.server.server_port}",
+            bearer_token="ci-signed-token",
+        )
         self.assertEqual([result.id for result in results], [
             "QA05-ROLLBACK", "QA05-CONCURRENCY", "QA05-AUTHORIZATION", "QA05-BFF-FANOUT", "QA05-RECOVERY"
         ])

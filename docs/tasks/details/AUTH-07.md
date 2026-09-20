@@ -167,6 +167,12 @@ state changes so a long-lived JPA persistence context cannot observe stale
 conditional on the current claim and therefore stale workers cannot overwrite
 newer delivery state.
 
+Accounts now has an explicitly disabled-by-default RabbitMQ publisher. When
+enabled, it serializes only the versioned protected event envelope, acknowledges
+the outbox after the broker send, and routes AMQP/serialization failures through
+retry or parking. It does not import Expense Core messaging classes or publish
+plaintext credentials.
+
 The first protection implementation adds `CredentialEnvelopeProtector` and an
 AES-GCM adapter. Each envelope uses a fresh 96-bit nonce, a 256-bit configured
 key, an explicit format version, and authenticated recipient/template context.

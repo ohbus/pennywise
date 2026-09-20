@@ -102,3 +102,7 @@ once, create session, rotate refresh token, revoke family, and revoke session.
 Consume/rotate operations must return a conflict or no-match outcome when a
 row is expired, already consumed, revoked, or replaced. Concurrent callers
 must not both succeed.
+
+Spring integration tests now prove single-consumer redemption, expiry
+rejection, one-time refresh rotation, and family revocation against the actual
+Flyway/JPA persistence context rather than mocks.

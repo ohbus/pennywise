@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Final
@@ -14,7 +15,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
 
 
-ISSUER: Final[str] = "http://invalid-subject-oidc:8091"
+ISSUER: Final[str] = os.environ.get("INVALID_SUBJECT_OIDC_ISSUER", "http://invalid-subject-oidc:8080")
 AUDIENCE: Final[str] = "pennywise-api"
 PRIVATE_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 PUBLIC_KEY = PRIVATE_KEY.public_key()

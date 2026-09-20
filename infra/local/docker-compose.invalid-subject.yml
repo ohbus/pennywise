@@ -1,35 +1,35 @@
+x-invalid-subject-oidc-issuer: &invalid_subject_oidc_issuer ${PENNYWISE_INVALID_SUBJECT_OIDC_ISSUER:-http://invalid-subject-oidc:8080}
+
 services:
   invalid-subject-oidc:
     build:
       context: ../..
       dockerfile: tests/fixtures/invalid_subject_oidc/Dockerfile
     ports: ["127.0.0.1:8091:8080"]
+    environment:
+      INVALID_SUBJECT_OIDC_ISSUER: *invalid_subject_oidc_issuer
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/.well-known/openid-configuration')"]
       interval: 2s
       timeout: 2s
       retries: 20
   accounts:
-    extra_hosts: ["invalid-subject-oidc:host-gateway"]
     environment:
-      PENNYWISE_SECURITY_OIDC_ISSUER_URI: http://invalid-subject-oidc:8091
+      PENNYWISE_SECURITY_OIDC_ISSUER_URI: *invalid_subject_oidc_issuer
     depends_on:
       invalid-subject-oidc: {condition: service_healthy}
   expense-core:
-    extra_hosts: ["invalid-subject-oidc:host-gateway"]
     environment:
-      PENNYWISE_SECURITY_OIDC_ISSUER_URI: http://invalid-subject-oidc:8091
+      PENNYWISE_SECURITY_OIDC_ISSUER_URI: *invalid_subject_oidc_issuer
     depends_on:
       invalid-subject-oidc: {condition: service_healthy}
   notifications:
-    extra_hosts: ["invalid-subject-oidc:host-gateway"]
     environment:
-      PENNYWISE_SECURITY_OIDC_ISSUER_URI: http://invalid-subject-oidc:8091
+      PENNYWISE_SECURITY_OIDC_ISSUER_URI: *invalid_subject_oidc_issuer
     depends_on:
       invalid-subject-oidc: {condition: service_healthy}
   bff:
-    extra_hosts: ["invalid-subject-oidc:host-gateway"]
     environment:
-      PENNYWISE_SECURITY_OIDC_ISSUER_URI: http://invalid-subject-oidc:8091
+      PENNYWISE_SECURITY_OIDC_ISSUER_URI: *invalid_subject_oidc_issuer
     depends_on:
       invalid-subject-oidc: {condition: service_healthy}

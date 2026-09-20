@@ -134,6 +134,14 @@ never raw credentials in logs or generic errors. A Notifications/RabbitMQ
 adapter can deliver through the existing SMTP/Mailpit infrastructure; a future
 managed provider adapter can replace it without changing login policy.
 
+The delivery boundary review confirms that Expense Core's outbox is not a
+shared library or cross-service database. AUTH-07B must add an Accounts-owned
+transactional outbox and a versioned auth-email event; Notifications consumes
+that event and delegates to its existing email dispatcher. Raw one-time
+credentials must not be placed in a generic notification inbox or ordinary
+outbox payload, so the handoff requires an explicitly bounded protected delivery
+mechanism and redaction tests.
+
 `LoginStartService` is the application orchestration boundary. It derives the
 trusted abuse key, acquires the atomic request slot, issues a link/code, and
 hands the delivery-only plaintext to `AuthEmailSender`. Invalid email,

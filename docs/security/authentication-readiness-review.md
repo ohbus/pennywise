@@ -115,6 +115,18 @@ issuer mix-up protection, and no implicit or password grant.
    that only configuration and provider adapters change when issuer, JWKS, and
    optional claims differ.
 
+## Delivery boundary decision
+
+The existing Expense Core outbox is service-private and must not be imported by
+Accounts. Auth-email delivery will use an Accounts-owned transactional outbox
+with a versioned `auth.email.requested.v1` event. Accounts will persist the
+credential digest and delivery record in one transaction; the raw credential
+must not be persisted in the outbox or generic notification inbox. The event
+adapter requires an explicitly bounded protected handoff for the one-time
+plaintext, with strict redaction and short retention. Notifications consumes
+the versioned event and delegates SMTP/provider delivery to its existing
+`EmailDispatcher` port.
+
 ## Acceptance gate for calling authentication production-ready
 
 The goal is not met until all of the following have executable evidence:
@@ -132,4 +144,3 @@ The goal is not met until all of the following have executable evidence:
   absent.
 - REST/OpenAPI, GraphQL, Bruno, unit, persistence, concurrency, and E2E
   artifacts are synchronized with the tracker and progress ledger.
-

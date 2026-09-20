@@ -122,4 +122,6 @@ Each child task must record:
 
 ## Status
 
-Planned. No authentication implementation is claimed by this task.
+Implemented as the architecture baseline. Runtime delivery remains tracked by
+AUTH-03 through AUTH-16; this task does not claim that the complete login,
+passwordless, or session lifecycle exists.

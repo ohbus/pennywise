@@ -56,11 +56,13 @@ compile inside Docker.
 
 The checked-in `tools/bruno/` collection provides local requests for all four
 HTTP services, including the GraphQL BFF and Notifications endpoints. Import
-that directory into Bruno, select its `local` environment, and start the stack
-with `make full-up` before sending requests. For a repeatable CLI run use
-`make bruno-run BRUNO_ENV=local BRUNO_TOKEN=test-user`; override the four base
-URL variables and token centrally for CI or staging rather than editing request
-files. The collection contains no production credentials.
+that directory into Bruno and start the stack with `make full-up` before
+sending requests. The legacy `local` environment is only for the explicit
+passthrough compatibility profile. For the Keycloak-backed topology, select
+`local-oidc` and inject a real signed token through `PENNYWISE_BRUNO_TOKEN`;
+never place credentials in request files. Override base URLs and tokens
+centrally for CI or staging. The collection contains no production
+credentials.
 
 ## Live acceptance testing
 

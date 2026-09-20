@@ -4569,7 +4569,7 @@
       "parent_id": "MILESTONE-SECURITY",
       "title": "Define provider-neutral authentication hardening baseline",
       "phase": "security",
-      "status": "planned",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [],
@@ -4594,7 +4594,7 @@
         "git diff --check"
       ],
       "evidence": [
-        "Authentication implementation audit recorded in docs/security/authentication-hardening.md; implementation remains planned."
+        "Provider-neutral architecture and exhaustive implementation tracker recorded in docs/security/authentication-hardening.md and docs/security/authentication-audit.md; runtime work remains explicitly delegated to AUTH-03 through AUTH-16."
       ],
       "reviewer": "/root",
       "blocker": null

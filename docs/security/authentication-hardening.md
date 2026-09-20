@@ -8,9 +8,12 @@ local acceptance harness. Under the `local` profile, any bearer token is
 accepted literally as the user subject. This is intentionally non-production
 behavior and does not prove OIDC integration.
 
-There is currently no committed Keycloak service, realm, issuer/JWK
-configuration, passwordless login flow, refresh-token lifecycle, or verified
-production resource-server configuration.
+Keycloak service, realm, issuer/JWK configuration, and reusable resource-server
+adapters now exist for local OIDC and production/staging profiles. Discovery
+startup and security-library tests are evidenced. There is still no
+Pennywise-owned passwordless login flow, refresh-token lifecycle, or complete
+real-token application E2E proof. See the detailed
+[authentication audit](authentication-audit.md).
 
 ## Target architecture
 

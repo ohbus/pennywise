@@ -124,6 +124,12 @@ Bucket acquisition uses one PostgreSQL `INSERT ... ON CONFLICT DO UPDATE`
 statement. It atomically handles first request, expired-window reset,
 cooldown, and maximum-count checks; no read-then-write race is permitted.
 
+Email delivery remains an outbound port owned by Accounts. Its message model
+contains the canonical recipient, template identifier, and rendering data but
+never raw credentials in logs or generic errors. A Notifications/RabbitMQ
+adapter can deliver through the existing SMTP/Mailpit infrastructure; a future
+managed provider adapter can replace it without changing login policy.
+
 The service slice now owns the orchestration boundary: canonicalize email,
 issue and persist only a digest-backed credential, and verify through the
 conditional repository transition. It returns generic outcomes so controllers

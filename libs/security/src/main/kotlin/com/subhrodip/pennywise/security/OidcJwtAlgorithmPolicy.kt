@@ -13,7 +13,7 @@ class OidcJwtAlgorithmPolicy(
 
     init {
         require(allowed.isNotEmpty()) { OidcSecurityConstants.SIGNING_ALGORITHM_REQUIRED_MESSAGE }
-        require(allowed.none { it.startsWith("HS") }) {
+        require(allowed.none { it.startsWith(OidcSecurityConstants.SYMMETRIC_ALGORITHM_PREFIX) }) {
             OidcSecurityConstants.SYMMETRIC_SIGNING_UNSUPPORTED_MESSAGE
         }
     }

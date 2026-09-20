@@ -14,6 +14,9 @@ object OidcSecurityConstants {
     /** Default asymmetric algorithm accepted by local and production policy. */
     const val DEFAULT_SIGNING_ALGORITHM: String = "RS256"
 
+    /** Prefix identifying symmetric HMAC algorithms, which are disallowed. */
+    const val SYMMETRIC_ALGORITHM_PREFIX: String = "HS"
+
     /** OAuth error code for rejected bearer-token validation. */
     const val INVALID_TOKEN_ERROR_CODE: String = "invalid_token"
 

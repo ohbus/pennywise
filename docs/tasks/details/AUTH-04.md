@@ -75,9 +75,10 @@ subject and independently checks group membership in the owning service.
   bearer rejection at all four application boundaries. Wrong-audience,
   wrong-issuer, forged-signature, and unsupported-algorithm rejection are
   verified across all four HTTP boundaries. Forged-token WebSocket upgrade
-  rejection is also verified. A separately signed token from the one-second
-  `pennywise-expiring` realm is rejected after expiry at all four HTTP
-  boundaries. Invalid-subject provider journeys remain open and must not be
+  rejection is also verified. A separately signed token from the configured
+  `pennywise` issuer is rejected after its one-second expiry and the configured
+  clock-skew window at all four HTTP boundaries. Invalid-subject provider
+  journeys remain open and must not be
   inferred from the happy path.
 
 The shared security module also centralizes OIDC claim names, OAuth rejection

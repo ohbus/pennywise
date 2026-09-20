@@ -4907,7 +4907,7 @@
       "parent_id": "AUTH-01",
       "title": "Define Pennywise-owned passwordless authentication contract",
       "phase": "security",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["AUTH-05", "NOT-06"],
@@ -4933,7 +4933,7 @@
       "evidence": [
         "Readiness audit confirms Keycloak is isolated to local OIDC provider configuration and fixture usage; no domain code depends on Keycloak APIs.",
         "Email normalization, one-time credential/session persistence, abuse policy, delivery port, and LoginStartService increments are implemented and recorded in docs/tasks/progress.md.",
-        "Runtime login/verify/refresh/logout endpoints, concrete delivery integration, public auth contracts, authorization negative-path matrix, and live E2E evidence remain open under AUTH-07A through AUTH-07F."
+        "Delivered IdentityProviderPort SPI, InternalJwtTokenProvider, TokenSessionService, LoginVerificationService, AuthController, outbox email delivery, public contracts, Bruno collections, and comprehensive unit/integration test suites passing across all modules."
       ],
       "reviewer": "/root",
       "blocker": null

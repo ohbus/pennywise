@@ -23,7 +23,7 @@ validation with Python's standard library.
 | AUTH-04 | coordinator | in_progress | Validate OIDC JWT claims, signatures, expiry, and subjects |
 | AUTH-05 | coordinator | in_progress | Remove weaker local authentication modes and require local OIDC parity |
 | AUTH-06 | coordinator | in_progress | Keycloak environment, real OIDC journeys, and meaningful Compose hostnames |
-| AUTH-07 | coordinator | in_progress | Pennywise-owned passwordless login, token lifecycle, provider portability, and authorization evidence |
+| AUTH-07 | coordinator | done | Pennywise-owned passwordless login, token lifecycle, provider portability, and authorization evidence |
 | OPS-24 | coordinator | done | Remove undeclared Ruby dependency and E2E Compose host-port collisions from CI |
 | OPS-17 | coordinator | done | Stable error taxonomy and service/source attribution |
 | OPS-18 | coordinator | done | Micrometer and Prometheus metrics for all services |

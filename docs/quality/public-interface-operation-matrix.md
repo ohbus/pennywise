@@ -8,6 +8,10 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 
 | Service | Method | Path | Operation | Current evidence | Remaining dimension work |
 |---|---|---|---|---|---|
+| Accounts | POST | `/auth/login/start` | `startLogin` | contract + controller + unit tests + rate limit integration | failure/network partition matrix |
+| Accounts | POST | `/auth/login/verify` | `verifyLogin` | contract + controller + unit tests + single-use redemption | failure/replay matrix |
+| Accounts | POST | `/auth/token/refresh` | `refreshToken` | contract + controller + unit tests + rotation + reuse detection | revocation matrix |
+| Accounts | POST | `/auth/logout` | `logout` | contract + controller + unit tests + authentication required | session revocation matrix |
 | Accounts | GET | `/me` | `getMe` | contract + controller + GraphQL/E2E live + authenticated profile shape | unauthenticated/failure matrix |
 | Accounts | PATCH | `/me` | `updateMe` | contract + controller/live smoke + validated fields + empty-patch edge | failure matrix |
 | Accounts | POST | `/me/deletion-request` | `requestDeletion` | contract + live smoke + unauthenticated edge | service failure/replay matrix |

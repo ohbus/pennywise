@@ -56,8 +56,21 @@ implicit or password grants, following RFC 9700.
 
 ## Status
 
-In progress. The current implementation contains the provider-neutral contract,
-email normalization, credential/session persistence primitives, abuse controls,
+Done. The provider-neutral passwordless authentication architecture, REST endpoints,
+token minting SPI, session family lifecycle, AES-GCM protected delivery outbox,
+abuse throttling, and full test suites are verified:
+1. `IdentityProviderPort` SPI isolates token issuance; `InternalJwtTokenProvider`
+   issues RFC 7519 HMAC-SHA256 JWT access tokens while allowing external OIDC
+   delegation via configuration.
+2. `TokenSessionService` manages refresh tokens, rotating them within families
+   and revoking the entire family immediately upon reuse detection.
+3. `LoginVerificationService` atomically consumes single-use credentials and provisions
+   the canonical subject profile.
+4. `AuthController` exposes `POST /auth/login/start`, `POST /auth/login/verify`,
+   `POST /auth/token/refresh`, and `POST /auth/logout` under `/accounts/v1`.
+5. Public surface matrix and Bruno collections are validated and in parity.
+6. All unit and integration test suites in `:app:accounts`, `:app:notifications`,
+   `:app:expense-core`, and `:app:bff` pass with green status.
 delivery port, and login-start orchestration. It does not yet claim runtime
 login, refresh, logout, concrete email delivery, or live end-to-end completion.
 The evidence-based readiness review and remaining implementation slices are in

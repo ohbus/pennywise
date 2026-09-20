@@ -4643,7 +4643,7 @@
       "parent_id": "AUTH-01",
       "title": "Implement fail-closed provider-neutral OIDC resource-server validation",
       "phase": "security",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["AUTH-01", "ERR-03"],
@@ -4674,7 +4674,7 @@
       ],
       "evidence": [
         "Added and imported a reusable production/staging OIDC configuration guard across all four applications.",
-        "Guard tests and full Kotlin compilation pass; missing issuer/audience and non-HTTPS production-like configuration fail closed, while actual JWT claim validation remains AUTH-04."
+        "Guard tests and full Kotlin compilation pass; missing issuer/audience and non-HTTPS production-like configuration fail closed across the shared guard imported by all four applications, while AUTH-04 supplies the claim-validation matrix."
       ],
       "reviewer": "/root",
       "blocker": null

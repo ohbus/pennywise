@@ -90,7 +90,8 @@ subject, and key rotation.
 - `./gradlew.bat compileKotlin --no-daemon` passed for all applications and
   libraries.
 - `./gradlew.bat :libs:security:test --rerun-tasks --no-daemon` passed all four
-  guard tests.
+  guard tests, covering missing issuer, missing audience, insecure production
+  issuer, and valid production-like configuration.
 - `py -3 tools/contracts/validate.py` and `git diff --check` passed.
 - Provider-backed REST, GraphQL HTTP, and WebSocket boundaries are verified
   through the local Keycloak fixture and the isolated malformed-subject issuer,

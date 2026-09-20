@@ -19,7 +19,7 @@ validation with Python's standard library.
 | --- | --- | --- | --- |
 | AUTH-01 | coordinator | done | Provider-neutral OIDC authentication hardening baseline and implementation tracker |
 | AUTH-02 | coordinator | done | Remove implicit authentication identities with full boundary evidence |
-| AUTH-03 | coordinator | in_progress | Fail-closed provider-neutral OIDC resource-server validation |
+| AUTH-03 | coordinator | done | Fail-closed provider-neutral OIDC resource-server validation |
 | AUTH-04 | coordinator | done | Validate OIDC JWT claims, signatures, expiry, and subjects |
 | AUTH-05 | coordinator | done | Remove weaker local authentication modes and require local OIDC parity |
 | AUTH-06 | coordinator | done | Keycloak environment, real OIDC journeys, and meaningful Compose hostnames |

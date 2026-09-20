@@ -142,6 +142,12 @@ credentials must not be placed in a generic notification inbox or ordinary
 outbox payload, so the handoff requires an explicitly bounded protected delivery
 mechanism and redaction tests.
 
+The versioned event schema is now recorded at
+`contracts/events/auth-email-requested.v1.schema.json`. It permits only the
+canonical recipient, link/code template, bounded encrypted credential, and
+expiry. Encryption and key-management adapters must be implemented before the
+event is published; a plaintext fallback is explicitly prohibited.
+
 `LoginStartService` is the application orchestration boundary. It derives the
 trusted abuse key, acquires the atomic request slot, issues a link/code, and
 hands the delivery-only plaintext to `AuthEmailSender`. Invalid email,

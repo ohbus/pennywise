@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pennywise.example/schemas/auth-email-requested-v1.json",
+  "title": "Authentication email request v1",
+  "type": "object",
+  "required": ["recipient", "template", "encryptedCredential", "expiresAt"],
+  "properties": {
+    "recipient": {"type": "string", "format": "email", "maxLength": 254},
+    "template": {"type": "string", "enum": ["LOGIN_LINK", "LOGIN_CODE"]},
+    "encryptedCredential": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "expiresAt": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false,
+  "description": "The one-time credential is envelope-encrypted for the delivery adapter. Plaintext credentials, digests, and refresh tokens are forbidden in this event."
+}

@@ -127,6 +127,12 @@ plaintext, with strict redaction and short retention. Notifications consumes
 the versioned event and delegates SMTP/provider delivery to its existing
 `EmailDispatcher` port.
 
+The payload contract is now recorded in
+`contracts/events/auth-email-requested.v1.schema.json`. Its
+`encryptedCredential` field is deliberately not a plaintext credential field;
+the encryption envelope/key-management adapter remains an AUTH-07B
+implementation requirement and must fail closed when unavailable.
+
 ## Acceptance gate for calling authentication production-ready
 
 The goal is not met until all of the following have executable evidence:

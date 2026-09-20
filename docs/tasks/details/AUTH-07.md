@@ -95,3 +95,10 @@ and bounded device metadata only. It never stores raw codes, raw refresh
 tokens, access tokens, or provider-specific credentials. Conditional updates
 and unique identifiers are required for atomic redemption and refresh reuse
 detection in the repository adapter.
+
+The repository adapter must expose command-shaped operations rather than allow
+callers to mutate security state freely: create credential, consume credential
+once, create session, rotate refresh token, revoke family, and revoke session.
+Consume/rotate operations must return a conflict or no-match outcome when a
+row is expired, already consumed, revoked, or replaced. Concurrent callers
+must not both succeed.

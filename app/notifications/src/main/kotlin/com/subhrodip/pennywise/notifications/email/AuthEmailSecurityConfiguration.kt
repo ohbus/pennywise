@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Profile
 /** Fail-closed configuration for decrypting protected auth-email handoffs. */
 @Configuration
 class AuthEmailSecurityConfiguration(
-    @Value("\${PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}") private val encodedKey: String
+    @Value("\${PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY}") private val encodedKey: String
 ) {
     /** Creates the configured AES-GCM decryptor; missing or malformed keys fail startup. */
     @Bean

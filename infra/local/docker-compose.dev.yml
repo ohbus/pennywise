@@ -23,6 +23,13 @@ services:
       PENNYWISE_SECURITY_OIDC_AUDIENCE: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:-pennywise-api}
       PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET: ${PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET:?Set a unique base64 credential digest secret}
       PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY: ${PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY:?Set a unique base64 auth email envelope key}
+      SPRING_RABBITMQ_HOST: ${PENNYWISE_RABBITMQ_HOSTNAME:-message-broker}
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-pennywise}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-pennywise-local-only}
+      PENNYWISE_AUTH_EMAIL_OUTBOX_ENABLED: "true"
+      PENNYWISE_AUTH_EMAIL_OUTBOX_EXCHANGE: pennywise.events
+      PENNYWISE_AUTH_EMAIL_OUTBOX_ROUTING_KEY: auth.email.requested.v1
       SPRING_DATASOURCE_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_accounts
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-pennywise}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
@@ -32,7 +39,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 30
-    depends_on: {postgres: {condition: service_healthy}, idp-keycloak: {condition: service_healthy}}
+    depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, idp-keycloak: {condition: service_healthy}}
   expense-core:
     hostname: expense-core-api
     deploy:

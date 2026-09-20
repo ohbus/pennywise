@@ -16,9 +16,9 @@ import org.springframework.context.annotation.Profile
 /** Fail-closed deployment wiring for passwordless credential cryptography. */
 @Configuration
 class AuthenticationCredentialConfiguration(
-    @Value("\${PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}")
+    @Value("\${PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET}")
     private val encodedDigestSecret: String,
-    @Value("\${PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}")
+    @Value("\${PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY}")
     private val encodedEnvelopeKey: String
 ) {
     /** Creates the HMAC digest adapter from a deployment-only base64 secret. */

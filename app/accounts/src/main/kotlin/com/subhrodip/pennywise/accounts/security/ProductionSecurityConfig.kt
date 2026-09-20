@@ -27,7 +27,12 @@ class ProductionSecurityConfig(
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain = http
         .csrf { it.disable() }
         .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
-        .authorizeHttpRequests { it.requestMatchers("/actuator/**").permitAll().anyRequest().authenticated() }
+        .authorizeHttpRequests {
+            it.requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/accounts/v1/auth/login/**").permitAll()
+                .requestMatchers("/accounts/v1/auth/token/refresh").permitAll()
+                .anyRequest().authenticated()
+        }
         .oauth2ResourceServer { it.jwt {} }
         .build()
 }

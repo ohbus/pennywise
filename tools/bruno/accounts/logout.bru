@@ -1,0 +1,22 @@
+meta {
+  name: Logout
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrlAccounts}}/accounts/v1/auth/logout
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+tests {
+  test("logout revokes session or unauthorized", function() {
+    expect([204, 401]).to.include(res.getStatus());
+  });
+}

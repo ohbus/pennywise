@@ -1,0 +1,34 @@
+meta {
+  name: Start Login
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrlAccounts}}/accounts/v1/auth/login/start
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "user@example.com",
+    "channel": "LINK",
+    "clientKind": "BROWSER"
+  }
+}
+
+tests {
+  test("start login accepted", function() {
+    expect(res.getStatus()).to.eql(202);
+  });
+
+  test("status is accepted", function() {
+    const body = res.getBody();
+    expect(body.status).to.eql("ACCEPTED");
+  });
+}

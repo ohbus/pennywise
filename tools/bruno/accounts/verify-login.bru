@@ -1,0 +1,28 @@
+meta {
+  name: Verify Login
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrlAccounts}}/accounts/v1/auth/login/verify
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "credential": "{{credential}}",
+    "clientKind": "BROWSER"
+  }
+}
+
+tests {
+  test("verify login returns tokens or unauthorized", function() {
+    expect([200, 401]).to.include(res.getStatus());
+  });
+}

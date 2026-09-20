@@ -1,13 +1,12 @@
 package com.subhrodip.pennywise.accounts.profile
+
 import com.subhrodip.pennywise.errors.ApplicationException
 import com.subhrodip.pennywise.errors.ErrorCode
-import org.springframework.http.HttpStatus
-
 import java.time.DateTimeException
 import java.time.ZoneId
 
 object ProfileRules {
-    private val subjectPattern = Regex("^[A-Za-z0-9|._:-]{1,200}$")
+    private val subjectPattern = Regex("^[A-Za-z0-9|._:@-]{1,200}$")
 
     fun requireSubject(subject: String): String {
         if (!subjectPattern.matches(subject)) {

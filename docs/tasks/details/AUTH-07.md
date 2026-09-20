@@ -174,7 +174,8 @@ missing or malformed configuration fails startup.
 The Accounts-owned `auth_email_outbox` migration and persistence boundary now
 store an idempotent event ID, canonical recipient, template, expiry, delivery
 state, and only the protected envelope. The table is deliberately separate from
-Expense Core's outbox. Publication and Notifications consumption remain open.
+Expense Core's outbox. Publication and Notifications consumption are now
+verified in the local Compose delivery path.
 The outbox service now uses a pessimistic row lock and bounded lease timestamp
 so one worker claims an available event at a time; expired claims become
 eligible for retry.
@@ -196,7 +197,8 @@ AES-GCM adapter. Each envelope uses a fresh 96-bit nonce, a 256-bit configured
 key, an explicit format version, and authenticated recipient/template context.
 Tampering, wrong-context decryption, malformed envelopes, and invalid key
 sizes fail closed. The adapter is intentionally a port-level primitive and is
-not yet wired to an outbox or Notifications consumer.
+is wired to the Accounts outbox and Notifications consumer; the live Mailpit
+journey verifies protected delivery without exposing the credential in logs.
 
 `LoginStartService` is the application orchestration boundary. It derives the
 trusted abuse key, acquires the atomic request slot, issues a link/code, and

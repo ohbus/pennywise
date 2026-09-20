@@ -29,5 +29,6 @@ object EventConstants {
         const val ALL_GROUP_EVENTS: String = "group.#"
         const val ALL_EXPENSE_EVENTS: String = "expense.#"
         const val ALL_SETTLEMENT_EVENTS: String = "settlement.#"
+        const val AUTH_EMAIL_REQUESTED: String = "auth.email.requested.v1"
     }
 }

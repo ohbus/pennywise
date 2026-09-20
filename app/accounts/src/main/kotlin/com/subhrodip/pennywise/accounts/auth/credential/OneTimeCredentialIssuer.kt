@@ -10,6 +10,9 @@ class OneTimeCredentialIssuer(
     private val digest: CredentialDigest,
     private val random: SecureRandom = SecureRandom()
 ) {
+    /** Digests a delivery-only credential using the configured storage policy. */
+    fun digest(plaintext: String): ByteArray = digest.digest(plaintext)
+
     /**
      * Creates a credential envelope and its delivery-only plaintext.
      *
@@ -27,7 +30,7 @@ class OneTimeCredentialIssuer(
         val plaintext = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
         return IssuedCredential(
             plaintext = plaintext,
-            digest = digest.digest(plaintext),
+            digest = digest(plaintext),
             issuedAt = now,
             expiresAt = now.plus(lifetime),
             remainingAttempts = maxAttempts

@@ -106,3 +106,9 @@ must not both succeed.
 Spring integration tests now prove single-consumer redemption, expiry
 rejection, one-time refresh rotation, and family revocation against the actual
 Flyway/JPA persistence context rather than mocks.
+
+The service slice now owns the orchestration boundary: canonicalize email,
+issue and persist only a digest-backed credential, and verify through the
+conditional repository transition. It returns generic outcomes so controllers
+cannot accidentally disclose whether an email or credential exists. Email
+delivery and HTTP mapping remain adapters.

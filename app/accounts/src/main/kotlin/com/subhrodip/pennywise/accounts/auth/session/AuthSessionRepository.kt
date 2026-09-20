@@ -10,12 +10,12 @@ import org.springframework.data.repository.query.Param
 /** Persistence port for refresh-token rotation and family revocation. */
 interface AuthSessionRepository : JpaRepository<AuthSessionEntity, UUID> {
     /** Revokes one refresh-token family, including descendants and ancestors. */
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE AuthSessionEntity s SET s.revokedAt = :revokedAt WHERE s.familyId = :familyId AND s.revokedAt IS NULL")
     fun revokeFamily(@Param("familyId") familyId: UUID, @Param("revokedAt") revokedAt: Instant): Int
 
     /** Atomically marks a refresh session replaced and revoked exactly once. */
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
         """
         UPDATE AuthSessionEntity s
@@ -30,4 +30,7 @@ interface AuthSessionRepository : JpaRepository<AuthSessionEntity, UUID> {
         @Param("replacement") replacement: UUID,
         @Param("revokedAt") revokedAt: Instant
     ): Int
+
+    /** Finds an auth session by its refresh token HMAC digest. */
+    fun findByRefreshTokenDigest(refreshTokenDigest: ByteArray): AuthSessionEntity?
 }

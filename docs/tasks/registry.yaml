@@ -4684,7 +4684,7 @@
       "parent_id": "AUTH-01",
       "title": "Validate OIDC JWT issuer, audience, signature, expiry, algorithm, and subject",
       "phase": "security",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["AUTH-03", "ERR-03"],
@@ -4712,7 +4712,11 @@
         "make security-hygiene",
         "git diff --check"
       ],
-      "evidence": [],
+      "evidence": [
+        "Shared servlet/reactive decoder factories and production/staging security chains compile across all four applications.",
+        "Issuer and audience are externalized through PENNYWISE_SECURITY_OIDC_ISSUER_URI and PENNYWISE_SECURITY_OIDC_AUDIENCE.",
+        "Real signed-token and Keycloak E2E evidence remains open."
+      ],
       "reviewer": "/root",
       "blocker": null
     },

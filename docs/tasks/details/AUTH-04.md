@@ -54,3 +54,16 @@ subject and independently checks group membership in the owning service.
 - Bruno and REST-edge invalid-token cases are added; real Keycloak E2E follows
   AUTH-06.
 - Documentation and progress ledger contain exact commands and limitations.
+
+## Implementation notes
+
+- Added reusable servlet and reactive decoder factories in `libs/security`.
+- Added production/staging JWT security chains to Accounts, Expense Core,
+  Notifications, and the reactive BFF.
+- Issuer URI is supplied by `PENNYWISE_SECURITY_OIDC_ISSUER_URI`; audience is
+  supplied by `PENNYWISE_SECURITY_OIDC_AUDIENCE`.
+- Keycloak discovery/JWK is used through standard Spring OIDC APIs; no
+  Keycloak-specific SDK or claim is used.
+- Real Keycloak issuer availability, signed-token integration tests, and
+  invalid-token REST/GraphQL/WebSocket E2E remain open and must not be inferred
+  from compilation.

@@ -5,6 +5,7 @@ execution checkpoints and evidence; it does not replace task acceptance criteria
 
 | Date | Task(s) | Change | Verification | Commit |
 |---|---|---|---|---|
+| 2026-09-20 | AUTH-04 | Added shared servlet/reactive OIDC JWT decoder factories and production/staging security chains for all four applications; configured issuer/audience environment keys | `./gradlew.bat compileKotlin --no-daemon` passed; signed-token and real-Keycloak REST/GraphQL/WebSocket evidence remains open | a9909d6 |
 | 2026-09-20 | AUTH-03 | Added reusable production/staging OIDC configuration guard to `libs/security`, imported by all four applications, requiring HTTPS issuer and audience; documented meaningful Compose hostname policy | `./gradlew.bat compileKotlin --no-daemon` passed; `./gradlew.bat :libs:security:test --rerun-tasks --no-daemon` passed 4 guard tests; contract validation and diff check passed; JWT/provider E2E remain open | 0b943fe |
 | 2026-09-20 | AUTH-02 | Removed Expense Core's implicit `test-user` identity fallback; missing/blank subjects now fail before membership authorization, with focused controller, REST-edge, and Bruno coverage added | Focused Expense Core suite passed 14 tests; contract/public-surface validation passed; live REST-edge/Bruno evidence remains environment-dependent | 87d6736 |
 | 2026-09-17 | DOC-01–DOC-08 | Wrote product, architecture, technology, API, quality, operations and task documentation; passed documentation gate | Registry links, dependency IDs and contract JSON validated | d7c4f2c |

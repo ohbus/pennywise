@@ -1,6 +1,11 @@
 spring:
   application:
     name: expense-core
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${PENNYWISE_SECURITY_OIDC_ISSUER_URI:}
   jpa:
     hibernate:
       ddl-auto: validate

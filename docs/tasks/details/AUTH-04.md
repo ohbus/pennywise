@@ -76,8 +76,9 @@ subject and independently checks group membership in the owning service.
   wrong-audience, expiry, signature, algorithm, subject, and WebSocket
   wrong-audience, forged-signature, and unsupported-algorithm rejection are now
   verified across all four HTTP boundaries. Wrong-issuer, expiry, subject, and
-  WebSocket invalid-token cases remain open and must not be inferred from the
-  happy path.
+  forged-token WebSocket upgrade rejection is now verified. Wrong-issuer,
+  expiry, and invalid-subject cases remain open and must not be inferred from
+  the happy path.
 
 ## Next implementation increment
 

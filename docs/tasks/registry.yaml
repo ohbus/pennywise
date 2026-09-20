@@ -4715,7 +4715,7 @@
       "evidence": [
         "Shared servlet/reactive decoder factories and production/staging security chains compile across all four applications.",
         "Issuer and audience are externalized through PENNYWISE_SECURITY_OIDC_ISSUER_URI and PENNYWISE_SECURITY_OIDC_AUDIENCE.",
-        "Real signed-token REST/GraphQL HTTP journeys, malformed-bearer, wrong-audience, forged-signature, and unsupported-algorithm 401 coverage pass against local Keycloak; wrong-issuer, expiry, subject, WebSocket, and remaining negative cases remain open."
+        "Real signed-token REST/GraphQL HTTP journeys, malformed-bearer, wrong-audience, forged-signature, unsupported-algorithm, and forged-token WebSocket 401 coverage pass against local Keycloak; wrong-issuer, expiry, subject, and remaining negative cases remain open."
       ],
       "reviewer": "/root",
       "blocker": null

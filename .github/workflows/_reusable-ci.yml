@@ -203,6 +203,7 @@ jobs:
           make acceptance-live
           make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"
           python3 tests/e2e/test_oidc_negative.py
+          python3 tests/e2e/test_oidc_websocket_negative.py
           make e2e-live
           make e2e-offline
           make e2e-concurrency

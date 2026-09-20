@@ -59,6 +59,12 @@ audience, or client settings are missing.
 
 ## Implementation tracker
 
+The current status for AUTH-01 through AUTH-07 is maintained in
+`docs/tasks/registry.yaml`; those seven slices are complete. The table below is
+the original security-plan baseline and remains useful for scope history. The
+later AUTH-08 through AUTH-16 rows are future hardening work outside this
+completed slice.
+
 | ID | Deliverable | Priority | Dependency | Status |
 |---|---|---:|---|---|
 | AUTH-01 | Provider-neutral architecture and tracker | P0 | — | Planned |

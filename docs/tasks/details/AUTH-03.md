@@ -76,8 +76,8 @@ subject, and key rotation.
 - All environments may use Keycloak as the current provider; the guard accepts
   only provider-neutral issuer/audience configuration and contains no Keycloak
   SDK or claim coupling.
-- Actual JWT decoder wiring and signature/issuer/audience/expiry/algorithm
-  validation remain AUTH-04 work and are not claimed complete here.
+- JWT decoder wiring and signature/issuer/audience/expiry/algorithm validation
+  are supplied by the completed AUTH-04 shared policy and boundary evidence.
 - Compose operations must use meaningful, stable hostnames for all auth and
   service endpoints (for example `idp-keycloak`, `accounts-api`,
   `expense-core-api`, `notifications-api`, and `pennywise-bff`). Issuer and

@@ -32,7 +32,7 @@ A permanently free, privacy-centric expense-sharing platform for households, cou
 
 Pennywise provides a modern alternative to proprietary expense splitters with:
 - **Fair Financial Allocations**: Equal splits, exact minor amounts, and percentage allocations (with basis-point rounding guarantees).
-- **Passwordless Native Authentication**: The Accounts passwordless slice includes email magic-link/code contracts, a decoupled token-minting SPI (`IdentityProviderPort`), refresh-token family policy, and provider-neutral delivery boundaries. Production readiness still requires the tracked live OIDC, broker/Mailpit, and cross-service evidence in AUTH-03 through AUTH-07.
+- **Passwordless Native Authentication**: The Accounts passwordless slice includes email magic-link/code contracts, a decoupled token-minting SPI (`IdentityProviderPort`), refresh-token family policy, and provider-neutral delivery boundaries. AUTH-03 through AUTH-07 are implemented and verified with live OIDC, broker/Mailpit, REST, GraphQL, WebSocket, Bruno, and CI evidence.
 - **Group Collaboration**: Invite-based membership, role permissions, and group revisions.
 - **Audit & History**: Immutable postings and synchronized balance ledgers.
 - **Zero Lock-In**: Complete data export and account lifecycle controls.

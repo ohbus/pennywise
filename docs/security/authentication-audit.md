@@ -134,10 +134,10 @@ validated provider-qualified subject and enforce its own resource policy.
 
 | Phase | Task | Outcome | Required evidence | Status |
 |---|---|---|---|---|
-| P0 | AUTH-04 | Complete JWT policy and servlet/reactive parity | signed-token unit matrix and invalid-token probes | in progress |
-| P0 | AUTH-05 | Remove weaker local mode | no raw-token runtime path; local OIDC profile tests | in progress |
-| P0 | AUTH-06 | Prove local Keycloak integration | real REST/GraphQL/WS token journeys | in progress |
-| P0 | AUTH-07 | Define Pennywise-owned auth contracts | API/session contract and threat model | planned |
+| P0 | AUTH-04 | Complete JWT policy and servlet/reactive parity | signed-token unit matrix and invalid-token probes | done |
+| P0 | AUTH-05 | Remove weaker local mode | no raw-token runtime path; local OIDC profile tests | done |
+| P0 | AUTH-06 | Prove local Keycloak integration | real REST/GraphQL/WS token journeys | done |
+| P0 | AUTH-07 | Define Pennywise-owned auth contracts | API/session contract and threat model | done |
 | P0 | AUTH-08 | Implement identity and session issuance | persistence and provider adapter tests | planned |
 | P0 | AUTH-09 | Implement passwordless links/codes | replay, brute force, enumeration, Mailpit tests | planned |
 | P0 | AUTH-10 | Implement rotating refresh lifecycle | hashing, rotation, family revocation, reuse detection | planned |

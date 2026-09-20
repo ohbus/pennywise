@@ -47,9 +47,10 @@ port.
 - The `pennywise` realm imported successfully from the checked-in fixture.
 - OIDC discovery returned HTTP 200 at
   `http://localhost:8090/realms/pennywise/.well-known/openid-configuration`.
-- Application token acquisition and real-token REST/GraphQL HTTP journeys are
-  verified under `local-oidc`; WebSocket journeys and invalid-token rejection
-  remain open. The applications no longer use the local passthrough profile.
+- Application token acquisition and real-token REST/GraphQL/WebSocket journeys
+  are verified under `local-oidc`; invalid-token rejection is covered by the
+  Keycloak and isolated test-issuer matrices. The applications no longer use
+  the local passthrough profile.
 - Operations, README, Bruno environment, and E2E instructions are updated.
 - Compose image names, service hostnames, credentials, ports, realm, issuer,
   audience, and inter-service URLs are environment-backed with meaningful

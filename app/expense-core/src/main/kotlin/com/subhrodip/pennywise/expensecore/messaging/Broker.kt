@@ -3,7 +3,40 @@ package com.subhrodip.pennywise.expensecore.messaging
 import java.time.Instant
 import java.util.UUID
 
-data class BrokerMessage(val eventId: UUID, val eventType: String, val payload: ByteArray, val occurredAt: Instant, val headers: Map<String, String> = emptyMap())
+data class BrokerMessage(
+    val eventId: UUID,
+    val eventType: String,
+    val payload: ByteArray,
+    val occurredAt: Instant,
+    val headers: Map<String, String> = emptyMap()
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as BrokerMessage
+
+        if (eventId != other.eventId) return false
+        if (eventType != other.eventType) return false
+        if (!payload.contentEquals(other.payload)) return false
+        if (occurredAt != other.occurredAt) return false
+        if (headers != other.headers) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = eventId.hashCode()
+        result = 31 * result + eventType.hashCode()
+        result = 31 * result + payload.contentHashCode()
+        result = 31 * result + occurredAt.hashCode()
+        result = 31 * result + headers.hashCode()
+        return result
+    }
+
+    override fun toString(): String =
+        "BrokerMessage(eventId=$eventId, eventType='$eventType', payload=${payload.contentToString()}, occurredAt=$occurredAt, headers=$headers)"
+}
 
 sealed interface PublishResult {
     data object Confirmed : PublishResult

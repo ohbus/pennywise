@@ -44,7 +44,34 @@ class OneTimeCredentialIssuer(
         val issuedAt: Instant,
         val expiresAt: Instant,
         val remainingAttempts: Int
-    )
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as IssuedCredential
+
+            if (plaintext != other.plaintext) return false
+            if (!digest.contentEquals(other.digest)) return false
+            if (issuedAt != other.issuedAt) return false
+            if (expiresAt != other.expiresAt) return false
+            if (remainingAttempts != other.remainingAttempts) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = plaintext.hashCode()
+            result = 31 * result + digest.contentHashCode()
+            result = 31 * result + issuedAt.hashCode()
+            result = 31 * result + expiresAt.hashCode()
+            result = 31 * result + remainingAttempts
+            return result
+        }
+
+        override fun toString(): String =
+            "IssuedCredential(plaintext='[REDACTED]', digest=${digest.contentToString()}, issuedAt=$issuedAt, expiresAt=$expiresAt, remainingAttempts=$remainingAttempts)"
+    }
 
     private companion object {
         const val RAW_BYTES: Int = 32

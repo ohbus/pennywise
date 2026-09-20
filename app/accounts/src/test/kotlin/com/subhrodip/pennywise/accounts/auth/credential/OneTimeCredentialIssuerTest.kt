@@ -44,6 +44,36 @@ class OneTimeCredentialIssuerTest {
     }
 
     @Test
+    fun `verifies IssuedCredential value equality and hashCode with byte arrays`() {
+        val cred1 = OneTimeCredentialIssuer.IssuedCredential(
+            plaintext = "abc",
+            digest = byteArrayOf(1, 2, 3),
+            issuedAt = now,
+            expiresAt = now.plusSeconds(300),
+            remainingAttempts = 3
+        )
+        val cred2 = OneTimeCredentialIssuer.IssuedCredential(
+            plaintext = "abc",
+            digest = byteArrayOf(1, 2, 3),
+            issuedAt = now,
+            expiresAt = now.plusSeconds(300),
+            remainingAttempts = 3
+        )
+        val cred3 = OneTimeCredentialIssuer.IssuedCredential(
+            plaintext = "abc",
+            digest = byteArrayOf(1, 2, 4),
+            issuedAt = now,
+            expiresAt = now.plusSeconds(300),
+            remainingAttempts = 3
+        )
+
+        org.junit.jupiter.api.Assertions.assertEquals(cred1, cred2)
+        org.junit.jupiter.api.Assertions.assertEquals(cred1.hashCode(), cred2.hashCode())
+        assertNotEquals(cred1, cred3)
+        assertTrue(cred1.toString().contains("[REDACTED]"))
+    }
+
+    @Test
     fun `rejects weak digest secret`() {
         assertThrows(IllegalArgumentException::class.java) { HmacCredentialDigest(ByteArray(31)) }
     }

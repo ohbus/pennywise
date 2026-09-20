@@ -81,6 +81,19 @@ class SimpleGraphQLWSClient:
         self._listener_thread: threading.Thread | None = None
 
     def connect(self) -> None:
+        """Open the socket and retry transient startup races before subscribing."""
+        for attempt in range(3):
+            try:
+                self._connect_once()
+                return
+            except (TimeoutError, ConnectionResetError, ConnectionError):
+                self.close()
+                if attempt == 2:
+                    raise
+                time.sleep(1)
+
+    def _connect_once(self) -> None:
+        """Perform one WebSocket handshake and GraphQL connection acknowledgement."""
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(SOCKET_SETUP_TIMEOUT_SECONDS)
         self.sock.connect((self.host, self.port))

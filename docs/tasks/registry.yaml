@@ -4674,7 +4674,7 @@
       ],
       "evidence": [
         "Added and imported a reusable production/staging OIDC configuration guard across all four applications.",
-        "Guard tests and full Kotlin compilation are pending final validation in this increment; actual JWT claim validation remains AUTH-04."
+        "Guard tests and full Kotlin compilation pass; missing issuer/audience and non-HTTPS production-like configuration fail closed, while actual JWT claim validation remains AUTH-04."
       ],
       "reviewer": "/root",
       "blocker": null
@@ -4755,7 +4755,7 @@
         "Full local Compose services now have meaningful stable hostnames and application-to-dependency URLs use them in docker-compose.dev.yml.",
         "Pinned Keycloak 26.7.4 service and local realm import fixture added; Compose render and contract validation passed.",
         "Live Keycloak startup imported the pennywise realm and OIDC discovery returned HTTP 200 at the local realm discovery endpoint.",
-        "Real token acquisition and REST/GraphQL HTTP validation pass against local Keycloak; WebSocket and invalid/expired-token matrix evidence remain open."
+        "Real token acquisition and REST/GraphQL HTTP validation pass against local Keycloak; forged-token WebSocket rejection, malformed bearer, wrong-audience, wrong-issuer, forged-signature, and unsupported-algorithm checks are executable, while expiry and invalid-subject evidence remain open."
       ],
       "reviewer": "/root",
       "blocker": null

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import os
 import sys
+import base64
+import json
 from dataclasses import dataclass
 from http.client import HTTPResponse
 from typing import Final
@@ -43,6 +45,20 @@ def tamper_signature(token: str) -> str:
     return ".".join((*parts[:2], replacement + parts[2][1:]))
 
 
+def tamper_algorithm(token: str) -> str:
+    """Rewrite only the protected JWT header to an unsupported algorithm."""
+    parts = token.split(".")
+    if len(parts) != 3:
+        raise ValueError("BEARER_TOKEN must be a compact signed JWT")
+    padding = "=" * (-len(parts[0]) % 4)
+    header = json.loads(base64.urlsafe_b64decode((parts[0] + padding).encode()))
+    header["alg"] = "HS256"
+    encoded = base64.urlsafe_b64encode(
+        json.dumps(header, separators=(",", ":")).encode()
+    ).decode().rstrip("=")
+    return ".".join((encoded, parts[1], parts[2]))
+
+
 def status_for(probe: Probe, token: str) -> int:
     """Execute one protected request and return its HTTP status."""
     headers = {"Authorization": f"Bearer {token}"}
@@ -58,18 +74,24 @@ def status_for(probe: Probe, token: str) -> int:
         return EXPECTED_STATUS
 
 
+def run_variant(name: str, token: str) -> list[str]:
+    """Run one invalid-token variant across every protected HTTP service."""
+    failures: list[str] = []
+    for probe in PROBES:
+        status = status_for(probe, token)
+        print(f"{name} / {probe.name}: HTTP {status}")
+        if status != EXPECTED_STATUS:
+            failures.append(f"{name} / {probe.name} expected {EXPECTED_STATUS}, got {status}")
+    return failures
+
+
 def main() -> int:
-    """Run forged-signature probes across every protected HTTP service."""
+    """Run forged-signature and unsupported-algorithm probes."""
     if not TOKEN:
         print("BEARER_TOKEN must contain a signed access token", file=sys.stderr)
         return 2
-    forged = tamper_signature(TOKEN)
-    failures: list[str] = []
-    for probe in PROBES:
-        status = status_for(probe, forged)
-        print(f"{probe.name}: HTTP {status}")
-        if status != EXPECTED_STATUS:
-            failures.append(f"{probe.name} expected {EXPECTED_STATUS}, got {status}")
+    failures = run_variant("forged-signature", tamper_signature(TOKEN))
+    failures.extend(run_variant("unsupported-algorithm", tamper_algorithm(TOKEN)))
     if failures:
         raise AssertionError("; ".join(failures))
     return 0

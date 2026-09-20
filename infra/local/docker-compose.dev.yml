@@ -18,12 +18,14 @@ services:
       dockerfile: infra/docker/Dockerfile.fast
       args: {APP_PROJECT: accounts}
     environment:
-      SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/pennywise_accounts
-      SPRING_DATASOURCE_USERNAME: pennywise
-      SPRING_DATASOURCE_PASSWORD: pennywise-local-only
+      SPRING_PROFILES_ACTIVE: local-oidc
+      PENNYWISE_SECURITY_OIDC_ISSUER_URI: ${PENNYWISE_SECURITY_OIDC_ISSUER_URI:-http://${PENNYWISE_IDP_HOSTNAME:-idp-keycloak}:8080/realms/${KEYCLOAK_REALM:-pennywise}}
+      PENNYWISE_SECURITY_OIDC_AUDIENCE: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:-pennywise-api}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_accounts
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-pennywise}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
     ports: ["8081:8080"]
-    depends_on: {postgres: {condition: service_healthy}}
+    depends_on: {postgres: {condition: service_healthy}, idp-keycloak: {condition: service_healthy}}
   expense-core:
     hostname: expense-core-api
     deploy:
@@ -35,18 +37,20 @@ services:
       dockerfile: infra/docker/Dockerfile.fast
       args: {APP_PROJECT: expense-core}
     environment:
-      SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/pennywise_expense_core
-      SPRING_DATASOURCE_USERNAME: pennywise
-      SPRING_DATASOURCE_PASSWORD: pennywise-local-only
-      SPRING_RABBITMQ_HOST: message-broker
+      SPRING_PROFILES_ACTIVE: local-oidc
+      PENNYWISE_SECURITY_OIDC_ISSUER_URI: ${PENNYWISE_SECURITY_OIDC_ISSUER_URI:-http://${PENNYWISE_IDP_HOSTNAME:-idp-keycloak}:8080/realms/${KEYCLOAK_REALM:-pennywise}}
+      PENNYWISE_SECURITY_OIDC_AUDIENCE: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:-pennywise-api}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_expense_core
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-pennywise}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+      SPRING_RABBITMQ_HOST: ${PENNYWISE_RABBITMQ_HOSTNAME:-message-broker}
       SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: pennywise
-      SPRING_RABBITMQ_PASSWORD: pennywise-local-only
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-pennywise}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-pennywise-local-only}
       PENNYWISE_OUTBOX_ENABLED: "true"
       PENNYWISE_OUTBOX_RABBIT_ENABLED: "true"
     ports: ["8082:8080"]
-    depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}}
+    depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, idp-keycloak: {condition: service_healthy}}
   notifications:
     hostname: notifications-api
     deploy:
@@ -58,18 +62,20 @@ services:
       dockerfile: infra/docker/Dockerfile.fast
       args: {APP_PROJECT: notifications}
     environment:
-      SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/pennywise_notifications
-      SPRING_DATASOURCE_USERNAME: pennywise
-      SPRING_DATASOURCE_PASSWORD: pennywise-local-only
-      SPRING_RABBITMQ_HOST: message-broker
+      SPRING_PROFILES_ACTIVE: local-oidc
+      PENNYWISE_SECURITY_OIDC_ISSUER_URI: ${PENNYWISE_SECURITY_OIDC_ISSUER_URI:-http://${PENNYWISE_IDP_HOSTNAME:-idp-keycloak}:8080/realms/${KEYCLOAK_REALM:-pennywise}}
+      PENNYWISE_SECURITY_OIDC_AUDIENCE: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:-pennywise-api}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_notifications
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-pennywise}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+      SPRING_RABBITMQ_HOST: ${PENNYWISE_RABBITMQ_HOSTNAME:-message-broker}
       SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: pennywise
-      SPRING_RABBITMQ_PASSWORD: pennywise-local-only
-      PENNYWISE_NOTIFICATIONS_EMAIL_HOST: mailpit-email
-      PENNYWISE_NOTIFICATIONS_EMAIL_PORT: 1025
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-pennywise}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-pennywise-local-only}
+      PENNYWISE_NOTIFICATIONS_EMAIL_HOST: ${PENNYWISE_MAILPIT_HOSTNAME:-mailpit-email}
+      PENNYWISE_NOTIFICATIONS_EMAIL_PORT: ${MAILPIT_SMTP_PORT:-1025}
     ports: ["8083:8080"]
-    depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, mailpit: {condition: service_healthy}}
+    depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, mailpit: {condition: service_healthy}, idp-keycloak: {condition: service_healthy}}
   bff:
     hostname: pennywise-bff
     deploy:
@@ -81,12 +87,14 @@ services:
       dockerfile: infra/docker/Dockerfile.fast
       args: {APP_PROJECT: bff}
     environment:
-      SPRING_PROFILES_ACTIVE: local
-      SPRING_RABBITMQ_HOST: message-broker
+      SPRING_PROFILES_ACTIVE: local-oidc
+      PENNYWISE_SECURITY_OIDC_ISSUER_URI: ${PENNYWISE_SECURITY_OIDC_ISSUER_URI:-http://${PENNYWISE_IDP_HOSTNAME:-idp-keycloak}:8080/realms/${KEYCLOAK_REALM:-pennywise}}
+      PENNYWISE_SECURITY_OIDC_AUDIENCE: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:-pennywise-api}
+      SPRING_RABBITMQ_HOST: ${PENNYWISE_RABBITMQ_HOSTNAME:-message-broker}
       SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: pennywise
-      SPRING_RABBITMQ_PASSWORD: pennywise-local-only
-      PENNYWISE_EXPENSE_CORE_URL: http://expense-core-api:8080
-      PENNYWISE_ACCOUNTS_URL: http://accounts-api:8080
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-pennywise}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-pennywise-local-only}
+      PENNYWISE_EXPENSE_CORE_URL: ${PENNYWISE_EXPENSE_CORE_URL:-http://expense-core-api:8080}
+      PENNYWISE_ACCOUNTS_URL: ${PENNYWISE_ACCOUNTS_URL:-http://accounts-api:8080}
     ports: ["8080:8080"]
-    depends_on: [accounts, expense-core, notifications]
+    depends_on: {accounts: {condition: service_started}, expense-core: {condition: service_started}, notifications: {condition: service_started}, idp-keycloak: {condition: service_healthy}}

@@ -9,28 +9,28 @@ class OidcConfigurationGuardTest {
     @Test
     fun `accepts secure issuer and audience`() {
         assertDoesNotThrow {
-            OidcConfigurationGuard("https://keycloak.example/realms/pennywise", "pennywise-api")
+            OidcConfigurationGuard("https://keycloak.example/realms/pennywise", "pennywise-api", "production")
         }
     }
 
     @Test
     fun `rejects missing issuer`() {
         assertThrows(IllegalArgumentException::class.java) {
-            OidcConfigurationGuard("", "pennywise-api")
+            OidcConfigurationGuard("", "pennywise-api", "production")
         }
     }
 
     @Test
     fun `rejects missing audience`() {
         assertThrows(IllegalArgumentException::class.java) {
-            OidcConfigurationGuard("https://keycloak.example/realms/pennywise", "")
+            OidcConfigurationGuard("https://keycloak.example/realms/pennywise", "", "production")
         }
     }
 
     @Test
     fun `rejects non-https issuer`() {
         assertThrows(IllegalArgumentException::class.java) {
-            OidcConfigurationGuard("http://keycloak.example/realms/pennywise", "pennywise-api")
+            OidcConfigurationGuard("http://keycloak.example/realms/pennywise", "pennywise-api", "production")
         }
     }
 }

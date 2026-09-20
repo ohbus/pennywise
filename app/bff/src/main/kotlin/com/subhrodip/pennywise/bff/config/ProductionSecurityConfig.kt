@@ -11,7 +11,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain
 
 /** Production/staging reactive JWT security chain for the GraphQL BFF. */
 @Configuration
-@Profile("production", "staging")
+@Profile("production", "staging", "local-oidc")
 class ProductionSecurityConfig(
     @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}") private val issuerUri: String,
     @Value("\${pennywise.security.oidc.audience}") private val audience: String

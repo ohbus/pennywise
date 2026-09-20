@@ -13,7 +13,7 @@ import org.springframework.security.web.SecurityFilterChain
 
 /** Production/staging JWT security chain for Notifications. */
 @Configuration
-@Profile("production", "staging")
+@Profile("production", "staging", "local-oidc")
 @EnableWebSecurity
 class ProductionSecurityConfig(
     @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}") private val issuerUri: String,

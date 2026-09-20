@@ -15,7 +15,7 @@ import uuid
 ACCOUNTS_URL = os.environ.get("ACCOUNTS_URL", "http://localhost:8081")
 EXPENSE_CORE_URL = os.environ.get("EXPENSE_CORE_URL", "http://localhost:8082")
 NOTIFICATIONS_URL = os.environ.get("NOTIFICATIONS_URL", "http://localhost:8083")
-TOKEN = os.environ.get("BEARER_TOKEN", "test-user")
+TOKEN = os.environ.get("BEARER_TOKEN")
 
 ACCOUNTS_ME = "/accounts/v1/me"
 ACCOUNTS_DELETION = "/accounts/v1/me/deletion-request"
@@ -78,6 +78,8 @@ def expect(label: str, actual: int, *allowed: int) -> None:
 
 def main() -> None:
     """Run live REST edge checks with deterministic UTF-8 console output."""
+    if not TOKEN:
+        raise RuntimeError("BEARER_TOKEN must contain a signed access token for authenticated checks")
     sys.stdout.reconfigure(encoding="utf-8")
     print("Running live REST edge-case checks")
 

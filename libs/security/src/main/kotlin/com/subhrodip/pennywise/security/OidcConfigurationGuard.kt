@@ -15,10 +15,11 @@ import org.springframework.stereotype.Component
  * available only under the explicit local profile.
  */
 @Component
-@Profile("production", "staging")
+@Profile("production", "staging", "local-oidc")
 class OidcConfigurationGuard(
     @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri:}") private val issuerUri: String,
-    @Value("\${pennywise.security.oidc.audience:}") private val audience: String
+    @Value("\${pennywise.security.oidc.audience:}") private val audience: String,
+    @Value("\${spring.profiles.active:}") private val activeProfiles: String
 ) {
     init {
         require(issuerUri.isNotBlank()) {
@@ -27,7 +28,7 @@ class OidcConfigurationGuard(
         require(audience.isNotBlank()) {
             "OIDC audience is required in production and staging"
         }
-        require(issuerUri.startsWith("https://")) {
+        require(issuerUri.startsWith("https://") || activeProfiles.split(',').contains("local-oidc")) {
             "OIDC issuer URI must use HTTPS outside local development"
         }
     }

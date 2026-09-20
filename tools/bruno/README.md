@@ -8,7 +8,10 @@ covers the Accounts, Expense Core, Notifications, and GraphQL BFF HTTP
 surfaces currently defined by the repository contracts, including recurring
 schedules and explicit quality/error probes.
 
-The local environment uses `test-user` as a demo bearer token. The complete
+The legacy local environment uses `test-user` only for non-OIDC compatibility.
+For the Keycloak-backed stack, select `local-oidc` and provide a real signed
+access token through `PENNYWISE_BRUNO_TOKEN`; request files never contain a
+credential. The complete
 stack must be running first:
 
 ```sh
@@ -21,7 +24,7 @@ files never contain environment-specific credentials. Override it without
 editing the collection:
 
 ```sh
-make bruno-run BRUNO_ENV=local BRUNO_TOKEN=test-user
+make bruno-run BRUNO_ENV=local-oidc BRUNO_TOKEN="${PENNYWISE_BRUNO_TOKEN}"
 make bruno-run BRUNO_ENV=ci BRUNO_TOKEN="${CI_BRUNO_TOKEN}"
 ```
 

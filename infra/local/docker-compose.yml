@@ -1,15 +1,15 @@
 services:
   postgres:
-    hostname: postgres-db
-    image: postgres:17
+    hostname: ${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}
+    image: ${POSTGRES_IMAGE:-postgres:17}
     deploy:
       resources:
         reservations: {cpus: "0.25", memory: 256m}
         limits: {cpus: "1.00", memory: 768m}
     environment:
-      POSTGRES_USER: pennywise
-      POSTGRES_PASSWORD: pennywise-local-only
-      POSTGRES_DB: pennywise
+      POSTGRES_USER: ${POSTGRES_USER:-pennywise}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+      POSTGRES_DB: ${POSTGRES_DB:-pennywise}
     volumes:
       - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
     ports: ["5432:5432"]
@@ -19,15 +19,15 @@ services:
       timeout: 3s
       retries: 20
   rabbitmq:
-    hostname: message-broker
-    image: rabbitmq:4.3-management
+    hostname: ${PENNYWISE_RABBITMQ_HOSTNAME:-message-broker}
+    image: ${RABBITMQ_IMAGE:-rabbitmq:4.3-management}
     deploy:
       resources:
         reservations: {cpus: "0.25", memory: 256m}
         limits: {cpus: "1.00", memory: 768m}
     environment:
-      RABBITMQ_DEFAULT_USER: pennywise
-      RABBITMQ_DEFAULT_PASS: pennywise-local-only
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-pennywise}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-pennywise-local-only}
     ports: ["5672:5672", "15672:15672"]
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
@@ -35,8 +35,8 @@ services:
       timeout: 3s
       retries: 20
   mailpit:
-    hostname: mailpit-email
-    image: axllent/mailpit:v1.27
+    hostname: ${PENNYWISE_MAILPIT_HOSTNAME:-mailpit-email}
+    image: ${MAILPIT_IMAGE:-axllent/mailpit:v1.27}
     deploy:
       resources:
         reservations: {cpus: "0.05", memory: 64m}
@@ -48,7 +48,7 @@ services:
       timeout: 3s
       retries: 20
   idp-keycloak:
-    hostname: idp-keycloak
+    hostname: ${PENNYWISE_IDP_HOSTNAME:-idp-keycloak}
     image: ${KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.7.4}
     command: ["start-dev", "--import-realm"]
     environment:
@@ -57,4 +57,9 @@ services:
       KC_HEALTH_ENABLED: "true"
     volumes:
       - ./keycloak/realm:/opt/keycloak/data/import:ro
-    ports: ["127.0.0.1:8090:8080"]
+    ports: ["${KEYCLOAK_BIND_ADDRESS:-127.0.0.1}:${KEYCLOAK_HOST_PORT:-8090}:8080"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:9000/health/ready >/dev/null"]
+      interval: 5s
+      timeout: 3s
+      retries: 30

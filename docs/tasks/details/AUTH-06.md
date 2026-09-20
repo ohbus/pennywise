@@ -51,3 +51,23 @@ port.
   remain open; the current applications still run under the local passthrough
   profile.
 - Operations, README, Bruno environment, and E2E instructions are updated.
+- Compose image names, service hostnames, credentials, ports, realm, issuer,
+  audience, and inter-service URLs are environment-backed with meaningful
+  defaults in `infra/versions.env.example`; no application-facing local URL is
+  required to be edited in the Compose YAML.
+- Added `tools/bruno/environments/local-oidc.bru`, which requires an injected
+  signed token through `PENNYWISE_BRUNO_TOKEN`.
+- The REST edge harness now refuses to run authenticated checks without an
+  injected `BEARER_TOKEN`, preventing placeholder bearer strings from being
+  mistaken for identities under OIDC validation.
+- `docker compose ... config --quiet`, `git diff --check`, and
+  `:libs:security:test --rerun-tasks --no-daemon` passed. The latter executed
+  all four security-library tests.
+
+## Remaining gates
+
+- Seeded-user token acquisition and replacement of every legacy E2E fixture
+  identity with valid signed tokens are still open.
+- Full-stack application startup under `local-oidc`, real REST/GraphQL/
+  WebSocket journeys, passwordless Mailpit delivery, and invalid/expired-token
+  rejection remain required before AUTH-06 can close.

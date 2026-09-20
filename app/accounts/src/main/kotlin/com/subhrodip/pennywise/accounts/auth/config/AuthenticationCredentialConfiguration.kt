@@ -15,11 +15,10 @@ import org.springframework.context.annotation.Profile
 
 /** Fail-closed deployment wiring for passwordless credential cryptography. */
 @Configuration
-@Profile("local-oidc", "staging", "production")
 class AuthenticationCredentialConfiguration(
-    @Value("\${PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET}")
+    @Value("\${PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}")
     private val encodedDigestSecret: String,
-    @Value("\${PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY}")
+    @Value("\${PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}")
     private val encodedEnvelopeKey: String
 ) {
     /** Creates the HMAC digest adapter from a deployment-only base64 secret. */
@@ -42,6 +41,28 @@ class AuthenticationCredentialConfiguration(
     @Bean
     fun credentialEnvelopeProtector(): CredentialEnvelopeProtector =
         AesGcmCredentialEnvelopeProtector(decodeEnvelopeKey())
+
+    /** Creates the rate limit key deriver. */
+    @Bean
+    fun loginRateLimitKeyDeriver(digest: CredentialDigest): com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitKeyDeriver =
+        com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitKeyDeriver(digest)
+
+    /** Creates the transactional login rate limit service. */
+    @Bean
+    fun loginRateLimitService(
+        keyDeriver: com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitKeyDeriver,
+        repository: com.subhrodip.pennywise.accounts.auth.abuse.RateLimitBucketRepository
+    ): com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitService =
+        com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitService(keyDeriver, repository)
+
+    /** Creates the login start application service. */
+    @Bean
+    fun loginStartService(
+        rateLimitService: com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitService,
+        credentialService: LoginCredentialService,
+        emailSender: com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailSender
+    ): com.subhrodip.pennywise.accounts.auth.login.LoginStartService =
+        com.subhrodip.pennywise.accounts.auth.login.LoginStartService(rateLimitService, credentialService, emailSender)
 
     private fun decodeSecret(): ByteArray = runCatching {
         Base64.getDecoder().decode(encodedDigestSecret)

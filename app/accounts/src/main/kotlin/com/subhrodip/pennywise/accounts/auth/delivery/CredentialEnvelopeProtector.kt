@@ -14,9 +14,3 @@ interface CredentialEnvelopeProtector {
     /** Decrypts and authenticates a delivery envelope for the exact context. */
     fun reveal(envelope: String, context: CredentialDeliveryContext): String
 }
-
-/** Context bound into the authenticated-encryption tag. */
-data class CredentialDeliveryContext(
-    val recipient: String,
-    val template: AuthEmailTemplate
-)

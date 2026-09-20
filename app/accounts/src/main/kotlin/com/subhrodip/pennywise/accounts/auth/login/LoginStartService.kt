@@ -56,6 +56,3 @@ class LoginStartService(
             LoginCredentialService.CredentialKind.CODE -> com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailTemplate.LOGIN_CODE
         }
 }
-
-/** Public login-start result intentionally contains no account or delivery state. */
-enum class LoginStartResult { ACCEPTED }

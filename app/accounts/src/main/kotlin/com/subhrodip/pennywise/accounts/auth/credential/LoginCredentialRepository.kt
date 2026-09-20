@@ -46,4 +46,7 @@ interface LoginCredentialRepository : JpaRepository<LoginCredentialEntity, UUID>
         @Param("digest") digest: ByteArray,
         @Param("now") now: Instant
     ): Int
+
+    /** Finds a credential record by its HMAC digest. */
+    fun findByCredentialDigest(credentialDigest: ByteArray): LoginCredentialEntity?
 }

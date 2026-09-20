@@ -7,7 +7,7 @@ import java.util.UUID
 import org.springframework.transaction.annotation.Transactional
 
 /** Application service coordinating canonical email credentials without provider coupling. */
-class LoginCredentialService(
+open class LoginCredentialService(
     private val repository: LoginCredentialRepository,
     private val issuer: OneTimeCredentialIssuer
 ) {
@@ -56,12 +56,30 @@ class LoginCredentialService(
      */
     @Transactional
     fun verify(plaintext: String, now: Instant): VerificationOutcome {
-        if (plaintext.isBlank()) return VerificationOutcome.REJECTED
-        val digest = issuer.digest(plaintext)
-        return if (repository.consumeIfActive(digest, now) == 1) {
+        return if (redeem(plaintext, now) != null) {
             VerificationOutcome.ACCEPTED
         } else {
             VerificationOutcome.REJECTED
+        }
+    }
+
+    /**
+     * Atomically redeems an active credential and returns its entity upon success.
+     * Replay, expired, or invalid credentials return null.
+     *
+     * @param plaintext raw credential submitted by client.
+     * @param now verification timestamp.
+     * @return redeemed entity or null if redemption did not succeed.
+     */
+    @Transactional
+    fun redeem(plaintext: String, now: Instant): LoginCredentialEntity? {
+        if (plaintext.isBlank()) return null
+        val digest = issuer.digest(plaintext)
+        val updated = repository.consumeIfActive(digest, now)
+        return if (updated == 1) {
+            repository.findByCredentialDigest(digest)
+        } else {
+            null
         }
     }
 

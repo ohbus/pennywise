@@ -5,6 +5,7 @@ execution checkpoints and evidence; it does not replace task acceptance criteria
 
 | Date | Task(s) | Change | Verification | Commit |
 |---|---|---|---|---|
+| 2026-09-20 | AUTH-06 | Verified the pinned Keycloak fixture live: realm import completed and OIDC discovery became available through the local provider hostname/port | Keycloak 26.7.4 started from full Compose; `pennywise` realm imported; discovery endpoint returned HTTP 200; application token/E2E validation remains open | pending |
 | 2026-09-20 | AUTH-06 | Added pinned local Keycloak 26.7.4 service with imported realm fixture, alongside meaningful internal hostnames and architecture documentation | Compose render and contract validation passed; real Keycloak startup/token/E2E evidence remains open | 4646416 |
 | 2026-09-20 | AUTH-04 | Added shared servlet/reactive OIDC JWT decoder factories and production/staging security chains for all four applications; configured issuer/audience environment keys | `./gradlew.bat compileKotlin --no-daemon` passed; signed-token and real-Keycloak REST/GraphQL/WebSocket evidence remains open | a9909d6 |
 | 2026-09-20 | AUTH-03 | Added reusable production/staging OIDC configuration guard to `libs/security`, imported by all four applications, requiring HTTPS issuer and audience; documented meaningful Compose hostname policy | `./gradlew.bat compileKotlin --no-daemon` passed; `./gradlew.bat :libs:security:test --rerun-tasks --no-daemon` passed 4 guard tests; contract validation and diff check passed; JWT/provider E2E remain open | 0b943fe |

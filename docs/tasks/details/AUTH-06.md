@@ -38,4 +38,16 @@ port.
 - Mailpit receives passwordless authentication messages without leaking codes
   into application logs.
 - Auth0/another OIDC provider can later replace the issuer by configuration.
+
+## Current evidence
+
+- Official Keycloak container guidance was checked before pinning the image;
+  realm import uses `/opt/keycloak/data/import` and `--import-realm`.
+- Keycloak `26.7.4` started from the full local Compose topology.
+- The `pennywise` realm imported successfully from the checked-in fixture.
+- OIDC discovery returned HTTP 200 at
+  `http://localhost:8090/realms/pennywise/.well-known/openid-configuration`.
+- Application token acquisition and real-token REST/GraphQL/WebSocket journeys
+  remain open; the current applications still run under the local passthrough
+  profile.
 - Operations, README, Bruno environment, and E2E instructions are updated.

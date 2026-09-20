@@ -120,6 +120,10 @@ a versioned delimiter, and HMACs the result with the deployment secret. The
 repository sees only the resulting digest. Raw IP addresses, forwarded headers,
 emails, and user-controlled rate-limit keys never reach persistence.
 
+Bucket acquisition uses one PostgreSQL `INSERT ... ON CONFLICT DO UPDATE`
+statement. It atomically handles first request, expired-window reset,
+cooldown, and maximum-count checks; no read-then-write race is permitted.
+
 The service slice now owns the orchestration boundary: canonicalize email,
 issue and persist only a digest-backed credential, and verify through the
 conditional repository transition. It returns generic outcomes so controllers

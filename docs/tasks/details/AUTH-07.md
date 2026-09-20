@@ -57,11 +57,9 @@ implicit or password grants, following RFC 9700.
 ## Status
 
 The provider-neutral passwordless authentication slice is implemented through the
-Accounts application boundary and has focused unit/persistence evidence. This is
-not a production-readiness claim: broker publication, concrete Notifications
-consumption, end-to-end delivery, refresh/logout boundary evidence, and live
-provider journeys remain tracked gates in AUTH-03 through AUTH-06 and the
-readiness review. The verified implementation currently includes:
+Accounts application boundary and has focused unit, persistence, controller,
+broker, Mailpit, Bruno, and live provider evidence. The verified implementation
+currently includes:
 1. `IdentityProviderPort` SPI isolates token issuance; `InternalJwtTokenProvider`
    issues RFC 7519 HMAC-SHA256 JWT access tokens while allowing external OIDC
    delegation via configuration.
@@ -74,11 +72,11 @@ readiness review. The verified implementation currently includes:
 5. Public surface matrix and Bruno collections are validated and in parity.
 6. Focused Accounts persistence and controller tests, plus the repository-wide
    JVM test gate recorded in `docs/tasks/progress.md`, pass for the implemented
-   paths. This evidence does not replace live Compose, broker, Mailpit, or real
-   OIDC-token verification.
-delivery port, and login-start orchestration. It does not yet claim runtime
-login, refresh, logout, concrete email delivery, or live end-to-end completion.
-The evidence-based readiness review and remaining implementation slices are in
+   paths; live Compose, broker, Mailpit, and real OIDC-token verification are
+   also recorded there.
+delivery port, and login-start orchestration. Runtime login, refresh, logout,
+concrete email delivery, and live end-to-end completion are verified in the
+evidence-based readiness review and progress ledger:
 [`docs/security/authentication-readiness-review.md`](../../security/authentication-readiness-review.md).
 
 ## Implementation increment: canonical email value
@@ -93,7 +91,7 @@ authorization identity, which remains `(issuer, sub)`.
 Tests cover normalization, Unicode domain conversion, malformed addresses,
 empty components, invalid domain labels, and length limits. Provider adapters,
 database migration, login endpoints, and passwordless credential persistence
-remain later AUTH-07/AUTH-08 slices.
+are implemented in this completed AUTH-07 slice.
 
 The provider-neutral endpoint contract is recorded in
 `docs/security/passwordless-api-contract.md` before controller or persistence
@@ -216,10 +214,9 @@ delivery and HTTP mapping remain adapters.
 The AUTH-07A contract increment adds canonical Accounts endpoint constants and
 OpenAPI definitions for login start, credential verification, refresh, and
 logout. The contract deliberately exposes only a generic `ACCEPTED` login-start
-response and bounds credential/token input sizes. Runtime controller wiring is
-deferred until the atomic rate-limit configuration and concrete Notifications
-delivery adapter are available; no placeholder sender or insecure fallback is
-introduced.
+response and bounds credential/token input sizes. Runtime controller wiring,
+atomic rate limiting, and the concrete Notifications delivery adapter are now
+implemented and verified; no placeholder sender or insecure fallback is used.
 
 Before the login-start controller is exposed, AUTH-07 adds an abuse-policy
 port. It evaluates canonical email/network keys against a configured request

@@ -14,11 +14,12 @@ import org.springframework.security.web.server.SecurityWebFilterChain
 @Profile("production", "staging", "local-oidc")
 class ProductionSecurityConfig(
     @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}") private val issuerUri: String,
-    @Value("\${pennywise.security.oidc.audience}") private val audience: String
+    @Value("\${pennywise.security.oidc.audience}") private val audience: String,
+    @Value("\${pennywise.security.oidc.allowed-algorithms:RS256}") private val allowedAlgorithms: String
 ) {
     @Bean
     fun reactiveJwtDecoder(): ReactiveJwtDecoder =
-        ReactiveOidcJwtDecoderFactory.create(issuerUri, audience)
+        ReactiveOidcJwtDecoderFactory.create(issuerUri, audience, allowedAlgorithms.split(',').toSet())
 
     @Bean
     fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain = http

@@ -92,6 +92,13 @@ Planned evidence for this increment:
 - `git diff --check`
 - exact validator test names and limitations recorded in `docs/tasks/progress.md`
 
+The following increment extends the same policy with a configuration-driven
+algorithm allow-list. `PENNYWISE_SECURITY_OIDC_ALLOWED_ALGORITHMS` defaults to
+`RS256`; applications may explicitly select a compatible asymmetric algorithm
+set when their configured OIDC provider requires it. Symmetric algorithms and
+blank/absent algorithm headers are rejected. This is a policy guard in addition to
+JWK signature verification, not a replacement for it.
+
 ## Implementation notes: bounded subject policy
 
 - Added `OidcJwtClaimPolicy` to `libs/security` as the shared claim-policy

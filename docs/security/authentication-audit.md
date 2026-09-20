@@ -76,6 +76,26 @@ must not depend on Keycloak SDKs, realm roles, or vendor claim names.
 
 ## Recommended target design
 
+### RFC 9700 OAuth security baseline
+
+The planned OAuth flow follows [RFC 9700](https://www.rfc-editor.org/rfc/rfc9700):
+
+- authorization-code flow only; implicit and resource-owner-password grants are
+  prohibited;
+- PKCE with `S256` for every public client and also for confidential clients;
+- transaction-specific state and OIDC nonce, exact redirect-URI matching, no
+  open redirects, and issuer mix-up protection;
+- short-lived, audience-restricted access tokens with least-privilege scopes;
+- rotating refresh tokens with family revocation on reuse, or sender
+  constraint where supported;
+- TLS for all non-loopback authorization traffic and no credentials in URLs,
+  logs, referrers, or browser history;
+- authorization-server metadata/discovery used as the provider capability
+  source, while issuer allowlists remain deployment-controlled.
+
+The local Keycloak password-grant fixture must therefore remain test-only and
+must not be used by the Pennywise product flow.
+
 - `auth.login` owns start, callback, magic-link request, code verification,
   resend, logout, and session operations.
 - `auth.identity` maps `(issuer, subject)` to a local account. Email is mutable

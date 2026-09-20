@@ -18,7 +18,7 @@ object OidcJwtDecoderFactory {
      * @return configured JWT decoder.
      * @throws IllegalArgumentException when the issuer or audience is blank.
      */
-    fun create(issuerUri: String, audience: String): JwtDecoder {
+    fun create(issuerUri: String, audience: String, allowedAlgorithms: Set<String> = setOf("RS256")): JwtDecoder {
         require(issuerUri.isNotBlank()) { "OIDC issuer URI is required" }
         require(audience.isNotBlank()) { "OIDC audience is required" }
 
@@ -30,7 +30,8 @@ object OidcJwtDecoderFactory {
             DelegatingOAuth2TokenValidator(
                 JwtValidators.createDefaultWithIssuer(issuerUri),
                 audienceValidator,
-                OidcJwtClaimPolicy.subjectValidator()
+                OidcJwtClaimPolicy.subjectValidator(),
+                OidcJwtAlgorithmPolicy(allowedAlgorithms)
             )
         )
         return decoder

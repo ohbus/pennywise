@@ -270,7 +270,9 @@ jobs:
           for request in tools/bruno/quality/invalid-subject-accounts.bru tools/bruno/quality/invalid-subject-expense-core.bru tools/bruno/quality/invalid-subject-notifications.bru tools/bruno/quality/invalid-subject-bff.bru; do
             (cd tools/bruno && npx --yes @usebruno/cli@4.1.0 run "../../$request" -r --env local-oidc --env-var "invalidSubjectToken=$invalid_subject_token")
           done
-          docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml down -v
+          # Preserve the Keycloak/PostgreSQL volumes so tokens minted before the
+          # isolated invalid-subject phase remain valid for the following E2E run.
+          docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml down
           docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
           make e2e-live
           make e2e-offline

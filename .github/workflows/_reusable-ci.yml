@@ -192,6 +192,13 @@ jobs:
           wrong_audience_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$wrong_audience_response")"
           test -n "$wrong_audience_token" || { echo "Keycloak returned no negative-audience token"; exit 2; }
           echo "wrong_audience_token=$wrong_audience_token" >> "$GITHUB_OUTPUT"
+          wrong_issuer_response="$(curl --fail-with-body --silent --show-error \
+            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
+            --data 'grant_type=client_credentials&client_id=pennywise-ci-wrong-issuer&client_secret=pennywise-ci-wrong-issuer-local-only' \
+            http://idp-keycloak:8080/realms/pennywise-other/protocol/openid-connect/token)"
+          wrong_issuer_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$wrong_issuer_response")"
+          test -n "$wrong_issuer_token" || { echo "Keycloak returned no negative-issuer token"; exit 2; }
+          echo "wrong_issuer_token=$wrong_issuer_token" >> "$GITHUB_OUTPUT"
       - name: Run public-interface acceptance and E2E suites
         env:
           BRUNO_ENV: local-oidc
@@ -199,6 +206,7 @@ jobs:
           PENNYWISE_BRUNO_TOKEN: ${{ steps.oidc-token.outputs.token }}
           PENNYWISE_BRUNO_WRONG_AUDIENCE_TOKEN: ${{ steps.oidc-token.outputs.wrong_audience_token }}
           BEARER_TOKEN: ${{ steps.oidc-token.outputs.token }}
+          WRONG_ISSUER_TOKEN: ${{ steps.oidc-token.outputs.wrong_issuer_token }}
         run: |
           make acceptance-live
           make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"

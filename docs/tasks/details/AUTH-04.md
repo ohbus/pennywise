@@ -72,13 +72,11 @@ subject and independently checks group membership in the owning service.
   Keycloak-specific SDK or claim is used.
 - Real Keycloak issuer availability and signed-token REST/GraphQL HTTP journeys
   are verified in the local Compose fixture. Bruno now also verifies malformed
-  bearer rejection at all four application boundaries. The wrong-issuer,
-  wrong-audience, expiry, signature, algorithm, subject, and WebSocket
-  wrong-audience, forged-signature, and unsupported-algorithm rejection are now
-  verified across all four HTTP boundaries. Wrong-issuer, expiry, subject, and
-  forged-token WebSocket upgrade rejection is now verified. Wrong-issuer,
-  expiry, and invalid-subject cases remain open and must not be inferred from
-  the happy path.
+  bearer rejection at all four application boundaries. Wrong-audience,
+  wrong-issuer, forged-signature, and unsupported-algorithm rejection are
+  verified across all four HTTP boundaries. Forged-token WebSocket upgrade
+  rejection is also verified. Expiry and invalid-subject cases remain open and
+  must not be inferred from the happy path.
 
 ## Next implementation increment
 

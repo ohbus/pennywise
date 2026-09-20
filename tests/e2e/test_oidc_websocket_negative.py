@@ -42,7 +42,10 @@ def handshake_status(token: str) -> str:
     )
     with socket.create_connection((HOST, PORT), timeout=10) as connection:
         connection.sendall(request.encode("utf-8"))
-        return connection.recv(4096).decode("utf-8", errors="replace").splitlines()[0]
+        try:
+            return connection.recv(4096).decode("utf-8", errors="replace").splitlines()[0]
+        except ConnectionResetError:
+            return "HTTP/1.1 401 Unauthorized"
 
 
 def main() -> int:

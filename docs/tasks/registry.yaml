@@ -4868,6 +4868,71 @@
       "evidence": [],
       "reviewer": "/root",
       "blocker": "Requires production-like environment and approved operational test procedures."
+    },
+    {
+      "id": "AUTH-05",
+      "parent_id": "AUTH-01",
+      "title": "Remove weaker local authentication modes",
+      "phase": "security",
+      "status": "in_progress",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["AUTH-03", "AUTH-04"],
+      "owned_paths": [
+        "app/*/src/main/kotlin/**/*SecurityConfig.kt",
+        "docs/operations/",
+        "docs/tasks/details/AUTH-05.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-05.md",
+      "acceptance_criteria": [
+        "No runtime application path accepts an arbitrary bearer string as an identity.",
+        "Local applications use local-oidc and the same provider-neutral validation policy as staging and production.",
+        "Missing local OIDC configuration fails closed."
+      ],
+      "validation_commands": [
+        "./gradlew.bat compileKotlin --no-daemon",
+        "./gradlew.bat :libs:security:test --rerun-tasks --no-daemon",
+        "docker compose -f infra/local/docker-compose.yml -f infra/local/docker-compose.dev.yml config --quiet",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Removed the four local passthrough security configurations; local signed-token E2E remains AUTH-06 evidence."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "AUTH-07",
+      "parent_id": "AUTH-01",
+      "title": "Define Pennywise-owned passwordless authentication contract",
+      "phase": "security",
+      "status": "planned",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["AUTH-05", "NOT-06"],
+      "owned_paths": [
+        "contracts/rest/",
+        "app/accounts/src/main/kotlin/**/*auth*/",
+        "app/notifications/src/main/kotlin/**/*email*/",
+        "docs/tasks/details/AUTH-07.md",
+        "docs/security/",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-07.md",
+      "acceptance_criteria": [
+        "Pennywise-owned magic-link and one-time-code endpoints are provider-neutral and environment-parity compliant.",
+        "Email normalization, generic responses, expiry, hashing, single-use redemption, throttling, and anti-enumeration are specified before implementation.",
+        "RFC 9700 authorization-code, PKCE, redirect, state, nonce, and refresh-token constraints are represented in contracts and tests."
+      ],
+      "validation_commands": [
+        "python3 tools/contracts/validate.py",
+        "python3 tools/contracts/validate_public_surface.py",
+        "git diff --check"
+      ],
+      "evidence": [],
+      "reviewer": "/root",
+      "blocker": null
     }
   ]
 }

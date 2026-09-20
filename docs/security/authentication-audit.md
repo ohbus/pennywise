@@ -110,6 +110,9 @@ or weaker token validation for convenience.
   resend, logout, and session operations.
 - `auth.identity` maps `(issuer, subject)` to a local account. Email is mutable
   contact data and never the authorization key.
+- Authentication normalizes email input at one boundary before lookup,
+  throttling, or credential creation; canonical email is not used as the
+  durable authorization identity.
 - `auth.provider` exposes provider-neutral ports; Keycloak/Auth0/etc. are
   infrastructure adapters.
 - Browser clients receive secure HttpOnly SameSite-controlled sessions. Native
@@ -132,7 +135,7 @@ validated provider-qualified subject and enforce its own resource policy.
 | Phase | Task | Outcome | Required evidence | Status |
 |---|---|---|---|---|
 | P0 | AUTH-04 | Complete JWT policy and servlet/reactive parity | signed-token unit matrix and invalid-token probes | in progress |
-| P0 | AUTH-05 | Isolate passthrough mode | localhost-only binding, warning, profile tests | planned |
+| P0 | AUTH-05 | Remove weaker local mode | no raw-token runtime path; local OIDC profile tests | in progress |
 | P0 | AUTH-06 | Prove local Keycloak integration | real REST/GraphQL/WS token journeys | in progress |
 | P0 | AUTH-07 | Define Pennywise-owned auth contracts | API/session contract and threat model | planned |
 | P0 | AUTH-08 | Implement identity and session issuance | persistence and provider adapter tests | planned |

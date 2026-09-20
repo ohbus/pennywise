@@ -86,7 +86,8 @@ shell launches must set them before the corresponding Gradle `bootRun` task.
 | Notifications | 8083 | `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pennywise_notifications`, datasource and RabbitMQ values, email host `localhost`, email port `1025` |
 | BFF | 8080 | Accounts URL `http://localhost:8081`, Expense Core URL `http://localhost:8082` |
 
-Set `SPRING_PROFILES_ACTIVE=local` and `SERVER_PORT` to the table's port. The
+Set `SPRING_PROFILES_ACTIVE=local-oidc`, configure the local Keycloak issuer and
+audience, and set `SERVER_PORT` to the table's port. The
 exact variable names are version-controlled in `.run/`.
 
 ## Health and startup order

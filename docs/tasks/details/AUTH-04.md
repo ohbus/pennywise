@@ -14,6 +14,12 @@ managed provider can be substituted without domain changes.
   unit tests, and invalid-token contract coverage.
 - Keycloak Compose provisioning and real-token journeys are AUTH-06.
 
+The implementation must visibly scream authentication capabilities through
+feature packages, then layer each feature internally. It follows modular DDD
+and Hexagonal Architecture: JWT validation is exposed through ports, and
+Spring servlet/reactive decoders plus Keycloak discovery are infrastructure
+adapters rather than domain dependencies.
+
 ## Validation rules
 
 Every protected request must validate:

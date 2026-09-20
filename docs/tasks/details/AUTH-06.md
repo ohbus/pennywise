@@ -21,6 +21,11 @@ use those names rather than localhost or ambiguous container identifiers.
 - Health checks and startup dependencies use these stable names.
 - Real signed tokens replace arbitrary local bearer strings in OIDC E2E tests.
 
+The Compose/Keycloak integration is an infrastructure adapter inside the
+authentication boundary. It must not leak realm/bootstrap details into domain
+or application packages and must remain replaceable through the OIDC provider
+port.
+
 ## Acceptance criteria
 
 - Dependency and full-stack Compose configurations render successfully.

@@ -23,6 +23,17 @@ hosted pages are reserved for consent, MFA, recovery, or other step-up flows.
 Access credentials must use short-lived access tokens and rotating refresh
 tokens, or an equivalent secure server-side session for browser clients.
 
+## Architecture shape
+
+Authentication uses Screaming Architecture: the top-level packages and modules
+must make the business capabilities visible (`login`, `identity`, `session`,
+and `provider`) rather than exposing framework or vendor names. Each feature
+uses internal layering with modular DDD and Hexagonal Architecture: domain and
+application policies depend on inbound/outbound ports, while Spring Security,
+Keycloak, email, persistence, and HTTP/WebSocket implementations remain
+replaceable adapters. Shared `libs/security` contains only technical OIDC/JWT
+primitives and no login or business workflow.
+
 ## Initial findings
 
 - The `local` profile accepts any bearer value as the subject and performs no

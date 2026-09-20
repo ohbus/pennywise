@@ -1,0 +1,21 @@
+meta {
+  name: Wrong audience is rejected by Expense Core
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{wrongAudienceToken}}
+}
+
+tests {
+  test("wrong audience is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

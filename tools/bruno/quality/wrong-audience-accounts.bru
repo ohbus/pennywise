@@ -1,0 +1,21 @@
+meta {
+  name: Wrong audience is rejected by Accounts
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrlAccounts}}/accounts/v1/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{wrongAudienceToken}}
+}
+
+tests {
+  test("wrong audience is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

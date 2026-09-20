@@ -78,6 +78,11 @@ subject and independently checks group membership in the owning service.
   rejection is also verified. Expiry and invalid-subject cases remain open and
   must not be inferred from the happy path.
 
+The shared security module also centralizes OIDC claim names, OAuth rejection
+codes, algorithm policy messages, and deployment configuration messages in
+`OidcSecurityConstants`; servlet, reactive, and startup-guard adapters consume
+that single policy vocabulary.
+
 ## Next implementation increment
 
 The shared security library will add one provider-neutral claim-policy port and

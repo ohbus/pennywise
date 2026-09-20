@@ -25,4 +25,23 @@ object OidcSecurityConstants {
 
     /** Safe configuration error when no audience is configured. */
     const val AUDIENCE_REQUIRED_MESSAGE: String = "OIDC audience is required"
+
+    /** Configuration error raised when no signing algorithm is allowed. */
+    const val SIGNING_ALGORITHM_REQUIRED_MESSAGE: String = "At least one OIDC signing algorithm is required"
+
+    /** Configuration error raised when symmetric signing is configured. */
+    const val SYMMETRIC_SIGNING_UNSUPPORTED_MESSAGE: String =
+        "Symmetric OIDC signing algorithms are not supported"
+
+    /** Safe production/staging configuration error when the issuer is incomplete. */
+    const val DEPLOYMENT_ISSUER_REQUIRED_MESSAGE: String =
+        "OIDC issuer URI is required in production and staging"
+
+    /** Safe production/staging configuration error when the audience is incomplete. */
+    const val DEPLOYMENT_AUDIENCE_REQUIRED_MESSAGE: String =
+        "OIDC audience is required in production and staging"
+
+    /** Safe production/staging configuration error when the issuer is not HTTPS. */
+    const val DEPLOYMENT_ISSUER_HTTPS_MESSAGE: String =
+        "OIDC issuer URI must use HTTPS outside local development"
 }

@@ -22,14 +22,10 @@ class OidcConfigurationGuard(
     @Value("\${spring.profiles.active:}") private val activeProfiles: String
 ) {
     init {
-        require(issuerUri.isNotBlank()) {
-            "OIDC issuer URI is required in production and staging"
-        }
-        require(audience.isNotBlank()) {
-            "OIDC audience is required in production and staging"
-        }
+        require(issuerUri.isNotBlank()) { OidcSecurityConstants.DEPLOYMENT_ISSUER_REQUIRED_MESSAGE }
+        require(audience.isNotBlank()) { OidcSecurityConstants.DEPLOYMENT_AUDIENCE_REQUIRED_MESSAGE }
         require(issuerUri.startsWith("https://") || activeProfiles.split(',').contains("local-oidc")) {
-            "OIDC issuer URI must use HTTPS outside local development"
+            OidcSecurityConstants.DEPLOYMENT_ISSUER_HTTPS_MESSAGE
         }
     }
 }

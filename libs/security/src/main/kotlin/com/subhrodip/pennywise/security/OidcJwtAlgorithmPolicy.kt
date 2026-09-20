@@ -12,8 +12,10 @@ class OidcJwtAlgorithmPolicy(
     private val allowed: Set<String> = allowedAlgorithms.map(String::trim).filter(String::isNotEmpty).toSet()
 
     init {
-        require(allowed.isNotEmpty()) { "At least one OIDC signing algorithm is required" }
-        require(allowed.none { it.startsWith("HS") }) { "Symmetric OIDC signing algorithms are not supported" }
+        require(allowed.isNotEmpty()) { OidcSecurityConstants.SIGNING_ALGORITHM_REQUIRED_MESSAGE }
+        require(allowed.none { it.startsWith("HS") }) {
+            OidcSecurityConstants.SYMMETRIC_SIGNING_UNSUPPORTED_MESSAGE
+        }
     }
 
     override fun validate(token: Jwt): OAuth2TokenValidatorResult {

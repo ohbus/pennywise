@@ -58,3 +58,17 @@ implicit or password grants, following RFC 9700.
 
 Registered; contract design is the next implementation gate. No runtime login
 endpoint is claimed yet.
+
+## Implementation increment: canonical email value
+
+The first runtime slice adds `auth.identity.EmailAddress` in Accounts. It
+trims outer Unicode whitespace, applies Unicode-aware root-locale case folding,
+converts the domain to canonical ASCII using IDN rules, and validates bounded
+local/domain lengths. The canonical value is suitable for account lookup,
+rate-limit keys, and credential issuance. It is not used as the durable
+authorization identity, which remains `(issuer, sub)`.
+
+Tests cover normalization, Unicode domain conversion, malformed addresses,
+empty components, invalid domain labels, and length limits. Provider adapters,
+database migration, login endpoints, and passwordless credential persistence
+remain later AUTH-07/AUTH-08 slices.

@@ -147,6 +147,14 @@ conditional repository transition. It returns generic outcomes so controllers
 cannot accidentally disclose whether an email or credential exists. Email
 delivery and HTTP mapping remain adapters.
 
+The AUTH-07A contract increment adds canonical Accounts endpoint constants and
+OpenAPI definitions for login start, credential verification, refresh, and
+logout. The contract deliberately exposes only a generic `ACCEPTED` login-start
+response and bounds credential/token input sizes. Runtime controller wiring is
+deferred until the atomic rate-limit configuration and concrete Notifications
+delivery adapter are available; no placeholder sender or insecure fallback is
+introduced.
+
 Before the login-start controller is exposed, AUTH-07 adds an abuse-policy
 port. It evaluates canonical email/network keys against a configured request
 window, resend cooldown, and attempt budget, returning only a generic allow or

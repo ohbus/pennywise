@@ -17,6 +17,10 @@ object ApiEndpoints {
         /** Version 1 endpoints for Accounts service */
         object V1 {
             const val BASE: String = "/accounts/v1"
+            const val LOGIN_START: String = "/auth/login/start"
+            const val LOGIN_VERIFY: String = "/auth/login/verify"
+            const val TOKEN_REFRESH: String = "/auth/token/refresh"
+            const val LOGOUT: String = "/auth/logout"
             const val ME: String = "/me"
             const val ME_DELETION_REQUEST: String = "/me/deletion-request"
             const val ME_EXPORT_REQUEST: String = "/me/export-request"
@@ -25,6 +29,10 @@ object ApiEndpoints {
             const val PROFILES_BATCH: String = "/profiles/batch"
 
             const val PATH_ME: String = "$BASE$ME"
+            const val PATH_LOGIN_START: String = "$BASE$LOGIN_START"
+            const val PATH_LOGIN_VERIFY: String = "$BASE$LOGIN_VERIFY"
+            const val PATH_TOKEN_REFRESH: String = "$BASE$TOKEN_REFRESH"
+            const val PATH_LOGOUT: String = "$BASE$LOGOUT"
             const val PATH_ME_DELETION_REQUEST: String = "$BASE$ME_DELETION_REQUEST"
             const val PATH_ME_EXPORT_REQUEST: String = "$BASE$ME_EXPORT_REQUEST"
             const val PATH_ME_EXPORT_REQUESTS: String = "$BASE$ME_EXPORT_REQUESTS"

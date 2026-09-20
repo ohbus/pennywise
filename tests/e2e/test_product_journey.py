@@ -84,6 +84,18 @@ def graphql_query(
     return res.get("data", {})
 
 
+def bootstrap_profile(url: str, bearer: str) -> tuple[int, Any]:
+    """Read a profile while allowing the freshly started OIDC decoder to settle."""
+    last_result: tuple[int, Any] = (503, {"error": "profile bootstrap did not run"})
+    for attempt in range(3):
+        last_result = request_json(url, bearer=bearer)
+        if last_result[0] == 200 or last_result[0] not in (401, 502, 503):
+            return last_result
+        if attempt < 2:
+            time.sleep(2)
+    return last_result
+
+
 def run_e2e_tests() -> int:
     """Run the product lifecycle journey with explicit UTF-8 console output."""
     if isinstance(sys.stdout, io.TextIOWrapper):
@@ -127,8 +139,8 @@ def run_e2e_tests() -> int:
         raise RuntimeError("E2E persona variables must contain signed tokens")
 
     # Query 'me' for Alice via Accounts API
-    status_a, profile_a = request_json(f"{ACCOUNTS_URL}/accounts/v1/me", bearer=user_a)
-    assert status_a == 200, f"Failed to get profile for Alice: {profile_a}"
+    status_a, profile_a = bootstrap_profile(f"{ACCOUNTS_URL}/accounts/v1/me", user_a)
+    assert status_a == 200, f"Failed to get profile for Alice: HTTP {status_a} ({profile_a})"
     alice_id = profile_a["accountId"]
     print(f"  ✓ Alice profile created: accountId={alice_id}, displayName={profile_a['displayName']}")
 

@@ -112,3 +112,10 @@ issue and persist only a digest-backed credential, and verify through the
 conditional repository transition. It returns generic outcomes so controllers
 cannot accidentally disclose whether an email or credential exists. Email
 delivery and HTTP mapping remain adapters.
+
+Deployment wiring for the credential core is profile-gated and fail-closed:
+`PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET` is required in `local-oidc`,
+`staging`, and `production`. It has no application default and is never
+committed. The configured secret is used only by the HMAC digest adapter; a
+rotation procedure and existing-credential migration policy must be completed
+before production secret rotation.

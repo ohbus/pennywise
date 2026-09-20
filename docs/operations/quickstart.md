@@ -30,6 +30,12 @@ For the complete containerized environment, run:
 make full-up
 ```
 
+Before the first local start, provide the required credential-digest secret
+without committing it. Copy `infra/local/auth.env.example` to a private env
+file or export `PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET` with at least 32
+random bytes encoded as base64. The Compose profile fails closed when it is
+missing; local authentication intentionally does not use a shared default.
+
 This builds and runs PostgreSQL 17, RabbitMQ 4.3, Mailpit, Accounts, Expense
 Core, Notifications, and BFF from `infra/local/docker-compose.dev.yml`. Stop it
 with `make full-down`; `compose-dev-up`, `compose-dev-down`, `compose-up`, and

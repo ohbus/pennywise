@@ -92,5 +92,7 @@ subject, and key rotation.
 - `./gradlew.bat :libs:security:test --rerun-tasks --no-daemon` passed all four
   guard tests.
 - `py -3 tools/contracts/validate.py` and `git diff --check` passed.
-- Full JWT decoder validation, Keycloak Compose provisioning, Bruno invalid-token
-  coverage, and real-provider E2E remain open for AUTH-04/AUTH-06.
+- Full invalid-token matrix and WebSocket-specific rejection remain AUTH-04/AUTH-06
+  follow-up evidence. Provider-backed REST and GraphQL HTTP boundaries are now
+  verified through the local Keycloak fixture, including centralized BFF bearer
+  forwarding and readiness-gated startup.

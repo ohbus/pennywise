@@ -70,9 +70,10 @@ subject and independently checks group membership in the owning service.
   supplied by `PENNYWISE_SECURITY_OIDC_AUDIENCE`.
 - Keycloak discovery/JWK is used through standard Spring OIDC APIs; no
   Keycloak-specific SDK or claim is used.
-- Real Keycloak issuer availability, signed-token integration tests, and
-  invalid-token REST/GraphQL/WebSocket E2E remain open and must not be inferred
-  from compilation.
+- Real Keycloak issuer availability and signed-token REST/GraphQL HTTP journeys
+  are now verified in the local Compose fixture. The wrong-issuer, wrong-
+  audience, expiry, signature, algorithm, subject, and WebSocket invalid-token
+  matrix remains open and must not be inferred from the successful happy path.
 
 ## Next implementation increment
 

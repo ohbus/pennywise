@@ -47,9 +47,9 @@ port.
 - The `pennywise` realm imported successfully from the checked-in fixture.
 - OIDC discovery returned HTTP 200 at
   `http://localhost:8090/realms/pennywise/.well-known/openid-configuration`.
-- Application token acquisition and real-token REST/GraphQL/WebSocket journeys
-  remain open; the current applications still run under the local passthrough
-  profile.
+- Application token acquisition and real-token REST/GraphQL HTTP journeys are
+  verified under `local-oidc`; WebSocket journeys and invalid-token rejection
+  remain open. The applications no longer use the local passthrough profile.
 - Operations, README, Bruno environment, and E2E instructions are updated.
 - Compose image names, service hostnames, credentials, ports, realm, issuer,
   audience, and inter-service URLs are environment-backed with meaningful
@@ -68,9 +68,8 @@ port.
 
 - Seeded-user token acquisition and replacement of every legacy E2E fixture
   identity with valid signed tokens are still open.
-- Full-stack application startup under `local-oidc`, real REST/GraphQL/
-  WebSocket journeys, passwordless Mailpit delivery, and invalid/expired-token
-  rejection remain required before AUTH-06 can close.
+- Full-stack `local-oidc` WebSocket journeys, passwordless Mailpit delivery, and
+  invalid/expired-token rejection remain required before AUTH-06 can close.
 
 ## Environment parity decision
 

@@ -1,0 +1,21 @@
+meta {
+  name: Invalid subject token is rejected by Expense Core
+  type: http
+  seq: 20
+}
+
+get {
+  url: {{baseUrlExpenseCore}}/expense-core/v1/groups
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{invalidSubjectToken}}
+}
+
+tests {
+  test("invalid subject token is rejected", function() {
+    expect(res.getStatus()).to.eql(401);
+  });
+}

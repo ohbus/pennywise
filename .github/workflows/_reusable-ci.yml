@@ -231,6 +231,16 @@ jobs:
           make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"
           python3 tests/e2e/test_oidc_negative.py
           python3 tests/e2e/test_oidc_websocket_negative.py
+          docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml up -d --build --wait
+          invalid_subject_token="$(curl --fail-with-body --silent --show-error -X POST http://localhost:8091/token | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')"
+          test -n "$invalid_subject_token"
+          INVALID_SUBJECT_TOKEN="$invalid_subject_token" python3 tests/e2e/test_oidc_negative.py
+          INVALID_SUBJECT_TOKEN="$invalid_subject_token" BEARER_TOKEN="$BEARER_TOKEN" python3 tests/e2e/test_oidc_websocket_negative.py
+          for request in tools/bruno/quality/invalid-subject-accounts.bru tools/bruno/quality/invalid-subject-expense-core.bru tools/bruno/quality/invalid-subject-notifications.bru tools/bruno/quality/invalid-subject-bff.bru; do
+            (cd tools/bruno && npx --yes @usebruno/cli@4.1.0 run "../../$request" -r --env local-oidc --env-var "invalidSubjectToken=$invalid_subject_token")
+          done
+          docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml down -v
+          docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
           make e2e-live
           make e2e-offline
           make e2e-concurrency

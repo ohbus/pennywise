@@ -9,6 +9,7 @@ from typing import Final
 
 
 TOKEN: Final[str] = os.environ.get("BEARER_TOKEN", "")
+INVALID_SUBJECT_TOKEN: Final[str] = os.environ.get("INVALID_SUBJECT_TOKEN", "")
 HOST: Final[str] = "localhost"
 PORT: Final[int] = 8080
 PATH: Final[str] = "/graphql"
@@ -48,10 +49,13 @@ def main() -> int:
     """Reject a forged-token GraphQL WebSocket upgrade."""
     if not TOKEN:
         raise RuntimeError("BEARER_TOKEN must contain a signed access token")
-    status = handshake_status(tamper_signature(TOKEN))
-    print(status)
-    if " 101 " in status:
-        raise AssertionError("forged token was accepted for WebSocket upgrade")
+    for name, token in (("forged", tamper_signature(TOKEN)), ("invalid-subject", INVALID_SUBJECT_TOKEN)):
+        if not token:
+            continue
+        status = handshake_status(token)
+        print(f"{name}: {status}")
+        if " 101 " in status:
+            raise AssertionError(f"{name} token was accepted for WebSocket upgrade")
     return 0
 
 

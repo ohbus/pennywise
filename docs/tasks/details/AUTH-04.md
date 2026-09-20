@@ -77,9 +77,9 @@ subject and independently checks group membership in the owning service.
   verified across all four HTTP boundaries. Forged-token WebSocket upgrade
   rejection is also verified. A separately signed token from the configured
   `pennywise` issuer is rejected after its one-second expiry and the configured
-  clock-skew window at all four HTTP boundaries. Invalid-subject provider
-  journeys remain open and must not be
-  inferred from the happy path.
+  clock-skew window at all four HTTP boundaries. A dedicated provider-signed
+  whitespace-only-subject token is rejected across REST, GraphQL, WebSocket,
+  and Bruno boundaries; this evidence is isolated from production Compose.
 
 The shared security module also centralizes OIDC claim names, OAuth rejection
 codes, algorithm policy messages, and deployment configuration messages in
@@ -89,8 +89,10 @@ that single policy vocabulary.
 Provider-neutral temporal regression tests now prove that the default issuer
 validator rejects expired and not-yet-valid JWT claims and accepts a token
 inside its validity window. Live provider-issued expiry is also covered by a
-real provider-issued token; invalid-subject journeys remain separate acceptance
-evidence and are still open.
+real provider-issued token; invalid-subject journeys use the isolated
+`tests/fixtures/invalid_subject_oidc` issuer and are executed against REST,
+GraphQL, WebSocket, Bruno, and CI boundaries. The fixture has its own ephemeral
+RSA key and is never part of a production Compose profile.
 
 ## Delivered policy increments
 

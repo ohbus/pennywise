@@ -17,6 +17,7 @@ from urllib.request import Request, urlopen
 TOKEN: Final[str] = os.environ.get("BEARER_TOKEN", "")
 WRONG_ISSUER_TOKEN: Final[str] = os.environ.get("WRONG_ISSUER_TOKEN", "")
 EXPIRED_TOKEN: Final[str] = os.environ.get("EXPIRED_TOKEN", "")
+INVALID_SUBJECT_TOKEN: Final[str] = os.environ.get("INVALID_SUBJECT_TOKEN", "")
 EXPECTED_STATUS: Final[int] = 401
 
 
@@ -98,6 +99,8 @@ def main() -> int:
         failures.extend(run_variant("wrong-issuer", WRONG_ISSUER_TOKEN))
     if EXPIRED_TOKEN:
         failures.extend(run_variant("expired", EXPIRED_TOKEN))
+    if INVALID_SUBJECT_TOKEN:
+        failures.extend(run_variant("invalid-subject", INVALID_SUBJECT_TOKEN))
     if failures:
         raise AssertionError("; ".join(failures))
     return 0

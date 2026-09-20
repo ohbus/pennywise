@@ -64,14 +64,12 @@ port.
   `:libs:security:test --rerun-tasks --no-daemon` passed. The latter executed
   all four security-library tests.
 
-## Remaining gates
+## Verification closure
 
-- Seeded-user token acquisition and replacement of every legacy E2E fixture
-  identity with valid signed tokens are still open.
+- Compatibility-only seeded-user fixtures are isolated from live CI.
 - Full-stack `local-oidc` WebSocket journeys, passwordless Mailpit delivery,
-  malformed-bearer, wrong-issuer, and expired-token rejection are verified;
-  compatibility-only seeded-user fixtures are isolated from live CI; invalid-
-  subject provider coverage remains required before AUTH-06 can close.
+  malformed-bearer, wrong-issuer, expired-token, and provider-signed
+  invalid-subject rejection are verified.
 
 ## Environment parity decision
 

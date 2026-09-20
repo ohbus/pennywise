@@ -1,6 +1,8 @@
 package com.subhrodip.pennywise.accounts.security
 
 import java.net.URI
+import com.subhrodip.pennywise.security.OidcJwtClaimPolicy
+import com.subhrodip.pennywise.security.OidcSecurityConstants
 
 /**
  * Validates OIDC issuer and subject format for incoming claims.
@@ -15,8 +17,12 @@ class OidcSubjectValidator(private val expectedIssuer: URI) {
      * @return Validated subject identifier string.
      */
     fun validate(claims: OidcClaims): String {
-        require(URI.create(claims.issuer) == expectedIssuer) { "OIDC issuer is not trusted" }
-        require(claims.subject.matches(Regex("^[A-Za-z0-9|._:-]{1,200}$"))) { "OIDC subject is invalid" }
+        require(URI.create(claims.issuer) == expectedIssuer) {
+            OidcSecurityConstants.ISSUER_INVALID_DESCRIPTION
+        }
+        require(OidcJwtClaimPolicy.isValidSubject(claims.subject)) {
+            OidcSecurityConstants.SUBJECT_INVALID_DESCRIPTION
+        }
         return claims.subject
     }
 }

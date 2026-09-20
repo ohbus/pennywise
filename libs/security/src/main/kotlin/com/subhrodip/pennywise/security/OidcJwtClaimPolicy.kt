@@ -12,6 +12,15 @@ object OidcJwtClaimPolicy {
     private val subjectPattern = Regex("^[^\\s]{1,$MAX_SUBJECT_LENGTH}$")
 
     /**
+     * Checks the provider-neutral durable-subject invariant without requiring
+     * a decoded JWT wrapper.
+     *
+     * @param subject candidate provider subject.
+     * @return true only for bounded, non-blank, whitespace-free subjects.
+     */
+    fun isValidSubject(subject: String): Boolean = subjectPattern.matches(subject)
+
+    /**
      * Creates the subject validator used by servlet and reactive decoders.
      *
      * A subject must be present, non-blank, contain no whitespace, and remain
@@ -21,6 +30,6 @@ object OidcJwtClaimPolicy {
      * @return validator that fails closed for absent or malformed subjects.
      */
     fun subjectValidator(): OAuth2TokenValidator<Jwt> = JwtClaimValidator<Any>(OidcSecurityConstants.SUBJECT_CLAIM) { subject ->
-        subject is String && subjectPattern.matches(subject)
+        subject is String && isValidSubject(subject)
     }
 }

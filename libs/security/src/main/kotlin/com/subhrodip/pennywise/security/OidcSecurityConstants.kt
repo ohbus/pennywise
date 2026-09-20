@@ -8,6 +8,12 @@ object OidcSecurityConstants {
     /** JWT subject claim used as the only durable provider identity. */
     const val SUBJECT_CLAIM: String = "sub"
 
+    /** Safe rejection description for a missing or malformed subject claim. */
+    const val SUBJECT_INVALID_DESCRIPTION: String = "OIDC subject is invalid"
+
+    /** Safe rejection description for an issuer outside the configured trust boundary. */
+    const val ISSUER_INVALID_DESCRIPTION: String = "OIDC issuer is not trusted"
+
     /** JWT audience claim used for API resource targeting. */
     const val AUDIENCE_CLAIM: String = "aud"
 

@@ -87,3 +87,11 @@ only to the email-delivery adapter; persistence receives only a keyed digest,
 expiry, attempt budget, and consumed state. Verification is constant-time and
 must be completed by a later atomic persistence adapter. This slice does not
 claim endpoint, database, rate-limit, or delivery completion.
+
+The persistence increment adds a Flyway schema for login credentials and
+refresh-token sessions. It stores canonical email, HMAC digests, expiry,
+attempt/consumption state, session family identifiers, revocation timestamps,
+and bounded device metadata only. It never stores raw codes, raw refresh
+tokens, access tokens, or provider-specific credentials. Conditional updates
+and unique identifiers are required for atomic redemption and refresh reuse
+detection in the repository adapter.

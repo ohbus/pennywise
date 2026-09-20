@@ -75,8 +75,10 @@ subject and independently checks group membership in the owning service.
   bearer rejection at all four application boundaries. Wrong-audience,
   wrong-issuer, forged-signature, and unsupported-algorithm rejection are
   verified across all four HTTP boundaries. Forged-token WebSocket upgrade
-  rejection is also verified. Expiry and invalid-subject cases remain open and
-  must not be inferred from the happy path.
+  rejection is also verified. A separately signed token from the one-second
+  `pennywise-expiring` realm is rejected after expiry at all four HTTP
+  boundaries. Invalid-subject provider journeys remain open and must not be
+  inferred from the happy path.
 
 The shared security module also centralizes OIDC claim names, OAuth rejection
 codes, algorithm policy messages, and deployment configuration messages in
@@ -86,6 +88,7 @@ that single policy vocabulary.
 Provider-neutral temporal regression tests now prove that the default issuer
 validator rejects expired and not-yet-valid JWT claims and accepts a token
 inside its validity window. Live provider-issued expiry and invalid-subject
+expiry is now also covered by a real provider-issued token; invalid-subject
 journeys remain separate acceptance evidence and are still open.
 
 ## Delivered policy increments

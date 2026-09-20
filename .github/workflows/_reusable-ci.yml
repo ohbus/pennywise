@@ -199,6 +199,14 @@ jobs:
           wrong_issuer_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$wrong_issuer_response")"
           test -n "$wrong_issuer_token" || { echo "Keycloak returned no negative-issuer token"; exit 2; }
           echo "wrong_issuer_token=$wrong_issuer_token" >> "$GITHUB_OUTPUT"
+          expiring_response="$(curl --fail-with-body --silent --show-error \
+            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
+            --data 'grant_type=client_credentials&client_id=pennywise-ci-expiring&client_secret=pennywise-ci-expiring-local-only' \
+            http://idp-keycloak:8080/realms/pennywise-expiring/protocol/openid-connect/token)"
+          expiring_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$expiring_response")"
+          test -n "$expiring_token" || { echo "Keycloak returned no expiring token"; exit 2; }
+          sleep 2
+          echo "expired_token=$expiring_token" >> "$GITHUB_OUTPUT"
       - name: Run public-interface acceptance and E2E suites
         env:
           BRUNO_ENV: local-oidc
@@ -208,6 +216,7 @@ jobs:
           PENNYWISE_BRUNO_WRONG_ISSUER_TOKEN: ${{ steps.oidc-token.outputs.wrong_issuer_token }}
           BEARER_TOKEN: ${{ steps.oidc-token.outputs.token }}
           WRONG_ISSUER_TOKEN: ${{ steps.oidc-token.outputs.wrong_issuer_token }}
+          EXPIRED_TOKEN: ${{ steps.oidc-token.outputs.expired_token }}
         run: |
           make acceptance-live
           make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"

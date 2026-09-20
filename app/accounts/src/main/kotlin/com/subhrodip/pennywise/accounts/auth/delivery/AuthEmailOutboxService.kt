@@ -27,4 +27,16 @@ class AuthEmailOutboxService(
         record.attempts += 1
         return repository.save(record)
     }
+
+    /** Marks a claimed event as published; stale or duplicate acknowledgements are ignored. */
+    @Transactional
+    fun acknowledge(eventId: UUID, now: Instant): Boolean = repository.acknowledge(eventId, now) == 1
+
+    /** Retries a claimed event or parks it when the bounded attempt budget is exhausted. */
+    @Transactional
+    fun reject(eventId: UUID, now: Instant, retryAfter: Duration, maximumAttempts: Int): Boolean {
+        require(!retryAfter.isNegative) { "retryAfter must not be negative" }
+        require(maximumAttempts > 0) { "maximumAttempts must be positive" }
+        return repository.reject(eventId, maximumAttempts, now.plus(retryAfter)) == 1
+    }
 }

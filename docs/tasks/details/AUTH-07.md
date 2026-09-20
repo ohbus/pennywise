@@ -161,6 +161,12 @@ The outbox service now uses a pessimistic row lock and bounded lease timestamp
 so one worker claims an available event at a time; expired claims become
 eligible for retry.
 
+Lifecycle transitions use flush-and-clear semantics after conditional native
+state changes so a long-lived JPA persistence context cannot observe stale
+`CLAIMED`, `PUBLISHED`, or `PARKED` state. Acknowledgement and rejection are
+conditional on the current claim and therefore stale workers cannot overwrite
+newer delivery state.
+
 The first protection implementation adds `CredentialEnvelopeProtector` and an
 AES-GCM adapter. Each envelope uses a fresh 96-bit nonce, a 256-bit configured
 key, an explicit format version, and authenticated recipient/template context.

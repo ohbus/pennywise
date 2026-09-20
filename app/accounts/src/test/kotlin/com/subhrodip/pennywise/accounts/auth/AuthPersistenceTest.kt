@@ -108,4 +108,27 @@ class AuthPersistenceTest @Autowired constructor(
         assertEquals("first@example.com", claimed?.recipient)
         assertEquals(null, authEmailOutboxService.claim(now.plusMillis(2), Duration.ofSeconds(30)))
     }
+
+    @Test
+    fun `claimed outbox event can be acknowledged only once`() {
+        val now = Instant.now()
+        val eventId = UUID.randomUUID()
+        authEmailOutboxService.append(eventId, "ack@example.com", AuthEmailTemplate.LOGIN_LINK, "v1-a", now.plusSeconds(600), now)
+        authEmailOutboxService.claim(now.plusMillis(1), Duration.ofSeconds(30))
+
+        assertEquals(true, authEmailOutboxService.acknowledge(eventId, now.plusSeconds(2)))
+        assertEquals(false, authEmailOutboxService.acknowledge(eventId, now.plusSeconds(3)))
+        assertEquals("PUBLISHED", authEmailOutboxRepository.findByEventId(eventId)?.status)
+    }
+
+    @Test
+    fun `rejected event is parked at attempt limit`() {
+        val now = Instant.now()
+        val eventId = UUID.randomUUID()
+        authEmailOutboxService.append(eventId, "park@example.com", AuthEmailTemplate.LOGIN_CODE, "v1-p", now.plusSeconds(600), now)
+        authEmailOutboxService.claim(now.plusMillis(1), Duration.ofSeconds(30))
+
+        assertEquals(true, authEmailOutboxService.reject(eventId, now.plusSeconds(2), Duration.ZERO, 1))
+        assertEquals("PARKED", authEmailOutboxRepository.findByEventId(eventId)?.status)
+    }
 }

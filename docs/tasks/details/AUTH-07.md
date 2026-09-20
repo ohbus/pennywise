@@ -56,8 +56,12 @@ implicit or password grants, following RFC 9700.
 
 ## Status
 
-Registered; contract design is the next implementation gate. No runtime login
-endpoint is claimed yet.
+In progress. The current implementation contains the provider-neutral contract,
+email normalization, credential/session persistence primitives, abuse controls,
+delivery port, and login-start orchestration. It does not yet claim runtime
+login, refresh, logout, concrete email delivery, or live end-to-end completion.
+The evidence-based readiness review and remaining implementation slices are in
+[`docs/security/authentication-readiness-review.md`](../../security/authentication-readiness-review.md).
 
 ## Implementation increment: canonical email value
 

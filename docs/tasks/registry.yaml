@@ -4721,6 +4721,41 @@
       "blocker": null
     },
     {
+      "id": "AUTH-06",
+      "parent_id": "AUTH-01",
+      "title": "Add Keycloak environment and meaningful Compose hostnames",
+      "phase": "security",
+      "status": "planned",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["AUTH-04", "NOT-06", "OPS-09"],
+      "owned_paths": [
+        "infra/local/",
+        "tools/bruno/environments/",
+        "tests/e2e/",
+        "docs/operations/",
+        "docs/tasks/details/AUTH-06.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-06.md",
+      "acceptance_criteria": [
+        "Keycloak is a real OIDC provider in local and production-like Compose configurations with meaningful stable hostnames.",
+        "Real signed-token REST, GraphQL, and WebSocket journeys are executable and documented.",
+        "Provider configuration remains replaceable without domain or authorization code changes."
+      ],
+      "validation_commands": [
+        "make compose-config",
+        "make full-up",
+        "make acceptance-live",
+        "make bruno-run BRUNO_ENV=local-oidc",
+        "py -3 tools/contracts/validate.py",
+        "git diff --check"
+      ],
+      "evidence": [],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
       "id": "QA-07",
       "parent_id": "MILESTONE-QUALITY",
       "title": "Exhaustive public-interface integration coverage",

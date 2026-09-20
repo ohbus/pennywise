@@ -72,3 +72,9 @@ Tests cover normalization, Unicode domain conversion, malformed addresses,
 empty components, invalid domain labels, and length limits. Provider adapters,
 database migration, login endpoints, and passwordless credential persistence
 remain later AUTH-07/AUTH-08 slices.
+
+The provider-neutral endpoint contract is recorded in
+`docs/security/passwordless-api-contract.md` before controller or persistence
+implementation. It is intentionally application-owned so users remain on a
+Pennywise-branded flow; provider-hosted interaction is reserved for MFA,
+recovery, consent, or step-up requirements.

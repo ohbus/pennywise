@@ -4,4 +4,5 @@ package com.subhrodip.pennywise.bff.transport
 internal object BearerTokenContext {
     const val KEY: String = "pennywise.bff.bearer-token"
     const val WATERMARK_KEY: String = "pennywise.bff.required-watermark"
+    const val EXCHANGE_KEY: String = "pennywise.bff.server-exchange"
 }

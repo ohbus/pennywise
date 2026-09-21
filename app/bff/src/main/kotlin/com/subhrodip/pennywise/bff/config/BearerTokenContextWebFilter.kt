@@ -28,6 +28,7 @@ class BearerTokenContextWebFilter : WebFilter {
             var updated = context
             if (token != null) updated = updated.put(BearerTokenContext.KEY, token)
             if (watermark != null) updated = updated.put(BearerTokenContext.WATERMARK_KEY, watermark)
+            updated = updated.put(BearerTokenContext.EXCHANGE_KEY, exchange)
             updated
         }
     }

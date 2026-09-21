@@ -1,6 +1,9 @@
 package com.subhrodip.pennywise.expensecore.search
 
 import com.subhrodip.pennywise.errors.GlobalErrorHandler
+import com.subhrodip.pennywise.db.routing.DbContextHolder
+import com.subhrodip.pennywise.db.routing.DbOperationKind
+import com.subhrodip.pennywise.db.routing.ReadConsistency
 import com.subhrodip.pennywise.expensecore.categories.ExpenseCategory
 import com.subhrodip.pennywise.expensecore.groups.CreateGroupRequest
 import com.subhrodip.pennywise.expensecore.groups.InMemoryGroupStore
@@ -29,6 +32,7 @@ class SearchControllerTest {
 
     private lateinit var groupStore: InMemoryGroupStore
     private lateinit var searchStore: InMemorySearchStore
+    private lateinit var recordingSearchStore: RecordingSearchStore
     private lateinit var mvc: MockMvc
 
     private val alice = RequestPostProcessor { request -> request.userPrincipal = Principal { "alice" }; request }
@@ -38,10 +42,25 @@ class SearchControllerTest {
     fun setup() {
         groupStore = InMemoryGroupStore()
         searchStore = InMemorySearchStore()
-        val controller = SearchController(groupStore, searchStore)
+        recordingSearchStore = RecordingSearchStore(searchStore)
+        val controller = SearchController(groupStore, recordingSearchStore)
         mvc = MockMvcBuilders.standaloneSetup(controller)
             .setControllerAdvice(GlobalErrorHandler())
             .build()
+    }
+
+    @Test
+    fun `authorized search uses the approved eventual reader policy`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Reader policy", "TRIP", "EUR"))
+
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupSearch(group.groupId)).with(alice)
+        ).andExpect(status().isOk)
+
+        assertTrue(recordingSearchStore.context?.operationName == "expense.search")
+        assertTrue(recordingSearchStore.context?.kind == DbOperationKind.QUERY)
+        assertTrue(recordingSearchStore.context?.consistency == ReadConsistency.EVENTUAL)
+        assertTrue(recordingSearchStore.context?.readerEligible == true)
     }
 
     @Test
@@ -212,5 +231,14 @@ class SearchControllerTest {
                 .header("Accept", "application/json")
         )
             .andExpect(status().isNotAcceptable)
+    }
+}
+
+private class RecordingSearchStore(private val delegate: SearchStore) : SearchStore {
+    var context: com.subhrodip.pennywise.db.routing.DbExecutionContext? = null
+
+    override fun findSearchExpenses(query: SearchQuery): List<SearchExpense> {
+        context = DbContextHolder.current()
+        return delegate.findSearchExpenses(query)
     }
 }

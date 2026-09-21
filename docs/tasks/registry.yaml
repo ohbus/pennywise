@@ -5682,7 +5682,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Deliver Expense Core read-model and performance pilot",
       "phase": "cqrs_data_access",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "core",
       "owner_agent": "/root",
       "depends_on": ["DB-05", "DB-06"],
@@ -5690,7 +5690,7 @@
       "specification": "docs/tasks/details/DB-07.md",
       "acceptance_criteria": ["One approved historical/search query uses an explicit bounded DTO and policy.", "Authorization, route, stale behavior, query-plan, load, and writer rollback evidence exists."],
       "validation_commands": ["./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon", "git diff --check"],
-      "evidence": ["SearchController now keeps membership authorization before the query and scopes only expense.search and expense.search.export as eventual reader-eligible contexts; optional replica Compose config supplies writer and search-reader endpoints. SQL-side filtering/keyset pagination and route integration evidence remain open."],
+      "evidence": ["SearchController keeps membership authorization before the query and scopes only expense.search and expense.search.export as eventual reader-eligible contexts; SQL filtering/keyset pagination and optional replica configuration are present. SearchControllerTest now asserts the operation context at the adapter boundary; PostgreSQL plan/load and live rollback evidence remain open."],
       "reviewer": "/root",
       "blocker": null
     },

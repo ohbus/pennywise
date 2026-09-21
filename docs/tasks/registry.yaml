@@ -5801,7 +5801,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Execute one controlled replica pilot",
       "phase": "cqrs_data_access",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["DB-07", "DB-10", "DB-12", "DB-13"],
@@ -5809,7 +5809,7 @@
       "specification": "docs/tasks/details/DB-14.md",
       "acceptance_criteria": ["One historical capability runs against a replica with approved SLO and stale-data behavior.", "Failure, promotion, fallback, writer-protection, and rollback evidence receives explicit go/no-go review."],
       "validation_commands": ["make acceptance", "make check", "git diff --check"],
-      "evidence": [],
+      "evidence": ["Local merged Compose pilot smoke passed: primary and named replica were running, pg_stat_replication reported streaming, the replica reported pg_is_in_recovery() true, and pg_last_wal_replay_lsn() returned 0/40B24D8. Contract validation, merged Compose config validation, and the full Accounts/Expense Core/Notifications/BFF regression passed. Production-like failover, promotion, load/SLO, and rollback evidence remain open."],
       "reviewer": "/root",
       "blocker": "Requires production-like PostgreSQL replica environment."
     },

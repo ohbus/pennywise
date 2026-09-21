@@ -25,7 +25,7 @@ query classification, and evidence gates are complete.
 | DB-10 | coordinator | in_progress | Propagate causal writer watermarks through services and BFF |
 | DB-11 | observability | in_progress | Add query operation telemetry and slow-query governance |
 | DB-12 | quality | in_progress | Add contention, replica failure, lag, and capacity evidence |
-| DB-13 | platform | in_progress | Add optional local/production-like PostgreSQL replica topology |
+| DB-13 | platform | done | Add optional local/production-like PostgreSQL replica topology |
 | DB-14 | coordinator | in_progress | Run one reviewed historical-read replica pilot |
 | DB-15 | coordinator | in_progress | Promote only individually approved query capabilities |
 | DB-16 | operations | in_progress | Complete failover, restore, rollback, alert, and release gates |

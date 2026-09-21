@@ -5784,7 +5784,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Add optional replica topology to infrastructure",
       "phase": "cqrs_data_access",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "platform",
       "owner_agent": "/root",
       "depends_on": ["DB-05", "DB-12"],
@@ -5792,7 +5792,7 @@
       "specification": "docs/tasks/details/DB-13.md",
       "acceptance_criteria": ["Optional streaming-replica topology, credentials, health probes, and endpoints validate standalone and merged.", "Migrations remain writer-only and single-database mode is labelled non-replica evidence."],
       "validation_commands": ["docker compose -f infra/local/docker-compose.yml config --quiet", "docker compose -f infra/deploy/docker-compose.staging.yml config --quiet", "git diff --check"],
-      "evidence": ["Added optional infra/local/docker-compose.replica.yml, PostgreSQL WAL/replication settings, pg_hba configuration, replication role initialization, and replica base-backup entrypoint. Default and merged Compose configurations validate; live smoke verified primary pg_stat_replication streaming and replica pg_is_in_recovery() true after repairing the pre-existing local volume role."],
+      "evidence": ["Completed optional infra/local/docker-compose.replica.yml with PostgreSQL WAL/replication settings, pg_hba rules, replication role initialization, base-backup entrypoint, health probes, and service endpoints. Default and merged Compose validation, live streaming smoke, authenticated replica E2E, and disconnect/recovery drill pass; production promotion remains DB-16."],
       "reviewer": "/root",
       "blocker": null
     },

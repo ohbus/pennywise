@@ -5699,7 +5699,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Split Accounts command and query ports",
       "phase": "cqrs_data_access",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "accounts",
       "owner_agent": "/root",
       "depends_on": ["DB-03", "DB-04"],
@@ -5707,7 +5707,7 @@
       "specification": "docs/tasks/details/DB-08.md",
       "acceptance_criteria": ["Credential, session, rate-limit, token, export/deletion, and auth-email operations remain writer-only.", "Approved profile/preferences queries have explicit policies and read-after-write tests."],
       "validation_commands": ["./gradlew.bat :app:accounts:test --rerun-tasks --no-daemon", "git diff --check"],
-      "evidence": ["ProfileController scopes only profile-by-ID and bounded batch lookup as eventual reader-eligible contexts; /me provisioning and all authentication/session/rate-limit/mutation paths remain writer-bound. Accounts writer/profile-reader configuration added; live route evidence remains open."],
+      "evidence": ["ProfileController scopes only profile-by-ID and bounded batch lookup as eventual reader-eligible contexts; /me provisioning and all authentication/session/rate-limit/mutation paths remain writer-bound. ProfileControllerTest now asserts profile.lookup route context; replica outage and read-after-write evidence remain open."],
       "reviewer": "/root",
       "blocker": null
     },

@@ -35,6 +35,7 @@ import com.subhrodip.pennywise.db.routing.DbContextHolder
 import com.subhrodip.pennywise.db.routing.DbExecutionContext
 import com.subhrodip.pennywise.db.routing.DbOperationKind
 import com.subhrodip.pennywise.db.routing.ReadConsistency
+import com.subhrodip.pennywise.observability.db.DbTelemetry
 
 data class ExportRequestResponse(
     val exportId: UUID,
@@ -69,7 +70,8 @@ data class ProfilePatchRequest(
 class ProfileController(
     private val profiles: ProfileStore,
     private val deletionService: DeletionRequestService,
-    private val exportService: ExportRequestService
+    private val exportService: ExportRequestService,
+    private val dbTelemetry: DbTelemetry = DbTelemetry()
 ) {
     private val serviceName: String = "accounts"
 
@@ -143,14 +145,16 @@ class ProfileController(
 
     @GetMapping(ApiEndpoints.Accounts.V1.PROFILES_BY_ID)
     fun getProfileById(@PathVariable accountId: UUID): ProfileResponse =
-        DbContextHolder.withContext(profileReadContext("profile.lookup")) {
-            profiles.findById(accountId) ?: throw ApplicationException(ErrorCode.ERR_05, "Profile not found")
+        dbTelemetry.measureQuery("profile.lookup", "approved-query") {
+            DbContextHolder.withContext(profileReadContext("profile.lookup")) {
+                profiles.findById(accountId) ?: throw ApplicationException(ErrorCode.ERR_05, "Profile not found")
+            }
         }
 
     @PostMapping(ApiEndpoints.Accounts.V1.PROFILES_BATCH)
     fun getProfilesBatch(@Valid @RequestBody request: BatchProfileRequest): List<ProfileResponse> =
-        DbContextHolder.withContext(profileReadContext("profile.batch_lookup")) {
-            profiles.findByIds(request.accountIds)
+        dbTelemetry.measureQuery("profile.batch_lookup", "approved-query") {
+            DbContextHolder.withContext(profileReadContext("profile.batch_lookup")) { profiles.findByIds(request.accountIds) }
         }
 
     private fun profileReadContext(operationName: String) = DbExecutionContext(

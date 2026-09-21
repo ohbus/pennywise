@@ -23,6 +23,7 @@ import com.subhrodip.pennywise.db.routing.DbContextHolder
 import com.subhrodip.pennywise.db.routing.DbExecutionContext
 import com.subhrodip.pennywise.db.routing.DbOperationKind
 import com.subhrodip.pennywise.db.routing.ReadConsistency
+import com.subhrodip.pennywise.observability.db.DbTelemetry
 
 data class InboxItem(val notificationId: UUID, val eventType: String, val message: String, val occurredAt: Instant, val read: Boolean = false)
 data class InboxPage(val items: List<InboxItem>, val nextCursor: String? = null)
@@ -56,7 +57,8 @@ class InboxController(private val inbox: NotificationInbox) {
 
 @Service
 class NotificationInbox(
-    private val store: NotificationInboxStore
+    private val store: NotificationInboxStore,
+    private val dbTelemetry: DbTelemetry = DbTelemetry()
 ) {
     fun append(subject: String, item: InboxItem) = store.append(subject, item)
 
@@ -65,9 +67,11 @@ class NotificationInbox(
     fun markAsRead(subject: String, notificationId: UUID): Boolean = store.markAsRead(subject, notificationId)
 
     fun page(subject: String, cursor: String?, limit: Int): InboxPage {
-        val sorted = DbContextHolder.withContext(
-            DbExecutionContext("notification.inbox.history", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)
-        ) { list(subject) }.sortedWith(compareByDescending<InboxItem> { it.occurredAt }.thenByDescending { it.notificationId })
+        val sorted = dbTelemetry.measureQuery("notification.inbox.history", "approved-query") {
+            DbContextHolder.withContext(
+                DbExecutionContext("notification.inbox.history", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)
+            ) { list(subject) }
+        }.sortedWith(compareByDescending<InboxItem> { it.occurredAt }.thenByDescending { it.notificationId })
         val start = cursor?.let { decodeCursor(it) }?.let { key ->
             sorted.indexOfFirst { it.occurredAt < key.first || (it.occurredAt == key.first && it.notificationId < key.second) }
                 .takeIf { it >= 0 } ?: sorted.size

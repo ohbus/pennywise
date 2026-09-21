@@ -263,6 +263,11 @@ def run_concurrency_and_subscriptions_test() -> None:
     assert status == 201, f"Failed to create invite: {invite}"
     status, claim = request_json(f"{EXPENSE_CORE_URL}/expense-core/v1/invites/{invite['token']}/claim", method="POST", bearer=user_b)
     assert status == 200, f"Bob failed to claim invite: {claim}"
+    status, members = request_json(f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/members", bearer=user_a)
+    assert status == 200, f"Failed to list group members: {members}"
+    member_ids = {member["subject"]: member["membershipId"] for member in members}
+    alice_id = member_ids[profile_a["displayName"]]
+    bob_id = member_ids[profile_b["displayName"]]
     print(f"  ✓ Members active: Alice={alice_id}, Bob={bob_id}")
 
     # Step 2: Establish Real-time GraphQL WebSocket Subscription (groupChanged)

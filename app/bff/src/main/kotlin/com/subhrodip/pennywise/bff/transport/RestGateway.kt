@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import reactor.core.publisher.Mono
 import reactor.core.publisher.Flux
 import java.time.Duration
+import java.util.UUID
 
 data class BffMoney(val currency: String, val minor: String)
 
@@ -285,6 +286,7 @@ class ExpenseCoreGateway(
             "amountMinor" to input.amount.minor
         )
         return client.post().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_SETTLEMENTS, groupId)
+            .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, UUID.randomUUID().toString())
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
             .bodyValue(payload)
             .retrieve()

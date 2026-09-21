@@ -400,6 +400,7 @@ def main() -> None:
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SETTLEMENTS.format(group_id=group_id)}",
         method="POST", body=settlement_payload, token="non-member",
+        headers={"Idempotency-Key": str(uuid.uuid4())},
     )
     expect("non-member settlement recording is hidden", status, 404)
 
@@ -500,7 +501,11 @@ def main() -> None:
     )
     expect("non-member CSV export is hidden", status, 404)
 
-    participant = str(uuid.uuid4())
+    status, members = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_MEMBERS.format(group_id=group_id)}"
+    )
+    expect("member lookup for financial edge case", status, 200)
+    participant = members[0]["membershipId"]
     expense_id = str(uuid.uuid4())
     key = f"rest-edge-{uuid.uuid4()}"
     payload = {

@@ -382,6 +382,9 @@ def run_e2e_tests() -> int:
     subjects = [m.get("subject") for m in members]
     assert profile_a["displayName"] in subjects, f"Expected Alice subject in members: {subjects}"
     assert bob_me["displayName"] in subjects, f"Expected Bob subject in members: {subjects}"
+    member_ids = {m["subject"]: m["membershipId"] for m in members}
+    alice_id = member_ids[profile_a["displayName"]]
+    bob_id = member_ids[bob_me["displayName"]]
     print(f"  ✓ Group members verified: {subjects}")
 
     # 5. Add Expense via GraphQL createExpense

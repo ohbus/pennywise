@@ -5665,7 +5665,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Split Expense Core command and query ports",
       "phase": "cqrs_data_access",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "core",
       "owner_agent": "/root",
       "depends_on": ["DB-03", "DB-04"],
@@ -5673,7 +5673,7 @@
       "specification": "docs/tasks/details/DB-06.md",
       "acceptance_criteria": ["Expense Core commands and queries have explicit ports and bounded DTO results.", "Financial, authorization, lock, claim, idempotency, revision, and outbox operations remain writer-only."],
       "validation_commands": ["./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon", "git diff --check"],
-      "evidence": ["Added Expense, Group, Settlement, Synchronization, Outbox, and Recurring command/query ports with compatibility facades; settlement, outbox ownership, and due-schedule processing remain writer-only. Full ./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon passed; audit and route assertion work remains open."],
+      "evidence": ["Completed explicit Expense, Group, Settlement, Synchronization, Outbox, Recurring, and GroupAudit command/query ports with compatibility facades. Financial, authorization, lock, claim, idempotency, revision, audit, settlement, outbox ownership, and due-schedule operations remain writer-side. Full ./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon passed; promoted read route assertions and PostgreSQL concurrency evidence pass."],
       "reviewer": "/root",
       "blocker": null
     },

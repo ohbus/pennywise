@@ -6,13 +6,20 @@ import java.util.concurrent.atomic.AtomicLong
 import java.time.Duration
 
 /** Low-cardinality database route and reader-health telemetry. */
-class DbTelemetry(private val registry: MeterRegistry? = null) {
+class DbTelemetry(
+    private val registry: MeterRegistry? = null,
+    private val slowQueryThresholdMs: Long = 500
+) {
+    init { require(slowQueryThresholdMs >= 1) { "slowQueryThresholdMs must be positive" } }
     private val fallbackCount = AtomicLong()
     private val failureCount = AtomicLong()
     private val acquisitionCount = AtomicLong()
     private val acquisitionTotalMs = AtomicLong()
     private val lockWaitCount = AtomicLong()
     private val deadlockCount = AtomicLong()
+    private val queryCount = AtomicLong()
+    private val queryTotalMs = AtomicLong()
+    private val slowQueryCount = AtomicLong()
 
     /** Records a connection route for a validated operation name. */
     fun route(operation: String, route: String) {
@@ -39,6 +46,19 @@ class DbTelemetry(private val registry: MeterRegistry? = null) {
             ?.record(Duration.ofMillis(durationMs.coerceAtLeast(0)))
     }
 
+    /** Records query duration using only stable operation and route labels. */
+    fun queryDuration(operation: String, route: String, durationMs: Long) {
+        val boundedDuration = durationMs.coerceAtLeast(0)
+        queryCount.incrementAndGet()
+        queryTotalMs.addAndGet(boundedDuration)
+        registry?.timer("pennywise.db.query.duration", Tags.of("operation", operation, "route", route))
+            ?.record(Duration.ofMillis(boundedDuration))
+        if (boundedDuration >= slowQueryThresholdMs) {
+            slowQueryCount.incrementAndGet()
+            registry?.counter("pennywise.db.query.slow", "operation", operation)?.increment()
+        }
+    }
+
     /** Records a lock-wait observation using only the stable operation label. */
     fun lockWait(operation: String) {
         lockWaitCount.incrementAndGet()
@@ -63,7 +83,10 @@ class DbTelemetry(private val registry: MeterRegistry? = null) {
         acquisitions = acquisitionCount.get(),
         acquisitionTotalMs = acquisitionTotalMs.get(),
         lockWaits = lockWaitCount.get(),
-        deadlocks = deadlockCount.get()
+        deadlocks = deadlockCount.get(),
+        queries = queryCount.get(),
+        queryTotalMs = queryTotalMs.get(),
+        slowQueries = slowQueryCount.get()
     )
 }
 
@@ -74,5 +97,8 @@ data class DbTelemetrySnapshot(
     val acquisitions: Long = 0,
     val acquisitionTotalMs: Long = 0,
     val lockWaits: Long = 0,
-    val deadlocks: Long = 0
+    val deadlocks: Long = 0,
+    val queries: Long = 0,
+    val queryTotalMs: Long = 0,
+    val slowQueries: Long = 0
 )

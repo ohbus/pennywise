@@ -5,7 +5,7 @@ import java.util.UUID
 /**
  * Domain port for reading and modifying user profiles.
  */
-interface ProfileStore {
+interface ProfileQueryStore {
     /**
      * Retrieves the profile corresponding to the given subject, defaulting if not found.
      */
@@ -21,13 +21,16 @@ interface ProfileStore {
      */
     fun findByIds(accountIds: List<UUID>): List<ProfileResponse>
 
-    /**
-     * Updates an existing profile using the patch payload.
-     */
+}
+
+/** Writer-side profile mutations and deletion transitions. */
+interface ProfileCommandStore {
+    /** Updates an existing profile using the patch payload. */
     fun update(subject: String, patch: ProfilePatchRequest): ProfileResponse
 
-    /**
-     * Marks the profile for deletion.
-     */
+    /** Marks the profile for deletion. */
     fun requestDeletion(subject: String)
 }
+
+/** Compatibility facade combining profile command and query ports. */
+interface ProfileStore : ProfileQueryStore, ProfileCommandStore

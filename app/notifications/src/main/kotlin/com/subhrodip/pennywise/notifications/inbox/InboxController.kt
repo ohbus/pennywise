@@ -87,11 +87,19 @@ class NotificationInbox(
     }.getOrElse { throw ApplicationException(ErrorCode.ERR_02, "invalid inbox cursor") }
 }
 
-interface NotificationInboxStore {
+/** Writer-side inbox mutations. */
+interface NotificationInboxCommandStore {
     fun append(subject: String, item: InboxItem)
-    fun list(subject: String): List<InboxItem>
     fun markAsRead(subject: String, notificationId: UUID): Boolean
 }
+
+/** Bounded historical inbox query port; it carries no delivery state mutation. */
+interface NotificationInboxQueryStore {
+    fun list(subject: String): List<InboxItem>
+}
+
+/** Compatibility facade for existing inbox adapters. */
+interface NotificationInboxStore : NotificationInboxCommandStore, NotificationInboxQueryStore
 
 class InMemoryNotificationInboxStore : NotificationInboxStore {
     private val items = ConcurrentHashMap<String, MutableList<InboxItem>>()

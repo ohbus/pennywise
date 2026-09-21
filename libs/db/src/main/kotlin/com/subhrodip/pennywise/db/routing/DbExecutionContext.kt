@@ -8,6 +8,8 @@ data class DbExecutionContext(
     val kind: DbOperationKind,
     /** Required consistency guarantee. */
     val consistency: ReadConsistency = ReadConsistency.STRONG,
+    /** Whether the named operation has been approved for replica execution. */
+    val readerEligible: Boolean = false,
     /** Optional writer watermark required before a replica may answer. */
     val requiredWatermark: String? = null
 ) {
@@ -18,7 +20,7 @@ data class DbExecutionContext(
     }
 
     /** Returns whether this context is intrinsically forbidden from a reader. */
-    fun isWriterOnly(): Boolean = kind != DbOperationKind.QUERY || consistency == ReadConsistency.STRONG
+    fun isWriterOnly(): Boolean = kind != DbOperationKind.QUERY || consistency == ReadConsistency.STRONG || !readerEligible
 
     private companion object {
         val OPERATION_NAME = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")

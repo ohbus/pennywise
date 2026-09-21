@@ -7,6 +7,7 @@ import com.subhrodip.pennywise.db.routing.ReadConsistency
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
+import com.subhrodip.pennywise.db.routing.DbContextHolder
 
 /** Verifies the first writer-safety boundary independently of Spring. */
 class DbRouteGuardTest {
@@ -29,9 +30,18 @@ class DbRouteGuardTest {
     @Test
     fun `eventual queries may use a reader`() {
         guard.validate(
-            DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL),
+            DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true),
             DbRoute.READER
         )
         assertIs<DbRoute>(DbRoute.READER)
+    }
+
+    @Test
+    fun `context is restored after scoped execution`() {
+        val before = DbContextHolder.current()
+        DbContextHolder.withContext(DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)) {
+            assertIs<DbExecutionContext>(DbContextHolder.current())
+        }
+        kotlin.test.assertEquals(before, DbContextHolder.current())
     }
 }

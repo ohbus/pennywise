@@ -59,6 +59,16 @@ class DbTelemetry(
         }
     }
 
+    /** Measures one bounded query block without capturing SQL, parameters, or payloads. */
+    inline fun <T> measureQuery(operation: String, route: String, block: () -> T): T {
+        val started = System.nanoTime()
+        return try {
+            block()
+        } finally {
+            queryDuration(operation, route, (System.nanoTime() - started) / 1_000_000)
+        }
+    }
+
     /** Records a lock-wait observation using only the stable operation label. */
     fun lockWait(operation: String) {
         lockWaitCount.incrementAndGet()

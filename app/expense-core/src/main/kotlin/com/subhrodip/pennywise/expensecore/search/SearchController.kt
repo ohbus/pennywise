@@ -19,6 +19,7 @@ import com.subhrodip.pennywise.db.routing.DbContextHolder
 import com.subhrodip.pennywise.db.routing.DbExecutionContext
 import com.subhrodip.pennywise.db.routing.DbOperationKind
 import com.subhrodip.pennywise.db.routing.ReadConsistency
+import com.subhrodip.pennywise.observability.db.DbTelemetry
 
 /**
  * Controller exposing authorized, persistent group-scoped expense search and CSV export endpoints.
@@ -31,7 +32,8 @@ import com.subhrodip.pennywise.db.routing.ReadConsistency
 class SearchController(
     private val groupStore: GroupStore,
     private val searchStore: SearchStore,
-    private val expenseSearch: ExpenseSearch = ExpenseSearch()
+    private val expenseSearch: ExpenseSearch = ExpenseSearch(),
+    private val dbTelemetry: DbTelemetry = DbTelemetry()
 ) {
 
     /**
@@ -58,17 +60,19 @@ class SearchController(
         principal: Principal
     ): ExpenseSearchPage {
         ensureMembership(groupId, principal.name)
-        val expenses = DbContextHolder.withContext(
-            DbExecutionContext(
-                operationName = "expense.search",
-                kind = DbOperationKind.QUERY,
-                consistency = ReadConsistency.EVENTUAL,
-                readerEligible = true
-            )
-        ) {
-            searchStore.findSearchExpenses(
-                SearchQuery(groupId, query?.trim().orEmpty(), currency?.trim()?.uppercase(), category, cursor, limit)
-            )
+        val expenses = dbTelemetry.measureQuery("expense.search", "approved-query") {
+            DbContextHolder.withContext(
+                DbExecutionContext(
+                    operationName = "expense.search",
+                    kind = DbOperationKind.QUERY,
+                    consistency = ReadConsistency.EVENTUAL,
+                    readerEligible = true
+                )
+            ) {
+                searchStore.findSearchExpenses(
+                    SearchQuery(groupId, query?.trim().orEmpty(), currency?.trim()?.uppercase(), category, cursor, limit)
+                )
+            }
         }
         return try {
             expenseSearch.page(
@@ -106,17 +110,19 @@ class SearchController(
         principal: Principal
     ): ResponseEntity<String> {
         ensureMembership(groupId, principal.name)
-        val expenses = DbContextHolder.withContext(
-            DbExecutionContext(
-                operationName = "expense.search.export",
-                kind = DbOperationKind.QUERY,
-                consistency = ReadConsistency.EVENTUAL,
-                readerEligible = true
-            )
-        ) {
-            searchStore.findSearchExpenses(
-                SearchQuery(groupId, query?.trim().orEmpty(), currency?.trim()?.uppercase(), category, null, ExpenseSearch.MAX_EXPORT_ROWS)
-            )
+        val expenses = dbTelemetry.measureQuery("expense.search.export", "approved-query") {
+            DbContextHolder.withContext(
+                DbExecutionContext(
+                    operationName = "expense.search.export",
+                    kind = DbOperationKind.QUERY,
+                    consistency = ReadConsistency.EVENTUAL,
+                    readerEligible = true
+                )
+            ) {
+                searchStore.findSearchExpenses(
+                    SearchQuery(groupId, query?.trim().orEmpty(), currency?.trim()?.uppercase(), category, null, ExpenseSearch.MAX_EXPORT_ROWS)
+                )
+            }
         }
         val csvData = try {
             expenseSearch.csv(

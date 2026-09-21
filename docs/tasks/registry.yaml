@@ -5071,7 +5071,7 @@
         "python3 tools/contracts/validate.py",
         "git diff --check"
       ],
-      "evidence": ["SearchController now keeps membership authorization before the query and scopes only expense.search and expense.search.export as eventual reader-eligible contexts; optional replica Compose config supplies writer and search-reader endpoints. SQL-side filtering/keyset pagination and route integration evidence remain open."],
+      "evidence": ["SearchController keeps membership authorization before the query and scopes only expense.search and expense.search.export as eventual reader-eligible contexts; ExpenseRepository now performs bounded scalar SQL filtering with UUID keyset cursor and limit-plus-one projection; optional replica Compose config supplies writer and search-reader endpoints. Live application route evidence remains open."],
       "reviewer": "/root",
       "blocker": null
     },

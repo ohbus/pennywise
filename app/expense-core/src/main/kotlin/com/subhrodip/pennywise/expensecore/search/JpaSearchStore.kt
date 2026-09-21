@@ -2,9 +2,7 @@ package com.subhrodip.pennywise.expensecore.search
 
 import com.subhrodip.pennywise.expensecore.categories.ExpenseCategory
 import com.subhrodip.pennywise.expensecore.expenses.ExpenseRepository
-import java.util.UUID
 import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -27,18 +25,18 @@ class JpaSearchStore(
      * @return list of [SearchExpense] domain records
      */
     @Transactional(readOnly = true)
-    override fun findSearchExpenses(groupId: UUID): List<SearchExpense> {
-        val entities = expenseRepository.findByGroupIdAndDeletedFalseOrderByCreatedAtDesc(
-            groupId,
-            PageRequest.of(0, 100, Sort.by(Sort.Direction.DESC, "createdAt"))
-        )
-        return entities.map { entity ->
-            val category = runCatching { ExpenseCategory.fromKey(entity.category) }.getOrDefault(ExpenseCategory.OTHER)
+    override fun findSearchExpenses(query: SearchQuery): List<SearchExpense> {
+        require(query.limit in 1..ExpenseSearch.MAX_EXPORT_ROWS)
+        return expenseRepository.searchProjection(
+            query.groupId, query.text, query.currency, query.category,
+            query.afterExpenseId, PageRequest.of(0, query.limit + 1)
+        ).map { projection ->
+            val category = runCatching { ExpenseCategory.fromKey(projection.getCategory()) }.getOrDefault(ExpenseCategory.OTHER)
             SearchExpense(
-                expenseId = entity.expenseId.toString(),
-                description = entity.description,
-                currency = entity.currency,
-                amountMinor = entity.amountMinor.toString(),
+                expenseId = projection.getExpenseId(),
+                description = projection.getDescription(),
+                currency = projection.getCurrency(),
+                amountMinor = projection.getAmountMinor().toString(),
                 category = category
             )
         }

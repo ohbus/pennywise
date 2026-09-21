@@ -65,7 +65,11 @@ class SearchController(
                 consistency = ReadConsistency.EVENTUAL,
                 readerEligible = true
             )
-        ) { searchStore.findSearchExpenses(groupId) }
+        ) {
+            searchStore.findSearchExpenses(
+                SearchQuery(groupId, query?.trim().orEmpty(), currency?.trim()?.uppercase(), category, cursor, limit)
+            )
+        }
         return try {
             expenseSearch.page(
                 expenses = expenses,
@@ -109,7 +113,11 @@ class SearchController(
                 consistency = ReadConsistency.EVENTUAL,
                 readerEligible = true
             )
-        ) { searchStore.findSearchExpenses(groupId) }
+        ) {
+            searchStore.findSearchExpenses(
+                SearchQuery(groupId, query?.trim().orEmpty(), currency?.trim()?.uppercase(), category, null, ExpenseSearch.MAX_EXPORT_ROWS)
+            )
+        }
         val csvData = try {
             expenseSearch.csv(
                 expenses = expenses,

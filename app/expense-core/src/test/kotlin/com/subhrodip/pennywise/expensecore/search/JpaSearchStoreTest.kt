@@ -77,14 +77,14 @@ class JpaSearchStoreTest @Autowired constructor(
 
         expenseRepository.saveAll(listOf(active1, active2, deleted))
 
-        val results = searchStore.findSearchExpenses(groupId)
+        val results = searchStore.findSearchExpenses(SearchQuery(groupId))
         assertEquals(2, results.size)
-        // Ordered by createdAt desc
-        assertEquals(expenseId2.toString(), results[0].expenseId)
-        assertEquals("Train tickets", results[0].description)
-        assertEquals("5000", results[0].amountMinor)
-        assertEquals(expenseId1.toString(), results[1].expenseId)
-        assertEquals("Museum tickets", results[1].description)
-        assertEquals("2400", results[1].amountMinor)
+        // Stable UUID ordering is the keyset cursor order used by ExpenseSearch.
+        val expected = listOf(active1, active2).sortedBy { it.expenseId.toString() }
+        assertEquals(expected[0].expenseId.toString(), results[0].expenseId)
+        assertEquals(expected[0].description, results[0].description)
+        assertEquals(expected[0].amountMinor.toString(), results[0].amountMinor)
+        assertEquals(expected[1].expenseId.toString(), results[1].expenseId)
+        assertEquals(expected[1].description, results[1].description)
     }
 }

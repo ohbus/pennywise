@@ -25,14 +25,23 @@ class DbRoutingDataSource(
 
     /** Returns a connection for an explicit route. */
     fun connection(route: DbRoute, readerName: String = readers.keys.firstOrNull() ?: ""): Connection {
+        val operation = DbContextHolder.current().operationName
         if (route == DbRoute.WRITER) {
-            telemetry.route(DbContextHolder.current().operationName, "writer")
-            return writer.connection
+            val started = System.nanoTime()
+            return try { writer.connection } finally {
+                telemetry.route(operation, "writer")
+                telemetry.acquisition(operation, "writer", (System.nanoTime() - started) / 1_000_000)
+            }
         }
         val reader = readers[readerName] ?: error("No configured reader pool named '$readerName'")
         return try {
-            reader.connection
-                .also { telemetry.route(DbContextHolder.current().operationName, "reader") }
+            val started = System.nanoTime()
+            try {
+                reader.connection
+                    .also { telemetry.route(operation, "reader") }
+            } finally {
+                telemetry.acquisition(operation, "reader", (System.nanoTime() - started) / 1_000_000)
+            }
         } catch (failure: SQLException) {
             readerHealth.markFailure(readerName)
             telemetry.failure(readerName)

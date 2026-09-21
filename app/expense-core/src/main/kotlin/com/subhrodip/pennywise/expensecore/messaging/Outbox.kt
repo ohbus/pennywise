@@ -21,7 +21,8 @@ data class OutboxMessage(
     var availableAt: Instant = occurredAt
 )
 
-interface OutboxStore {
+/** Writer-side transactional outbox command port. */
+interface OutboxCommandStore {
     fun append(message: OutboxMessage)
 
     fun claim(limit: Int, lease: Duration): List<OutboxMessage>
@@ -29,9 +30,15 @@ interface OutboxStore {
     fun acknowledge(eventId: UUID)
 
     fun reject(eventId: UUID, maxAttempts: Int, retryAfter: Duration)
+}
 
+/** Read-only outbox inspection port. */
+interface OutboxQueryStore {
     fun snapshot(): List<OutboxMessage>
 }
+
+/** Compatibility facade combining outbox command and query operations. */
+interface OutboxStore : OutboxCommandStore, OutboxQueryStore
 
 /** Deterministic in-memory adapter used by domain tests. */
 class OutboxRelay(private val clock: () -> Instant = Instant::now) : OutboxStore {

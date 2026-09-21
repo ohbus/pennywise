@@ -5673,7 +5673,7 @@
       "specification": "docs/tasks/details/DB-06.md",
       "acceptance_criteria": ["Expense Core commands and queries have explicit ports and bounded DTO results.", "Financial, authorization, lock, claim, idempotency, revision, and outbox operations remain writer-only."],
       "validation_commands": ["./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon", "git diff --check"],
-      "evidence": ["Added Expense, Group, Settlement, and Synchronization command/query ports with compatibility facades; settlement remains writer-only. Full ./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon passed; recurring, audit, outbox, and route assertion work remains open."],
+      "evidence": ["Added Expense, Group, Settlement, Synchronization, and Outbox command/query ports with compatibility facades; settlement and outbox ownership operations remain writer-only. Full ./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon passed; recurring, audit, and route assertion work remains open."],
       "reviewer": "/root",
       "blocker": null
     },

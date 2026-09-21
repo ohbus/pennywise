@@ -3,6 +3,7 @@ package com.subhrodip.pennywise.accounts.auth.config
 import com.subhrodip.pennywise.accounts.auth.credential.CredentialDigest
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialService
 import com.subhrodip.pennywise.accounts.auth.login.LoginVerificationService
+import com.subhrodip.pennywise.accounts.auth.provider.ExternalOidcTokenProvider
 import com.subhrodip.pennywise.accounts.auth.provider.IdentityProviderPort
 import com.subhrodip.pennywise.accounts.auth.provider.InternalJwtTokenProvider
 import com.subhrodip.pennywise.accounts.auth.session.AuthSessionRepository
@@ -42,6 +43,21 @@ class AuthSessionConfiguration(
             audience = effectiveAudience
         )
     }
+
+    /**
+     * Registers the configured external OIDC adapter for provider-backed profiles.
+     *
+     * The adapter owns delegation to the external issuer; this configuration must
+     * not fall back to the internal HMAC signer when OIDC security is enabled.
+     */
+    @Bean
+    @ConditionalOnMissingBean(IdentityProviderPort::class)
+    @Profile("production", "staging", "local-oidc")
+    fun externalIdentityProviderPort(): IdentityProviderPort = ExternalOidcTokenProvider(
+        externalIssuerUri = issuerUri,
+        clientId = audience,
+        audience = audience
+    )
 
     /**
      * Creates the TokenSessionService managing refresh tokens and families.

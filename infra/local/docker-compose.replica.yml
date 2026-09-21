@@ -1,0 +1,45 @@
+services:
+  postgres:
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=2
+      - -c
+      - wal_keep_size=64MB
+      - -c
+      - hba_file=/etc/postgresql/pg_hba.conf
+    volumes:
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgres/replication-init.sql:/docker-entrypoint-initdb.d/replication-init.sql:ro
+
+  postgres-replica:
+    image: ${POSTGRES_IMAGE:-postgres:17}
+    hostname: ${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}
+    networks:
+      default:
+        aliases: ["${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}"]
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-pennywise_replica}
+      POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-pennywise-replica-local-only}
+      POSTGRES_PRIMARY_HOST: ${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}
+      POSTGRES_PRIMARY_PORT: "5432"
+    entrypoint: ["/usr/local/bin/replica-entrypoint.sh"]
+    volumes:
+      - postgres-replica-data:/var/lib/postgresql/data
+      - ./postgres/replica-entrypoint.sh:/usr/local/bin/replica-entrypoint.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-pennywise} -d pennywise_accounts"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  postgres-replica-data:

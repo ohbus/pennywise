@@ -1,3 +1,8 @@
 plugins { alias(libs.plugins.kotlin.jvm) }
 kotlin { jvmToolchain(25) }
-dependencies { api(libs.boot.data.jpa) }
+dependencies {
+    api(libs.boot.data.jpa)
+    testImplementation(kotlin("test"))
+}
+
+tasks.withType<Test> { useJUnitPlatform() }

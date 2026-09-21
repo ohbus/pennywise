@@ -5733,7 +5733,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Add causal read-after-write propagation",
       "phase": "cqrs_data_access",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["DB-05", "DB-07", "DB-08", "DB-09"],
@@ -5741,7 +5741,7 @@
       "specification": "docs/tasks/details/DB-10.md",
       "acceptance_criteria": ["Writer watermarks propagate through service and BFF boundaries.", "Readers are used only after replay to the watermark; lag, timeout, and no-watermark behavior are tested."],
       "validation_commands": ["./gradlew.bat test --rerun-tasks --no-daemon", "python tools/contracts/validate.py", "git diff --check"],
-      "evidence": [],
+      "evidence": ["Added typed DbWatermark PostgreSQL-LSN parsing/serialization, watermark header names, execution-context parsing, and reader replay-position checks. A reader below the required position uses bounded eventual fallback or writer routing; service/BFF HTTP propagation remains open."],
       "reviewer": "/root",
       "blocker": null
     },

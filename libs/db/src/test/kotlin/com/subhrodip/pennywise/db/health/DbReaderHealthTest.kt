@@ -3,6 +3,7 @@ package com.subhrodip.pennywise.db.health
 import com.subhrodip.pennywise.db.routing.DbExecutionContext
 import com.subhrodip.pennywise.db.routing.DbOperationKind
 import com.subhrodip.pennywise.db.routing.ReadConsistency
+import com.subhrodip.pennywise.db.routing.DbWatermark
 import java.time.Duration
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -30,6 +31,16 @@ class DbReaderHealthTest {
         health.markHealthy("search")
         assertEquals(DbReaderState.HEALTHY, health.state("search"))
         assertEquals(DbReaderDecision.Reader, health.route(query, "search"))
+    }
+
+    @Test
+    fun `reader cannot answer before required causal watermark`() {
+        val health = DbReaderHealth()
+        health.markHealthy("search", DbWatermark.parse("0/10"))
+        val causal = query.copy(requiredWatermark = "0/20")
+        assertEquals(DbReaderDecision.BoundedWriterFallback, health.route(causal, "search"))
+        health.markHealthy("search", DbWatermark.parse("0/20"))
+        assertEquals(DbReaderDecision.Reader, health.route(causal, "search"))
     }
 
 }

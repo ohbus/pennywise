@@ -2,6 +2,7 @@ package com.subhrodip.pennywise.db.health
 
 import com.subhrodip.pennywise.db.routing.DbExecutionContext
 import com.subhrodip.pennywise.db.routing.ReadConsistency
+import com.subhrodip.pennywise.db.routing.DbWatermark
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -20,7 +21,8 @@ class DbReaderHealth(
     private data class Entry(
         var state: DbReaderState = DbReaderState.HEALTHY,
         var failures: AtomicInteger = AtomicInteger(0),
-        var openedAt: Instant? = null
+        var openedAt: Instant? = null,
+        var replayedWatermark: DbWatermark? = null
     )
 
     private val readers = ConcurrentHashMap<String, Entry>()
@@ -37,11 +39,17 @@ class DbReaderHealth(
 
     /** Records a successful probe or query and closes an open circuit. */
     fun markHealthy(readerName: String) {
+        markHealthy(readerName, null)
+    }
+
+    /** Records a successful probe and the reader's latest replayed causal position. */
+    fun markHealthy(readerName: String, replayedWatermark: DbWatermark?) {
         val entry = readers.computeIfAbsent(readerName) { Entry() }
         synchronized(entry) {
             entry.state = DbReaderState.HEALTHY
             entry.failures.set(0)
             entry.openedAt = null
+            if (replayedWatermark != null) entry.replayedWatermark = replayedWatermark
         }
     }
 
@@ -88,6 +96,15 @@ class DbReaderHealth(
     /** Decides whether routing may use the reader or must use the writer/fail. */
     fun route(context: DbExecutionContext, readerName: String): DbReaderDecision {
         if (context.isWriterOnly()) return DbReaderDecision.Writer
+        val required = context.requiredDbWatermark()
+        val replayed = readers[readerName]?.replayedWatermark
+        if (required != null && (replayed == null || replayed < required)) {
+            return if (context.consistency == ReadConsistency.EVENTUAL || context.consistency == ReadConsistency.BOUNDED_STALENESS) {
+                DbReaderDecision.BoundedWriterFallback
+            } else {
+                DbReaderDecision.Writer
+            }
+        }
         return when (state(readerName)) {
             DbReaderState.HEALTHY -> DbReaderDecision.Reader
             DbReaderState.LAGGING, DbReaderState.OPEN, DbReaderState.DISCONNECTED ->

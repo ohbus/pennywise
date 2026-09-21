@@ -22,6 +22,9 @@ data class DbExecutionContext(
     /** Returns whether this context is intrinsically forbidden from a reader. */
     fun isWriterOnly(): Boolean = kind != DbOperationKind.QUERY || consistency == ReadConsistency.STRONG || !readerEligible
 
+    /** Returns the required causal position when a request supplied one. */
+    fun requiredDbWatermark(): DbWatermark? = requiredWatermark?.let(DbWatermark::parse)
+
     private companion object {
         val OPERATION_NAME = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")
     }

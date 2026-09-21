@@ -1,7 +1,7 @@
 package com.subhrodip.pennywise.observability.db
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertEquals
 
 class DbTelemetryTest {
     @Test

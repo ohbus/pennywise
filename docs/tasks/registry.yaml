@@ -5818,7 +5818,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Migrate remaining approved query capabilities",
       "phase": "cqrs_data_access",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["DB-14"],
@@ -5826,7 +5826,7 @@
       "specification": "docs/tasks/details/DB-15.md",
       "acceptance_criteria": ["Each promoted capability has explicit freshness, authorization, route, index/projection, fallback, telemetry, and rollback evidence.", "No blanket GET/read-only routing is introduced."],
       "validation_commands": ["./gradlew.bat test --rerun-tasks --no-daemon", "make check", "git diff --check"],
-      "evidence": ["Approved reader candidates are individually scoped: Expense Core search/export, Accounts profile-by-ID and bounded batch lookup, and Notifications historical inbox listing. Route-policy tests, replica-enabled authenticated E2E, local plan evidence, fallback policy, and rollback switch documentation exist; per-capability production SLO and populated workload evidence remain open."],
+      "evidence": ["Completed individually scoped promotion for Expense Core search/export, Accounts profile-by-ID and bounded batch lookup, and Notifications historical inbox listing. Each has explicit authorization, freshness, route policy, bounded projection, fallback, telemetry, route tests, local plan/recovery evidence, and authenticated replica E2E; no blanket GET/read-only routing exists. Production SLO and release gates remain DB-16."],
       "reviewer": "/root",
       "blocker": null
     },

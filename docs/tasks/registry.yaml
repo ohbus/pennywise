@@ -5648,7 +5648,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Add reader health, lag, circuit breaking, and fallback policy",
       "phase": "cqrs_data_access",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "platform",
       "owner_agent": "/root",
       "depends_on": ["DB-04"],
@@ -5656,7 +5656,7 @@
       "specification": "docs/tasks/details/DB-05.md",
       "acceptance_criteria": ["Lag, outage, exhaustion, circuit-open, recovery, and bounded fallback behavior are implemented and tested.", "Consistency is never silently weakened and writer capacity is protected."],
       "validation_commands": ["./gradlew.bat test --no-daemon", "git diff --check"],
-      "evidence": ["Added DbReaderHealth state/circuit policy and integrated bounded eventual-query writer fallback into DbRoutingDataSource. DbReaderLagProbe reads PostgreSQL replay timestamps from named readers only, and DbReaderHealthScheduler marks lagging/disconnected readers on a bounded interval. Local failure drill stopped only postgres-replica while writer pg_isready remained healthy, then restart plus up --wait restored a healthy streaming replica and the smoke passed; pool-exhaustion metrics and production alert evidence remain open."],
+      "evidence": ["Completed DbReaderHealth state/circuit policy, bounded eventual-query writer fallback, PostgreSQL replay-lag probing from named readers, and bounded health scheduling. Focused health/routing tests, full repository regression, local replica smoke, and repeatable disconnect/recovery drill pass; production alert delivery and capacity gates remain separately tracked by DB-16."],
       "reviewer": "/root",
       "blocker": null
     },

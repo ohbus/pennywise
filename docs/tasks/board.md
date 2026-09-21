@@ -17,7 +17,7 @@ query classification, and evidence gates are complete.
 | DB-02 | architecture | done | Define command/query, consistency, watermark, fallback, and retry contracts |
 | DB-03 | coordinator | done | Implement `libs/db` route context, policies, and transaction guards |
 | DB-04 | platform | done | Add separate writer/named-reader pools and writer-only migration wiring |
-| DB-05 | platform | in_progress | Add reader lag health, circuit breaking, and bounded fallback |
+| DB-05 | platform | done | Add reader lag health, circuit breaking, and bounded fallback |
 | DB-06 | core | in_progress | Split Expense Core command/query ports while preserving financial transactions |
 | DB-07 | core | in_progress | Pilot bounded Expense Core search projection and measured query optimization |
 | DB-08 | accounts | in_progress | Split Accounts command/query ports with writer-only auth state |

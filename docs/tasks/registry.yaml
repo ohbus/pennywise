@@ -5614,7 +5614,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Implement shared libs/db routing and execution-context kernel",
       "phase": "cqrs_data_access",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["DB-02"],
@@ -5622,7 +5622,7 @@
       "specification": "docs/tasks/details/DB-03.md",
       "acceptance_criteria": ["Typed route targets, operation kinds, policies, context, and transaction guards exist.", "Illegal reader use for writes, locks, and claims is rejected and tested."],
       "validation_commands": ["./gradlew.bat :libs:db:test --rerun-tasks --no-daemon", "./gradlew.bat test --no-daemon", "git diff --check"],
-      "evidence": ["Initial libs/db route, operation-kind, consistency, execution-context, ThreadLocal context holder, routed datasource, and writer-safety guard types added; focused DB library tests and three service Kotlin compilation passed."],
+      "evidence": ["Completed typed route/operation/consistency/context kernel, routed datasource, health-aware selection, and writer-safety guards. Explicit datasource route requests now pass through DbRouteGuard; regression tests reject reader acquisition for commands/strong queries and allow approved eventual queries. ./gradlew.bat test --rerun-tasks --no-daemon passed all 52 actionable tasks and git diff --check passed."],
       "reviewer": "/root",
       "blocker": null
     },

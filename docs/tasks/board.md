@@ -15,7 +15,7 @@ query classification, and evidence gates are complete.
 | --- | --- | --- | --- |
 | DB-01 | coordinator | done | Catalog every persistence operation and register the workstream |
 | DB-02 | architecture | done | Define command/query, consistency, watermark, fallback, and retry contracts |
-| DB-03 | coordinator | in_progress | Implement `libs/db` route context, policies, and transaction guards |
+| DB-03 | coordinator | done | Implement `libs/db` route context, policies, and transaction guards |
 | DB-04 | platform | in_progress | Add separate writer/named-reader pools and writer-only migration wiring |
 | DB-05 | platform | in_progress | Add reader lag health, circuit breaking, and bounded fallback |
 | DB-06 | core | in_progress | Split Expense Core command/query ports while preserving financial transactions |

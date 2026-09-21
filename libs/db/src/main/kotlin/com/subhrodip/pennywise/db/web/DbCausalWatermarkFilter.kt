@@ -17,7 +17,10 @@ class DbCausalWatermarkFilter(private val dataSource: DataSource) : OncePerReque
             ?.let { value -> runCatching { DbWatermark.parse(value).asLsn() }.getOrNull() }
         DbCausalContext.withRequiredWatermark(required) {
             chain.doFilter(request, response)
-            if (request.method != "GET" && response.status < 400 && !response.isCommitted) {
+            // Spring may commit the response while unwinding the chain; setting the
+            // header here is still safe because committed servlet responses simply
+            // ignore late header changes, while uncommitted mutation responses retain it.
+            if (request.method != "GET" && response.status < 400) {
                 readCurrentWriterLsn()?.let { response.setHeader(DbWatermarkHeaders.WRITER_WATERMARK, it) }
             }
         }

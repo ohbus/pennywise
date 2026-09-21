@@ -5,7 +5,8 @@ import java.util.UUID
 /**
  * Domain port defining persistence operations for recorded settlements and reversals.
  */
-interface SettlementStore {
+/** Writer-only settlement command port. */
+interface SettlementCommandStore {
     /**
      * Records a new settlement or returns the existing record idempotently.
      */
@@ -16,3 +17,6 @@ interface SettlementStore {
      */
     fun reverse(groupId: UUID, settlementId: UUID, reason: String): Settlement
 }
+
+/** Compatibility alias for existing settlement handlers. */
+interface SettlementStore : SettlementCommandStore

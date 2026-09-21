@@ -30,13 +30,22 @@ data class SyncChange(val revision: Long, val entityId: String, val deleted: Boo
 
 data class SyncPage(val changes: List<SyncChange>, val nextCursor: String?, val hasMore: Boolean)
 
-interface SynchronizationStore {
+/** Writer-only synchronization change command port. */
+interface SynchronizationCommandStore {
     fun append(entityId: String, payload: String?): Long = append("default", entityId, payload)
     fun append(groupId: String, entityId: String, payload: String?): Long
     fun delete(entityId: String): Long = delete("default", entityId)
     fun delete(groupId: String, entityId: String): Long
+}
+
+/** Bounded synchronization snapshot query port. */
+interface SynchronizationQueryStore {
     fun snapshot(after: String?, limit: Int): SyncPage = snapshot("default", after, limit)
     fun snapshot(groupId: String, after: String?, limit: Int): SyncPage
+}
+
+/** Compatibility facade combining synchronization command and query ports. */
+interface SynchronizationStore : SynchronizationCommandStore, SynchronizationQueryStore {
 
     companion object {
         operator fun invoke(

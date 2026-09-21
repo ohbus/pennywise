@@ -23,19 +23,20 @@ object AllocationCalculator {
         require(totalMinor >= 0) { "total must be non-negative" }
         require(items.isNotEmpty()) { "at least one participant is required" }
         require(items.values.all { it >= 0 }) { "all allocation values must be non-negative" }
-        val sum = items.values.sum()
+        val sum = items.values.fold(0L, FinancialArithmetic::add)
         require(sum == totalMinor) { "exact allocations sum ($sum) must equal total ($totalMinor)" }
         return items
     }
 
     fun percentage(totalMinor: Long, basisPoints: Map<String, Long>): Map<String, Long> {
         require(totalMinor >= 0) { "total must be non-negative" }
-        require(basisPoints.isNotEmpty() && basisPoints.values.all { it >= 0 } && basisPoints.values.sum() == 10_000L) {
+        val basisPointSum = basisPoints.values.fold(0L, FinancialArithmetic::add)
+        require(basisPoints.isNotEmpty() && basisPoints.values.all { it >= 0 } && basisPointSum == 10_000L) {
             "percentages must be non-negative and sum to 10000 basis points"
         }
-        val exactNumerators = basisPoints.mapValues { totalMinor * it.value }
+        val exactNumerators = basisPoints.mapValues { FinancialArithmetic.multiply(totalMinor, it.value) }
         val floors = exactNumerators.mapValues { it.value / 10_000L }.toMutableMap()
-        var remainder = totalMinor - floors.values.sum()
+        var remainder = totalMinor - floors.values.fold(0L, FinancialArithmetic::add)
         exactNumerators.entries.sortedWith(compareByDescending<Map.Entry<String, Long>> { it.value % 10_000L }.thenBy { it.key })
             .forEach { (id, _) -> if (remainder > 0) { floors[id] = floors.getValue(id) + 1; remainder-- } }
         return floors
@@ -44,11 +45,11 @@ object AllocationCalculator {
     fun weightedShares(totalMinor: Long, shares: Map<String, Long>): Map<String, Long> {
         require(totalMinor >= 0) { "total must be non-negative" }
         require(shares.isNotEmpty() && shares.values.all { it >= 0 }) { "all shares must be non-negative" }
-        val totalShares = shares.values.sum()
+        val totalShares = shares.values.fold(0L, FinancialArithmetic::add)
         require(totalShares > 0) { "total shares must be greater than zero" }
-        val exactNumerators = shares.mapValues { totalMinor * it.value }
+        val exactNumerators = shares.mapValues { FinancialArithmetic.multiply(totalMinor, it.value) }
         val floors = exactNumerators.mapValues { it.value / totalShares }.toMutableMap()
-        var remainder = totalMinor - floors.values.sum()
+        var remainder = totalMinor - floors.values.fold(0L, FinancialArithmetic::add)
         exactNumerators.entries.sortedWith(compareByDescending<Map.Entry<String, Long>> { it.value % totalShares }.thenBy { it.key })
             .forEach { (id, _) -> if (remainder > 0) { floors[id] = floors.getValue(id) + 1; remainder-- } }
         return floors

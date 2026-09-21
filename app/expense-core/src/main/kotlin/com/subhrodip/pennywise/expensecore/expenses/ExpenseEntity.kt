@@ -55,9 +55,9 @@ class ExpenseEntity(
     @Column(name = "updated_at")
     var updatedAt: Instant? = null,
 
-    @OneToMany(mappedBy = "expense", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "expense", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     var payers: MutableList<ExpensePayerEntity> = mutableListOf(),
 
-    @OneToMany(mappedBy = "expense", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "expense", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     var allocations: MutableList<ExpenseAllocationEntity> = mutableListOf()
 )

@@ -19,7 +19,7 @@ class AuthEmailRabbitListener(
     private val consumer: AuthEmailDeliveryConsumer
 ) : ChannelAwareMessageListener {
     @RabbitListener(
-        queues = ["\${pennywise.notifications.auth-email-queue:pennywise.auth-email}"],
+        queues = ["\${pennywise.notifications.auth-email-queue:pennywise.auth-email.v2}"],
         ackMode = "MANUAL"
     )
     override fun onMessage(message: Message, channel: Channel?) {
@@ -33,13 +33,20 @@ class AuthEmailRabbitListener(
         } catch (error: IllegalArgumentException) {
             channel?.basicReject(deliveryTag, false)
         } catch (_: Throwable) {
-            channel?.basicReject(deliveryTag, true)
+            // Give transient delivery one retry; park repeated failures in the DLQ.
+            channel?.basicReject(deliveryTag, message.messageProperties.redelivered != true)
         }
     }
 
     private fun parse(body: ByteArray): AuthEmailDeliveryEvent {
-        val root = objectMapper.readTree(body)
-            ?: throw InvalidEnvelopeException("Empty auth email event")
+        val root = try {
+            objectMapper.readTree(body)
+                ?: throw InvalidEnvelopeException("Empty auth email event")
+        } catch (error: InvalidEnvelopeException) {
+            throw error
+        } catch (error: Throwable) {
+            throw InvalidEnvelopeException("Malformed auth email event", error)
+        }
         val eventType = required(root, "eventType").asString()
         if (eventType != AUTH_EMAIL_EVENT_TYPE) {
             throw InvalidEnvelopeException("Unexpected auth email event type")

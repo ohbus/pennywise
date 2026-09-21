@@ -52,7 +52,7 @@ class InboxController(private val inbox: NotificationInbox) {
 
 @Service
 class NotificationInbox(
-    private val store: NotificationInboxStore = InMemoryNotificationInboxStore()
+    private val store: NotificationInboxStore
 ) {
     fun append(subject: String, item: InboxItem) = store.append(subject, item)
 

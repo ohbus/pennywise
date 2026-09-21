@@ -1,11 +1,13 @@
 package com.subhrodip.pennywise.expensecore.recurring
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.time.LocalDate
 import java.util.UUID
+import jakarta.persistence.LockModeType
 
 /**
  * Spring Data JPA repository for managing [RecurringExpenseSchedule] entities.
@@ -36,5 +38,6 @@ interface RecurringExpenseScheduleRepository : JpaRepository<RecurringExpenseSch
         ORDER BY s.nextOccurrenceDate ASC
         """
     )
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     fun findDueSchedules(@Param("asOfDate") asOfDate: LocalDate): List<RecurringExpenseSchedule>
 }

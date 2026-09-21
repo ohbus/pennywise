@@ -305,7 +305,7 @@ class BffFanoutTest {
 
     /**
      * Verifies getGroup fetches group, balances, expenses, and members concurrently,
-     * handling partial balances/expenses failures gracefully via onErrorReturn, while populating members.
+     * propagating all financial fanout requests while populating members.
      */
     @Test
     fun `getGroup resolves group with balances, expenses, and members`() {
@@ -330,6 +330,54 @@ class BffFanoutTest {
         assertThat(group.expenses).hasSize(1)
         assertThat(group.members).hasSize(1)
         assertThat(group.members[0].subject).isEqualTo("alice")
+    }
+
+    /** Verifies a balance failure cannot be presented as an empty successful balance list. */
+    @Test
+    fun `getGroup propagates balance fanout failure`() {
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupById("g-balance-failure")) { exchange ->
+            respondJson(exchange, 200, groupJson("g-balance-failure", "Group"))
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupBalances("g-balance-failure")) { exchange ->
+            respondJson(exchange, 503, """{"error":"Balances unavailable"}""")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupExpenses("g-balance-failure")) { exchange ->
+            respondJson(exchange, 200, "[]")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-balance-failure")) { exchange ->
+            respondJson(exchange, 200, "[]")
+        }
+
+        val ex = assertThrows<RuntimeException> {
+            gateway.getGroup("g-balance-failure", "bearer-token").block()
+        }
+        val cause = Exceptions.unwrap(ex)
+        assertThat(cause).isInstanceOf(UpstreamServiceException::class.java)
+        assertThat((cause as UpstreamServiceException).status).isEqualTo(503)
+    }
+
+    /** Verifies an expense failure cannot be presented as an empty successful expense list. */
+    @Test
+    fun `getGroup propagates expense fanout failure`() {
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupById("g-expense-failure")) { exchange ->
+            respondJson(exchange, 200, groupJson("g-expense-failure", "Group"))
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupBalances("g-expense-failure")) { exchange ->
+            respondJson(exchange, 200, """{"groupId":"g-expense-failure","balances":[]}""")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupExpenses("g-expense-failure")) { exchange ->
+            respondJson(exchange, 502, """{"error":"Expenses unavailable"}""")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-expense-failure")) { exchange ->
+            respondJson(exchange, 200, "[]")
+        }
+
+        val ex = assertThrows<RuntimeException> {
+            gateway.getGroup("g-expense-failure", "bearer-token").block()
+        }
+        val cause = Exceptions.unwrap(ex)
+        assertThat(cause).isInstanceOf(UpstreamServiceException::class.java)
+        assertThat((cause as UpstreamServiceException).status).isEqualTo(502)
     }
 
     /**

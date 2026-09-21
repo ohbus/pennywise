@@ -1,6 +1,7 @@
 package com.subhrodip.pennywise.expensecore.expenses
 
 import java.util.UUID
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
@@ -12,24 +13,18 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ExpenseRepository : JpaRepository<ExpenseEntity, UUID> {
     /**
-     * Retrieves all expenses in a group ordered by creation date descending.
-     */
-    fun findByGroupIdOrderByCreatedAtDesc(groupId: UUID): List<ExpenseEntity>
-
-    /**
-     * Retrieves expenses in a group filtered by category ordered by creation date descending.
-     */
-    fun findByGroupIdAndCategoryOrderByCreatedAtDesc(groupId: UUID, category: String): List<ExpenseEntity>
-
-    /**
      * Retrieves active (non-deleted) expenses in a group ordered by creation date descending.
      */
-    fun findByGroupIdAndDeletedFalseOrderByCreatedAtDesc(groupId: UUID): List<ExpenseEntity>
+    fun findByGroupIdAndDeletedFalseOrderByCreatedAtDesc(groupId: UUID, pageable: Pageable): List<ExpenseEntity>
 
     /**
      * Retrieves active (non-deleted) expenses in a group filtered by category ordered by creation date descending.
      */
-    fun findByGroupIdAndCategoryAndDeletedFalseOrderByCreatedAtDesc(groupId: UUID, category: String): List<ExpenseEntity>
+    fun findByGroupIdAndCategoryAndDeletedFalseOrderByCreatedAtDesc(
+        groupId: UUID,
+        category: String,
+        pageable: Pageable
+    ): List<ExpenseEntity>
 
     /**
      * Finds an expense by ID and group ID.

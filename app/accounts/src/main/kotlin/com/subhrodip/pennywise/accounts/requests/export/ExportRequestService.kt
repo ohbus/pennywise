@@ -9,8 +9,8 @@ enum class ExportStatus { REQUESTED, READY, EXPIRED }
 data class ExportRequest(val exportId: UUID, val subject: String, val requestedAt: Instant, var status: ExportStatus = ExportStatus.REQUESTED)
 
 @Service
-class ExportRequestService(
-    private val store: ExportRequestStore = InMemoryExportRequestStore()
+class ExportRequestService @Autowired constructor(
+    private val store: ExportRequestStore
 ) {
     constructor(clock: () -> Instant) : this(InMemoryExportRequestStore(clock))
 

@@ -339,4 +339,21 @@ class GraphqlHttpTransportTest {
             privateDetail = "private repayment conflict"
         )
     }
+
+    @Test
+    fun `rejects complexity over the configured bound before gateway execution`() {
+        val query = (1..40).joinToString(" ") { alias ->
+            "group$alias: groups { id name revision }"
+        }.let { "{ $it }" }
+
+        client.post().uri("/graphql")
+            .bodyValue(mapOf("query" to query))
+            .exchange()
+            .expectStatus().isOk
+            .expectBody()
+            .jsonPath("$.errors").isArray
+            .jsonPath("$.data").doesNotExist()
+
+        org.mockito.Mockito.verifyNoInteractions(accountsGateway, expenseCoreGateway)
+    }
 }

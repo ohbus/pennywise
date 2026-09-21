@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.validation.annotation.Validated
 
 import com.subhrodip.pennywise.errors.ApplicationException
 import com.subhrodip.pennywise.errors.ErrorCode
@@ -25,6 +26,7 @@ import com.subhrodip.pennywise.expensecore.groups.GroupMembershipRepository
 import com.subhrodip.pennywise.expensecore.groups.GroupRepository
 
 @RestController
+@Validated
 @RequestMapping(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_BY_ID)
 class ExpenseController(
     private val expenseStore: ExpenseStore,
@@ -36,23 +38,30 @@ class ExpenseController(
     @ResponseStatus(HttpStatus.CREATED)
     fun createExpense(
         @PathVariable groupId: UUID,
-        @RequestHeader(ApiEndpoints.Headers.IDEMPOTENCY_KEY) idempotencyKey: String,
+        @RequestHeader(ApiEndpoints.Headers.IDEMPOTENCY_KEY)
+        @jakarta.validation.constraints.Size(max = ExpenseRequestLimits.MAX_IDEMPOTENCY_KEY_LENGTH)
+        idempotencyKey: String,
         @Valid @RequestBody request: CreateExpenseRequest,
         principal: Principal?
     ): ExpenseResponse {
+        validateRequestBounds(request, idempotencyKey)
         ensureActiveMember(groupId, principal)
         val totalMinor = ExpenseValidator.parseAndValidateAmount(request.amount.minor)
 
-        val payerSum = request.payers.sumOf {
-            val pAmount = it.amount.minor.toLongOrNull()
+        val payerSum = request.payers.fold(0L) { sum, payer ->
+            val pAmount = payer.amount.minor.toLongOrNull()
                 ?: throw ApplicationException(ErrorCode.ERR_02, "payer amount.minor must be a valid integer")
             if (pAmount <= 0) {
                 throw ApplicationException(ErrorCode.ERR_02, "payer amount.minor must be positive")
             }
-            if (it.amount.currency != request.amount.currency) {
+            if (payer.amount.currency != request.amount.currency) {
                 throw ApplicationException(ErrorCode.ERR_02, "payer currency must match expense currency")
             }
-            pAmount
+            try {
+                FinancialArithmetic.add(sum, pAmount)
+            } catch (e: IllegalArgumentException) {
+                throw ApplicationException(ErrorCode.ERR_02, e.message, e)
+            }
         }
 
         if (payerSum != totalMinor) {
@@ -116,19 +125,24 @@ class ExpenseController(
         @Valid @RequestBody request: UpdateExpenseRequest,
         principal: Principal?
     ): ExpenseResponse {
+        validateRequestBounds(request)
         ensureActiveMember(groupId, principal)
         val totalMinor = ExpenseValidator.parseAndValidateAmount(request.amount.minor)
 
-        val payerSum = request.payers.sumOf {
-            val pAmount = it.amount.minor.toLongOrNull()
+        val payerSum = request.payers.fold(0L) { sum, payer ->
+            val pAmount = payer.amount.minor.toLongOrNull()
                 ?: throw ApplicationException(ErrorCode.ERR_02, "payer amount.minor must be a valid integer")
             if (pAmount <= 0) {
                 throw ApplicationException(ErrorCode.ERR_02, "payer amount.minor must be positive")
             }
-            if (it.amount.currency != request.amount.currency) {
+            if (payer.amount.currency != request.amount.currency) {
                 throw ApplicationException(ErrorCode.ERR_02, "payer currency must match expense currency")
             }
-            pAmount
+            try {
+                FinancialArithmetic.add(sum, pAmount)
+            } catch (e: IllegalArgumentException) {
+                throw ApplicationException(ErrorCode.ERR_02, e.message, e)
+            }
         }
 
         if (payerSum != totalMinor) {
@@ -169,7 +183,7 @@ class ExpenseController(
             allocations = domainAllocations
         )
 
-        val updated = expenseStore.update(groupId, expenseId, updateRecord)
+        val updated = expenseStore.update(groupId, expenseId, updateRecord, principal?.name)
 
         return ExpenseResponse(
             expenseId = updated.expenseId,
@@ -194,7 +208,7 @@ class ExpenseController(
         principal: Principal?
     ) {
         ensureActiveMember(groupId, principal)
-        expenseStore.delete(groupId, expenseId, version)
+        expenseStore.delete(groupId, expenseId, version, principal?.name)
     }
 
     @GetMapping(ApiEndpoints.ExpenseCore.V1.EXPENSES_SUBPATH)
@@ -242,6 +256,26 @@ class ExpenseController(
         }
         if (groupRepository.findById(groupId).map { it.status }.orElse(null) != "ACTIVE") {
             throw ApplicationException(ErrorCode.ERR_06, "Group $groupId is archived")
+        }
+    }
+
+    private fun validateRequestBounds(request: CreateExpenseRequest, idempotencyKey: String) {
+        if (idempotencyKey.length > ExpenseRequestLimits.MAX_IDEMPOTENCY_KEY_LENGTH) {
+            throw ApplicationException(ErrorCode.ERR_02, "Idempotency-Key is too long")
+        }
+        validateRequestBounds(request.category, request.payers.size, request.allocation.items.size)
+    }
+
+    private fun validateRequestBounds(request: UpdateExpenseRequest) {
+        validateRequestBounds(request.category, request.payers.size, request.allocation.items.size)
+    }
+
+    private fun validateRequestBounds(category: String?, payerCount: Int, allocationCount: Int) {
+        if (category != null && category.length > ExpenseRequestLimits.MAX_CATEGORY_LENGTH) {
+            throw ApplicationException(ErrorCode.ERR_02, "category is too long")
+        }
+        if (payerCount > ExpenseRequestLimits.MAX_PARTICIPANTS || allocationCount > ExpenseRequestLimits.MAX_PARTICIPANTS) {
+            throw ApplicationException(ErrorCode.ERR_02, "participant count exceeds the maximum")
         }
     }
 }

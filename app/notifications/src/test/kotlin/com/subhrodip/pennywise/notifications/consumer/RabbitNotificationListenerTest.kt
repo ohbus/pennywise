@@ -176,6 +176,23 @@ class RabbitNotificationListenerTest {
     }
 
     @Test
+    fun `rejects redelivered transient failure without requeue`() {
+        val consumer = NotificationConsumer { throw IllegalStateException("database unavailable") }
+        val listener = RabbitNotificationListener(consumer, envelopeParser)
+        val channel = TestChannel()
+        val message = createMessage(
+            """{"eventId":"00000000-0000-7000-8000-000000000212","eventType":"expense.created","schemaVersion":1,"aggregateId":"00000000-0000-7000-8000-000000000213","groupId":"00000000-0000-7000-8000-000000000214","groupRevision":1,"occurredAt":"2026-09-17T20:00:00Z","payload":{}}""",
+            78L,
+            redelivered = true
+        )
+
+        listener.onMessage(message, channel)
+
+        assertEquals(78L, channel.rejectedTag)
+        assertEquals(false, channel.rejectedRequeue)
+    }
+
+    @Test
     fun `handles null channel gracefully without throwing`() {
         val consumer = NotificationConsumer { NotificationConsumptionOutcome.APPLIED }
         val listener = RabbitNotificationListener(consumer, envelopeParser)
@@ -185,9 +202,10 @@ class RabbitNotificationListenerTest {
         listener.onMessage(message, null)
     }
 
-    private fun createMessage(content: String, deliveryTag: Long): Message {
+    private fun createMessage(content: String, deliveryTag: Long, redelivered: Boolean = false): Message {
         val props = MessageProperties().apply {
             this.deliveryTag = deliveryTag
+            this.isRedelivered = redelivered
         }
         return Message(content.toByteArray(StandardCharsets.UTF_8), props)
     }

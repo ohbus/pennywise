@@ -1,6 +1,5 @@
 package com.subhrodip.pennywise.accounts.profile
 
-import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -16,7 +15,6 @@ data class StoredProfile(
 /**
  * In-memory thread-safe implementation of [ProfileStore] used for unit testing.
  */
-@Service
 class InMemoryProfileStore : ProfileStore {
     private val profiles = ConcurrentHashMap<String, StoredProfile>()
 

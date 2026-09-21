@@ -10,6 +10,7 @@ import com.subhrodip.pennywise.errors.GlobalErrorHandler
 import com.subhrodip.pennywise.ids.ApiEndpoints
 import java.nio.charset.StandardCharsets
 import java.security.Principal
+import java.time.Instant
 import java.util.UUID
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.RequestPostProcessor
@@ -24,8 +25,8 @@ class ProfileControllerTest {
     private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(
         ProfileController(
             profiles = InMemoryProfileStore(),
-            deletionService = DeletionRequestService(),
-            exportService = ExportRequestService()
+            deletionService = DeletionRequestService { Instant.parse("2026-01-01T00:00:00Z") },
+            exportService = ExportRequestService { Instant.parse("2026-01-01T00:00:00Z") }
         )
     )
         .setControllerAdvice(GlobalErrorHandler())

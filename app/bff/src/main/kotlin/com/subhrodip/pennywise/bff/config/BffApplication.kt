@@ -9,12 +9,18 @@ import org.springframework.http.MediaType
 import org.springframework.web.server.WebFilter
 import reactor.core.publisher.Mono
 import com.subhrodip.pennywise.security.OidcConfigurationGuard
+import com.subhrodip.pennywise.bff.config.GraphQlAbuseProperties
+import java.time.Duration
 
 @SpringBootApplication
 @Import(OidcConfigurationGuard::class)
 class BffApplication {
     @Bean
-    fun liveUpdateFanout(): LiveUpdateFanout = LiveUpdateFanout()
+    fun liveUpdateFanout(properties: GraphQlAbuseProperties): LiveUpdateFanout = LiveUpdateFanout(
+        queueCapacity = properties.subscriptionQueueCapacity,
+        subscriptionTtl = Duration.ofSeconds(properties.subscriptionTtlSeconds),
+        maxSubscriptionsPerUser = properties.maxSubscriptionsPerUser
+    )
 
     /** Returns the deterministic GraphQL failure envelope used by live acceptance. */
     @Bean

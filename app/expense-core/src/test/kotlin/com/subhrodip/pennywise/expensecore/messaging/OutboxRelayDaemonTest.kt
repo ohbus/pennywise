@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 
@@ -14,6 +15,17 @@ class OutboxRelayDaemonTest {
     private val contextRunner = ApplicationContextRunner()
         .withUserConfiguration(OutboxMessagingConfiguration::class.java)
         .withBean(OutboxStore::class.java, { OutboxRelay() })
+
+    @Test
+    fun `deployed outbox configuration requires durable publishing`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            RequiredOutboxConfiguration(OutboxRelayProperties())
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            RequiredOutboxConfiguration(OutboxRelayProperties(enabled = true))
+        }
+        RequiredOutboxConfiguration(OutboxRelayProperties(enabled = true, rabbitEnabled = true))
+    }
 
     @Test
     fun `daemon is active and publishes available messages when enabled`() {

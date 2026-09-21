@@ -484,4 +484,63 @@ class ExpenseControllerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
     }
+
+    @Test
+    fun `rejects oversized idempotency key before financial processing`() {
+        val groupId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val json = """
+            {"expenseId":"${UUID.randomUUID()}","description":"bounded",
+             "amount":{"currency":"EUR","minor":"100"},
+             "payers":[{"participantId":"$participantId","amount":{"currency":"EUR","minor":"100"}}],
+             "allocation":{"mode":"EQUAL","items":[{"participantId":"$participantId","value":"1"}]}}
+        """.trimIndent()
+
+        mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "x".repeat(201))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `rejects oversized category before financial processing`() {
+        val groupId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val json = """
+            {"expenseId":"${UUID.randomUUID()}","description":"bounded","category":"${"x".repeat(33)}",
+             "amount":{"currency":"EUR","minor":"100"},
+             "payers":[{"participantId":"$participantId","amount":{"currency":"EUR","minor":"100"}}],
+             "allocation":{"mode":"EQUAL","items":[{"participantId":"$participantId","value":"1"}]}}
+        """.trimIndent()
+
+        mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "bounded-category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `rejects oversized participant collections before financial processing`() {
+        val groupId = UUID.randomUUID()
+        val participantIds = (1..101).map { UUID.randomUUID() }
+        val payers = participantIds.joinToString(",") {
+            "{\"participantId\":\"$it\",\"amount\":{\"currency\":\"EUR\",\"minor\":\"1\"}}"
+        }
+        val json = """
+            {"expenseId":"${UUID.randomUUID()}","description":"bounded",
+             "amount":{"currency":"EUR","minor":"101"},"payers":[$payers],
+             "allocation":{"mode":"EQUAL","items":[{"participantId":"${participantIds.first()}","value":"1"}]}}
+        """.trimIndent()
+
+        mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "bounded-participants")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+        ).andExpect(status().isBadRequest)
+    }
 }

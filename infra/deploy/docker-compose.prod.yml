@@ -5,14 +5,26 @@ x-healthcheck: &healthcheck
   retries: 12
   start_period: 30s
 
+x-app-deploy: &app-deploy
+  replicas: ${PENNYWISE_APP_REPLICAS:-3}
+  resources:
+    limits:
+      cpus: ${PENNYWISE_APP_CPU_LIMIT:-4.0}
+      memory: ${PENNYWISE_APP_MEMORY_LIMIT:-8G}
+    reservations:
+      cpus: ${PENNYWISE_APP_CPU_RESERVATION:-1.0}
+      memory: ${PENNYWISE_APP_MEMORY_RESERVATION:-2G}
+
 x-service-defaults: &service-defaults
   restart: unless-stopped
   read_only: true
   tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
   security_opt: [no-new-privileges:true]
+  deploy: *app-deploy
   networks: [private]
   init: true
   environment:
+    SPRING_PROFILES_ACTIVE: production
     SPRING_MAIN_BANNER_MODE: "off"
     LOGGING_STRUCTURED_FORMAT: ${PENNYWISE_LOG_FORMAT:-ecs}
     MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus

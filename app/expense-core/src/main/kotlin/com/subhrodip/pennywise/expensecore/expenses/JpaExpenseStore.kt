@@ -1,12 +1,16 @@
 package com.subhrodip.pennywise.expensecore.expenses
 
 import com.subhrodip.pennywise.expensecore.groups.GroupRepository
+import com.subhrodip.pennywise.expensecore.groups.GroupMembershipRepository
 import com.subhrodip.pennywise.expensecore.messaging.OutboxMessage
 import com.subhrodip.pennywise.expensecore.messaging.OutboxStore
 import com.subhrodip.pennywise.expensecore.sync.SynchronizationStore
 import com.subhrodip.pennywise.ids.UuidGenerator
 import java.time.Instant
 import java.util.UUID
+import java.security.MessageDigest
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.context.annotation.Primary
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -24,8 +28,10 @@ import com.subhrodip.pennywise.errors.ErrorCode
 @Primary
 class JpaExpenseStore(
     private val expenseRepository: ExpenseRepository,
+    private val idempotencyRepository: ExpenseIdempotencyRepository,
     private val balancePostingRepository: BalancePostingRepository,
     private val groupRepository: GroupRepository,
+    private val membershipRepository: GroupMembershipRepository,
     private val outboxStore: OutboxStore,
     private val syncStore: SynchronizationStore
 ) : ExpenseStore {
@@ -41,6 +47,29 @@ class JpaExpenseStore(
         idempotencyKey: String,
         actorSubject: String?
     ): ExpenseRecord {
+        val actor = actorSubject ?: "<unknown>"
+        val payloadHash = expensePayloadHash(expense)
+        // Serialize all mutations for the group before consulting or creating
+        // the idempotency claim. This closes the check-then-insert race for
+        // concurrent same-key requests on one group.
+        val group = groupRepository.findForMembershipUpdate(groupId)
+            ?: throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
+        requireActiveMembership(groupId, actorSubject)
+        validateFinancialParticipants(groupId, expense, actorSubject)
+        if (group.status == "ARCHIVED") {
+            throw ApplicationException(ErrorCode.ERR_06, "Group is archived")
+        }
+        val priorClaim = idempotencyRepository.findByGroupIdAndActorSubjectAndOperationAndIdempotencyKey(
+            groupId, actor, "expense.create", idempotencyKey
+        )
+        if (priorClaim != null) {
+            if (priorClaim.payloadHash != payloadHash) {
+                throw ApplicationException(ErrorCode.ERR_06, "Idempotency key was already used with a different payload")
+            }
+            return expenseRepository.findById(priorClaim.expenseId).orElseThrow {
+                ApplicationException(ErrorCode.ERR_06, "Idempotency record has no committed expense")
+            }.toRecord()
+        }
         val existing = expenseRepository.findById(expense.expenseId).orElse(null)
         if (existing != null) {
             val existingRecord = existing.toRecord()
@@ -53,12 +82,6 @@ class JpaExpenseStore(
                 return existingRecord
             }
             throw ApplicationException(ErrorCode.ERR_06, "Expense already exists with different payload")
-        }
-
-        val group = groupRepository.findForMembershipUpdate(groupId)
-            ?: throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
-        if (group.status == "ARCHIVED") {
-            throw ApplicationException(ErrorCode.ERR_06, "Group is archived")
         }
 
         group.revision += 1
@@ -93,6 +116,17 @@ class JpaExpenseStore(
         })
 
         val saved = expenseRepository.save(entity)
+        idempotencyRepository.save(
+            ExpenseIdempotencyEntity(
+                idempotencyId = UuidGenerator.next(),
+                groupId = groupId,
+                actorSubject = actor,
+                operation = "expense.create",
+                idempotencyKey = idempotencyKey,
+                payloadHash = payloadHash,
+                expenseId = saved.expenseId
+            )
+        )
 
         val postings = mutableListOf<BalancePostingEntity>()
         expense.payers.forEach { payer ->
@@ -149,14 +183,63 @@ class JpaExpenseStore(
         return saved.toRecord()
     }
 
+    private fun expensePayloadHash(expense: ExpenseRecord): String {
+        val canonical = buildString {
+            append(expense.description).append('|').append(expense.category).append('|')
+            append(expense.currency).append('|').append(expense.amountMinor).append('|')
+            append(expense.allocationMode).append('|')
+            expense.payers.sortedBy { it.participantId }.forEach {
+                append("P:").append(it.participantId).append(':').append(it.amountMinor).append('|')
+            }
+            expense.allocations.sortedBy { it.participantId }.forEach {
+                append("A:").append(it.participantId).append(':').append(it.allocatedMinor).append('|')
+            }
+        }
+        return MessageDigest.getInstance("SHA-256").digest(canonical.toByteArray())
+            .joinToString("") { byte -> "%02x".format(byte) }
+    }
+
+    private fun requireActiveMembership(groupId: UUID, actorSubject: String?) {
+        if (actorSubject != null && membershipRepository.findByGroupIdAndSubjectAndStatus(groupId, actorSubject, "ACTIVE") == null) {
+            throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
+        }
+    }
+
+    /** Compatibility overload for internal callers that do not carry an actor. */
+    /** Rejects public postings for arbitrary or duplicate participant identifiers. */
+    private fun validateFinancialParticipants(groupId: UUID, expense: ExpenseRecord, actorSubject: String?) {
+        if (actorSubject == null) return
+        val payerIds = expense.payers.map { it.participantId }
+        val allocationIds = expense.allocations.map { it.participantId }
+        if (payerIds.size != payerIds.toSet().size || allocationIds.size != allocationIds.toSet().size) {
+            throw ApplicationException(ErrorCode.ERR_02, "Participant IDs must be unique within payers and allocations")
+        }
+        val participantIds = payerIds + allocationIds
+        val activeIds = membershipRepository.findByGroupIdAndStatus(groupId, "ACTIVE")
+            .map { it.membershipId }
+            .toSet()
+        if (!activeIds.containsAll(participantIds)) {
+            throw ApplicationException(ErrorCode.ERR_05, "Every financial participant must be an active group member")
+        }
+    }
+
+    fun update(groupId: UUID, expenseId: UUID, update: ExpenseRecord): ExpenseRecord =
+        update(groupId, expenseId, update, null)
+
+    /** Compatibility overload for internal callers that do not carry an actor. */
+    fun delete(groupId: UUID, expenseId: UUID, version: Long?) =
+        delete(groupId, expenseId, version, null)
+
     /**
      * Updates an existing expense in place, generates double-entry reversal postings,
      * writes new balance postings, updates group revision, emits outbox and sync events.
      */
     @Transactional
-    override fun update(groupId: UUID, expenseId: UUID, update: ExpenseRecord): ExpenseRecord {
+    override fun update(groupId: UUID, expenseId: UUID, update: ExpenseRecord, actorSubject: String?): ExpenseRecord {
         val group = groupRepository.findForMembershipUpdate(groupId)
             ?: throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
+        requireActiveMembership(groupId, actorSubject)
+        validateFinancialParticipants(groupId, update, actorSubject)
         if (group.status == "ARCHIVED") {
             throw ApplicationException(ErrorCode.ERR_06, "Group is archived")
         }
@@ -307,9 +390,10 @@ class JpaExpenseStore(
      * Performs a soft delete on an expense, posting reversal balance entries and recording outbox and sync changes.
      */
     @Transactional
-    override fun delete(groupId: UUID, expenseId: UUID, version: Long?) {
+    override fun delete(groupId: UUID, expenseId: UUID, version: Long?, actorSubject: String?) {
         val group = groupRepository.findForMembershipUpdate(groupId)
             ?: throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
+        requireActiveMembership(groupId, actorSubject)
         if (group.status == "ARCHIVED") {
             throw ApplicationException(ErrorCode.ERR_06, "Group is archived")
         }
@@ -386,6 +470,7 @@ class JpaExpenseStore(
     /**
      * Looks up an active (non-deleted) expense by its ID.
      */
+    @Transactional(readOnly = true)
     override fun findById(expenseId: UUID): ExpenseRecord? {
         val entity = expenseRepository.findById(expenseId).orElse(null) ?: return null
         return if (entity.deleted) null else entity.toRecord()
@@ -394,13 +479,16 @@ class JpaExpenseStore(
     /**
      * Lists active expenses for a group, optionally filtered by category.
      */
+    @Transactional(readOnly = true)
     override fun list(groupId: UUID, category: String?, cursor: String?, limit: Int): List<ExpenseRecord> {
+        val boundedLimit = limit.coerceIn(1, 100)
+        val page = PageRequest.of(0, boundedLimit, Sort.by(Sort.Direction.DESC, "createdAt"))
         val entities = if (category != null) {
-            expenseRepository.findByGroupIdAndCategoryAndDeletedFalseOrderByCreatedAtDesc(groupId, category)
+            expenseRepository.findByGroupIdAndCategoryAndDeletedFalseOrderByCreatedAtDesc(groupId, category, page)
         } else {
-            expenseRepository.findByGroupIdAndDeletedFalseOrderByCreatedAtDesc(groupId)
+            expenseRepository.findByGroupIdAndDeletedFalseOrderByCreatedAtDesc(groupId, page)
         }
-        return entities.take(limit).map { it.toRecord() }
+        return entities.map { it.toRecord() }
     }
 
     /**

@@ -72,10 +72,10 @@ class Qa05Test(unittest.TestCase):
         cls.server.server_close()
 
     def test_edge_case_journeys(self) -> None:
-        EdgeCaseHandler.expected_token = "ci-signed-token"
+        EdgeCaseHandler.expected_token = "ci-signed-token"  # security-hygiene: test-fixture
         results = qa05.run_qa05_journeys(
             f"http://127.0.0.1:{self.server.server_port}",
-            bearer_token="ci-signed-token",
+            bearer_token="ci-signed-token",  # security-hygiene: test-fixture
         )
         self.assertEqual([result.id for result in results], [
             "QA05-ROLLBACK", "QA05-CONCURRENCY", "QA05-AUTHORIZATION", "QA05-BFF-FANOUT", "QA05-RECOVERY"

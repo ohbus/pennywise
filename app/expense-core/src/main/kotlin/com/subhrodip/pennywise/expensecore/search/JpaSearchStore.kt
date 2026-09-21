@@ -3,6 +3,8 @@ package com.subhrodip.pennywise.expensecore.search
 import com.subhrodip.pennywise.expensecore.categories.ExpenseCategory
 import com.subhrodip.pennywise.expensecore.expenses.ExpenseRepository
 import java.util.UUID
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -26,7 +28,10 @@ class JpaSearchStore(
      */
     @Transactional(readOnly = true)
     override fun findSearchExpenses(groupId: UUID): List<SearchExpense> {
-        val entities = expenseRepository.findByGroupIdAndDeletedFalseOrderByCreatedAtDesc(groupId)
+        val entities = expenseRepository.findByGroupIdAndDeletedFalseOrderByCreatedAtDesc(
+            groupId,
+            PageRequest.of(0, 100, Sort.by(Sort.Direction.DESC, "createdAt"))
+        )
         return entities.map { entity ->
             val category = runCatching { ExpenseCategory.fromKey(entity.category) }.getOrDefault(ExpenseCategory.OTHER)
             SearchExpense(

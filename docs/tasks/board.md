@@ -17,12 +17,45 @@ validation with Python's standard library.
 
 | ID | Owner | Status | Deliverable |
 | --- | --- | --- | --- |
+| PR-41 | coordinator | in_progress | Make BFF financial fanout fail closed |
+| PR-42 | coordinator | in_progress | Bound RabbitMQ transient redelivery |
+| PR-43 | coordinator | in_progress | Wire configurable GraphQL subscription bounds |
+| PR-44 | coordinator | in_progress | Serialize GraphQL subscription admission |
+| PR-45 | coordinator | in_progress | Lock recurring schedules during worker claims |
+| PR-46 | coordinator | in_progress | Add durable settlement recording idempotency |
+| PR-47 | coordinator | in_progress | Add PostgreSQL populated-settlement reconciliation evidence |
+| PR-48 | coordinator | in_progress | Add CI dependency vulnerability review gate |
+| PR-49 | coordinator | in_progress | Bound GraphQL transport request sizes |
 | AUTH-01 | coordinator | done | Provider-neutral OIDC authentication hardening baseline and implementation tracker |
 | AUTH-02 | coordinator | done | Remove implicit authentication identities with full boundary evidence |
 | AUTH-03 | coordinator | done | Fail-closed provider-neutral OIDC resource-server validation |
 | AUTH-04 | coordinator | done | Validate OIDC JWT claims, signatures, expiry, and subjects |
 | AUTH-05 | coordinator | done | Remove weaker local authentication modes and require local OIDC parity |
 | AUTH-06 | coordinator | done | Keycloak environment, real OIDC journeys, and meaningful Compose hostnames |
+| PR-17 | coordinator | in_progress | Financial ledger reconciliation and durable mutation idempotency |
+| PR-18 | coordinator | in_progress | Bounded persistence reads and mutation-time authorization |
+| PR-19 | coordinator | in_progress | Messaging retry, dead-letter, and poison-message handling |
+| PR-20 | coordinator | in_progress | GraphQL abuse controls |
+| PR-21 | coordinator | in_progress | CI, security, SBOM, and architecture gates |
+| PR-22 | coordinator | in_progress | Remove production in-memory persistence fallbacks |
+| PR-23 | coordinator | in_progress | Profile and financial adapter production wiring |
+| PR-24 | coordinator | in_progress | Remove Accounts request-service in-memory defaults |
+| PR-25 | coordinator | in_progress | Fail closed on production identity-provider wiring |
+| PR-26 | coordinator | in_progress | Expense participant and request-bound validation |
+| PR-27 | coordinator | in_progress | Notification fail-closed delivery policy |
+| PR-28 | coordinator | in_progress | BFF fail-closed upstream configuration |
+| PR-29 | coordinator | in_progress | Checked financial arithmetic |
+| PR-30 | coordinator | in_progress | Subscription revocation on membership removal |
+| PR-31 | coordinator | in_progress | Required production messaging capabilities |
+| PR-32 | coordinator | in_progress | Deployment overlay configuration alignment |
+| PR-33 | coordinator | in_progress | Security hygiene fixture classification |
+| PR-34 | coordinator | in_progress | Notification log redaction |
+| PR-35 | coordinator | in_progress | Actuator exposure hardening |
+| PR-36 | coordinator | in_progress | Versioned notification queue topology |
+| PR-37 | coordinator | in_progress | GraphQL abuse-control transport evidence |
+| PR-38 | coordinator | in_progress | CI workflow and release-gate parity |
+| PR-39 | coordinator | in_progress | Production application topology controls |
+| PR-40 | coordinator | in_progress | Idempotency retention and cleanup |
 | AUTH-07 | coordinator | done | Pennywise-owned passwordless login, token lifecycle, provider portability, and authorization evidence |
 | OPS-24 | coordinator | done | Remove undeclared Ruby dependency and E2E Compose host-port collisions from CI |
 | OPS-17 | coordinator | done | Stable error taxonomy and service/source attribution |

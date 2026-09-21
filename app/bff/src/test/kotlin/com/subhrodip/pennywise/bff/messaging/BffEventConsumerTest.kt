@@ -95,4 +95,28 @@ class BffEventConsumerTest {
 
         assertEquals(false, smallDeduplicator.isDuplicateAndMark(id2)) // id2 was evicted, so recognized as new
     }
+
+    @Test
+    fun `member removal revokes only removed subject subscription before update`() {
+        val groupId = UUID.randomUUID()
+        val removed = fanout.subscribe("removed-user", groupId.toString())
+        val retained = fanout.subscribe("retained-user", groupId.toString())
+        val envelope = BffEventEnvelope(
+            eventId = UUID.randomUUID(),
+            eventType = "member.removed",
+            schemaVersion = 1,
+            aggregateId = UUID.randomUUID(),
+            groupId = groupId,
+            groupRevision = 4L,
+            occurredAt = Instant.now(),
+            payload = mapOf("targetSubject" to "removed-user")
+        )
+
+        val result = consumer.consume(envelope)
+
+        assertTrue(result is ConsumptionResult.Processed)
+        assertEquals(1, (result as ConsumptionResult.Processed).deliveredQueues)
+        assertEquals(null, fanout.poll(removed.id))
+        assertEquals(groupId.toString(), fanout.poll(retained.id)?.groupId)
+    }
 }

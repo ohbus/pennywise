@@ -245,7 +245,6 @@ class ExpenseCoreGateway(
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
             .bodyToMono(BffBalancesResponse::class.java)
             .map { it.balances }
-            .onErrorReturn(emptyList())
 
         val expensesMono = client.get().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_EXPENSES, groupId)
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }
@@ -254,7 +253,6 @@ class ExpenseCoreGateway(
             .bodyToFlux(UpstreamExpense::class.java)
             .map { it.toBffExpense() }
             .collectList()
-            .onErrorReturn(emptyList())
 
         val membersMono = listMembers(groupId, bearer)
 

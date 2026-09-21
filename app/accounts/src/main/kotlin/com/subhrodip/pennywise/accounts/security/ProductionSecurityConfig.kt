@@ -31,7 +31,7 @@ class ProductionSecurityConfig(
         .csrf { it.disable() }
         .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
         .authorizeHttpRequests {
-            it.requestMatchers("/actuator/**").permitAll()
+            it.requestMatchers("/actuator/health/**").permitAll()
                 .requestMatchers("/accounts/v1/auth/login/**").permitAll()
                 .requestMatchers("/accounts/v1/auth/token/refresh").permitAll()
                 .anyRequest().authenticated()

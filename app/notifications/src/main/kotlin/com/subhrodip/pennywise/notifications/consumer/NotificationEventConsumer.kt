@@ -1,6 +1,8 @@
 package com.subhrodip.pennywise.notifications.consumer
 
 import com.subhrodip.pennywise.notifications.email.EmailDispatcher
+import com.subhrodip.pennywise.notifications.email.opaqueRecipientId
+import com.subhrodip.pennywise.notifications.delivery.DeliveryRateLimiter
 import com.subhrodip.pennywise.notifications.preferences.PreferenceStore
 
 import org.hibernate.exception.ConstraintViolationException
@@ -46,7 +48,8 @@ class NotificationEventConsumer(
     private val processor: TransactionalNotificationEventProcessor,
     private val processedEvents: ProcessedNotificationEventRepository,
     private val preferenceStore: PreferenceStore,
-    private val emailDispatcher: EmailDispatcher
+    private val emailDispatcher: EmailDispatcher,
+    private val deliveryRateLimiter: DeliveryRateLimiter
 ) : NotificationConsumer {
 
     private val log = LoggerFactory.getLogger(NotificationEventConsumer::class.java)
@@ -75,24 +78,28 @@ class NotificationEventConsumer(
             val preferences = try {
                 preferenceStore.get(recipientId)
             } catch (e: Exception) {
-                log.warn("Failed to retrieve notification preferences for recipient='{}', defaulting to enabled: {}", recipientId, e.message)
-                null
+                log.warn("Failed to retrieve notification preferences for recipientId={}; suppressing delivery", recipientId, e)
+                return
             }
 
-            val emailEnabled = preferences?.emailEnabled ?: true
+            val emailEnabled = preferences?.emailEnabled ?: false
             if (!emailEnabled) {
                 log.info("Email notifications disabled for recipient='{}'; skipping dispatch", recipientId)
                 return
             }
 
             val recipientEmail = resolveRecipientEmail(event)
+            if (!deliveryRateLimiter.allow(recipientId)) {
+                log.warn("Email delivery rate limit reached for recipientId={}; suppressing delivery", recipientId)
+                return
+            }
             val subject = "Notification: ${event.title}"
             val body = event.body
 
             val deliveryOutcome = emailDispatcher.send(recipientEmail, subject, body)
-            log.info("Email dispatch outcome for recipient='{}' (notificationId={}): {}", recipientEmail, event.notificationId, deliveryOutcome)
+            log.info("Email dispatch outcome for recipientId={} (notificationId={}): {}", opaqueRecipientId(recipientEmail), event.notificationId, deliveryOutcome)
         } catch (t: Throwable) {
-            log.error("Unexpected error dispatching email for notification {}: {}", event.notificationId, t.message, t)
+            log.error("Unexpected email delivery failure for notification {}, errorClass={}", event.notificationId, t::class.simpleName)
         }
     }
 
@@ -101,11 +108,8 @@ class NotificationEventConsumer(
             return event.recipientEmail.trim()
         }
         val recipient = event.subject.trim()
-        return if (recipient.contains("@")) {
-            recipient
-        } else {
-            "${recipient}@pennywise.local"
-        }
+        require(recipient.contains("@")) { "Verified recipient email is required for notification delivery" }
+        return recipient
     }
 }
 

@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component
 @ConfigurationProperties(prefix = "pennywise.outbox")
 data class OutboxRelayProperties(
     var enabled: Boolean = false,
+    var rabbitEnabled: Boolean = false,
     var batchSize: Int = 100,
     var pollDelayMs: Long = 1000,
     var leaseSeconds: Long = 30,
@@ -35,6 +37,7 @@ class OutboxMessagingConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(BrokerPublisher::class)
+    @org.springframework.context.annotation.Profile("!production & !staging")
     fun defaultBrokerPublisher(): BrokerPublisher = InMemoryBroker()
 
     @Bean
@@ -53,6 +56,18 @@ class OutboxMessagingConfiguration {
         maxAttempts = properties.maxAttempts,
         retryAfter = Duration.ofSeconds(properties.retryAfterSeconds)
     )
+}
+
+/** Fails deployed profiles closed when durable event publishing is disabled. */
+@Configuration
+@Profile("production", "staging")
+class RequiredOutboxConfiguration(
+    properties: OutboxRelayProperties
+) {
+    init {
+        require(properties.enabled) { "pennywise.outbox.enabled must be true in deployed profiles" }
+        require(properties.rabbitEnabled) { "pennywise.outbox.rabbit-enabled must be true in deployed profiles" }
+    }
 }
 
 /**

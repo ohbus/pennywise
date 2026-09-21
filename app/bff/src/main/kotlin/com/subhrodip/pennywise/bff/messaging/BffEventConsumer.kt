@@ -33,6 +33,13 @@ class BffEventConsumer(
         val changeIdStr = envelope.eventId.toString()
         val revision = envelope.groupRevision
 
+        if (envelope.eventType == "member.removed") {
+            val removedSubject = envelope.payload["targetSubject"]?.toString()?.trim()
+            if (!removedSubject.isNullOrBlank()) {
+                fanout.revokeUserFromGroup(removedSubject, groupIdStr)
+            }
+        }
+
         val invalidation = fanout.emitInvalidation(groupIdStr, revision, changeIdStr)
         val deliveredQueues = fanout.publish(LiveUpdate(groupIdStr, revision))
 

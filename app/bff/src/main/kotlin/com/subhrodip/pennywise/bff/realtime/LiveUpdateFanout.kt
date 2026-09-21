@@ -26,9 +26,11 @@ data class LiveSubscription(
 class LiveUpdateFanout(
     private val queueCapacity: Int = DEFAULT_QUEUE_CAPACITY,
     private val clock: Clock = Clock.systemUTC(),
-    private val subscriptionTtl: Duration = DEFAULT_SUBSCRIPTION_TTL
+    private val subscriptionTtl: Duration = DEFAULT_SUBSCRIPTION_TTL,
+    private val maxSubscriptionsPerUser: Int = DEFAULT_MAX_SUBSCRIPTIONS_PER_USER
 ) {
     private val subscriptions = ConcurrentHashMap<String, Subscriber>()
+    private val admissionLock = Any()
     val invalidationSink: Sinks.Many<GroupInvalidation> =
         Sinks.many().multicast().directBestEffort()
 
@@ -46,16 +48,23 @@ class LiveUpdateFanout(
     init {
         require(queueCapacity > 0) { "queueCapacity must be positive" }
         require(!subscriptionTtl.isZero && !subscriptionTtl.isNegative) { "subscriptionTtl must be positive" }
+        require(maxSubscriptionsPerUser > 0) { "maxSubscriptionsPerUser must be positive" }
     }
 
     fun subscribe(userId: String, groupId: String): LiveSubscription {
         require(userId.isNotBlank()) { "userId must not be blank" }
         require(groupId.isNotBlank()) { "groupId must not be blank" }
-        val subscription = LiveSubscription(
-            UuidGenerator.next().toString(), userId, groupId, Instant.now(clock).plus(subscriptionTtl)
-        )
-        subscriptions[subscription.id] = Subscriber(subscription, ArrayDeque())
-        return subscription
+        return synchronized(admissionLock) {
+            removeExpired()
+            require(subscriptions.values.count { it.subscription.userId == userId } < maxSubscriptionsPerUser) {
+                "subscription limit exceeded"
+            }
+            val subscription = LiveSubscription(
+                UuidGenerator.next().toString(), userId, groupId, Instant.now(clock).plus(subscriptionTtl)
+            )
+            subscriptions[subscription.id] = Subscriber(subscription, ArrayDeque())
+            subscription
+        }
     }
 
     fun unsubscribe(subscriptionId: String) {
@@ -67,6 +76,20 @@ class LiveUpdateFanout(
         var revoked = 0
         subscriptions.entries.removeIf {
             val matches = it.value.subscription.userId == userId
+            if (matches) revoked++
+            matches
+        }
+        return revoked
+    }
+
+    /** Revokes only the removed subject's subscriptions for the affected group. */
+    fun revokeUserFromGroup(userId: String, groupId: String): Int {
+        require(userId.isNotBlank()) { "userId must not be blank" }
+        require(groupId.isNotBlank()) { "groupId must not be blank" }
+        var revoked = 0
+        subscriptions.entries.removeIf {
+            val subscription = it.value.subscription
+            val matches = subscription.userId == userId && subscription.groupId == groupId
             if (matches) revoked++
             matches
         }
@@ -118,6 +141,7 @@ class LiveUpdateFanout(
 
     companion object {
         const val DEFAULT_QUEUE_CAPACITY = 64
+        const val DEFAULT_MAX_SUBSCRIPTIONS_PER_USER = 20
         val DEFAULT_SUBSCRIPTION_TTL: Duration = Duration.ofMinutes(30)
     }
 }

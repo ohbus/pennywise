@@ -96,7 +96,7 @@ class SettlementControllerTest {
         val from = UUID.randomUUID()
         val to = UUID.randomUUID()
         val recorded = mvc.perform(
-            post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user)
+            post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user).header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "settlement-key-0001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1250\"}")
         )
@@ -122,17 +122,45 @@ class SettlementControllerTest {
             .andExpect(jsonPath("$.reason").value("paid externally"))
     }
 
+    /** Verifies settlement recording replay and altered-payload conflict at HTTP boundary. */
+    @Test
+    fun `replays same settlement key and rejects altered payload`() {
+        val groupId = UUID.randomUUID()
+        val from = UUID.randomUUID()
+        val to = UUID.randomUUID()
+        val path = ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)
+        val payload = "{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1250\"}"
+
+        val first = mvc.perform(post(path).with(user)
+            .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "public-settlement-key-0001")
+            .contentType(MediaType.APPLICATION_JSON).content(payload))
+            .andExpect(status().isCreated)
+            .andReturn().response.contentAsString
+
+        mvc.perform(post(path).with(user)
+            .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "public-settlement-key-0001")
+            .contentType(MediaType.APPLICATION_JSON).content(payload))
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.id").value(Regex("\\\"id\\\":\\\"([^\\\"]+)\\\"").find(first)!!.groupValues[1]))
+
+        mvc.perform(post(path).with(user)
+            .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "public-settlement-key-0001")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1300\"}"))
+            .andExpect(status().isConflict)
+    }
+
     /** Verifies invalid settlement invariants and unknown reversals use public client errors. */
     @Test
     fun `rejects invalid settlements and returns not found for unknown reversal`() {
         val groupId = UUID.randomUUID()
         val participant = UUID.randomUUID()
-        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user)
+        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user).header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "invalid-key-0001")
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"fromParticipantId\":\"$participant\",\"toParticipantId\":\"$participant\",\"amountMinor\":\"100\"}"))
             .andExpect(status().isBadRequest)
 
-        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user)
+        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user).header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "invalid-key-0002")
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"fromParticipantId\":\"${UUID.randomUUID()}\",\"toParticipantId\":\"${UUID.randomUUID()}\",\"amountMinor\":\"0\"}"))
             .andExpect(status().isBadRequest)

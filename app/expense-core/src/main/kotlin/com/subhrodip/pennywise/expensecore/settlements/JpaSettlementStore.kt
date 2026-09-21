@@ -1,6 +1,9 @@
 package com.subhrodip.pennywise.expensecore.settlements
 
 import com.subhrodip.pennywise.expensecore.groups.GroupRepository
+import com.subhrodip.pennywise.expensecore.expenses.BalancePostingEntity
+import com.subhrodip.pennywise.expensecore.expenses.BalancePostingRepository
+import com.subhrodip.pennywise.ids.UuidGenerator
 import java.util.UUID
 import org.springframework.context.annotation.Primary
 import org.springframework.http.HttpStatus
@@ -21,7 +24,8 @@ import com.subhrodip.pennywise.errors.ErrorCode
 @Service
 class JpaSettlementStore(
     private val repository: SettlementRepository,
-    private val groupRepository: GroupRepository
+    private val groupRepository: GroupRepository,
+    private val balancePostingRepository: BalancePostingRepository
 ) : SettlementStore {
 
     /**
@@ -33,10 +37,39 @@ class JpaSettlementStore(
      */
     @Transactional
     override fun record(groupId: UUID, settlement: Settlement): Settlement {
-        checkActiveGroup(groupId)
+        val group = checkActiveGroup(groupId)
         val existing = repository.findBySettlementIdAndGroupId(settlement.id, groupId)
-        if (existing != null) return existing.toDomain()
-        return repository.save(settlement.toEntity(groupId)).toDomain()
+        if (existing != null) {
+            if (existing.fromParticipantId != settlement.fromParticipantId ||
+                existing.toParticipantId != settlement.toParticipantId ||
+                existing.amountMinor != settlement.amountMinor
+            ) {
+                throw ApplicationException(ErrorCode.ERR_06, "Idempotency key was already used with a different settlement")
+            }
+            return existing.toDomain()
+        }
+        val saved = repository.save(settlement.toEntity(groupId))
+        balancePostingRepository.saveAll(
+            listOf(
+                BalancePostingEntity(
+                    postingId = UuidGenerator.next(),
+                    groupId = groupId,
+                    settlementId = saved.settlementId,
+                    participantId = saved.fromParticipantId,
+                    currency = group.currency,
+                    amountMinor = saved.amountMinor
+                ),
+                BalancePostingEntity(
+                    postingId = UuidGenerator.next(),
+                    groupId = groupId,
+                    settlementId = saved.settlementId,
+                    participantId = saved.toParticipantId,
+                    currency = group.currency,
+                    amountMinor = -saved.amountMinor
+                )
+            )
+        )
+        return saved.toDomain()
     }
 
     /**
@@ -56,15 +89,27 @@ class JpaSettlementStore(
         if (entity.status == SettlementStatus.REVERSED) return entity.toDomain()
         entity.status = SettlementStatus.REVERSED
         entity.reversalReason = reason
+        val postings = balancePostingRepository.findBySettlementId(settlementId)
+        balancePostingRepository.saveAll(
+            postings.map { posting ->
+                BalancePostingEntity(
+                    postingId = UuidGenerator.next(),
+                    groupId = posting.groupId,
+                    settlementId = settlementId,
+                    participantId = posting.participantId,
+                    currency = posting.currency,
+                    amountMinor = -posting.amountMinor
+                )
+            }
+        )
         return repository.save(entity).toDomain()
     }
 
-    private fun checkActiveGroup(groupId: UUID) {
-        val group = groupRepository.findById(groupId).orElse(null)
-        if (group != null && group.status == "ARCHIVED") {
+    private fun checkActiveGroup(groupId: UUID) = groupRepository.findById(groupId).orElse(null)?.also { group ->
+        if (group.status == "ARCHIVED") {
             throw ApplicationException(ErrorCode.ERR_06, "Group is archived")
         }
-    }
+    } ?: throw ApplicationException(ErrorCode.ERR_05, "Group $groupId not found")
 }
 
 private fun Settlement.toEntity(groupId: UUID) = SettlementEntity(

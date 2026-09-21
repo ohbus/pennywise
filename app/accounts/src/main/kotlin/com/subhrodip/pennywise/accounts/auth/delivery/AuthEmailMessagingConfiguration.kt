@@ -8,6 +8,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -33,6 +34,19 @@ class AuthEmailMessagingConfiguration {
     @ConditionalOnProperty(prefix = "pennywise.auth-email-outbox", name = ["enabled"], havingValue = "true")
     fun authEmailOutboxPublisher(outbox: AuthEmailOutboxService, rabbitTemplate: RabbitTemplate, objectMapper: ObjectMapper, properties: AuthEmailOutboxProperties): AuthEmailOutboxPublisher =
         AuthEmailOutboxPublisher(outbox, rabbitTemplate, objectMapper, properties.exchange, properties.routingKey, Duration.ofSeconds(properties.leaseSeconds), Duration.ofSeconds(properties.retryAfterSeconds), properties.maximumAttempts)
+}
+
+/** Fails deployed profiles closed when passwordless email publishing is disabled. */
+@Configuration
+@Profile("production", "staging")
+class RequiredAuthEmailOutboxConfiguration(
+    properties: AuthEmailOutboxProperties
+) {
+    init {
+        require(properties.enabled) {
+            "pennywise.auth-email-outbox.enabled must be true in deployed profiles"
+        }
+    }
 }
 
 /** Polls the protected auth-email outbox only when explicitly enabled. */

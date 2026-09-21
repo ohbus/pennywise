@@ -10,6 +10,13 @@ import jakarta.validation.constraints.Size
 import java.time.Instant
 import java.util.UUID
 
+/** Shared bounds for public Expense Core mutation inputs. */
+object ExpenseRequestLimits {
+    const val MAX_PARTICIPANTS = 100
+    const val MAX_CATEGORY_LENGTH = 32
+    const val MAX_IDEMPOTENCY_KEY_LENGTH = 200
+}
+
 data class MoneyDto(
     @field:NotBlank
     @field:Pattern(regexp = "^[A-Z]{3}$")
@@ -53,12 +60,14 @@ data class CreateExpenseRequest(
     @field:Size(min = 1, max = 240)
     val description: String,
 
+    @field:Size(max = ExpenseRequestLimits.MAX_CATEGORY_LENGTH)
     val category: String? = "other",
 
     @field:Valid
     val amount: MoneyDto,
 
     @field:NotEmpty
+    @field:Size(max = ExpenseRequestLimits.MAX_PARTICIPANTS)
     val payers: List<@Valid PayerDto>,
 
     @field:Valid
@@ -73,12 +82,14 @@ data class UpdateExpenseRequest(
     @field:Size(min = 1, max = 240)
     val description: String,
 
+    @field:Size(max = ExpenseRequestLimits.MAX_CATEGORY_LENGTH)
     val category: String? = "other",
 
     @field:Valid
     val amount: MoneyDto,
 
     @field:NotEmpty
+    @field:Size(max = ExpenseRequestLimits.MAX_PARTICIPANTS)
     val payers: List<@Valid PayerDto>,
 
     @field:Valid

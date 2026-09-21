@@ -2,19 +2,29 @@ package com.subhrodip.pennywise.expensecore.settlements
 
 import com.subhrodip.pennywise.errors.ApplicationException
 import com.subhrodip.pennywise.errors.ErrorCode
-import org.springframework.stereotype.Service
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Thread-safe in-memory implementation of [SettlementStore] used for unit testing.
  */
-@Service
 class InMemorySettlementStore : SettlementStore {
     private val settlements = ConcurrentHashMap<Pair<UUID, UUID>, Settlement>()
 
-    override fun record(groupId: UUID, settlement: Settlement): Settlement =
-        settlements.computeIfAbsent(groupId to settlement.id) { settlement }
+    override fun record(groupId: UUID, settlement: Settlement): Settlement {
+        val key = groupId to settlement.id
+        val existing = settlements[key]
+        if (existing != null) {
+            if (existing.fromParticipantId != settlement.fromParticipantId ||
+                existing.toParticipantId != settlement.toParticipantId ||
+                existing.amountMinor != settlement.amountMinor
+            ) {
+                throw ApplicationException(ErrorCode.ERR_06, "Idempotency key was already used with a different settlement")
+            }
+            return existing
+        }
+        return settlements.computeIfAbsent(key) { settlement }
+    }
 
     @Synchronized
     override fun reverse(groupId: UUID, settlementId: UUID, reason: String): Settlement {

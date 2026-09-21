@@ -2,6 +2,7 @@ package com.subhrodip.pennywise.expensecore.settlements
 
 import com.subhrodip.pennywise.expensecore.expenses.ExpenseStore
 import com.subhrodip.pennywise.expensecore.expenses.GroupBalanceItem
+import com.subhrodip.pennywise.expensecore.expenses.FinancialArithmetic
 import org.springframework.stereotype.Service
 import java.util.PriorityQueue
 import java.util.UUID
@@ -30,7 +31,7 @@ class SettlementSuggestionEngine(private val expenseStore: ExpenseStore) {
             for (item in items) {
                 val participantId = UUID.fromString(item.participantId)
                 val minor = item.amount.minor.toLong()
-                netByParticipant[participantId] = (netByParticipant[participantId] ?: 0L) + minor
+                netByParticipant[participantId] = FinancialArithmetic.add(netByParticipant[participantId] ?: 0L, minor)
             }
 
             val debtorComparator = compareBy<Debtor> { it.balance }.thenBy { it.participantId }
@@ -51,7 +52,7 @@ class SettlementSuggestionEngine(private val expenseStore: ExpenseStore) {
                 val debtor = debtors.poll()
                 val creditor = creditors.poll()
 
-                val debtorDebt = -debtor.balance
+                val debtorDebt = FinancialArithmetic.negate(debtor.balance)
                 val creditorCredit = creditor.balance
                 val transferAmount = minOf(debtorDebt, creditorCredit)
 

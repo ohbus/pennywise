@@ -17,7 +17,7 @@ import java.time.Instant
 import java.util.UUID
 
 class InboxControllerTest {
-    private val inbox = NotificationInbox()
+    private val inbox = NotificationInbox(InMemoryNotificationInboxStore())
     private val controller = InboxController(inbox)
     private val mvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(GlobalErrorHandler()).build()
@@ -25,7 +25,7 @@ class InboxControllerTest {
 
     @Test
     fun `orders inbox newest first and isolates subjects`() {
-        val testInbox = NotificationInbox()
+        val testInbox = NotificationInbox(InMemoryNotificationInboxStore())
         testInbox.append("alice", InboxItem(UUID.randomUUID(), "expense.created", "Expense", Instant.EPOCH))
         testInbox.append("alice", InboxItem(UUID.randomUUID(), "repayment.created", "Repayment", Instant.ofEpochSecond(2)))
         testInbox.append("bob", InboxItem(UUID.randomUUID(), "expense.created", "Other", Instant.now()))
@@ -36,7 +36,7 @@ class InboxControllerTest {
 
     @Test
     fun `returns stable cursor pages`() {
-        val testInbox = NotificationInbox()
+        val testInbox = NotificationInbox(InMemoryNotificationInboxStore())
         repeat(3) { index -> testInbox.append("alice", InboxItem(UUID.randomUUID(), "event-$index", "Event", Instant.ofEpochSecond(index.toLong()))) }
         val first = testInbox.page("alice", null, 2)
         assertEquals(listOf("event-2", "event-1"), first.items.map { it.eventType })
@@ -47,7 +47,7 @@ class InboxControllerTest {
 
     @Test
     fun `rejects malformed cursor`() {
-        val testInbox = NotificationInbox()
+        val testInbox = NotificationInbox(InMemoryNotificationInboxStore())
         val err = org.junit.jupiter.api.Assertions.assertThrows(com.subhrodip.pennywise.errors.ApplicationException::class.java) {
             testInbox.page("alice", "bad", 10)
         }

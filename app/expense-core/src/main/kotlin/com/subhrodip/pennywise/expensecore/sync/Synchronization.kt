@@ -4,7 +4,6 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.Base64
-import org.springframework.stereotype.Service
 
 data class SyncCursor(val groupId: String, val revision: Long, val expiresAt: Instant) {
     fun encode(): String {
@@ -47,7 +46,6 @@ interface SynchronizationStore {
     }
 }
 
-@Service
 class InMemorySynchronizationStore(
     private val clock: Clock = Clock.systemUTC(),
     private val cursorLifetime: Duration = Duration.ofHours(24)

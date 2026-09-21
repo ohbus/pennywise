@@ -165,7 +165,7 @@ class RabbitNotificationListener(
 ) : ChannelAwareMessageListener {
 
     @RabbitListener(
-        queues = ["\${pennywise.notifications.queue:pennywise.notifications}"],
+        queues = ["\${pennywise.notifications.queue:pennywise.notifications.v2}"],
         ackMode = "MANUAL"
     )
     override fun onMessage(message: Message, channel: Channel?) {
@@ -179,8 +179,9 @@ class RabbitNotificationListener(
             // Poison pill: reject without requeue
             channel?.basicReject(deliveryTag, false)
         } catch (t: Throwable) {
-            // Transient or application failure: reject with requeue so broker can retry
-            channel?.basicReject(deliveryTag, true)
+            // Give a transient failure one retry, then park it in the DLQ rather
+            // than allowing an indefinitely redelivered poison message.
+            channel?.basicReject(deliveryTag, message.messageProperties.redelivered != true)
         }
     }
 }

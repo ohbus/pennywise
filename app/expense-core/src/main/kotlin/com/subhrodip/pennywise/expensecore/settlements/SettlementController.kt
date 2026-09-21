@@ -1,6 +1,5 @@
 package com.subhrodip.pennywise.expensecore.settlements
 
-import com.subhrodip.pennywise.ids.UuidGenerator
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
@@ -11,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
@@ -33,9 +33,9 @@ class SettlementController(
 ) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun record(@PathVariable groupId: UUID, @Valid @RequestBody request: RecordSettlementRequest, principal: Principal?): Settlement {
+    fun record(@PathVariable groupId: UUID, @RequestHeader(ApiEndpoints.Headers.IDEMPOTENCY_KEY) idempotencyKey: String, @Valid @RequestBody request: RecordSettlementRequest, principal: Principal?): Settlement {
         ensureMembership(groupId, principal)
-        return service.record(groupId, UuidGenerator.next(), request.fromParticipantId, request.toParticipantId, request.amountMinor.toLong())
+        return service.record(groupId, UUID.randomUUID(), request.fromParticipantId, request.toParticipantId, request.amountMinor.toLong(), principal!!.name, idempotencyKey)
     }
 
     @PostMapping(ApiEndpoints.ExpenseCore.V1.SETTLEMENT_REVERSAL_RELATIVE_SUBPATH)

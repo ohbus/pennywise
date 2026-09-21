@@ -32,6 +32,7 @@ class AuthSessionConfiguration(
      */
     @Bean
     @ConditionalOnMissingBean(IdentityProviderPort::class)
+    @Profile("!production & !staging & !local-oidc")
     fun identityProviderPort(): IdentityProviderPort {
         val effectiveIssuer = issuerUri.ifBlank { "https://issuer.example.pennywise" }
         val effectiveAudience = audience.ifBlank { "pennywise-api" }

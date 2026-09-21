@@ -8,8 +8,8 @@ enum class DeletionStatus { REQUESTED, CANCELLED, COMPLETED }
 data class DeletionRequest(val subject: String, val requestedAt: Instant, var status: DeletionStatus = DeletionStatus.REQUESTED)
 
 @Service
-class DeletionRequestService(
-    private val store: DeletionRequestStore = InMemoryDeletionRequestStore()
+class DeletionRequestService @Autowired constructor(
+    private val store: DeletionRequestStore
 ) {
     constructor(clock: () -> Instant) : this(InMemoryDeletionRequestStore(clock))
 

@@ -27,7 +27,7 @@ class ProductionSecurityConfig(
     @Bean
     fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain = http
         .csrf { it.disable() }
-        .authorizeExchange { it.pathMatchers("/actuator/**").permitAll().anyExchange().authenticated() }
+        .authorizeExchange { it.pathMatchers("/actuator/health/**").permitAll().anyExchange().authenticated() }
         .oauth2ResourceServer { it.jwt {} }
         .build()
 }

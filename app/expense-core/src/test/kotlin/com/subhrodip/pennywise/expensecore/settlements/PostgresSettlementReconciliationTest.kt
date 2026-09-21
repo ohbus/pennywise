@@ -1,0 +1,72 @@
+package com.subhrodip.pennywise.expensecore.settlements
+
+import com.subhrodip.pennywise.expensecore.groups.GroupEntity
+import com.subhrodip.pennywise.expensecore.groups.GroupRepository
+import java.util.UUID
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
+import org.springframework.jdbc.core.JdbcTemplate
+import jakarta.persistence.EntityManager
+import jakarta.persistence.PersistenceContext
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
+import org.springframework.transaction.annotation.Transactional
+
+/**
+ * Runs the settlement reconciliation invariants against PostgreSQL rather than
+ * an embedded database. Enable with `PENNYWISE_POSTGRES_TESTS=true`.
+ */
+@SpringBootTest(webEnvironment = WebEnvironment.NONE)
+@EnabledIfEnvironmentVariable(named = "PENNYWISE_POSTGRES_TESTS", matches = "true")
+@Transactional
+class PostgresSettlementReconciliationTest @Autowired constructor(
+    private val store: JpaSettlementStore,
+    private val groupRepository: GroupRepository,
+    private val jdbc: JdbcTemplate
+) {
+    @PersistenceContext
+    private lateinit var entityManager: EntityManager
+
+    @Test
+    fun `reconciles recorded and reversed settlement postings`() {
+        val groupId = UUID.randomUUID()
+        groupRepository.save(GroupEntity(groupId, "Postgres settlement reconciliation", "HOUSEHOLD", "EUR"))
+        val recorded = Settlement(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 1_250)
+        val reversed = Settlement(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 2_500)
+
+        store.record(groupId, recorded)
+        store.record(groupId, reversed)
+        store.reverse(groupId, reversed.id, "reconciliation")
+        entityManager.flush()
+
+        assertEquals(2L, postingCount(recorded.id))
+        assertEquals(4L, postingCount(reversed.id))
+        assertEquals(0L, netAmount(recorded.id))
+        assertEquals(0L, netAmount(reversed.id))
+        assertEquals(1_250L, signedAmount(recorded.id, recorded.fromParticipantId))
+        assertEquals(-1_250L, signedAmount(recorded.id, recorded.toParticipantId))
+        assertEquals(2_500L, signedAmount(reversed.id, reversed.fromParticipantId))
+        assertEquals(-2_500L, signedAmount(reversed.id, reversed.toParticipantId))
+    }
+
+    private fun postingCount(settlementId: UUID): Long = jdbc.queryForObject(
+        "SELECT count(*) FROM balance_postings WHERE settlement_id = ?",
+        Long::class.java,
+        settlementId
+    ) ?: 0L
+
+    private fun netAmount(settlementId: UUID): Long = jdbc.queryForObject(
+        "SELECT COALESCE(sum(amount_minor), 0) FROM balance_postings WHERE settlement_id = ?",
+        Long::class.java,
+        settlementId
+    ) ?: 0L
+
+    private fun signedAmount(settlementId: UUID, participantId: UUID): Long = jdbc.queryForObject(
+        "SELECT amount_minor FROM balance_postings WHERE settlement_id = ? AND participant_id = ? ORDER BY created_at ASC LIMIT 1",
+        Long::class.java,
+        settlementId,
+        participantId
+    ) ?: 0L
+}

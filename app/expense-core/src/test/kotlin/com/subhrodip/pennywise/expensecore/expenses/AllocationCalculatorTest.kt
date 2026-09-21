@@ -31,4 +31,20 @@ class AllocationCalculatorTest {
         assertThrows(IllegalArgumentException::class.java) { AllocationCalculator.equal(1, emptyList()) }
         assertThrows(IllegalArgumentException::class.java) { AllocationCalculator.equal(1, listOf("a", "a")) }
     }
+
+    @Test
+    fun `rejects multiplication and aggregation overflow`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.percentage(Long.MAX_VALUE, mapOf("a" to 10_000L))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.exact(Long.MAX_VALUE, mapOf("a" to Long.MAX_VALUE, "b" to 1L))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            FinancialArithmetic.add(Long.MAX_VALUE, 1L)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            FinancialArithmetic.negate(Long.MIN_VALUE)
+        }
+    }
 }

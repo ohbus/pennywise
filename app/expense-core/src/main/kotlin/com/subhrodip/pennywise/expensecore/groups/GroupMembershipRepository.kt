@@ -2,6 +2,8 @@ package com.subhrodip.pennywise.expensecore.groups
 
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
+import jakarta.persistence.LockModeType
 import org.springframework.stereotype.Repository
 
 /**
@@ -73,5 +75,6 @@ interface GroupMembershipRepository : JpaRepository<GroupMembershipEntity, UUID>
      * @param status the membership status
      * @return the membership entity if found, null otherwise
      */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     fun findByGroupIdAndSubjectAndStatus(groupId: UUID, subject: String, status: String): GroupMembershipEntity?
 }

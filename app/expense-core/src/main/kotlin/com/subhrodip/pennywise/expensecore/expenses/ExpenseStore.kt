@@ -35,7 +35,7 @@ interface ExpenseStore {
      * @param update updated expense details
      * @return updated expense record
      */
-    fun update(groupId: UUID, expenseId: UUID, update: ExpenseRecord): ExpenseRecord
+    fun update(groupId: UUID, expenseId: UUID, update: ExpenseRecord, actorSubject: String? = null): ExpenseRecord
 
     /**
      * Soft-deletes an expense record, posting double-entry ledger reversals.
@@ -44,7 +44,7 @@ interface ExpenseStore {
      * @param expenseId expense UUID
      * @param version optional optimistic concurrency version to check
      */
-    fun delete(groupId: UUID, expenseId: UUID, version: Long?)
+    fun delete(groupId: UUID, expenseId: UUID, version: Long?, actorSubject: String? = null)
 
     /**
      * Finds an active (non-deleted) expense record by ID.
@@ -132,7 +132,7 @@ class InMemoryExpenseStore : ExpenseStore {
     }
 
     @Synchronized
-    override fun update(groupId: UUID, expenseId: UUID, update: ExpenseRecord): ExpenseRecord {
+    override fun update(groupId: UUID, expenseId: UUID, update: ExpenseRecord, actorSubject: String?): ExpenseRecord {
         val existing = expenses[expenseId]
             ?: throw ApplicationException(ErrorCode.ERR_05, "Expense $expenseId not found")
         if (existing.groupId != groupId || existing.deleted) {
@@ -206,7 +206,7 @@ class InMemoryExpenseStore : ExpenseStore {
     }
 
     @Synchronized
-    override fun delete(groupId: UUID, expenseId: UUID, version: Long?) {
+    override fun delete(groupId: UUID, expenseId: UUID, version: Long?, actorSubject: String?) {
         val existing = expenses[expenseId]
             ?: throw ApplicationException(ErrorCode.ERR_05, "Expense $expenseId not found")
         if (existing.groupId != groupId || existing.deleted) {

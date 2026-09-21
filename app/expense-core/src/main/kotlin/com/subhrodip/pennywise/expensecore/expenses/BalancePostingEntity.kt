@@ -25,6 +25,9 @@ class BalancePostingEntity(
     @Column(name = "expense_id")
     var expenseId: UUID? = null,
 
+    @Column(name = "settlement_id")
+    var settlementId: UUID? = null,
+
     @Column(name = "participant_id", nullable = false)
     var participantId: UUID,
 

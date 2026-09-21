@@ -16,13 +16,14 @@ class EmailDispatcher(
     private val log = LoggerFactory.getLogger(EmailDispatcher::class.java)
 
     fun dispatch(recipient: String, subject: String, body: String): EmailDeliveryOutcome {
+        val recipientId = opaqueRecipientId(recipient)
         if (!properties.enabled) {
-            log.info("Email dispatch disabled; skipping message to recipient='{}'", recipient)
+            log.info("Email dispatch disabled; skipping recipientId={}", recipientId)
             return EmailDeliveryOutcome.SKIPPED
         }
 
         if (!isValidEmail(recipient)) {
-            log.warn("Invalid email address for recipient='{}'", recipient)
+            log.warn("Invalid email address for recipientId={}", recipientId)
             return EmailDeliveryOutcome.PERMANENT_FAILURE
         }
 
@@ -42,16 +43,16 @@ class EmailDispatcher(
         for (attempt in 1..maxAttempts) {
             try {
                 mailSender.send(message)
-                log.info("Successfully dispatched email to recipient='{}' on attempt {}", recipient, attempt)
+                log.info("Successfully dispatched email to recipientId={} on attempt {}", recipientId, attempt)
                 return EmailDeliveryOutcome.DELIVERED
             } catch (e: Exception) {
                 if (isPermanentFailure(e)) {
-                    log.warn("Permanent failure dispatching email to recipient='{}': {}", recipient, e.message, e)
+                    log.warn("Permanent email delivery failure for recipientId={}, errorClass={}", recipientId, e::class.simpleName)
                     return EmailDeliveryOutcome.PERMANENT_FAILURE
                 }
 
                 if (isTransientFailure(e)) {
-                    log.warn("Transient failure dispatching email to recipient='{}' (attempt {}/{}): {}", recipient, attempt, maxAttempts, e.message)
+                    log.warn("Transient email delivery failure for recipientId={} (attempt {}/{})", recipientId, attempt, maxAttempts)
                     if (attempt < maxAttempts) {
                         if (properties.retryDelayMs > 0) {
                             try {
@@ -66,7 +67,7 @@ class EmailDispatcher(
                     return EmailDeliveryOutcome.RETRYABLE_FAILURE
                 }
 
-                log.error("Non-retryable error dispatching email to recipient='{}': {}", recipient, e.message, e)
+                log.error("Non-retryable email delivery failure for recipientId={}, errorClass={}", recipientId, e::class.simpleName)
                 return EmailDeliveryOutcome.PERMANENT_FAILURE
             }
         }

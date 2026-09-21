@@ -2,7 +2,7 @@
 # All image and credential values must be supplied by the deployment environment.
 services:
   postgres:
-    image: ${POSTGRES_IMAGE:-postgres:17}
+    image: ${POSTGRES_IMAGE:?set POSTGRES_IMAGE}
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
@@ -14,7 +14,7 @@ services:
     networks: [private]
 
   rabbitmq:
-    image: ${RABBITMQ_IMAGE:-rabbitmq:4.3-management}
+    image: ${RABBITMQ_IMAGE:?set RABBITMQ_IMAGE}
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?set RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD}
@@ -29,6 +29,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-pennywise}_accounts
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:?set POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      PENNYWISE_AUTH_EMAIL_OUTBOX_ENABLED: ${PENNYWISE_AUTH_EMAIL_OUTBOX_ENABLED:?set PENNYWISE_AUTH_EMAIL_OUTBOX_ENABLED}
     depends_on:
       postgres: {condition: service_healthy}
 
@@ -40,6 +41,8 @@ services:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:?set RABBITMQ_USER}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD}
+      PENNYWISE_OUTBOX_ENABLED: ${PENNYWISE_OUTBOX_ENABLED:?set PENNYWISE_OUTBOX_ENABLED}
+      PENNYWISE_OUTBOX_RABBIT_ENABLED: ${PENNYWISE_OUTBOX_RABBIT_ENABLED:?set PENNYWISE_OUTBOX_RABBIT_ENABLED}
     depends_on:
       postgres: {condition: service_healthy}
       rabbitmq: {condition: service_healthy}
@@ -58,16 +61,16 @@ services:
 
   bff:
     environment:
-      PENNYWISE_ACCOUNTS_BASE_URL: http://accounts:8080
-      PENNYWISE_EXPENSE_CORE_BASE_URL: http://expense-core:8080
-      PENNYWISE_NOTIFICATIONS_BASE_URL: http://notifications:8080
+      PENNYWISE_ACCOUNTS_URL: ${PENNYWISE_ACCOUNTS_URL:?set PENNYWISE_ACCOUNTS_URL}
+      PENNYWISE_EXPENSE_CORE_URL: ${PENNYWISE_EXPENSE_CORE_URL:?set PENNYWISE_EXPENSE_CORE_URL}
+      PENNYWISE_NOTIFICATIONS_URL: ${PENNYWISE_NOTIFICATIONS_URL:?set PENNYWISE_NOTIFICATIONS_URL}
     depends_on:
       accounts: {condition: service_healthy}
       expense-core: {condition: service_healthy}
       notifications: {condition: service_healthy}
 
   prometheus:
-    image: ${PROMETHEUS_IMAGE:-prom/prometheus:v3.8.0}
+    image: ${PROMETHEUS_IMAGE:?set PROMETHEUS_IMAGE}
     volumes:
       - ../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ../observability/rules:/etc/prometheus/rules:ro
@@ -76,7 +79,7 @@ services:
     networks: [private]
 
   grafana:
-    image: ${GRAFANA_IMAGE:-grafana/grafana:12.1.1}
+    image: ${GRAFANA_IMAGE:?set GRAFANA_IMAGE}
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:?set GRAFANA_ADMIN_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD}

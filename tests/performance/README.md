@@ -7,6 +7,8 @@ They do not provision infrastructure or claim production capacity.
 BASE_URL=http://localhost:8080 REQUESTS=50 CONCURRENCY=5 tests/performance/capacity-smoke.sh
 COMPOSE_FILE=infra/local/docker-compose.yml tests/performance/recovery-drill.sh
 tests/performance/cost-estimate.sh
+# Replica/routing smoke evidence (requires the merged local replica profile)
+tests/performance/cqrs-replica-smoke.sh
 ```
 
 The capacity probe checks readiness and reports throughput and failures. Supply
@@ -18,3 +20,10 @@ an isolated PostgreSQL backup, reconcile balances, audit rows, and outbox replay
 The cost output is an arithmetic estimate from operator supplied assumptions,
 not a provider quote. Set `DB_MONTHLY_EUR`, `BROKER_MONTHLY_EUR`,
 `APP_NODE_MONTHLY_EUR`, `APP_NODES`, and `OPS_MONTHLY_EUR`.
+
+`cqrs-replica-smoke.sh` emits machine-readable local evidence for PostgreSQL
+streaming, replica recovery mode, replay LSN, and route telemetry. It is a
+topology/routing smoke test, not production capacity, failover, or durability
+proof. Set `AUTH_HEADER="Authorization: Bearer <signed-token>"` to include
+protected Prometheus route telemetry; without it the script verifies health
+only.

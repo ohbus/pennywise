@@ -121,6 +121,9 @@ load-mutation-check: load-k6-validate ## Run fixture-backed mutation load and ve
 	@DURATION="$${DURATION:-5s}" k6 run tests/load/k6/mutation-expense.js
 	@python3 tools/ops/reconcile_mutation_fixture.py
 
+cqrs-replica-smoke: ## Verify local PostgreSQL streaming replica and route telemetry
+	@sh tests/performance/cqrs-replica-smoke.sh
+
 e2e: ## Run the contract and deployment E2E smoke checks
 	@tests/e2e/contract-smoke.sh
 

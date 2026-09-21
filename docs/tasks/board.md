@@ -24,7 +24,7 @@ query classification, and evidence gates are complete.
 | DB-09 | notifications | planned | Split Notifications command/query ports with writer-only delivery state |
 | DB-10 | coordinator | in_progress | Propagate causal writer watermarks through services and BFF |
 | DB-11 | observability | in_progress | Add query operation telemetry and slow-query governance |
-| DB-12 | quality | planned | Add contention, replica failure, lag, and capacity evidence |
+| DB-12 | quality | in_progress | Add contention, replica failure, lag, and capacity evidence |
 | DB-13 | platform | planned | Add optional local/production-like PostgreSQL replica topology |
 | DB-14 | coordinator | planned | Run one reviewed historical-read replica pilot |
 | DB-15 | coordinator | planned | Promote only individually approved query capabilities |

@@ -65,6 +65,15 @@ class DbReaderHealth(
         }
     }
 
+    /** Marks a reader disconnected after a failed health probe. */
+    fun markDisconnected(readerName: String) {
+        val entry = readers.computeIfAbsent(readerName) { Entry() }
+        synchronized(entry) {
+            entry.state = DbReaderState.DISCONNECTED
+            entry.failures.set(0)
+        }
+    }
+
     /** Returns the current state, transitioning an elapsed open circuit to disconnected for probing. */
     fun state(readerName: String): DbReaderState {
         val entry = readers[readerName] ?: return DbReaderState.DISCONNECTED

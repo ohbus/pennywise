@@ -10,7 +10,11 @@ data class DbProperties(
     /** Authoritative writer JDBC settings. */
     var writer: PoolProperties = PoolProperties(),
     /** Named read-only pool settings. */
-    var readers: Map<String, PoolProperties> = emptyMap()
+    var readers: Map<String, PoolProperties> = emptyMap(),
+    /** Maximum tolerated asynchronous replay lag before a reader is marked lagging. */
+    var readerLagBudgetMs: Long = 5_000,
+    /** Bounded interval between replay-lag probes. */
+    var healthProbeIntervalMs: Long = 2_000
 )
 
 /** Bounded JDBC pool settings for one database target. */

@@ -5656,7 +5656,7 @@
       "specification": "docs/tasks/details/DB-05.md",
       "acceptance_criteria": ["Lag, outage, exhaustion, circuit-open, recovery, and bounded fallback behavior are implemented and tested.", "Consistency is never silently weakened and writer capacity is protected."],
       "validation_commands": ["./gradlew.bat test --no-daemon", "git diff --check"],
-      "evidence": ["Added DbReaderHealth state/circuit policy and integrated bounded eventual-query writer fallback into DbRoutingDataSource; shared health tests cover failure threshold, circuit state, strong-read writer routing, and recovery. Replay-lag probes, scheduler, metrics, and operational alerts remain open."],
+      "evidence": ["Added DbReaderHealth state/circuit policy and integrated bounded eventual-query writer fallback into DbRoutingDataSource. DbReaderLagProbe reads PostgreSQL replay timestamps from named readers only, and DbReaderHealthScheduler marks lagging/disconnected readers on a bounded interval. Shared health tests and replica-enabled service startup passed; pool-exhaustion metrics and operational alerts remain open."],
       "reviewer": "/root",
       "blocker": null
     },

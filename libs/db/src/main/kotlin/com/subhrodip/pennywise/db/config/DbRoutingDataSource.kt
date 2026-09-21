@@ -37,6 +37,9 @@ class DbRoutingDataSource(
         }
     }
 
+    /** Returns the configured reader pools for health probing and diagnostics. */
+    fun readerDataSources(): Map<String, DataSource> = readers.toMap()
+
     private fun routeForCurrentContext(): DbRoute = when (readerHealth.route(DbContextHolder.current(), readers.keys.firstOrNull() ?: "")) {
         DbReaderDecision.Reader -> DbRoute.READER
         DbReaderDecision.Writer, DbReaderDecision.BoundedWriterFallback -> DbRoute.WRITER

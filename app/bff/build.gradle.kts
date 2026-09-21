@@ -6,6 +6,8 @@ plugins {
 }
 kotlin { jvmToolchain(25) }
 dependencies {
+    // Shared causal-header/value contract; database auto-configuration remains disabled in the BFF.
+    implementation(project(":libs:db"))
     implementation(project(":libs:security"))
     implementation(project(":libs:ids"))
     implementation(libs.boot.actuator)

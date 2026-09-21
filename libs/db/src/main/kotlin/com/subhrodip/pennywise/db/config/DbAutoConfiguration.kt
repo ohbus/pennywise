@@ -3,6 +3,7 @@ package com.subhrodip.pennywise.db.config
 import com.zaxxer.hikari.HikariDataSource
 import com.subhrodip.pennywise.db.health.DbReaderHealth
 import com.subhrodip.pennywise.db.health.DbReaderHealthScheduler
+import com.subhrodip.pennywise.db.web.DbCausalWatermarkFilter
 import com.subhrodip.pennywise.observability.db.DbTelemetry
 import javax.sql.DataSource
 import org.springframework.boot.autoconfigure.AutoConfiguration
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Primary
 import org.springframework.beans.factory.ObjectProvider
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.boot.web.servlet.FilterRegistrationBean
 
 /** Provides the writer/reader datasource topology when explicitly enabled. */
 @AutoConfiguration
@@ -45,6 +47,11 @@ class DbAutoConfiguration {
         val readers = properties.readers.mapValues { (name, pool) -> buildDataSource(pool, "reader.$name") }
         return DbRoutingDataSource(writer, readers, readerHealth, telemetry)
     }
+
+    /** Registers causal HTTP propagation only for stateful applications with routed DB access. */
+    @Bean
+    fun pennywiseCausalWatermarkFilter(dataSource: DataSource): FilterRegistrationBean<DbCausalWatermarkFilter> =
+        FilterRegistrationBean(DbCausalWatermarkFilter(dataSource)).also { it.order = -100 }
 
     /** Creates a reader-only replay-lag scheduler; it never probes the writer. */
     @Bean

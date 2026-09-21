@@ -11,7 +11,7 @@ object DbContextHolder {
     /** Executes [block] with [executionContext] and always restores the previous context. */
     fun <T> withContext(executionContext: DbExecutionContext, block: () -> T): T {
         val previous = context.get()
-        context.set(executionContext)
+        context.set(executionContext.copy(requiredWatermark = executionContext.requiredWatermark ?: DbCausalContext.requiredWatermark()))
         return try {
             block()
         } finally {

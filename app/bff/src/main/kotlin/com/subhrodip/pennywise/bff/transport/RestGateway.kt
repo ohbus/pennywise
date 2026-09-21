@@ -2,6 +2,7 @@ package com.subhrodip.pennywise.bff
 
 import com.subhrodip.pennywise.ids.ApiEndpoints
 import com.subhrodip.pennywise.bff.transport.BearerTokenContext
+import com.subhrodip.pennywise.db.routing.DbWatermarkHeaders
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
@@ -155,11 +156,11 @@ class UpstreamServiceException(val status: Int, message: String = "Upstream serv
 private val bearerPropagationFilter = ExchangeFilterFunction { request, next ->
     Mono.deferContextual { context ->
         val token: String? = context.getOrDefault(BearerTokenContext.KEY, null as String?)
-        val forwardedRequest = if (token is String && token.isNotEmpty()) {
-            ClientRequest.from(request).headers { headers -> headers.setBearerAuth(token) }.build()
-        } else {
-            request
-        }
+        val watermark: String? = context.getOrDefault(BearerTokenContext.WATERMARK_KEY, null as String?)
+        val forwardedRequest = ClientRequest.from(request).headers { headers ->
+            if (token is String && token.isNotEmpty()) headers.setBearerAuth(token)
+            if (watermark is String && watermark.isNotEmpty()) headers.set(DbWatermarkHeaders.REQUIRED_WATERMARK, watermark)
+        }.build()
         next.exchange(forwardedRequest)
     }
 }

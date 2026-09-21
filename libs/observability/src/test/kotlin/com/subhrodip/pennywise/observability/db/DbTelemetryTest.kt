@@ -10,6 +10,8 @@ class DbTelemetryTest {
         telemetry.fallback("expense.search")
         telemetry.failure("search")
         telemetry.acquisition("expense.search", "reader", 3)
-        assertEquals(DbTelemetrySnapshot(fallbacks = 1, failures = 1, acquisitions = 1, acquisitionTotalMs = 3), telemetry.snapshot())
+        telemetry.lockWait("expense.search")
+        telemetry.deadlock("expense.search")
+        assertEquals(DbTelemetrySnapshot(fallbacks = 1, failures = 1, acquisitions = 1, acquisitionTotalMs = 3, lockWaits = 1, deadlocks = 1), telemetry.snapshot())
     }
 }

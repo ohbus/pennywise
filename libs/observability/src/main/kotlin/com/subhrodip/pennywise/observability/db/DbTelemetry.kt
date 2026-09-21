@@ -11,6 +11,8 @@ class DbTelemetry(private val registry: MeterRegistry? = null) {
     private val failureCount = AtomicLong()
     private val acquisitionCount = AtomicLong()
     private val acquisitionTotalMs = AtomicLong()
+    private val lockWaitCount = AtomicLong()
+    private val deadlockCount = AtomicLong()
 
     /** Records a connection route for a validated operation name. */
     fun route(operation: String, route: String) {
@@ -37,6 +39,18 @@ class DbTelemetry(private val registry: MeterRegistry? = null) {
             ?.record(Duration.ofMillis(durationMs.coerceAtLeast(0)))
     }
 
+    /** Records a lock-wait observation using only the stable operation label. */
+    fun lockWait(operation: String) {
+        lockWaitCount.incrementAndGet()
+        registry?.counter("pennywise.db.lock.wait", "operation", operation)?.increment()
+    }
+
+    /** Records a deadlock observation using only the stable operation label. */
+    fun deadlock(operation: String) {
+        deadlockCount.incrementAndGet()
+        registry?.counter("pennywise.db.deadlock", "operation", operation)?.increment()
+    }
+
     /** Records the latest replay lag in milliseconds for a named reader. */
     fun lag(reader: String, lagMs: Long) {
         registry?.gauge("pennywise.db.reader.lag.ms", Tags.of("reader", reader), lagMs)
@@ -47,7 +61,9 @@ class DbTelemetry(private val registry: MeterRegistry? = null) {
         fallbacks = fallbackCount.get(),
         failures = failureCount.get(),
         acquisitions = acquisitionCount.get(),
-        acquisitionTotalMs = acquisitionTotalMs.get()
+        acquisitionTotalMs = acquisitionTotalMs.get(),
+        lockWaits = lockWaitCount.get(),
+        deadlocks = deadlockCount.get()
     )
 }
 
@@ -56,5 +72,7 @@ data class DbTelemetrySnapshot(
     val fallbacks: Long,
     val failures: Long,
     val acquisitions: Long = 0,
-    val acquisitionTotalMs: Long = 0
+    val acquisitionTotalMs: Long = 0,
+    val lockWaits: Long = 0,
+    val deadlocks: Long = 0
 )

@@ -5631,7 +5631,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Implement separate writer and reader connection pools",
       "phase": "cqrs_data_access",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "platform",
       "owner_agent": "/root",
       "depends_on": ["DB-03"],
@@ -5639,7 +5639,7 @@
       "specification": "docs/tasks/details/DB-04.md",
       "acceptance_criteria": ["Writer and named reader pools are independently configured and bounded.", "Flyway and Hibernate validation use only the writer; local reader-is-writer mode is explicitly diagnostic."],
       "validation_commands": ["./gradlew.bat test --no-daemon", "docker compose -f infra/local/docker-compose.yml config --quiet", "git diff --check"],
-      "evidence": ["Three stateful applications now depend on libs/db; focused DB tests and Accounts, Expense Core, and Notifications Kotlin compilation passed. Full datasource auto-configuration remains open."],
+      "evidence": ["Completed bounded writer and named-reader Hikari pools, explicit named flywayDataSource writer wiring, routed primary JPA datasource, and opt-in readerIsWriterDiagnostic local mode. DbProperties, routing, full DB library, and Accounts application-context tests pass; full repository regression and merged Compose validation pass. Production deployment-profile verification remains separately tracked in DB-16."],
       "reviewer": "/root",
       "blocker": null
     },

@@ -7,6 +7,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(libs.boot.web)
     testImplementation(libs.boot.test)
+    testImplementation(libs.boot.data.jpa)
 }
 
 tasks.withType<Test> { useJUnitPlatform() }

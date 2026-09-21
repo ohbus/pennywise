@@ -4,6 +4,7 @@ import com.subhrodip.pennywise.db.routing.DbRoute
 import com.subhrodip.pennywise.db.routing.DbContextHolder
 import com.subhrodip.pennywise.db.health.DbReaderDecision
 import com.subhrodip.pennywise.db.health.DbReaderHealth
+import com.subhrodip.pennywise.db.policy.DbRouteGuard
 import com.subhrodip.pennywise.observability.db.DbTelemetry
 import java.sql.Connection
 import java.sql.SQLException
@@ -15,7 +16,8 @@ class DbRoutingDataSource(
     private val writer: DataSource,
     private val readers: Map<String, DataSource>,
     private val readerHealth: DbReaderHealth = DbReaderHealth(),
-    private val telemetry: DbTelemetry = DbTelemetry()
+    private val telemetry: DbTelemetry = DbTelemetry(),
+    private val routeGuard: DbRouteGuard = DbRouteGuard()
 ) : AbstractDataSource() {
     init { readers.keys.forEach(readerHealth::register) }
 
@@ -25,7 +27,9 @@ class DbRoutingDataSource(
 
     /** Returns a connection for an explicit route. */
     fun connection(route: DbRoute, readerName: String = readers.keys.firstOrNull() ?: ""): Connection {
-        val operation = DbContextHolder.current().operationName
+        val context = DbContextHolder.current()
+        routeGuard.validate(context, route)
+        val operation = context.operationName
         if (route == DbRoute.WRITER) {
             val started = System.nanoTime()
             return try { writer.connection } finally {

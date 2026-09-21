@@ -5758,7 +5758,7 @@
       "specification": "docs/tasks/details/DB-11.md",
       "acceptance_criteria": ["Operation-level route, pool, duration, lock, retry, and lag telemetry is emitted with low-cardinality labels.", "Slow-query and plan-remediation procedures protect sensitive data and include rollback."],
       "validation_commands": ["./gradlew.bat :libs:observability:test :libs:db:test --rerun-tasks --no-daemon", "git diff --check"],
-      "evidence": ["Added low-cardinality DbTelemetry route, fallback, reader-failure, replay-lag, pool-acquisition timing, lock-wait, and deadlock instruments under libs/observability and wired route/pool timing into the routed datasource. Added Prometheus alerts and CQRS replica operator runbook for lag, reader outage, and fallback pressure. Observability and DB tests pass; store-wide lock/deadlock wiring, dashboards, and production query-plan governance remain open."],
+      "evidence": ["Added low-cardinality DbTelemetry route, fallback, reader-failure, replay-lag, pool-acquisition timing, lock-wait, and deadlock instruments under libs/observability and wired route/pool timing into the routed datasource. Added Prometheus alerts, Grafana panels, and CQRS replica operator runbook for lag, reader outage, and fallback pressure. Observability/DB tests and Grafana JSON validation pass; store-wide lock/deadlock wiring and production query-plan governance remain open."],
       "reviewer": "/root",
       "blocker": null
     },

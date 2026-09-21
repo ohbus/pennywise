@@ -19,9 +19,9 @@ query classification, and evidence gates are complete.
 | DB-04 | platform | done | Add separate writer/named-reader pools and writer-only migration wiring |
 | DB-05 | platform | done | Add reader lag health, circuit breaking, and bounded fallback |
 | DB-06 | core | done | Split Expense Core command/query ports while preserving financial transactions |
-| DB-07 | core | in_progress | Pilot bounded Expense Core search projection and measured query optimization |
-| DB-08 | accounts | in_progress | Split Accounts command/query ports with writer-only auth state |
-| DB-09 | notifications | in_progress | Split Notifications command/query ports with writer-only delivery state |
+| DB-07 | core | done | Pilot bounded Expense Core search projection and measured query optimization |
+| DB-08 | accounts | done | Split Accounts command/query ports with writer-only auth state |
+| DB-09 | notifications | done | Split Notifications command/query ports with writer-only delivery state |
 | DB-10 | coordinator | in_progress | Propagate causal writer watermarks through services and BFF |
 | DB-11 | observability | in_progress | Add query operation telemetry and slow-query governance |
 | DB-12 | quality | in_progress | Add contention, replica failure, lag, and capacity evidence |

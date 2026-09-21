@@ -5,16 +5,14 @@ import java.util.UUID
 /**
  * Domain port defining persistence operations for expense groups, memberships, placeholders, and invitations.
  */
-interface GroupStore {
+/**
+ * Command-side group and membership persistence port.
+ */
+interface GroupCommandStore {
     /**
      * Creates a new group owned by the creator.
      */
     fun create(subject: String, request: CreateGroupRequest): GroupResponse
-
-    /**
-     * Lists all groups in which the subject holds an active membership.
-     */
-    fun list(subject: String): List<GroupResponse>
 
     /**
      * Updates an existing group's metadata (e.g. name), incrementing the group revision.
@@ -37,11 +35,6 @@ interface GroupStore {
     fun removeMember(groupId: UUID, subject: String, membershipId: UUID)
 
     /**
-     * Lists all active members and placeholders belonging to the specified group.
-     */
-    fun listMembers(groupId: UUID, subject: String): List<GroupMemberResponse>
-
-    /**
      * Generates a time-limited invitation token for joining a group (optionally targeting a placeholder).
      */
     fun invite(groupId: UUID, subject: String, request: CreateInviteRequest): InviteResponse
@@ -56,3 +49,23 @@ interface GroupStore {
      */
     fun claim(token: String, subject: String): GroupResponse
 }
+
+/**
+ * Query-side group and membership persistence port.
+ */
+interface GroupQueryStore {
+    /**
+     * Lists all groups in which the subject holds an active membership.
+     */
+    fun list(subject: String): List<GroupResponse>
+
+    /**
+     * Lists all active members and placeholders belonging to the specified group.
+     */
+    fun listMembers(groupId: UUID, subject: String): List<GroupMemberResponse>
+}
+
+/**
+ * Compatibility facade combining group command and query ports.
+ */
+interface GroupStore : GroupCommandStore, GroupQueryStore

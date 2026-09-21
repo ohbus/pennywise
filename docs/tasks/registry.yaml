@@ -5673,7 +5673,7 @@
       "specification": "docs/tasks/details/DB-06.md",
       "acceptance_criteria": ["Expense Core commands and queries have explicit ports and bounded DTO results.", "Financial, authorization, lock, claim, idempotency, revision, and outbox operations remain writer-only."],
       "validation_commands": ["./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon", "git diff --check"],
-      "evidence": ["Added ExpenseCommandStore and ExpenseQueryStore ports with an ExpenseStore compatibility facade. Full ./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon passed; group, settlement, sync, recurring, audit, and outbox port splits remain open."],
+      "evidence": ["Added ExpenseCommandStore/ExpenseQueryStore and GroupCommandStore/GroupQueryStore ports with compatibility facades. Full ./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon passed; settlement, sync, recurring, audit, and outbox port splits remain open."],
       "reviewer": "/root",
       "blocker": null
     },

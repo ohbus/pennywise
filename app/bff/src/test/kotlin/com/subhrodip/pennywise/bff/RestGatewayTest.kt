@@ -3,8 +3,18 @@ package com.subhrodip.pennywise.bff
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.UUID
+import com.subhrodip.pennywise.db.routing.DbWatermarkHeaders
 
 class RestGatewayTest {
+
+    @Test
+    fun `keeps greatest valid downstream writer watermark`() {
+        assertEquals("0/20", greatestWriterWatermark("0/10", "0/20"))
+        assertEquals("0/20", greatestWriterWatermark("0/20", "0/10"))
+        assertEquals("0/20", greatestWriterWatermark("0/20", "not-an-lsn"))
+        assertEquals("0/30", greatestWriterWatermark(null, "0/30"))
+        assertEquals(DbWatermarkHeaders.WRITER_WATERMARK, "X-Pennywise-Writer-Watermark")
+    }
 
     @Test
     fun `maps group response through nonblocking gateway`() {

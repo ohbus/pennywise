@@ -155,6 +155,12 @@ data class RepaymentInput(
 class UpstreamServiceException(val status: Int, message: String = "Upstream service returned HTTP $status") : RuntimeException(message)
 
 /** Forwards the authenticated signed token to service-to-service REST calls. */
+internal fun greatestWriterWatermark(current: String?, downstream: String?): String? {
+    val candidate = downstream?.let { runCatching { DbWatermark.parse(it) }.getOrNull() } ?: return current
+    val existing = current?.let { runCatching { DbWatermark.parse(it) }.getOrNull() }
+    return if (existing == null || candidate > existing) candidate.asLsn() else current
+}
+
 private val bearerPropagationFilter = ExchangeFilterFunction { request, next ->
     Mono.deferContextual { context ->
         val token: String? = context.getOrDefault(BearerTokenContext.KEY, null as String?)
@@ -168,12 +174,10 @@ private val bearerPropagationFilter = ExchangeFilterFunction { request, next ->
             val downstream = response.headers().header(DbWatermarkHeaders.WRITER_WATERMARK).firstOrNull()
                 ?.let { runCatching { DbWatermark.parse(it).asLsn() }.getOrNull() }
             if (exchange != null && downstream != null) {
-                val current = exchange.response.headers.getFirst(DbWatermarkHeaders.WRITER_WATERMARK)
-                    ?.let { runCatching { DbWatermark.parse(it) }.getOrNull() }
-                val candidate = DbWatermark.parse(downstream)
-                if (current == null || candidate > current) {
-                    exchange.response.headers.set(DbWatermarkHeaders.WRITER_WATERMARK, candidate.asLsn())
-                }
+                greatestWriterWatermark(
+                    exchange.response.headers.getFirst(DbWatermarkHeaders.WRITER_WATERMARK),
+                    downstream
+                )?.let { exchange.response.headers.set(DbWatermarkHeaders.WRITER_WATERMARK, it) }
             }
         }
     }

@@ -124,6 +124,9 @@ load-mutation-check: load-k6-validate ## Run fixture-backed mutation load and ve
 cqrs-replica-smoke: ## Verify local PostgreSQL streaming replica and route telemetry
 	@sh tests/performance/cqrs-replica-smoke.sh
 
+expense-search-plan: ## Capture the bounded Expense Core search plan on the local replica
+	@sh tests/performance/expense-search-plan.sh
+
 e2e: ## Run the contract and deployment E2E smoke checks
 	@tests/e2e/contract-smoke.sh
 

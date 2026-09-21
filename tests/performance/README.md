@@ -9,6 +9,12 @@ COMPOSE_FILE=infra/local/docker-compose.yml tests/performance/recovery-drill.sh
 tests/performance/cost-estimate.sh
 # Replica/routing smoke evidence (requires the merged local replica profile)
 tests/performance/cqrs-replica-smoke.sh
+
+The bounded Expense Core search plan can be checked against the live local
+replica with `tests/performance/expense-search-plan.sh`. Override `GROUP_ID`
+to inspect a populated group; the check requires the plan to use
+`expenses_group_idx` and prints the full `EXPLAIN (ANALYZE, BUFFERS, SETTINGS)`
+output. This is local plan evidence, not a production workload baseline.
 ```
 
 The capacity probe checks readiness and reports throughput and failures. Supply

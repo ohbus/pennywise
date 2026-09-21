@@ -5690,7 +5690,7 @@
       "specification": "docs/tasks/details/DB-07.md",
       "acceptance_criteria": ["One approved historical/search query uses an explicit bounded DTO and policy.", "Authorization, route, stale behavior, query-plan, load, and writer rollback evidence exists."],
       "validation_commands": ["./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon", "git diff --check"],
-      "evidence": ["SearchController keeps membership authorization before the query and scopes only expense.search and expense.search.export as eventual reader-eligible contexts; SQL filtering/keyset pagination and optional replica configuration are present. SearchControllerTest now asserts the operation context at the adapter boundary; PostgreSQL plan/load and live rollback evidence remain open."],
+      "evidence": ["SearchController keeps membership authorization before the query and scopes only expense.search and expense.search.export as eventual reader-eligible contexts; SQL filtering/keyset pagination and optional replica configuration are present. SearchControllerTest asserts the operation context at the adapter boundary, and tests/performance/expense-search-plan.sh requires an expenses_group_idx index scan on the replica; populated workload/load and live rollback evidence remain open."],
       "reviewer": "/root",
       "blocker": null
     },

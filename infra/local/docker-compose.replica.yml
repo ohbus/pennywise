@@ -41,5 +41,18 @@ services:
       timeout: 3s
       retries: 30
 
+  expense-core:
+    environment:
+      PENNYWISE_DB_ENABLED: "true"
+      PENNYWISE_DB_WRITER_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_expense_core
+      PENNYWISE_DB_WRITER_USERNAME: ${POSTGRES_USER:-pennywise}
+      PENNYWISE_DB_WRITER_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+      PENNYWISE_DB_READER_SEARCH_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}:5432/pennywise_expense_core
+      PENNYWISE_DB_READER_SEARCH_USERNAME: ${POSTGRES_USER:-pennywise}
+      PENNYWISE_DB_READER_SEARCH_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+    depends_on:
+      postgres-replica:
+        condition: service_healthy
+
 volumes:
   postgres-replica-data:

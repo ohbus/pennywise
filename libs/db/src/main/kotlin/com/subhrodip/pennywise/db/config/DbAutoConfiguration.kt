@@ -3,7 +3,6 @@ package com.subhrodip.pennywise.db.config
 import com.zaxxer.hikari.HikariDataSource
 import javax.sql.DataSource
 import org.springframework.boot.autoconfigure.AutoConfiguration
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.jdbc.DataSourceBuilder
@@ -18,7 +17,6 @@ class DbAutoConfiguration {
     /** Builds the routed datasource used by application JPA repositories. */
     @Bean
     @Primary
-    @ConditionalOnMissingBean(DataSource::class)
     fun pennywiseDataSource(properties: DbProperties): DataSource {
         properties.writer.validate("writer")
         properties.readers.forEach { (name, pool) -> pool.validate("readers.$name") }

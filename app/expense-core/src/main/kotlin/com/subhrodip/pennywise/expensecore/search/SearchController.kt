@@ -15,6 +15,10 @@ import com.subhrodip.pennywise.errors.ApplicationException
 import com.subhrodip.pennywise.errors.ErrorCode
 import java.security.Principal
 import java.util.UUID
+import com.subhrodip.pennywise.db.routing.DbContextHolder
+import com.subhrodip.pennywise.db.routing.DbExecutionContext
+import com.subhrodip.pennywise.db.routing.DbOperationKind
+import com.subhrodip.pennywise.db.routing.ReadConsistency
 
 /**
  * Controller exposing authorized, persistent group-scoped expense search and CSV export endpoints.
@@ -54,7 +58,14 @@ class SearchController(
         principal: Principal
     ): ExpenseSearchPage {
         ensureMembership(groupId, principal.name)
-        val expenses = searchStore.findSearchExpenses(groupId)
+        val expenses = DbContextHolder.withContext(
+            DbExecutionContext(
+                operationName = "expense.search",
+                kind = DbOperationKind.QUERY,
+                consistency = ReadConsistency.EVENTUAL,
+                readerEligible = true
+            )
+        ) { searchStore.findSearchExpenses(groupId) }
         return try {
             expenseSearch.page(
                 expenses = expenses,
@@ -91,7 +102,14 @@ class SearchController(
         principal: Principal
     ): ResponseEntity<String> {
         ensureMembership(groupId, principal.name)
-        val expenses = searchStore.findSearchExpenses(groupId)
+        val expenses = DbContextHolder.withContext(
+            DbExecutionContext(
+                operationName = "expense.search.export",
+                kind = DbOperationKind.QUERY,
+                consistency = ReadConsistency.EVENTUAL,
+                readerEligible = true
+            )
+        ) { searchStore.findSearchExpenses(groupId) }
         val csvData = try {
             expenseSearch.csv(
                 expenses = expenses,

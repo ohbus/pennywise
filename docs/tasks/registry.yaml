@@ -5071,7 +5071,7 @@
         "python3 tools/contracts/validate.py",
         "git diff --check"
       ],
-      "evidence": [],
+      "evidence": ["SearchController now keeps membership authorization before the query and scopes only expense.search and expense.search.export as eventual reader-eligible contexts; optional replica Compose config supplies writer and search-reader endpoints. SQL-side filtering/keyset pagination and route integration evidence remain open."],
       "reviewer": "/root",
       "blocker": null
     },
@@ -5690,7 +5690,7 @@
       "specification": "docs/tasks/details/DB-07.md",
       "acceptance_criteria": ["One approved historical/search query uses an explicit bounded DTO and policy.", "Authorization, route, stale behavior, query-plan, load, and writer rollback evidence exists."],
       "validation_commands": ["./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon", "git diff --check"],
-      "evidence": [],
+      "evidence": ["SearchController now keeps membership authorization before the query and scopes only expense.search and expense.search.export as eventual reader-eligible contexts; optional replica Compose config supplies writer and search-reader endpoints. SQL-side filtering/keyset pagination and route integration evidence remain open."],
       "reviewer": "/root",
       "blocker": null
     },

@@ -37,13 +37,24 @@ class DbAutoConfiguration {
     @Bean
     fun pennywiseReaderHealth(): DbReaderHealth = DbReaderHealth()
 
+    /** Builds the dedicated writer pool selected by Flyway for migrations. */
+    @Bean(name = ["flywayDataSource", "pennywiseWriterDataSource"])
+    fun pennywiseWriterDataSource(properties: DbProperties): HikariDataSource {
+        properties.writer.validate("writer")
+        return buildDataSource(properties.writer, "writer")
+    }
+
     /** Builds the routed datasource used by application JPA repositories. */
     @Bean
     @Primary
-    fun pennywiseDataSource(properties: DbProperties, readerHealth: DbReaderHealth, telemetry: DbTelemetry): DataSource {
+    fun pennywiseDataSource(
+        properties: DbProperties,
+        @org.springframework.beans.factory.annotation.Qualifier("flywayDataSource") writer: HikariDataSource,
+        readerHealth: DbReaderHealth,
+        telemetry: DbTelemetry
+    ): DataSource {
         properties.writer.validate("writer")
         properties.readers.forEach { (name, pool) -> pool.validate("readers.$name") }
-        val writer = buildDataSource(properties.writer, "writer")
         val readers = properties.readers.mapValues { (name, pool) -> buildDataSource(pool, "reader.$name") }
         return DbRoutingDataSource(writer, readers, readerHealth, telemetry)
     }

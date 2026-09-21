@@ -10,6 +10,11 @@ tests/performance/cost-estimate.sh
 # Replica/routing smoke evidence (requires the merged local replica profile)
 tests/performance/cqrs-replica-smoke.sh
 
+`tests/performance/replica-disconnect-recovery.sh` safely stops only the
+replica, verifies the writer remains accepting connections, then starts the
+replica with Compose health waiting and verifies streaming/recovery state. It
+never promotes the replica or removes volumes.
+
 The bounded Expense Core search plan can be checked against the live local
 replica with `tests/performance/expense-search-plan.sh`. Override `GROUP_ID`
 to inspect a populated group; the check requires the plan to use

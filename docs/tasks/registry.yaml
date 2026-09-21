@@ -5843,7 +5843,7 @@
       "specification": "docs/tasks/details/DB-16.md",
       "acceptance_criteria": ["Failover, restore, migration compatibility, pool budgets, alert routing, incident, and rollback drills pass.", "A tested switch returns all query traffic to the writer."],
       "validation_commands": ["make check", "make release-gate", "git diff --check"],
-      "evidence": ["Added CQRS replica runbook, reader alerts, writer-only switch documentation, local disconnect/recovery drill, merged Compose validation, and repository release-gate checks. Restore, promotion, external security scan, production capacity, alert delivery, and rollback-drill environment gates remain open."],
+      "evidence": ["Added CQRS replica runbook, reader alerts, writer-only switch documentation, repeatable replica-disconnect-recovery.sh drill, merged Compose validation, and repository release-gate checks. Restore, promotion, external security scan, production capacity, alert delivery, and rollback-drill environment gates remain open."],
       "reviewer": "/root",
       "blocker": "Requires production-like deployment and alerting environment."
     },

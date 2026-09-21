@@ -127,6 +127,9 @@ cqrs-replica-smoke: ## Verify local PostgreSQL streaming replica and route telem
 expense-search-plan: ## Capture the bounded Expense Core search plan on the local replica
 	@sh tests/performance/expense-search-plan.sh
 
+replica-disconnect-recovery: ## Drill safe local reader disconnect and recovery
+	@sh tests/performance/replica-disconnect-recovery.sh
+
 e2e: ## Run the contract and deployment E2E smoke checks
 	@tests/e2e/contract-smoke.sh
 

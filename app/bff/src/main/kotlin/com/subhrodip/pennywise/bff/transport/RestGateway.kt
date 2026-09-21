@@ -39,7 +39,7 @@ data class BffBalancesResponse(
     val balances: List<BffBalance> = emptyList()
 )
 
-data class BffMember(val membershipId: String, val subject: String, val displayName: String? = null, val isPlaceholder: Boolean? = null)
+data class BffMember(val membershipId: String, val subject: String? = null, val displayName: String? = null, val isPlaceholder: Boolean? = null)
 
 data class BffGroup(
     val groupId: String,

@@ -173,9 +173,55 @@ def check_group_expense_settlement(expense_core_url: str, timeout: float) -> tup
                 "detail": f"Group created but no groupId in response: {data}",
             }, None
 
-        # 2. POST /expense-core/v1/groups/{groupId}/expenses to create an expense
-        user1 = str(uuid.uuid4())
-        user2 = str(uuid.uuid4())
+        # 2. Resolve real active membership IDs for the financial participants.
+        # Expense Core intentionally rejects arbitrary account UUIDs here.
+        status, members = http_json(
+            f"{expense_core_url}/expense-core/v1/groups/{group_id}/members",
+            method="GET",
+            headers=auth_headers,
+            timeout=timeout,
+        )
+        if status != 200 or not isinstance(members, list) or not members:
+            return {
+                "id": scenario_id,
+                "status": "failed",
+                "detail": f"GET /expense-core/v1/groups/{group_id}/members failed with HTTP {status}: {members}",
+            }, str(group_id)
+
+        active_members = [member for member in members if member.get("status", "ACTIVE") == "ACTIVE"]
+        user1 = str(active_members[0].get("membershipId", ""))
+        if not user1:
+            return {
+                "id": scenario_id,
+                "status": "failed",
+                "detail": f"Group members response did not contain membershipId: {members}",
+            }, str(group_id)
+
+        if len(active_members) < 2:
+            status, placeholder = http_json(
+                f"{expense_core_url}/expense-core/v1/groups/{group_id}/placeholders",
+                method="POST",
+                headers=auth_headers,
+                body={"name": "Acceptance participant"},
+                timeout=timeout,
+            )
+            if status != 201:
+                return {
+                    "id": scenario_id,
+                    "status": "failed",
+                    "detail": f"POST /expense-core/v1/groups/{group_id}/placeholders failed with HTTP {status}: {placeholder}",
+                }, str(group_id)
+            user2 = str(placeholder.get("membershipId", ""))
+        else:
+            user2 = str(active_members[1].get("membershipId", ""))
+        if not user2:
+            return {
+                "id": scenario_id,
+                "status": "failed",
+                "detail": f"Second active membership was missing membershipId: {members}",
+            }, str(group_id)
+
+        # 3. POST /expense-core/v1/groups/{groupId}/expenses to create an expense
         expense_id = str(uuid.uuid4())
         expense_payload = {
             "expenseId": expense_id,
@@ -207,7 +253,7 @@ def check_group_expense_settlement(expense_core_url: str, timeout: float) -> tup
                 "detail": f"POST /expense-core/v1/groups/{group_id}/expenses failed with HTTP {status}: {data}",
             }, str(group_id)
 
-        # 3. GET /expense-core/v1/groups/{groupId}/balances to check balances
+        # 4. GET /expense-core/v1/groups/{groupId}/balances to check balances
         status, data = http_json(
             f"{expense_core_url}/expense-core/v1/groups/{group_id}/balances",
             method="GET",
@@ -221,7 +267,7 @@ def check_group_expense_settlement(expense_core_url: str, timeout: float) -> tup
                 "detail": f"GET /expense-core/v1/groups/{group_id}/balances failed with HTTP {status}: {data}",
             }, str(group_id)
 
-        # 4. POST /expense-core/v1/groups/{groupId}/settlements to record a repayment
+        # 5. POST /expense-core/v1/groups/{groupId}/settlements to record a repayment
         settlement_payload = {
             "fromParticipantId": user2,
             "toParticipantId": user1,
@@ -230,7 +276,7 @@ def check_group_expense_settlement(expense_core_url: str, timeout: float) -> tup
         status, data = http_json(
             f"{expense_core_url}/expense-core/v1/groups/{group_id}/settlements",
             method="POST",
-            headers=auth_headers,
+            headers={**auth_headers, "Idempotency-Key": str(uuid.uuid4())},
             body=settlement_payload,
             timeout=timeout,
         )
@@ -241,7 +287,7 @@ def check_group_expense_settlement(expense_core_url: str, timeout: float) -> tup
                 "detail": f"POST /expense-core/v1/groups/{group_id}/settlements failed with HTTP {status}: {data}",
             }, str(group_id)
 
-        # 5. GET /expense-core/v1/groups/{groupId}/balances to verify updated balance
+        # 6. GET /expense-core/v1/groups/{groupId}/balances to verify updated balance
         status, data = http_json(
             f"{expense_core_url}/expense-core/v1/groups/{group_id}/balances",
             method="GET",

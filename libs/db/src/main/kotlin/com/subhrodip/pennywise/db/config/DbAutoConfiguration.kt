@@ -1,6 +1,7 @@
 package com.subhrodip.pennywise.db.config
 
 import com.zaxxer.hikari.HikariDataSource
+import com.subhrodip.pennywise.db.health.DbReaderHealth
 import javax.sql.DataSource
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -14,15 +15,19 @@ import org.springframework.context.annotation.Primary
 @EnableConfigurationProperties(DbProperties::class)
 @ConditionalOnProperty(prefix = "pennywise.db", name = ["enabled"], havingValue = "true")
 class DbAutoConfiguration {
+    /** Supplies the shared reader circuit state used by the routed datasource. */
+    @Bean
+    fun pennywiseReaderHealth(): DbReaderHealth = DbReaderHealth()
+
     /** Builds the routed datasource used by application JPA repositories. */
     @Bean
     @Primary
-    fun pennywiseDataSource(properties: DbProperties): DataSource {
+    fun pennywiseDataSource(properties: DbProperties, readerHealth: DbReaderHealth): DataSource {
         properties.writer.validate("writer")
         properties.readers.forEach { (name, pool) -> pool.validate("readers.$name") }
         val writer = buildDataSource(properties.writer, "writer")
         val readers = properties.readers.mapValues { (name, pool) -> buildDataSource(pool, "reader.$name") }
-        return DbRoutingDataSource(writer, readers)
+        return DbRoutingDataSource(writer, readers, readerHealth)
     }
 
     private fun buildDataSource(properties: PoolProperties, poolName: String): HikariDataSource =

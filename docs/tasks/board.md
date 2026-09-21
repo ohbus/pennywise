@@ -14,10 +14,10 @@ query classification, and evidence gates are complete.
 | ID | Owner | Status | Deliverable |
 | --- | --- | --- | --- |
 | DB-01 | coordinator | planned | Catalog every persistence operation and register the workstream |
-| DB-02 | architecture | planned | Define command/query, consistency, watermark, fallback, and retry contracts |
+| DB-02 | architecture | done | Define command/query, consistency, watermark, fallback, and retry contracts |
 | DB-03 | coordinator | planned | Implement `libs/db` route context, policies, and transaction guards |
 | DB-04 | platform | planned | Add separate writer/named-reader pools and writer-only migration wiring |
-| DB-05 | platform | planned | Add reader lag health, circuit breaking, and bounded fallback |
+| DB-05 | platform | in_progress | Add reader lag health, circuit breaking, and bounded fallback |
 | DB-06 | core | planned | Split Expense Core command/query ports while preserving financial transactions |
 | DB-07 | core | planned | Pilot bounded Expense Core search projection and measured query optimization |
 | DB-08 | accounts | planned | Split Accounts command/query ports with writer-only auth state |

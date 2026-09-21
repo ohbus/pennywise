@@ -92,8 +92,10 @@ exact variable names are version-controlled in `.run/`.
 
 ## Health and startup order
 
-PostgreSQL is healthy only after `pg_isready -U pennywise`; RabbitMQ uses
-`rabbitmq-diagnostics -q ping`; Mailpit checks its HTTP UI. Compose waits for
+PostgreSQL is healthy only after `pg_isready` confirms the application
+`pennywise_accounts` database is accepting connections; this prevents dependent
+services from racing the local init script that creates the service databases.
+RabbitMQ uses `rabbitmq-diagnostics -q ping`; Mailpit checks its HTTP UI. Compose waits for
 these checks before starting dependent applications. In the full topology,
 Accounts waits for PostgreSQL, Expense Core waits for PostgreSQL and RabbitMQ,
 Notifications waits for PostgreSQL, RabbitMQ, and Mailpit, and BFF starts after

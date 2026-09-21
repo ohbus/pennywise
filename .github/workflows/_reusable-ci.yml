@@ -56,6 +56,13 @@ jobs:
         with: { persist-credentials: false }
       - name: Set up isolated Python tooling
         uses: astral-sh/setup-uv@v6
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: microsoft
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: gradle
+      - uses: gradle/actions/setup-gradle@v4
       - name: Check formatting and contracts
         run: |
           git diff --check

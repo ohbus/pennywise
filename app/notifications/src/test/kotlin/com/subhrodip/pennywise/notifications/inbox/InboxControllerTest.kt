@@ -1,5 +1,8 @@
 package com.subhrodip.pennywise.notifications.inbox
 
+import com.subhrodip.pennywise.db.routing.DbContextHolder
+import com.subhrodip.pennywise.db.routing.DbOperationKind
+import com.subhrodip.pennywise.db.routing.ReadConsistency
 import com.subhrodip.pennywise.errors.GlobalErrorHandler
 import com.subhrodip.pennywise.ids.ApiEndpoints
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -17,11 +20,23 @@ import java.time.Instant
 import java.util.UUID
 
 class InboxControllerTest {
-    private val inbox = NotificationInbox(InMemoryNotificationInboxStore())
+    private val recordingStore = RecordingInboxStore(InMemoryNotificationInboxStore())
+    private val inbox = NotificationInbox(recordingStore)
     private val controller = InboxController(inbox)
     private val mvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(GlobalErrorHandler()).build()
     private val user = RequestPostProcessor { request -> request.userPrincipal = Principal { "alice" }; request }
+
+    @Test
+    fun `historical inbox listing uses the approved eventual reader policy`() {
+        mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_INBOX).with(user))
+            .andExpect(status().isOk)
+
+        assertEquals("notification.inbox.history", recordingStore.lastContext?.operationName)
+        assertEquals(DbOperationKind.QUERY, recordingStore.lastContext?.kind)
+        assertEquals(ReadConsistency.EVENTUAL, recordingStore.lastContext?.consistency)
+        assertTrue(recordingStore.lastContext?.readerEligible == true)
+    }
 
     @Test
     fun `orders inbox newest first and isolates subjects`() {
@@ -120,4 +135,18 @@ class InboxControllerTest {
         assertTrue(store.markAsRead("alice", id))
         assertTrue(store.list("alice").first().read)
     }
+}
+
+private class RecordingInboxStore(private val delegate: NotificationInboxStore) : NotificationInboxStore {
+    var lastContext: com.subhrodip.pennywise.db.routing.DbExecutionContext? = null
+
+    override fun append(subject: String, item: InboxItem) = delegate.append(subject, item)
+
+    override fun list(subject: String): List<InboxItem> {
+        lastContext = DbContextHolder.current()
+        return delegate.list(subject)
+    }
+
+    override fun markAsRead(subject: String, notificationId: UUID): Boolean =
+        delegate.markAsRead(subject, notificationId)
 }

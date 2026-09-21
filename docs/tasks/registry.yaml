@@ -5716,7 +5716,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Split Notifications command and query ports",
       "phase": "cqrs_data_access",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "notifications",
       "owner_agent": "/root",
       "depends_on": ["DB-03", "DB-04"],
@@ -5724,7 +5724,7 @@
       "specification": "docs/tasks/details/DB-09.md",
       "acceptance_criteria": ["Deduplication, delivery preferences, leases, attempts, and operator state remain writer-only.", "Only bounded historical inbox reads are replica candidates with subject-isolation and outage tests."],
       "validation_commands": ["./gradlew.bat :app:notifications:test --rerun-tasks --no-daemon", "git diff --check"],
-      "evidence": ["NotificationInbox.page scopes historical listing as an eventual reader-eligible context while append, mark-read, deduplication, preferences used for delivery, and consumer state remain writer-bound. Notifications writer/inbox-reader configuration added; live route evidence remains open."],
+      "evidence": ["NotificationInbox.page scopes historical listing as an eventual reader-eligible context while append, mark-read, deduplication, preferences used for delivery, and consumer state remain writer-bound. InboxControllerTest now asserts notification.inbox.history route context; replica outage and subject-isolation integration evidence remain open."],
       "reviewer": "/root",
       "blocker": null
     },

@@ -33,6 +33,9 @@ workflow YAML parsing, strict Python typing via `uvx`/mypy, and
 `git diff --check`. Jobs use Microsoft Build of OpenJDK. Local Python tooling
 must use `uv` or `uvx` rather than installing packages into the system
 interpreter.
+The lightweight lint job also installs the same Microsoft JDK 25 and Gradle
+setup before generating the CycloneDX SBOM; every job that invokes Gradle owns
+its toolchain setup explicitly.
 Every test run publishes a readable test summary directly to GitHub Actions job
 summaries (`test-summary/action@v2`) and uploads JUnit XML and HTML reports as
 job artifacts with `if: always()` retention.

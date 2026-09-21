@@ -9,6 +9,8 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
+import org.springframework.amqp.rabbit.core.RabbitOperations
 import org.springframework.amqp.AmqpException
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -21,6 +23,14 @@ class RabbitBrokerPublisherTest {
     private val rabbitTemplate: RabbitTemplate = mock(RabbitTemplate::class.java)
     private val objectMapper = ObjectMapper()
     private val publisher = RabbitBrokerPublisher(rabbitTemplate, objectMapper, EventConstants.EVENTS_EXCHANGE)
+
+    init {
+        `when`(rabbitTemplate.invoke<Any?>(any())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            (invocation.getArgument<Any>(0) as RabbitOperations.OperationsCallback<Any?>)
+                .doInRabbit(rabbitTemplate)
+        }
+    }
 
     @Test
     fun `publishes message conforming to envelope schema to central topic exchange`() {
@@ -81,7 +91,7 @@ class RabbitBrokerPublisherTest {
         val failingRabbitTemplate: RabbitTemplate = mock(RabbitTemplate::class.java)
         doThrow(AmqpException("Connection refused"))
             .`when`(failingRabbitTemplate)
-            .send(any(String::class.java), any(String::class.java), any(Message::class.java))
+            .invoke<Any?>(any())
 
         val failingPublisher = RabbitBrokerPublisher(failingRabbitTemplate, objectMapper)
         val result = failingPublisher.publish(brokerMessage)

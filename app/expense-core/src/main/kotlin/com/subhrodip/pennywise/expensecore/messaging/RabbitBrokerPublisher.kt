@@ -18,8 +18,13 @@ import tools.jackson.databind.ObjectMapper
 class RabbitBrokerPublisher(
     private val rabbitTemplate: RabbitTemplate,
     private val objectMapper: ObjectMapper,
-    private val exchange: String = EventConstants.EVENTS_EXCHANGE
+    private val exchange: String = EventConstants.EVENTS_EXCHANGE,
+    private val confirmTimeoutMs: Long = 5_000
 ) : BrokerPublisher {
+
+    init {
+        require(confirmTimeoutMs > 0) { "confirmTimeoutMs must be positive" }
+    }
 
     private val log = LoggerFactory.getLogger(RabbitBrokerPublisher::class.java)
 
@@ -45,7 +50,11 @@ class RabbitBrokerPublisher(
                 message.headers.forEach { (key, value) -> setHeader(key, value) }
             }
 
-            rabbitTemplate.send(exchange, routingKey, Message(body, properties))
+            rabbitTemplate.invoke { operations ->
+                operations.send(exchange, routingKey, Message(body, properties))
+                operations.waitForConfirmsOrDie(confirmTimeoutMs)
+                null
+            }
             PublishResult.Confirmed
         } catch (ex: AmqpException) {
             log.error("Failed to publish message ${message.eventId} to exchange $exchange: ${ex.message}", ex)

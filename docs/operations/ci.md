@@ -6,6 +6,9 @@ publishes four application images. Verification, checks, and E2E execution live
 in `_reusable-ci.yml`, while container image delivery lives in `ci-master.yml` so
 feature branch and pull request workflows can operate with read-only permissions
 without encountering GitHub Actions reusable workflow permission validation errors.
+The PR and branch callers grant `pull-requests: read` because the reusable
+dependency-review job declares that least-privilege permission; the job remains
+skipped for non-PR events.
 
 The reusable workflow applies Gradle dependency and build caching with
 content-addressed keys and restore fallbacks. E2E uses the same policy, while

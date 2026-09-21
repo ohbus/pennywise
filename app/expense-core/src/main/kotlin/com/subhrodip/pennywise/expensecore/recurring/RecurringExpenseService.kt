@@ -49,6 +49,22 @@ data class UpdateRecurringScheduleRequest(
     val allocations: List<ExpenseAllocation>? = null
 )
 
+/** Writer-side recurring schedule and worker command port. */
+interface RecurringCommandStore {
+    fun createSchedule(groupId: UUID, request: CreateRecurringScheduleRequest): RecurringExpenseSchedule
+    fun updateSchedule(groupId: UUID, scheduleId: UUID, request: UpdateRecurringScheduleRequest): RecurringExpenseSchedule
+    fun pauseSchedule(scheduleId: UUID): RecurringExpenseSchedule
+    fun resumeSchedule(scheduleId: UUID): RecurringExpenseSchedule
+    fun processDueOccurrences(asOfDate: LocalDate = LocalDate.now(), maxCatchUpOccurrences: Int = 12): Int
+}
+
+/** Bounded recurring schedule and occurrence query port. */
+interface RecurringQueryStore {
+    fun getSchedule(scheduleId: UUID): RecurringExpenseSchedule?
+    fun listSchedules(groupId: UUID): List<RecurringExpenseSchedule>
+    fun getOccurrences(scheduleId: UUID): List<RecurringExpenseOccurrence>
+}
+
 /**
  * Service managing database-backed recurring expense schedule lifecycle operations,
  * due occurrence generation, bounded worker catch-up execution, and pause notification outbox events.
@@ -62,11 +78,11 @@ class RecurringExpenseService(
     @PersistenceContext private val entityManager: EntityManager,
     @Autowired(required = false)
     private val outboxStore: OutboxStore? = null
-) {
+) : RecurringCommandStore, RecurringQueryStore {
     private val customSpecifications = ConcurrentHashMap<UUID, Pair<List<ExpensePayer>, List<ExpenseAllocation>>>()
 
     @Transactional
-    fun createSchedule(groupId: UUID, request: CreateRecurringScheduleRequest): RecurringExpenseSchedule {
+    override fun createSchedule(groupId: UUID, request: CreateRecurringScheduleRequest): RecurringExpenseSchedule {
         require(request.description.isNotBlank()) { "description must not be blank" }
         require(request.amountMinor > 0) { "amountMinor must be positive" }
         require(request.currency.matches(Regex("^[A-Z]{3}$"))) { "currency must be 3 uppercase letters" }
@@ -123,7 +139,7 @@ class RecurringExpenseService(
     }
 
     @Transactional
-    fun updateSchedule(
+    override fun updateSchedule(
         groupId: UUID,
         scheduleId: UUID,
         request: UpdateRecurringScheduleRequest
@@ -180,7 +196,7 @@ class RecurringExpenseService(
     }
 
     @Transactional
-    fun pauseSchedule(scheduleId: UUID): RecurringExpenseSchedule {
+    override fun pauseSchedule(scheduleId: UUID): RecurringExpenseSchedule {
         val schedule = scheduleRepository.findById(scheduleId).orElseThrow {
             ApplicationException(ErrorCode.ERR_05, "Schedule $scheduleId not found")
         }
@@ -189,7 +205,7 @@ class RecurringExpenseService(
     }
 
     @Transactional
-    fun resumeSchedule(scheduleId: UUID): RecurringExpenseSchedule {
+    override fun resumeSchedule(scheduleId: UUID): RecurringExpenseSchedule {
         val schedule = scheduleRepository.findById(scheduleId).orElseThrow {
             ApplicationException(ErrorCode.ERR_05, "Schedule $scheduleId not found")
         }
@@ -198,9 +214,11 @@ class RecurringExpenseService(
     }
 
     @Transactional
-    fun processDueOccurrences(
-        asOfDate: LocalDate = LocalDate.now(),
-        maxCatchUpOccurrences: Int = 12
+    fun processDueOccurrences(): Int = processDueOccurrences(LocalDate.now(), 12)
+
+    override fun processDueOccurrences(
+        asOfDate: LocalDate,
+        maxCatchUpOccurrences: Int
     ): Int {
         val dueSchedules = scheduleRepository.findDueSchedules(asOfDate)
         var count = 0
@@ -211,15 +229,15 @@ class RecurringExpenseService(
     }
 
     @Transactional(readOnly = true)
-    fun getSchedule(scheduleId: UUID): RecurringExpenseSchedule? =
+    override fun getSchedule(scheduleId: UUID): RecurringExpenseSchedule? =
         scheduleRepository.findById(scheduleId).orElse(null)
 
     @Transactional(readOnly = true)
-    fun listSchedules(groupId: UUID): List<RecurringExpenseSchedule> =
+    override fun listSchedules(groupId: UUID): List<RecurringExpenseSchedule> =
         scheduleRepository.findByGroupId(groupId)
 
     @Transactional(readOnly = true)
-    fun getOccurrences(scheduleId: UUID): List<RecurringExpenseOccurrence> =
+    override fun getOccurrences(scheduleId: UUID): List<RecurringExpenseOccurrence> =
         occurrenceRepository.findByScheduleId(scheduleId)
 
     private fun processScheduleOccurrences(

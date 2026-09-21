@@ -2,6 +2,7 @@ package com.subhrodip.pennywise.db.health
 
 import javax.sql.DataSource
 import org.springframework.scheduling.annotation.Scheduled
+import com.subhrodip.pennywise.observability.db.DbTelemetry
 
 /** Measures PostgreSQL physical-replication replay lag without touching application tables. */
 class DbReaderLagProbe {
@@ -32,7 +33,8 @@ class DbReaderHealthScheduler(
     private val readers: Map<String, DataSource>,
     private val health: DbReaderHealth,
     private val lagBudgetMs: Long,
-    private val probe: DbReaderLagProbe = DbReaderLagProbe()
+    private val probe: DbReaderLagProbe = DbReaderLagProbe(),
+    private val telemetry: DbTelemetry = DbTelemetry()
 ) {
     init { require(lagBudgetMs > 0) { "lagBudgetMs must be positive" } }
 
@@ -42,6 +44,7 @@ class DbReaderHealthScheduler(
         readers.forEach { (name, dataSource) ->
             try {
                 val lagMs = probe.measure(dataSource)
+                lagMs?.let { telemetry.lag(name, it) }
                 if (lagMs == null || lagMs > lagBudgetMs) health.markLagging(name) else health.markHealthy(name)
             } catch (_: Exception) {
                 health.markDisconnected(name)

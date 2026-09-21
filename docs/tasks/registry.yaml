@@ -5818,7 +5818,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Migrate remaining approved query capabilities",
       "phase": "cqrs_data_access",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["DB-14"],
@@ -5826,7 +5826,7 @@
       "specification": "docs/tasks/details/DB-15.md",
       "acceptance_criteria": ["Each promoted capability has explicit freshness, authorization, route, index/projection, fallback, telemetry, and rollback evidence.", "No blanket GET/read-only routing is introduced."],
       "validation_commands": ["./gradlew.bat test --rerun-tasks --no-daemon", "make check", "git diff --check"],
-      "evidence": [],
+      "evidence": ["Approved reader candidates are individually scoped: Expense Core search/export, Accounts profile-by-ID and bounded batch lookup, and Notifications historical inbox listing. Route-policy tests, replica-enabled authenticated E2E, local plan evidence, fallback policy, and rollback switch documentation exist; per-capability production SLO and populated workload evidence remain open."],
       "reviewer": "/root",
       "blocker": null
     },
@@ -5835,7 +5835,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Complete operational hardening, runbooks, rollback, and release gates",
       "phase": "cqrs_data_access",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "operations",
       "owner_agent": "/root",
       "depends_on": ["DB-14", "DB-15"],
@@ -5843,7 +5843,7 @@
       "specification": "docs/tasks/details/DB-16.md",
       "acceptance_criteria": ["Failover, restore, migration compatibility, pool budgets, alert routing, incident, and rollback drills pass.", "A tested switch returns all query traffic to the writer."],
       "validation_commands": ["make check", "make release-gate", "git diff --check"],
-      "evidence": [],
+      "evidence": ["Added CQRS replica runbook, reader alerts, writer-only switch documentation, local disconnect/recovery drill, merged Compose validation, and repository release-gate checks. Restore, promotion, external security scan, production capacity, alert delivery, and rollback-drill environment gates remain open."],
       "reviewer": "/root",
       "blocker": "Requires production-like deployment and alerting environment."
     },
@@ -5852,7 +5852,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Complete CQRS architecture and acceptance reconciliation",
       "phase": "cqrs_data_access",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": ["DB-16"],
@@ -5860,7 +5860,7 @@
       "specification": "docs/tasks/details/DB-17.md",
       "acceptance_criteria": ["Every plan requirement is backed by direct implementation, runtime, performance, or operational evidence.", "Registry, board, task details, documentation, and limitations are reconciled with a final ship/no-ship decision."],
       "validation_commands": ["make check", "python tools/contracts/validate.py", "git diff --check"],
-      "evidence": [],
+      "evidence": ["Registry/board reconciliation is underway; DB-01/DB-02 are done, implementation tasks and DB-15/DB-16 are in progress, and repository-wide tests, contracts, architecture, security, observability, replica smoke, authenticated acceptance, product E2E, and release-asset checks have recorded evidence. Final ship/no-ship reconciliation awaits remaining production-like gates."],
       "reviewer": "/root",
       "blocker": null
     }

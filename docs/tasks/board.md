@@ -27,9 +27,9 @@ query classification, and evidence gates are complete.
 | DB-12 | quality | in_progress | Add contention, replica failure, lag, and capacity evidence |
 | DB-13 | platform | in_progress | Add optional local/production-like PostgreSQL replica topology |
 | DB-14 | coordinator | in_progress | Run one reviewed historical-read replica pilot |
-| DB-15 | coordinator | planned | Promote only individually approved query capabilities |
-| DB-16 | operations | planned | Complete failover, restore, rollback, alert, and release gates |
-| DB-17 | coordinator | planned | Reconcile implementation and evidence against every plan requirement |
+| DB-15 | coordinator | in_progress | Promote only individually approved query capabilities |
+| DB-16 | operations | in_progress | Complete failover, restore, rollback, alert, and release gates |
+| DB-17 | coordinator | in_progress | Reconcile implementation and evidence against every plan requirement |
 
 ## Current milestone: documentation and contracts
 

@@ -13,20 +13,20 @@ query classification, and evidence gates are complete.
 
 | ID | Owner | Status | Deliverable |
 | --- | --- | --- | --- |
-| DB-01 | coordinator | planned | Catalog every persistence operation and register the workstream |
+| DB-01 | coordinator | done | Catalog every persistence operation and register the workstream |
 | DB-02 | architecture | done | Define command/query, consistency, watermark, fallback, and retry contracts |
-| DB-03 | coordinator | planned | Implement `libs/db` route context, policies, and transaction guards |
-| DB-04 | platform | planned | Add separate writer/named-reader pools and writer-only migration wiring |
+| DB-03 | coordinator | in_progress | Implement `libs/db` route context, policies, and transaction guards |
+| DB-04 | platform | in_progress | Add separate writer/named-reader pools and writer-only migration wiring |
 | DB-05 | platform | in_progress | Add reader lag health, circuit breaking, and bounded fallback |
 | DB-06 | core | in_progress | Split Expense Core command/query ports while preserving financial transactions |
-| DB-07 | core | planned | Pilot bounded Expense Core search projection and measured query optimization |
-| DB-08 | accounts | planned | Split Accounts command/query ports with writer-only auth state |
-| DB-09 | notifications | planned | Split Notifications command/query ports with writer-only delivery state |
+| DB-07 | core | in_progress | Pilot bounded Expense Core search projection and measured query optimization |
+| DB-08 | accounts | in_progress | Split Accounts command/query ports with writer-only auth state |
+| DB-09 | notifications | in_progress | Split Notifications command/query ports with writer-only delivery state |
 | DB-10 | coordinator | in_progress | Propagate causal writer watermarks through services and BFF |
 | DB-11 | observability | in_progress | Add query operation telemetry and slow-query governance |
 | DB-12 | quality | in_progress | Add contention, replica failure, lag, and capacity evidence |
-| DB-13 | platform | planned | Add optional local/production-like PostgreSQL replica topology |
-| DB-14 | coordinator | planned | Run one reviewed historical-read replica pilot |
+| DB-13 | platform | in_progress | Add optional local/production-like PostgreSQL replica topology |
+| DB-14 | coordinator | in_progress | Run one reviewed historical-read replica pilot |
 | DB-15 | coordinator | planned | Promote only individually approved query capabilities |
 | DB-16 | operations | planned | Complete failover, restore, rollback, alert, and release gates |
 | DB-17 | coordinator | planned | Reconcile implementation and evidence against every plan requirement |

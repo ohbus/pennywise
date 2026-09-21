@@ -5597,7 +5597,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Define CQRS data-access architecture and consistency contracts",
       "phase": "cqrs_data_access",
-      "status": "planned",
+      "status": "done",
       "owner_role": "architecture",
       "owner_agent": "/root",
       "depends_on": ["DB-01"],
@@ -5605,7 +5605,7 @@
       "specification": "docs/tasks/details/DB-02.md",
       "acceptance_criteria": ["Command/query classifications, consistency levels, causal watermarks, fallback, timeout, and retry contracts are documented.", "Writer-only invariants and public freshness/error semantics are reviewable."],
       "validation_commands": ["python tools/contracts/validate.py", "git diff --check"],
-      "evidence": ["Added docs/architecture/cqrs-data-access.md defining command/query classification, STRONG/SESSION/BOUNDED_STALENESS/EVENTUAL semantics, writer-only invariants, bounded fallback, and explicit local-replica evidence limits."],
+      "evidence": ["Added docs/architecture/cqrs-data-access.md defining command/query classification, STRONG/SESSION/BOUNDED_STALENESS/EVENTUAL semantics, writer-only invariants, bounded fallback, and explicit local-replica evidence limits. Contract validation and git diff --check passed during the CQRS release audit."],
       "reviewer": "/root",
       "blocker": null
     },

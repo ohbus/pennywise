@@ -5775,7 +5775,7 @@
       "specification": "docs/tasks/details/DB-12.md",
       "acceptance_criteria": ["Realistic operation mix, hot-group, pagination, contention, lag, failure, and writer-protection scenarios are repeatable.", "Machine-readable p95/p99, error, connection, and lag budgets are recorded with evidence boundaries."],
       "validation_commands": ["make check", "git diff --check"],
-      "evidence": ["Added tests/performance/cqrs-replica-smoke.sh and Makefile target. The local merged replica profile reports streaming=t, pg_is_in_recovery=t, a replay LSN, and authenticated pennywise_db_ route telemetry; this is explicitly local topology evidence, not production capacity proof."],
+      "evidence": ["Added tests/performance/cqrs-replica-smoke.sh and Makefile target. The local merged replica profile reports streaming=t, pg_is_in_recovery=t, a replay LSN, and authenticated pennywise_db_ route telemetry; a 100-request/10-concurrency readiness smoke completed 100/100 with zero failures in 2 seconds (50 requests/s). This is explicitly local topology/readiness evidence, not production capacity proof."],
       "reviewer": "/root",
       "blocker": null
     },

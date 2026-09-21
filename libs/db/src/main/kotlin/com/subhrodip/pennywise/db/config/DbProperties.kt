@@ -11,6 +11,8 @@ data class DbProperties(
     var writer: PoolProperties = PoolProperties(),
     /** Named read-only pool settings. */
     var readers: Map<String, PoolProperties> = emptyMap(),
+    /** Explicit local-only mode that aliases configured reader names to the writer pool. */
+    var readerIsWriterDiagnostic: Boolean = false,
     /** Maximum tolerated asynchronous replay lag before a reader is marked lagging. */
     var readerLagBudgetMs: Long = 5_000,
     /** Bounded interval between replay-lag probes. */

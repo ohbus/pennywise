@@ -55,7 +55,11 @@ class DbAutoConfiguration {
     ): DataSource {
         properties.writer.validate("writer")
         properties.readers.forEach { (name, pool) -> pool.validate("readers.$name") }
-        val readers = properties.readers.mapValues { (name, pool) -> buildDataSource(pool, "reader.$name") }
+        val readers = if (properties.readerIsWriterDiagnostic) {
+            properties.readers.keys.associateWith { writer }
+        } else {
+            properties.readers.mapValues { (name, pool) -> buildDataSource(pool, "reader.$name") }
+        }
         return DbRoutingDataSource(writer, readers, readerHealth, telemetry)
     }
 

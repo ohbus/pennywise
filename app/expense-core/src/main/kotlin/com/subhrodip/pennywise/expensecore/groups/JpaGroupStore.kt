@@ -29,7 +29,7 @@ class JpaGroupStore(
     private val groups: GroupRepository,
     private val memberships: GroupMembershipRepository,
     private val invitations: GroupInvitationRepository,
-    private val audit: GroupAuditRepository,
+    private val audit: GroupAuditCommandStore,
     private val synchronization: SynchronizationStore,
     private val outbox: OutboxStore
 ) : GroupStore {

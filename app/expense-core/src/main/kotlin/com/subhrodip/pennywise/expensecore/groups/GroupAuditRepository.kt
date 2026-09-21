@@ -8,4 +8,4 @@ import org.springframework.stereotype.Repository
  * Spring Data JPA repository for persisting and querying [GroupAuditEntity] records.
  */
 @Repository
-interface GroupAuditRepository : JpaRepository<GroupAuditEntity, UUID>
+interface GroupAuditRepository : JpaRepository<GroupAuditEntity, UUID>, GroupAuditCommandStore

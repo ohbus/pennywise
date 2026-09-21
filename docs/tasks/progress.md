@@ -3,6 +3,8 @@
 The registry is the authoritative state machine. This ledger records meaningful
 execution checkpoints and evidence; it does not replace task acceptance criteria.
 
+| 2026-09-21 | Production-readiness audit | Reconciled the audit's historical finding descriptions with current implementation evidence and documented the remaining open/partial findings and the no-infrastructure gate | Audit now distinguishes implemented code-level remediation from unverified production-scale, HA/DR, rotation, rollback, supply-chain, and security-review evidence; release remains NO-GO | documentation increment pending commit |
+
 | 2026-09-20 | QA-07 / CI | Fixed the live QA-05 BFF fanout acceptance path and removed current deprecation warnings | Acceptance fault headers now propagate through the BFF reactive context to Expense Core; the E2E job installs uv via setup-uv; `asText()` uses `asString()` and deprecated `UNPROCESSABLE_ENTITY` uses `HttpStatusCode.valueOf(422)`; focused BFF and Expense Core tests, acceptance unit tests, uvx mypy, contract validation, and diff checks pass | live Docker acceptance rerun remains required |
 | 2026-09-20 | QA-07 / CI | Completed signed-persona live integration coverage and corrected authenticated notification delivery/Compose container portability | `make acceptance-live` equivalent passed 10/10; REST edge passed 86 checks; product, offline replay, WebSocket/concurrency, and RabbitMQ/outbox chaos suites passed; signed `local-oidc` Bruno passed 71/71 requests and 78/78 tests; `./gradlew.bat test --rerun-tasks --no-daemon` passed 40 actionable tasks; `uvx mypy`, contract/public-surface validators, compileall, and diff checks pass | hosted CI/production-scale QA-08 evidence remains environment-dependent |
 

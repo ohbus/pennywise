@@ -9,9 +9,9 @@ import com.subhrodip.pennywise.errors.ErrorCode
 import com.subhrodip.pennywise.ids.UuidGenerator
 
 /**
- * Persistence abstraction for expense records and group balances.
+ * Command-side persistence port for expense mutations.
  */
-interface ExpenseStore {
+interface ExpenseCommandStore {
     /**
      * Creates an expense record and writes its corresponding ledger postings.
      *
@@ -46,6 +46,12 @@ interface ExpenseStore {
      */
     fun delete(groupId: UUID, expenseId: UUID, version: Long?, actorSubject: String? = null)
 
+}
+
+/**
+ * Query-side persistence port for expense and balance reads.
+ */
+interface ExpenseQueryStore {
     /**
      * Finds an active (non-deleted) expense record by ID.
      *
@@ -73,6 +79,12 @@ interface ExpenseStore {
      */
     fun balances(groupId: UUID): List<GroupBalanceItem>
 }
+
+/**
+ * Compatibility facade combining the expense command and query ports.
+ * New callers should depend on the narrow port matching their use case.
+ */
+interface ExpenseStore : ExpenseCommandStore, ExpenseQueryStore
 
 /**
  * In-memory thread-safe implementation of [ExpenseStore] used for testing.

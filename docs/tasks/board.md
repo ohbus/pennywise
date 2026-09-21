@@ -18,7 +18,7 @@ query classification, and evidence gates are complete.
 | DB-03 | coordinator | planned | Implement `libs/db` route context, policies, and transaction guards |
 | DB-04 | platform | planned | Add separate writer/named-reader pools and writer-only migration wiring |
 | DB-05 | platform | in_progress | Add reader lag health, circuit breaking, and bounded fallback |
-| DB-06 | core | planned | Split Expense Core command/query ports while preserving financial transactions |
+| DB-06 | core | in_progress | Split Expense Core command/query ports while preserving financial transactions |
 | DB-07 | core | planned | Pilot bounded Expense Core search projection and measured query optimization |
 | DB-08 | accounts | planned | Split Accounts command/query ports with writer-only auth state |
 | DB-09 | notifications | planned | Split Notifications command/query ports with writer-only delivery state |

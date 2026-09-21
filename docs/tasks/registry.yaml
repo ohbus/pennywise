@@ -5665,7 +5665,7 @@
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Split Expense Core command and query ports",
       "phase": "cqrs_data_access",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "core",
       "owner_agent": "/root",
       "depends_on": ["DB-03", "DB-04"],
@@ -5673,7 +5673,7 @@
       "specification": "docs/tasks/details/DB-06.md",
       "acceptance_criteria": ["Expense Core commands and queries have explicit ports and bounded DTO results.", "Financial, authorization, lock, claim, idempotency, revision, and outbox operations remain writer-only."],
       "validation_commands": ["./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon", "git diff --check"],
-      "evidence": [],
+      "evidence": ["Added ExpenseCommandStore and ExpenseQueryStore ports with an ExpenseStore compatibility facade. Full ./gradlew.bat :app:expense-core:test --rerun-tasks --no-daemon passed; group, settlement, sync, recurring, audit, and outbox port splits remain open."],
       "reviewer": "/root",
       "blocker": null
     },

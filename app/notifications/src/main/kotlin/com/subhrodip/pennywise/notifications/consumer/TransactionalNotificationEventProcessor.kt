@@ -23,7 +23,9 @@ class TransactionalNotificationEventProcessor(
     @Transactional
     fun process(event: NotificationEvent): NotificationConsumptionOutcome {
         val inboxItem = event.toInboxEntity()
-        if (processedEvents.existsById(event.eventId)) {
+        if (processedEvents.existsById(event.eventId) ||
+            entityManager.find(NotificationInboxEntity::class.java, event.notificationId) != null
+        ) {
             return NotificationConsumptionOutcome.DUPLICATE
         }
 

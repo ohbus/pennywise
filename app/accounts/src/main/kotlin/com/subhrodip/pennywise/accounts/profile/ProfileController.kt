@@ -31,6 +31,10 @@ import java.security.Principal
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import com.subhrodip.pennywise.db.routing.DbContextHolder
+import com.subhrodip.pennywise.db.routing.DbExecutionContext
+import com.subhrodip.pennywise.db.routing.DbOperationKind
+import com.subhrodip.pennywise.db.routing.ReadConsistency
 
 data class ExportRequestResponse(
     val exportId: UUID,
@@ -139,9 +143,20 @@ class ProfileController(
 
     @GetMapping(ApiEndpoints.Accounts.V1.PROFILES_BY_ID)
     fun getProfileById(@PathVariable accountId: UUID): ProfileResponse =
-        profiles.findById(accountId) ?: throw ApplicationException(ErrorCode.ERR_05, "Profile not found")
+        DbContextHolder.withContext(profileReadContext("profile.lookup")) {
+            profiles.findById(accountId) ?: throw ApplicationException(ErrorCode.ERR_05, "Profile not found")
+        }
 
     @PostMapping(ApiEndpoints.Accounts.V1.PROFILES_BATCH)
     fun getProfilesBatch(@Valid @RequestBody request: BatchProfileRequest): List<ProfileResponse> =
-        profiles.findByIds(request.accountIds)
+        DbContextHolder.withContext(profileReadContext("profile.batch_lookup")) {
+            profiles.findByIds(request.accountIds)
+        }
+
+    private fun profileReadContext(operationName: String) = DbExecutionContext(
+        operationName = operationName,
+        kind = DbOperationKind.QUERY,
+        consistency = ReadConsistency.EVENTUAL,
+        readerEligible = true
+    )
 }

@@ -1,6 +1,10 @@
 package com.subhrodip.pennywise.expensecore.search
 
 import java.util.UUID
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.ErrorCode
 
 /**
  * Domain port for durable search and retrieval of expenses within an authorized group.
@@ -30,3 +34,10 @@ data class SearchQuery(
     /** Requested page size; one extra row is fetched for `hasMore`. */
     val limit: Int = ExpenseSearch.DEFAULT_LIMIT
 )
+
+/** Decodes the public opaque cursor before it reaches SQL or an in-memory adapter. */
+fun decodeSearchCursor(cursor: String?): String? = cursor?.let {
+    runCatching {
+        String(Base64.getUrlDecoder().decode(it), StandardCharsets.UTF_8).also { value -> require(value.isNotBlank()) }
+    }.getOrElse { throw ApplicationException(ErrorCode.ERR_02, "Invalid search cursor", it) }
+}

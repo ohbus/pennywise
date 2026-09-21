@@ -5707,7 +5707,7 @@
       "specification": "docs/tasks/details/DB-08.md",
       "acceptance_criteria": ["Credential, session, rate-limit, token, export/deletion, and auth-email operations remain writer-only.", "Approved profile/preferences queries have explicit policies and read-after-write tests."],
       "validation_commands": ["./gradlew.bat :app:accounts:test --rerun-tasks --no-daemon", "git diff --check"],
-      "evidence": [],
+      "evidence": ["ProfileController scopes only profile-by-ID and bounded batch lookup as eventual reader-eligible contexts; /me provisioning and all authentication/session/rate-limit/mutation paths remain writer-bound. Accounts writer/profile-reader configuration added; live route evidence remains open."],
       "reviewer": "/root",
       "blocker": null
     },
@@ -5724,7 +5724,7 @@
       "specification": "docs/tasks/details/DB-09.md",
       "acceptance_criteria": ["Deduplication, delivery preferences, leases, attempts, and operator state remain writer-only.", "Only bounded historical inbox reads are replica candidates with subject-isolation and outage tests."],
       "validation_commands": ["./gradlew.bat :app:notifications:test --rerun-tasks --no-daemon", "git diff --check"],
-      "evidence": [],
+      "evidence": ["NotificationInbox.page scopes historical listing as an eventual reader-eligible context while append, mark-read, deduplication, preferences used for delivery, and consumer state remain writer-bound. Notifications writer/inbox-reader configuration added; live route evidence remains open."],
       "reviewer": "/root",
       "blocker": null
     },

@@ -29,7 +29,7 @@ class JpaSearchStore(
         require(query.limit in 1..ExpenseSearch.MAX_EXPORT_ROWS)
         return expenseRepository.searchProjection(
             query.groupId, query.text, query.currency, query.category,
-            query.afterExpenseId, PageRequest.of(0, query.limit + 1)
+            decodeSearchCursor(query.afterExpenseId), PageRequest.of(0, query.limit + 1)
         ).map { projection ->
             val category = runCatching { ExpenseCategory.fromKey(projection.getCategory()) }.getOrDefault(ExpenseCategory.OTHER)
             SearchExpense(

@@ -19,6 +19,10 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.db.routing.DbContextHolder
+import com.subhrodip.pennywise.db.routing.DbExecutionContext
+import com.subhrodip.pennywise.db.routing.DbOperationKind
+import com.subhrodip.pennywise.db.routing.ReadConsistency
 
 data class InboxItem(val notificationId: UUID, val eventType: String, val message: String, val occurredAt: Instant, val read: Boolean = false)
 data class InboxPage(val items: List<InboxItem>, val nextCursor: String? = null)
@@ -61,7 +65,9 @@ class NotificationInbox(
     fun markAsRead(subject: String, notificationId: UUID): Boolean = store.markAsRead(subject, notificationId)
 
     fun page(subject: String, cursor: String?, limit: Int): InboxPage {
-        val sorted = list(subject).sortedWith(compareByDescending<InboxItem> { it.occurredAt }.thenByDescending { it.notificationId })
+        val sorted = DbContextHolder.withContext(
+            DbExecutionContext("notification.inbox.history", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)
+        ) { list(subject) }.sortedWith(compareByDescending<InboxItem> { it.occurredAt }.thenByDescending { it.notificationId })
         val start = cursor?.let { decodeCursor(it) }?.let { key ->
             sorted.indexOfFirst { it.occurredAt < key.first || (it.occurredAt == key.first && it.notificationId < key.second) }
                 .takeIf { it >= 0 } ?: sorted.size

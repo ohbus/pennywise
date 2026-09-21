@@ -30,7 +30,7 @@ class InMemorySearchStore : SearchStore {
             .filter { query.text.isBlank() || it.description.contains(query.text, ignoreCase = true) }
             .filter { query.currency == null || it.currency.equals(query.currency, ignoreCase = true) }
             .filter { query.category == null || it.category.key == query.category }
-            .filter { query.afterExpenseId == null || it.expenseId > query.afterExpenseId }
+            .filter { decodeSearchCursor(query.afterExpenseId) == null || it.expenseId > decodeSearchCursor(query.afterExpenseId)!! }
             .sortedBy { it.expenseId }
             .take(query.limit + 1)
             .toList()

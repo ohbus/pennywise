@@ -4,6 +4,33 @@ The coordinator owns this board and `registry.yaml`. The registry is the source
 of truth. Its JSON formatting is valid YAML 1.2 and permits dependency-free
 validation with Python's standard library.
 
+## CQRS data-access and PostgreSQL reader-scaling milestone
+
+The implementation-ready code inventory is maintained in
+`docs/implementation/cqrs-code-inventory.md`. These tasks are intentionally
+writer-safe: no reader routing is enabled until the shared kernel, route guards,
+query classification, and evidence gates are complete.
+
+| ID | Owner | Status | Deliverable |
+| --- | --- | --- | --- |
+| DB-01 | coordinator | planned | Catalog every persistence operation and register the workstream |
+| DB-02 | architecture | planned | Define command/query, consistency, watermark, fallback, and retry contracts |
+| DB-03 | coordinator | planned | Implement `libs/db` route context, policies, and transaction guards |
+| DB-04 | platform | planned | Add separate writer/named-reader pools and writer-only migration wiring |
+| DB-05 | platform | planned | Add reader lag health, circuit breaking, and bounded fallback |
+| DB-06 | core | planned | Split Expense Core command/query ports while preserving financial transactions |
+| DB-07 | core | planned | Pilot bounded Expense Core search projection and measured query optimization |
+| DB-08 | accounts | planned | Split Accounts command/query ports with writer-only auth state |
+| DB-09 | notifications | planned | Split Notifications command/query ports with writer-only delivery state |
+| DB-10 | coordinator | planned | Propagate causal writer watermarks through services and BFF |
+| DB-11 | observability | planned | Add query operation telemetry and slow-query governance |
+| DB-12 | quality | planned | Add contention, replica failure, lag, and capacity evidence |
+| DB-13 | platform | planned | Add optional local/production-like PostgreSQL replica topology |
+| DB-14 | coordinator | planned | Run one reviewed historical-read replica pilot |
+| DB-15 | coordinator | planned | Promote only individually approved query capabilities |
+| DB-16 | operations | planned | Complete failover, restore, rollback, alert, and release gates |
+| DB-17 | coordinator | planned | Reconcile implementation and evidence against every plan requirement |
+
 ## Current milestone: documentation and contracts
 
 ## Exhaustive public-interface coverage

@@ -5,6 +5,8 @@ dependencies {
     compileOnly(libs.boot.web)
     api(project(":libs:observability"))
     testImplementation(kotlin("test"))
+    testImplementation(libs.boot.web)
+    testImplementation(libs.boot.test)
 }
 
 tasks.withType<Test> { useJUnitPlatform() }

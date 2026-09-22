@@ -1,5 +1,5 @@
 package com.subhrodip.pennywise.notifications.email
-
+import com.subhrodip.pennywise.notifications.email.delivery.opaqueRecipientId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test

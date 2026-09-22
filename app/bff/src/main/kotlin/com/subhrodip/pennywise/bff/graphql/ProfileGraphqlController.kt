@@ -1,9 +1,9 @@
 package com.subhrodip.pennywise.bff.graphql
+import com.subhrodip.pennywise.bff.transport.model.output.BffProfile
 
-import com.subhrodip.pennywise.bff.*
+import com.subhrodip.pennywise.bff.transport.AccountsGateway
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import java.security.Principal
 import org.springframework.stereotype.Controller
 import reactor.core.publisher.Mono
 

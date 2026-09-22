@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.errors
+package com.subhrodip.pennywise.errors.domain
 
 /**
  * Custom exception representing application-level errors with an associated [ErrorCode].

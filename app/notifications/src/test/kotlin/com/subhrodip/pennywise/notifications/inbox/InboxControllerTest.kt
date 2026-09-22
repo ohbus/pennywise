@@ -1,10 +1,19 @@
 package com.subhrodip.pennywise.notifications.inbox
 
+import com.subhrodip.pennywise.notifications.inbox.persistence.JpaNotificationInboxStore
+import com.subhrodip.pennywise.notifications.inbox.persistence.NotificationInboxRepository
+
+import com.subhrodip.pennywise.notifications.inbox.api.InboxController
+import com.subhrodip.pennywise.notifications.inbox.model.InboxItem
+import com.subhrodip.pennywise.notifications.inbox.persistence.InMemoryNotificationInboxStore
+import com.subhrodip.pennywise.notifications.inbox.persistence.NotificationInboxStore
+import com.subhrodip.pennywise.notifications.inbox.service.NotificationInboxService
+
 import com.subhrodip.pennywise.db.routing.DbContextHolder
 import com.subhrodip.pennywise.db.routing.DbOperationKind
 import com.subhrodip.pennywise.db.routing.ReadConsistency
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -21,7 +30,7 @@ import java.util.UUID
 
 class InboxControllerTest {
     private val recordingStore = RecordingInboxStore(InMemoryNotificationInboxStore())
-    private val inbox = NotificationInbox(recordingStore)
+    private val inbox = NotificationInboxService(recordingStore)
     private val controller = InboxController(inbox)
     private val mvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(GlobalErrorHandler()).build()
@@ -40,7 +49,7 @@ class InboxControllerTest {
 
     @Test
     fun `orders inbox newest first and isolates subjects`() {
-        val testInbox = NotificationInbox(InMemoryNotificationInboxStore())
+        val testInbox = NotificationInboxService(InMemoryNotificationInboxStore())
         testInbox.append("alice", InboxItem(UUID.randomUUID(), "expense.created", "Expense", Instant.EPOCH))
         testInbox.append("alice", InboxItem(UUID.randomUUID(), "repayment.created", "Repayment", Instant.ofEpochSecond(2)))
         testInbox.append("bob", InboxItem(UUID.randomUUID(), "expense.created", "Other", Instant.now()))
@@ -51,7 +60,7 @@ class InboxControllerTest {
 
     @Test
     fun `returns stable cursor pages`() {
-        val testInbox = NotificationInbox(InMemoryNotificationInboxStore())
+        val testInbox = NotificationInboxService(InMemoryNotificationInboxStore())
         repeat(3) { index -> testInbox.append("alice", InboxItem(UUID.randomUUID(), "event-$index", "Event", Instant.ofEpochSecond(index.toLong()))) }
         val first = testInbox.page("alice", null, 2)
         assertEquals(listOf("event-2", "event-1"), first.items.map { it.eventType })
@@ -62,11 +71,11 @@ class InboxControllerTest {
 
     @Test
     fun `rejects malformed cursor`() {
-        val testInbox = NotificationInbox(InMemoryNotificationInboxStore())
-        val err = org.junit.jupiter.api.Assertions.assertThrows(com.subhrodip.pennywise.errors.ApplicationException::class.java) {
+        val testInbox = NotificationInboxService(InMemoryNotificationInboxStore())
+        val err = org.junit.jupiter.api.Assertions.assertThrows(com.subhrodip.pennywise.errors.domain.ApplicationException::class.java) {
             testInbox.page("alice", "bad", 10)
         }
-        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_02, err.errorCode)
+        assertEquals(com.subhrodip.pennywise.errors.domain.ErrorCode.ERR_02, err.errorCode)
     }
 
     @Test

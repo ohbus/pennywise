@@ -1,4 +1,6 @@
 package com.subhrodip.pennywise.expensecore.expenses
+import com.subhrodip.pennywise.expensecore.expenses.domain.AllocationCalculator
+import com.subhrodip.pennywise.expensecore.expenses.domain.FinancialArithmetic
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows

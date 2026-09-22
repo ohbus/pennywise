@@ -6,6 +6,7 @@ import threading
 import unittest
 from pathlib import Path
 import sys
+from tests.http_constants import ACCEPTANCE_FAULT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 try:
@@ -25,22 +26,22 @@ class EdgeCaseHandler(http.server.BaseHTTPRequestHandler):
 
     def _reply(self, status: int, body: object) -> None:
         self.send_response(status)
-        self.send_header("Content-Type", "application/json")
+        self.send_header(CONTENT_TYPE, "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(body).encode())
 
     def do_PATCH(self) -> None:
-        if self.headers.get("Authorization") != f"Bearer {self.expected_token}":
+        if self.headers.get(AUTHORIZATION) != f"Bearer {self.expected_token}":
             self._reply(401, {"code": "UNAUTHENTICATED"})
             return
-        if self.headers.get("X-Acceptance-Fault") == "rollback":
+        if self.headers.get(ACCEPTANCE_FAULT) == "rollback":
             self._reply(409, {"code": "TEST_ROLLBACK"})
             return
         EdgeCaseHandler.renames += 1
         self._reply(409 if EdgeCaseHandler.renames > 1 else 200, {"revision": 1})
 
     def do_GET(self) -> None:
-        if self.headers.get("Authorization") != f"Bearer {self.expected_token}":
+        if self.headers.get(AUTHORIZATION) != f"Bearer {self.expected_token}":
             self._reply(401, {"code": "UNAUTHENTICATED"})
         elif self.path == "/expense-core/v1/groups":
             self._reply(200, [{"groupId": "00000000-0000-0000-0000-000000000001"}])
@@ -48,7 +49,7 @@ class EdgeCaseHandler(http.server.BaseHTTPRequestHandler):
             self._reply(200, {"members": []})
 
     def do_POST(self) -> None:
-        length = int(self.headers.get("Content-Length", 0))
+        length = int(self.headers.get(CONTENT_LENGTH, 0))
         query = json.loads(self.rfile.read(length)).get("query", "")
         if "fanoutFailure" in query:
             self._reply(200, {"errors": [{"message": "upstream unavailable"}]})

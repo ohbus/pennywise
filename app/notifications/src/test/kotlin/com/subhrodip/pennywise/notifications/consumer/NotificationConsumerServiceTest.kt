@@ -1,10 +1,22 @@
 package com.subhrodip.pennywise.notifications.consumer
 
-import com.subhrodip.pennywise.notifications.email.EmailDeliveryOutcome
-import com.subhrodip.pennywise.notifications.email.EmailDispatcher
-import com.subhrodip.pennywise.notifications.delivery.DeliveryRateLimiter
-import com.subhrodip.pennywise.notifications.preferences.NotificationPreferences
-import com.subhrodip.pennywise.notifications.preferences.PreferenceStore
+import com.subhrodip.pennywise.notifications.consumer.model.NotificationConsumptionOutcome
+import com.subhrodip.pennywise.notifications.consumer.model.NotificationEvent
+import com.subhrodip.pennywise.notifications.consumer.persistence.ProcessedNotificationEventRepository
+import com.subhrodip.pennywise.notifications.consumer.service.NotificationConsumer
+import com.subhrodip.pennywise.notifications.consumer.service.NotificationConsumerService
+import com.subhrodip.pennywise.notifications.consumer.service.NotificationEventConsumer
+import com.subhrodip.pennywise.notifications.consumer.service.TransactionalNotificationEventProcessor
+import com.subhrodip.pennywise.notifications.consumer.transport.BrokerEnvelopeParser
+import com.subhrodip.pennywise.notifications.consumer.transport.RabbitNotificationListener
+import com.subhrodip.pennywise.notifications.delivery.rate.TestDeliveryRateLimiter
+import com.subhrodip.pennywise.notifications.preferences.persistence.PreferenceStore
+
+import com.subhrodip.pennywise.notifications.email.delivery.EmailDeliveryOutcome
+import com.subhrodip.pennywise.notifications.email.delivery.EmailDispatcher
+
+import com.subhrodip.pennywise.notifications.delivery.rate.DeliveryRateLimiter
+import com.subhrodip.pennywise.notifications.preferences.model.NotificationPreferences
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -23,7 +35,7 @@ class NotificationConsumerServiceTest {
 
     private lateinit var processor: TransactionalNotificationEventProcessor
     private lateinit var processedEvents: ProcessedNotificationEventRepository
-    private lateinit var preferenceStore: NotificationPreferenceStore
+    private lateinit var preferenceStore: PreferenceStore
     private lateinit var emailDispatcher: EmailDispatcher
     private lateinit var deliveryRateLimiter: DeliveryRateLimiter
     private lateinit var consumer: NotificationConsumerService
@@ -34,7 +46,7 @@ class NotificationConsumerServiceTest {
         processedEvents = mock(ProcessedNotificationEventRepository::class.java)
         preferenceStore = mock(PreferenceStore::class.java)
         emailDispatcher = mock(EmailDispatcher::class.java)
-        deliveryRateLimiter = DeliveryRateLimiter(10, Duration.ofMinutes(1))
+        deliveryRateLimiter = TestDeliveryRateLimiter(10, Duration.ofMinutes(1))
 
         consumer = NotificationConsumerService(
             processor = processor,
@@ -127,7 +139,7 @@ class NotificationConsumerServiceTest {
 
     @Test
     fun `suppresses delivery after the per-recipient rate limit`() {
-        deliveryRateLimiter = DeliveryRateLimiter(1, Duration.ofMinutes(1))
+        deliveryRateLimiter = TestDeliveryRateLimiter(1, Duration.ofMinutes(1))
         consumer = NotificationConsumerService(processor, processedEvents, preferenceStore, emailDispatcher, deliveryRateLimiter)
         val first = sampleEvent(subject = "rate@example.com")
         val second = sampleEvent(subject = "rate@example.com")

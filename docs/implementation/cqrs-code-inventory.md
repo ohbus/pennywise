@@ -84,7 +84,7 @@ Related controllers and contracts to inspect when response freshness changes:
 `expenses/ExpenseController.kt`, `search/SearchController.kt`,
 `groups/GroupController.kt`, `sync/SyncController.kt`,
 `settlements/SettlementController.kt`, `contracts/rest/expense-core.json`,
-`contracts/graphql/schema.graphqls`, and BFF gateway/resolver classes.
+the split SDL files under `contracts/graphql/`, and BFF gateway/resolver classes.
 
 ## Accounts command-side persistence
 

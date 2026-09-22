@@ -58,7 +58,9 @@ hardening plan.
 Services enforce membership authorization themselves. Use Actuator,
 Micrometer and OpenTelemetry-compatible tracing; structured logs exclude money
 payloads, invitation secrets and tokens. Docker Compose supports local
-PostgreSQL, RabbitMQ and SMTP capture. Local single-database reader mode is
-diagnostic only and is not replica evidence. Kubernetes, Kafka, Redis, JPA
-second-level caching, multi-region writes and sharding are deferred until
-measured requirements justify them.
+PostgreSQL, RabbitMQ, Redis and SMTP capture. Redis is mandatory for ephemeral
+distributed rate limiting in local, staging and production; it is not a source of
+truth for identity, sessions, audit or financial state. Local single-database
+reader mode is diagnostic only and is not replica evidence. Kubernetes, Kafka, JPA
+second-level caching, multi-region writes and sharding are deferred until measured
+requirements justify them.

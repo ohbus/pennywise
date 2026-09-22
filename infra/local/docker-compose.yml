@@ -40,6 +40,24 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+  redis:
+    hostname: ${PENNYWISE_REDIS_HOSTNAME:-rate-limit-redis}
+    networks:
+      default:
+        aliases: ["${PENNYWISE_REDIS_HOSTNAME:-rate-limit-redis}"]
+    image: ${REDIS_IMAGE:-redis:8.2-alpine}
+    deploy:
+      resources:
+        reservations: {cpus: "0.10", memory: 64m}
+        limits: {cpus: "0.50", memory: 256m}
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-pennywise-redis-local-only}", "--appendonly", "no"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-pennywise-redis-local-only}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
   mailpit:
     hostname: ${PENNYWISE_MAILPIT_HOSTNAME:-mailpit-email}
     networks:

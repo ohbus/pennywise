@@ -1,5 +1,7 @@
 package com.subhrodip.pennywise.bff.config
 
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
+
 import com.subhrodip.pennywise.bff.transport.BearerTokenContext
 import com.subhrodip.pennywise.db.routing.DbWatermark
 import com.subhrodip.pennywise.db.routing.DbWatermarkHeaders
@@ -10,7 +12,7 @@ import org.springframework.web.server.WebFilter
 import org.springframework.web.server.WebFilterChain
 import reactor.core.publisher.Mono
 
-private const val BEARER_SCHEME = "Bearer "
+private const val BEARER_SCHEME = "${ApiEndpoints.Headers.BEARER_SCHEME} "
 
 /** Captures the inbound bearer token at the HTTP boundary for reactive fan-out. */
 @Component

@@ -1,16 +1,24 @@
 package com.subhrodip.pennywise.accounts.profile
 
-import com.subhrodip.pennywise.accounts.requests.deletion.DeletionRequestService
-import com.subhrodip.pennywise.accounts.requests.export.ExportRequestService
+import com.subhrodip.pennywise.accounts.profile.api.ProfileController
+import com.subhrodip.pennywise.accounts.profile.api.ProfilePatchRequest
+import com.subhrodip.pennywise.accounts.profile.api.ProfileResponse
+import com.subhrodip.pennywise.accounts.profile.persistence.InMemoryProfileStore
+import com.subhrodip.pennywise.accounts.profile.persistence.ProfileStore
+
+import com.subhrodip.pennywise.accounts.requests.deletion.service.DeletionRequestService
+import com.subhrodip.pennywise.accounts.requests.deletion.persistence.InMemoryDeletionRequestStore
+import com.subhrodip.pennywise.accounts.requests.export.service.ExportRequestService
+import com.subhrodip.pennywise.accounts.requests.export.persistence.InMemoryExportRequestStore
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
 import com.subhrodip.pennywise.db.routing.DbContextHolder
 import com.subhrodip.pennywise.db.routing.DbOperationKind
 import com.subhrodip.pennywise.db.routing.ReadConsistency
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 import java.nio.charset.StandardCharsets
 import java.security.Principal
 import java.time.Instant
@@ -29,8 +37,8 @@ class ProfileControllerTest {
     private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(
         ProfileController(
             profiles = recordingProfiles,
-            deletionService = DeletionRequestService { Instant.parse("2026-01-01T00:00:00Z") },
-            exportService = ExportRequestService { Instant.parse("2026-01-01T00:00:00Z") }
+            deletionService = DeletionRequestService(InMemoryDeletionRequestStore { Instant.parse("2026-01-01T00:00:00Z") }),
+            exportService = ExportRequestService(InMemoryExportRequestStore { Instant.parse("2026-01-01T00:00:00Z") })
         )
     )
         .setControllerAdvice(GlobalErrorHandler())

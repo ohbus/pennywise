@@ -26,12 +26,12 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+from tests.http_constants import APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE, GRAPHQL_PATH
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 BFF_URL = "http://localhost:8080"
 EXPENSE_CORE_URL = "http://localhost:8082"
-GRAPHQL_PATH = "/graphql"
 HTTP_TIMEOUT_SECONDS = 10
 SOCKET_SETUP_TIMEOUT_SECONDS = 10
 WS_HOST = "localhost"
@@ -40,9 +40,9 @@ WS_PORT = 8080
 
 def request_json(url: str, method: str = "GET", body: Any = None,
                  bearer: str | None = None, extra_headers: dict[str, str] | None = None) -> tuple[int, dict[str, Any]]:
-    headers = {"Content-Type": "application/json"}
+    headers = {CONTENT_TYPE: APPLICATION_JSON}
     if bearer:
-        headers["Authorization"] = f"Bearer {bearer}"
+        headers[AUTHORIZATION] = f"{BEARER_PREFIX}{bearer}"
     if extra_headers:
         headers.update(extra_headers)
 

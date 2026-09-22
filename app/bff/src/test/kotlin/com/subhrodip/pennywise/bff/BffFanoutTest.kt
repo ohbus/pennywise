@@ -1,5 +1,19 @@
 package com.subhrodip.pennywise.bff
 
+import com.subhrodip.pennywise.bff.transport.UpstreamServiceException
+
+import com.subhrodip.pennywise.bff.transport.ExpenseCoreGateway
+import com.subhrodip.pennywise.bff.transport.AccountsGateway
+import com.subhrodip.pennywise.bff.messaging.model.BffEventEnvelope
+import com.subhrodip.pennywise.bff.messaging.model.ConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.model.DuplicateConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.model.ProcessedConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.service.BffEventConsumer
+import com.subhrodip.pennywise.bff.messaging.persistence.BffEventDeduplicator
+import com.subhrodip.pennywise.bff.realtime.GroupInvalidation
+import com.subhrodip.pennywise.bff.realtime.LiveUpdate
+import com.subhrodip.pennywise.bff.realtime.LiveUpdateFanout
+
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
@@ -9,7 +23,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.web.reactive.function.client.WebClient
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 import reactor.core.Exceptions
 import java.net.InetSocketAddress
 import java.time.Duration
@@ -79,7 +93,7 @@ class BffFanoutTest {
 
     private fun respondJson(exchange: HttpExchange, statusCode: Int, json: String) {
         val bytes = json.toByteArray(Charsets.UTF_8)
-        exchange.responseHeaders.set("Content-Type", "application/json")
+        exchange.responseHeaders.set(ApiEndpoints.Headers.CONTENT_TYPE, ApiEndpoints.Headers.APPLICATION_JSON)
         exchange.sendResponseHeaders(statusCode, bytes.size.toLong())
         exchange.responseBody.use { it.write(bytes) }
     }
@@ -413,11 +427,11 @@ class BffFanoutTest {
     fun `forwards bearer authorization header to upstream endpoints`() {
         val capturedAuthHeaders = CopyOnWriteArrayList<String>()
         registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
-            capturedAuthHeaders.addAll(exchange.requestHeaders.getOrDefault("Authorization", emptyList()))
+            capturedAuthHeaders.addAll(exchange.requestHeaders.getOrDefault(ApiEndpoints.Headers.AUTHORIZATION, emptyList()))
             respondJson(exchange, 200, "[${groupJson("g-auth", "Auth Group")}]")
         }
         registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-auth")) { exchange ->
-            capturedAuthHeaders.addAll(exchange.requestHeaders.getOrDefault("Authorization", emptyList()))
+            capturedAuthHeaders.addAll(exchange.requestHeaders.getOrDefault(ApiEndpoints.Headers.AUTHORIZATION, emptyList()))
             respondJson(exchange, 200, "[]")
         }
 

@@ -1,5 +1,5 @@
 package com.subhrodip.pennywise.notifications.email
-
+import com.subhrodip.pennywise.notifications.email.security.AuthEmailEnvelopeProtector
 import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
 import java.util.Base64

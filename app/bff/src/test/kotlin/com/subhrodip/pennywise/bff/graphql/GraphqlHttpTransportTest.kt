@@ -1,6 +1,32 @@
 package com.subhrodip.pennywise.bff.graphql
 
-import com.subhrodip.pennywise.bff.*
+import com.subhrodip.pennywise.bff.transport.ExpenseCoreGateway
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
+import com.subhrodip.pennywise.bff.transport.AccountsGateway
+import com.subhrodip.pennywise.bff.messaging.model.BffEventEnvelope
+import com.subhrodip.pennywise.bff.messaging.model.ConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.model.DuplicateConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.model.ProcessedConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.service.BffEventConsumer
+import com.subhrodip.pennywise.bff.messaging.persistence.BffEventDeduplicator
+import com.subhrodip.pennywise.bff.realtime.GroupInvalidation
+import com.subhrodip.pennywise.bff.realtime.LiveUpdate
+import com.subhrodip.pennywise.bff.realtime.LiveUpdateFanout
+import com.subhrodip.pennywise.bff.transport.model.input.AllocationInput
+import com.subhrodip.pennywise.bff.transport.model.input.AllocationItemInput
+import com.subhrodip.pennywise.bff.transport.model.output.BffCreateGroup
+import com.subhrodip.pennywise.bff.transport.model.output.BffExpense
+import com.subhrodip.pennywise.bff.transport.model.output.BffGroup
+import com.subhrodip.pennywise.bff.transport.model.output.BffMoney
+import com.subhrodip.pennywise.bff.transport.model.output.BffProfile
+import com.subhrodip.pennywise.bff.transport.model.output.BffSettlement
+import com.subhrodip.pennywise.bff.transport.model.output.BffSuggestedSettlement
+import com.subhrodip.pennywise.bff.transport.model.input.CreateExpenseInput
+import com.subhrodip.pennywise.bff.transport.model.input.MoneyInput
+import com.subhrodip.pennywise.bff.transport.model.input.PayerInput
+import com.subhrodip.pennywise.bff.transport.model.input.RepaymentInput
+
+import com.subhrodip.pennywise.bff.transport.UpstreamServiceException
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.BeforeEach
 import org.mockito.Mockito.`when`
@@ -51,7 +77,7 @@ class GraphqlHttpTransportTest {
     private lateinit var expenseCoreGateway: ExpenseCoreGateway
 
     private fun expectGraphqlError(query: String, privateDetail: String) {
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to query))
             .exchange()
             .expectStatus().isOk
@@ -69,7 +95,7 @@ class GraphqlHttpTransportTest {
             Mono.just(BffProfile("account-1", "Alice", "Europe/Vienna", "EUR"))
         )
 
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to "{ me { accountId displayName } }"))
             .exchange()
             .expectStatus().isOk
@@ -86,7 +112,7 @@ class GraphqlHttpTransportTest {
             Mono.just(listOf(BffSuggestedSettlement("alice", "bob", 1250, "EUR")))
         )
 
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to "{ groups { id name revision } settlementSuggestions(groupId: \"group-1\") { fromParticipantId amount { minor currency } } }"))
             .exchange()
             .expectStatus().isOk
@@ -104,7 +130,7 @@ class GraphqlHttpTransportTest {
         `when`(expenseCoreGateway.recordRepayment("group-2", RepaymentInput("group-2", "alice", "bob", MoneyInput("EUR", "500"), "repaid"), null))
             .thenReturn(Mono.just(settlement))
 
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to "mutation { createGroup(input: { name: \"Household\", kind: HOUSEHOLD, currency: \"EUR\" }) { id name } recordRepayment(input: { groupId: \"group-2\", fromParticipantId: \"alice\", toParticipantId: \"bob\", amount: { currency: \"EUR\", minor: \"500\" }, reason: \"repaid\" }) { id status amount { minor currency } } }"))
             .exchange()
             .expectStatus().isOk
@@ -129,14 +155,14 @@ class GraphqlHttpTransportTest {
         `when`(expenseCoreGateway.createExpense("group-3", input, "idempotency-key-1234", null))
             .thenReturn(Mono.just(expense))
 
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to "mutation { updateGroup(groupId: \"group-3\", name: \"Renamed\") { id name revision } }"))
             .exchange()
             .expectStatus().isOk
             .expectBody()
             .jsonPath("$.data.updateGroup.name").isEqualTo("Renamed")
 
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(
                 mapOf(
                     "query" to "mutation { createExpense(groupId: \"group-3\", input: { expenseId: \"$expenseId\", description: \"Dinner\", " +
@@ -154,7 +180,7 @@ class GraphqlHttpTransportTest {
 
     @Test
     fun `graphql route rejects malformed required variables before calling upstream`() {
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to "mutation { createExpense(groupId: \"not-a-uuid\", input: { expenseId: \"${UUID.randomUUID()}\", description: \"Dinner\", amount: { currency: \"EUR\", minor: \"100\" }, payers: [], allocation: { mode: EQUAL, items: [] } }, idempotencyKey: \"short\") { id } }"))
             .exchange()
             .expectStatus().isOk
@@ -165,7 +191,7 @@ class GraphqlHttpTransportTest {
 
     @Test
     fun `graphql route returns errors for an invalid field`() {
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to "{ doesNotExist }"))
             .exchange()
             .expectStatus().isOk
@@ -180,8 +206,8 @@ class GraphqlHttpTransportTest {
      */
     @Test
     fun `graphql route rejects malformed json payload`() {
-        client.post().uri("/graphql")
-            .header("Content-Type", "application/json")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
+            .header(ApiEndpoints.Headers.CONTENT_TYPE, ApiEndpoints.Headers.APPLICATION_JSON)
             .bodyValue("{\"query\":")
             .exchange()
             .expectStatus().isBadRequest
@@ -192,7 +218,7 @@ class GraphqlHttpTransportTest {
         `when`(expenseCoreGateway.getGroup("group-1", null))
             .thenReturn(Mono.error(UpstreamServiceException(403, "private authorization detail")))
 
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to "{ group(id: \"group-1\") { id } }"))
             .exchange()
             .expectStatus().isOk
@@ -208,7 +234,7 @@ class GraphqlHttpTransportTest {
         `when`(expenseCoreGateway.updateGroup("group-1", "", null))
             .thenReturn(Mono.error(UpstreamServiceException(400, "private validation detail")))
 
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to "mutation { updateGroup(groupId: \"group-1\", name: \"\") { id } }"))
             .exchange()
             .expectStatus().isOk
@@ -221,7 +247,7 @@ class GraphqlHttpTransportTest {
         `when`(expenseCoreGateway.getGroup("group-2", null))
             .thenReturn(Mono.error(TimeoutException("private timeout detail")))
 
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to "{ group(id: \"group-2\") { id } }"))
             .exchange()
             .expectStatus().isOk
@@ -237,7 +263,7 @@ class GraphqlHttpTransportTest {
         `when`(expenseCoreGateway.getGroup("group-3", null))
             .thenReturn(Mono.error(IllegalStateException("private malformed payload")))
 
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to "{ group(id: \"group-3\") { id } }"))
             .exchange()
             .expectStatus().isOk
@@ -278,7 +304,7 @@ class GraphqlHttpTransportTest {
     fun `settlement suggestions expose empty upstream result`() {
         `when`(expenseCoreGateway.getSettlementSuggestions("group-empty", null)).thenReturn(Mono.just(emptyList()))
 
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to "{ settlementSuggestions(groupId: \"group-empty\") { fromParticipantId } }"))
             .exchange()
             .expectStatus().isOk
@@ -346,7 +372,7 @@ class GraphqlHttpTransportTest {
             "group$alias: groups { id name revision }"
         }.let { "{ $it }" }
 
-        client.post().uri("/graphql")
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
             .bodyValue(mapOf("query" to query))
             .exchange()
             .expectStatus().isOk

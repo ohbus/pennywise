@@ -18,6 +18,7 @@ dependencies {
     implementation(libs.boot.resource.server)
     implementation(libs.boot.amqp)
     implementation(libs.boot.data.jpa)
+    implementation(libs.boot.data.redis)
     implementation(libs.kotlin.reflect)
     runtimeOnly(libs.postgresql)
     runtimeOnly(libs.boot.flyway)

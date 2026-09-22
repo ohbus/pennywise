@@ -5,12 +5,10 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 
 /**
- * Validates downstream service addresses for deployed BFF profiles.
- * Local development keeps the explicit localhost defaults in the gateway;
- * staging and production must provide target-specific addresses.
+ * Validates that deployed BFF profiles provide explicit downstream service addresses.
  */
 @Configuration
-@Profile("production", "staging")
+@Profile("production", "staging", "local-oidc")
 class UpstreamConfiguration(
     @Value("\${pennywise.accounts-url:}") accountsUrl: String,
     @Value("\${pennywise.expense-core-url:}") expenseCoreUrl: String

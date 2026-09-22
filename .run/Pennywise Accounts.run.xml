@@ -5,11 +5,22 @@
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="VM_PARAMETERS" value="-Dspring.profiles.active=local" />
     <envs>
-      <env name="SPRING_PROFILES_ACTIVE" value="local" />
+      <env name="SPRING_PROFILES_ACTIVE" value="local-oidc" />
       <env name="SERVER_PORT" value="8081" />
       <env name="SPRING_DATASOURCE_URL" value="jdbc:postgresql://localhost:5432/pennywise_accounts" />
       <env name="SPRING_DATASOURCE_USERNAME" value="pennywise" />
       <env name="SPRING_DATASOURCE_PASSWORD" value="pennywise-local-only" />
+      <env name="PENNYWISE_SECURITY_OIDC_ISSUER_URI" value="http://localhost:8090/realms/pennywise" />
+      <env name="PENNYWISE_SECURITY_OIDC_AUDIENCE" value="pennywise-api" />
+      <env name="PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET" value="AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=" />
+      <env name="PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY" value="ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=" />
+      <env name="PENNYWISE_REDIS_HOST" value="localhost" />
+      <env name="PENNYWISE_REDIS_PASSWORD" value="pennywise-redis-local-only" />
+      <env name="SPRING_RABBITMQ_HOST" value="localhost" />
+      <env name="SPRING_RABBITMQ_PORT" value="5672" />
+      <env name="SPRING_RABBITMQ_USERNAME" value="pennywise" />
+      <env name="SPRING_RABBITMQ_PASSWORD" value="pennywise-local-only" />
+      <env name="PENNYWISE_AUTH_EMAIL_OUTBOX_ENABLED" value="true" />
     </envs>
     <method v="2"><option name="Make" enabled="true" /></method>
   </configuration>

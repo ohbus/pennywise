@@ -25,7 +25,7 @@ pennywise/
 │   └── test-support/      # reusable fixtures/containers, no production dependency
 ├── contracts/
 │   ├── rest/              # accounts, expense-core, notifications OpenAPI
-│   ├── graphql/           # BFF schema and operations
+│   ├── graphql/           # BFF SDL: scalars, roots, domain types, and inputs
 │   ├── events/            # envelopes and event payload schemas
 │   └── examples/          # valid/invalid and financial fixtures
 ├── tools/contracts/       # portable validation

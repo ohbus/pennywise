@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, IDEMPOTENCY_KEY, CONTENT_TYPE
 
 
 AUTH_TOKEN = os.environ.get("BEARER_TOKEN", "test-user")
@@ -33,10 +34,10 @@ def http_json(
     body: dict | list | None = None,
     timeout: float = 2.0,
 ) -> tuple[int, Any]:
-    req_headers = {"Accept": "application/json"}
+    req_headers = {ACCEPT: APPLICATION_JSON}
     data = None
     if body is not None:
-        req_headers["Content-Type"] = "application/json"
+        req_headers[CONTENT_TYPE] = APPLICATION_JSON
         data = json.dumps(body).encode("utf-8")
     if headers:
         req_headers.update(headers)
@@ -142,7 +143,7 @@ def check_health(bff_url: str, expense_core_url: str, timeout: float) -> dict[st
 
 def check_group_expense_settlement(expense_core_url: str, timeout: float) -> tuple[dict[str, Any], str | None]:
     scenario_id = "QA-GROUP-EXPENSE-SETTLEMENT"
-    auth_headers = {"Authorization": f"Bearer {AUTH_TOKEN}"}
+    auth_headers = {AUTHORIZATION: f"Bearer {AUTH_TOKEN}"}
     try:
         # 1. POST /expense-core/v1/groups to create a group
         group_name = f"Acceptance Trip {uuid.uuid4().hex[:8]}"
@@ -242,7 +243,7 @@ def check_group_expense_settlement(expense_core_url: str, timeout: float) -> tup
         status, data = http_json(
             f"{expense_core_url}/expense-core/v1/groups/{group_id}/expenses",
             method="POST",
-            headers={**auth_headers, "Idempotency-Key": str(uuid.uuid4())},
+            headers={**auth_headers, IDEMPOTENCY_KEY: str(uuid.uuid4())},
             body=expense_payload,
             timeout=timeout,
         )
@@ -276,7 +277,7 @@ def check_group_expense_settlement(expense_core_url: str, timeout: float) -> tup
         status, data = http_json(
             f"{expense_core_url}/expense-core/v1/groups/{group_id}/settlements",
             method="POST",
-            headers={**auth_headers, "Idempotency-Key": str(uuid.uuid4())},
+            headers={**auth_headers, IDEMPOTENCY_KEY: str(uuid.uuid4())},
             body=settlement_payload,
             timeout=timeout,
         )
@@ -324,7 +325,7 @@ def check_group_expense_settlement(expense_core_url: str, timeout: float) -> tup
 
 def check_offline_replay(expense_core_url: str, group_id: str | None, timeout: float) -> dict[str, Any]:
     scenario_id = "QA-OFFLINE-REPLAY"
-    auth_headers = {"Authorization": f"Bearer {AUTH_TOKEN}"}
+    auth_headers = {AUTHORIZATION: f"Bearer {AUTH_TOKEN}"}
     try:
         if not group_id:
             group_payload = {
@@ -411,9 +412,9 @@ def check_offline_replay(expense_core_url: str, group_id: str | None, timeout: f
 def check_websocket_resync(bff_url: str, timeout: float) -> dict[str, Any]:
     scenario_id = "QA-WEBSOCKET-RESYNC"
     headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Authorization": f"Bearer {AUTH_TOKEN}",
+        CONTENT_TYPE: APPLICATION_JSON,
+        ACCEPT: APPLICATION_JSON,
+        AUTHORIZATION: f"Bearer {AUTH_TOKEN}",
     }
     body = {
         "query": "query { groups { id name } }"

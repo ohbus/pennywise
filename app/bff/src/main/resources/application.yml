@@ -32,6 +32,8 @@ server:
   max-http-request-header-size: ${PENNYWISE_BFF_MAX_HEADER_SIZE:16KB}
 
 pennywise:
+  accounts-url: ${PENNYWISE_ACCOUNTS_URL}
+  expense-core-url: ${PENNYWISE_EXPENSE_CORE_URL}
   security:
     oidc:
       audience: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:}

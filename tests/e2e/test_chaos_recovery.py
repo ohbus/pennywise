@@ -23,6 +23,7 @@ import urllib.error
 import urllib.request
 import uuid
 from typing import Any
+from tests.http_constants import APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE
 
 BFF_URL = "http://localhost:8080"
 ACCOUNTS_URL = "http://localhost:8081"
@@ -47,9 +48,9 @@ def query_postgres(sql: str) -> str:
 
 def request_json(url: str, method: str = "GET", body: Any = None,
                  bearer: str | None = None, extra_headers: dict[str, str] | None = None) -> tuple[int, dict[str, Any]]:
-    headers = {"Content-Type": "application/json"}
+    headers = {CONTENT_TYPE: APPLICATION_JSON}
     if bearer:
-        headers["Authorization"] = f"Bearer {bearer}"
+        headers[AUTHORIZATION] = f"{BEARER_PREFIX}{bearer}"
     if extra_headers:
         headers.update(extra_headers)
 

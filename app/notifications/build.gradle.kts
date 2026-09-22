@@ -19,6 +19,7 @@ dependencies {
     implementation(libs.boot.security)
     implementation(libs.boot.resource.server)
     implementation(libs.boot.data.jpa)
+    implementation(libs.boot.data.redis)
     runtimeOnly(libs.postgresql)
     runtimeOnly(libs.boot.flyway)
     runtimeOnly(libs.flyway.postgresql)

@@ -8,6 +8,7 @@ import os
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Final
+from tests.http_constants import APPLICATION_JSON, CONTENT_LENGTH, CONTENT_TYPE
 
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.hashes import SHA256
@@ -80,8 +81,8 @@ class Handler(BaseHTTPRequestHandler):
         """Write a JSON response with an explicit content length."""
         body = json.dumps(value, separators=(",", ":")).encode()
         self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
+        self.send_header(CONTENT_TYPE, APPLICATION_JSON)
+        self.send_header(CONTENT_LENGTH, str(len(body)))
         self.end_headers()
         self.wfile.write(body)
 

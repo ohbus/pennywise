@@ -6,7 +6,7 @@ Support group renaming and member discovery in the GraphQL BFF.
 
 ## Acceptance criteria
 
-- `contracts/graphql/schema.graphqls` includes:
+- `contracts/graphql/10-roots.graphqls` and `contracts/graphql/20-domain-types.graphqls` include:
   - `type Member { membershipId: ID!, subject: String! }`
   - Field `members: [Member!]!` on `type Group`
   - Mutation `updateGroup(groupId: ID!, name: String!): Group!` in `type Mutation`
@@ -23,7 +23,7 @@ Support group renaming and member discovery in the GraphQL BFF.
 
 - `app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/`
 - `app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/`
-- `contracts/graphql/schema.graphqls`
+- `contracts/graphql/10-roots.graphqls`, `contracts/graphql/20-domain-types.graphqls`
 
 ## Validation commands
 

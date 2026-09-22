@@ -14,8 +14,6 @@ data class DbOperationPolicy(
     val consistency: ReadConsistency = ReadConsistency.STRONG,
     /** Whether a healthy reader may serve this operation. */
     val readerEligible: Boolean = false,
-    /** Whether a reader failure may fall back to the writer. */
-    val writerFallbackAllowed: Boolean = false
 ) {
     init {
         require(operationName.matches(OPERATION_NAME)) {

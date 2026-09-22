@@ -1,9 +1,30 @@
 package com.subhrodip.pennywise.bff
 
+import com.subhrodip.pennywise.bff.transport.UpstreamServiceException
+
+import com.subhrodip.pennywise.bff.transport.ExpenseCoreGateway
+import com.subhrodip.pennywise.bff.transport.greatestWriterWatermark
+import com.subhrodip.pennywise.bff.transport.AccountsGateway
+import com.subhrodip.pennywise.bff.messaging.model.BffEventEnvelope
+import com.subhrodip.pennywise.bff.messaging.model.ConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.model.DuplicateConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.model.ProcessedConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.service.BffEventConsumer
+import com.subhrodip.pennywise.bff.messaging.persistence.BffEventDeduplicator
+import com.subhrodip.pennywise.bff.realtime.GroupInvalidation
+import com.subhrodip.pennywise.bff.realtime.LiveUpdate
+import com.subhrodip.pennywise.bff.realtime.LiveUpdateFanout
+import com.subhrodip.pennywise.bff.transport.model.output.BffBalance
+import com.subhrodip.pennywise.bff.transport.model.output.BffCreateGroup
+import com.subhrodip.pennywise.bff.transport.model.output.BffExpense
+import com.subhrodip.pennywise.bff.transport.model.output.BffGroup
+import com.subhrodip.pennywise.bff.transport.model.output.BffMoney
+import com.subhrodip.pennywise.bff.transport.model.output.BffSettlement
+import com.subhrodip.pennywise.bff.transport.model.output.BffSuggestedSettlement
+
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.UUID
-import com.subhrodip.pennywise.db.routing.DbWatermarkHeaders
 
 class RestGatewayTest {
 
@@ -13,7 +34,6 @@ class RestGatewayTest {
         assertEquals("0/20", greatestWriterWatermark("0/20", "0/10"))
         assertEquals("0/20", greatestWriterWatermark("0/20", "not-an-lsn"))
         assertEquals("0/30", greatestWriterWatermark(null, "0/30"))
-        assertEquals(DbWatermarkHeaders.WRITER_WATERMARK, "X-Pennywise-Writer-Watermark")
     }
 
     @Test

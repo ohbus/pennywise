@@ -36,6 +36,6 @@ The current increment adds GraphQL `groups` query and `createGroup` mutation
 entry points that delegate to the gateway; schema registration and transport
 integration remain pending until the BFF schema resource is wired.
 
-The schema is now copied from `contracts/graphql/schema.graphqls` during the BFF
-resource build, with GraphQL HTTP/WebSocket path configuration. Resolver coverage
+The schema is now copied from the `contracts/graphql/*.graphqls` files during the
+BFF resource build, with GraphQL HTTP/WebSocket path configuration. Resolver coverage
 for the remaining operations and transport-level tests remain pending.

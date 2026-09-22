@@ -1,0 +1,68 @@
+type Profile {
+  accountId: ID!
+  displayName: String!
+  timezone: String!
+  defaultCurrency: String!
+}
+
+type Group {
+  id: ID!
+  name: String!
+  kind: GroupKind!
+  revision: Int!
+  balances: [Balance!]!
+  expenses: [Expense!]!
+  members: [Member!]!
+}
+
+type Member {
+  membershipId: ID!
+  subject: String
+}
+
+type Balance {
+  participantId: ID!
+  money: Money!
+}
+
+type Money {
+  currency: String!
+  minor: MoneyMinor!
+}
+
+type Expense {
+  id: ID!
+  version: Int!
+  description: String!
+  amount: Money!
+  allocations: [Allocation!]!
+}
+
+type Allocation {
+  participantId: ID!
+  amount: Money!
+}
+
+type Settlement {
+  id: ID!
+  status: String!
+  amount: Money!
+}
+
+type SuggestedSettlement {
+  fromParticipantId: ID!
+  toParticipantId: ID!
+  amount: Money!
+}
+
+type GroupInvalidation {
+  groupId: ID!
+  revision: Int!
+  changeId: ID!
+}
+
+enum GroupKind {
+  HOUSEHOLD
+  COUPLE
+  TRIP
+}

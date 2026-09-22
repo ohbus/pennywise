@@ -1,5 +1,10 @@
 package com.subhrodip.pennywise.notifications.email
-
+import com.subhrodip.pennywise.notifications.email.config.EmailProperties
+import com.subhrodip.pennywise.notifications.email.delivery.EmailDeliveryOutcome
+import com.subhrodip.pennywise.notifications.email.delivery.EmailDispatcher
+import com.subhrodip.pennywise.notifications.email.smtp.JavaMailSender
+import com.subhrodip.pennywise.notifications.email.smtp.MailSendException
+import com.subhrodip.pennywise.notifications.email.smtp.SimpleMailMessage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

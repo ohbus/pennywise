@@ -1,4 +1,13 @@
 package com.subhrodip.pennywise.expensecore.settlements
+import com.subhrodip.pennywise.expensecore.settlements.api.SettlementController
+import com.subhrodip.pennywise.expensecore.settlements.persistence.InMemorySettlementStore
+import com.subhrodip.pennywise.expensecore.settlements.service.SettlementService
+import com.subhrodip.pennywise.expensecore.settlements.service.SettlementSuggestionEngine
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpenseAllocation
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpensePayer
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpenseRecord
+import com.subhrodip.pennywise.expensecore.expenses.persistence.store.InMemoryExpenseStore
+import com.subhrodip.pennywise.expensecore.groups.persistence.repository.GroupMembershipRepository
 
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -8,18 +17,12 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.util.UUID
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
-import com.subhrodip.pennywise.expensecore.expenses.ExpenseAllocation
-import com.subhrodip.pennywise.expensecore.expenses.ExpensePayer
-import com.subhrodip.pennywise.expensecore.expenses.ExpenseRecord
-import com.subhrodip.pennywise.expensecore.expenses.InMemoryExpenseStore
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
 import java.time.Instant
 import java.security.Principal
 import java.lang.reflect.Proxy
 import org.springframework.test.web.servlet.request.RequestPostProcessor
-import com.subhrodip.pennywise.expensecore.groups.GroupMembershipRepository
-
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 
 class SettlementControllerTest {
     private val expenseStore = InMemoryExpenseStore()

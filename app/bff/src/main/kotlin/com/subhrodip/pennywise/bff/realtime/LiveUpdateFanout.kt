@@ -1,27 +1,16 @@
-package com.subhrodip.pennywise.bff
+package com.subhrodip.pennywise.bff.realtime
 
-import com.subhrodip.pennywise.ids.UuidGenerator
+import com.subhrodip.pennywise.bff.realtime.GroupInvalidation
+import com.subhrodip.pennywise.bff.realtime.LiveSubscription
+import com.subhrodip.pennywise.bff.realtime.LiveUpdate
+
+import com.subhrodip.pennywise.ids.generation.UuidGenerator
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Sinks
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
-
-data class GroupInvalidation(
-    val groupId: String,
-    val revision: Long,
-    val changeId: String = UuidGenerator.next().toString()
-)
-
-data class LiveUpdate(val groupId: String, val revision: Long)
-
-data class LiveSubscription(
-    val id: String,
-    val userId: String,
-    val groupId: String,
-    val expiresAt: Instant
-)
 
 class LiveUpdateFanout(
     private val queueCapacity: Int = DEFAULT_QUEUE_CAPACITY,

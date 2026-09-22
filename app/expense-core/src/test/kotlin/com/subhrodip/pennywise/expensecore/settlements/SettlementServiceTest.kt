@@ -1,10 +1,13 @@
 package com.subhrodip.pennywise.expensecore.settlements
+import com.subhrodip.pennywise.expensecore.settlements.domain.SettlementStatus
+import com.subhrodip.pennywise.expensecore.settlements.persistence.InMemorySettlementStore
+import com.subhrodip.pennywise.expensecore.settlements.service.SettlementService
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertThrows
-import com.subhrodip.pennywise.errors.ApplicationException
+import com.subhrodip.pennywise.errors.domain.ApplicationException
 
 class SettlementServiceTest {
     @Test

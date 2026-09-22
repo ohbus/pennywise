@@ -1,12 +1,17 @@
 package com.subhrodip.pennywise.expensecore.recurring
-
-import com.subhrodip.pennywise.expensecore.expenses.ExpenseAllocation
-import com.subhrodip.pennywise.expensecore.expenses.ExpensePayer
-import com.subhrodip.pennywise.expensecore.expenses.ExpenseStore
-import com.subhrodip.pennywise.expensecore.groups.CreateGroupRequest
-import com.subhrodip.pennywise.expensecore.groups.CreateInviteRequest
-import com.subhrodip.pennywise.expensecore.groups.JpaGroupStore
-import com.subhrodip.pennywise.expensecore.messaging.OutboxStore
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpenseAllocation
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpensePayer
+import com.subhrodip.pennywise.expensecore.expenses.persistence.store.ExpenseStore
+import com.subhrodip.pennywise.expensecore.groups.api.CreateGroupRequest
+import com.subhrodip.pennywise.expensecore.groups.api.CreateInviteRequest
+import com.subhrodip.pennywise.expensecore.groups.persistence.store.JpaGroupStore
+import com.subhrodip.pennywise.expensecore.messaging.outbox.persistence.OutboxStore
+import com.subhrodip.pennywise.expensecore.recurring.api.CreateRecurringScheduleRequest
+import com.subhrodip.pennywise.expensecore.recurring.api.UpdateRecurringScheduleRequest
+import com.subhrodip.pennywise.expensecore.recurring.domain.RecurrenceFrequency
+import com.subhrodip.pennywise.expensecore.recurring.persistence.RecurringExpenseOccurrenceRepository
+import com.subhrodip.pennywise.expensecore.recurring.persistence.RecurringExpenseScheduleRepository
+import com.subhrodip.pennywise.expensecore.recurring.service.RecurringExpenseService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -16,8 +21,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
-import com.subhrodip.pennywise.errors.ApplicationException
-import com.subhrodip.pennywise.errors.ErrorCode
+import com.subhrodip.pennywise.errors.domain.ApplicationException
+import com.subhrodip.pennywise.errors.domain.ErrorCode
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.util.UUID

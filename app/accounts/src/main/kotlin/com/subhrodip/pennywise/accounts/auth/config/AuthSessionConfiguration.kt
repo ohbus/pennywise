@@ -5,13 +5,10 @@ import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialService
 import com.subhrodip.pennywise.accounts.auth.login.LoginVerificationService
 import com.subhrodip.pennywise.accounts.auth.provider.ExternalOidcTokenProvider
 import com.subhrodip.pennywise.accounts.auth.provider.IdentityProviderPort
-import com.subhrodip.pennywise.accounts.auth.provider.InternalJwtTokenProvider
 import com.subhrodip.pennywise.accounts.auth.session.AuthSessionRepository
 import com.subhrodip.pennywise.accounts.auth.session.TokenSessionService
-import com.subhrodip.pennywise.accounts.profile.ProfileStore
-import java.util.Base64
+import com.subhrodip.pennywise.accounts.profile.persistence.ProfileStore
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -21,29 +18,11 @@ import org.springframework.context.annotation.Profile
  */
 @Configuration
 class AuthSessionConfiguration(
-    @Value("\${PENNYWISE_SECURITY_JWT_SIGNING_SECRET:\${PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}}")
-    private val encodedJwtSecret: String,
-    @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri:https://issuer.example.pennywise}")
+    @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private val issuerUri: String,
-    @Value("\${pennywise.security.oidc.audience:pennywise-api}")
+    @Value("\${pennywise.security.oidc.audience}")
     private val audience: String
 ) {
-    /**
-     * Default IdentityProviderPort using Nimbus HMAC-SHA256 signer.
-     */
-    @Bean
-    @ConditionalOnMissingBean(IdentityProviderPort::class)
-    @Profile("!production & !staging & !local-oidc")
-    fun identityProviderPort(): IdentityProviderPort {
-        val effectiveIssuer = issuerUri.ifBlank { "https://issuer.example.pennywise" }
-        val effectiveAudience = audience.ifBlank { "pennywise-api" }
-        return InternalJwtTokenProvider(
-            secretSigningKey = decodeSecret(),
-            issuerUri = effectiveIssuer,
-            audience = effectiveAudience
-        )
-    }
-
     /**
      * Registers the configured external OIDC adapter for provider-backed profiles.
      *
@@ -51,7 +30,6 @@ class AuthSessionConfiguration(
      * not fall back to the internal HMAC signer when OIDC security is enabled.
      */
     @Bean
-    @ConditionalOnMissingBean(IdentityProviderPort::class)
     @Profile("production", "staging", "local-oidc")
     fun externalIdentityProviderPort(): IdentityProviderPort = ExternalOidcTokenProvider(
         externalIssuerUri = issuerUri,
@@ -89,8 +67,4 @@ class AuthSessionConfiguration(
             tokenSessionService = tokenSessionService
         )
 
-    private fun decodeSecret(): ByteArray = runCatching {
-        Base64.getDecoder().decode(encodedJwtSecret)
-    }.getOrElse { throw IllegalArgumentException("JWT signing secret must be base64", it) }
-        .also { require(it.size >= 32) { "JWT signing secret must contain at least 32 bytes" } }
 }

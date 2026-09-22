@@ -1,6 +1,11 @@
 spring:
   application:
     name: accounts
+  data:
+    redis:
+      host: ${PENNYWISE_REDIS_HOST}
+      port: ${PENNYWISE_REDIS_PORT:6379}
+      password: ${PENNYWISE_REDIS_PASSWORD}
   security:
     oauth2:
       resourceserver:

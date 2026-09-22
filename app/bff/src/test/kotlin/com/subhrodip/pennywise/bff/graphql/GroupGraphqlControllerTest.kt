@@ -1,6 +1,34 @@
 package com.subhrodip.pennywise.bff.graphql
 
-import com.subhrodip.pennywise.bff.*
+import com.subhrodip.pennywise.bff.transport.ExpenseCoreGateway
+import com.subhrodip.pennywise.bff.transport.AccountsGateway
+import com.subhrodip.pennywise.bff.messaging.model.BffEventEnvelope
+import com.subhrodip.pennywise.bff.messaging.model.ConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.model.DuplicateConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.model.ProcessedConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.service.BffEventConsumer
+import com.subhrodip.pennywise.bff.messaging.persistence.BffEventDeduplicator
+import com.subhrodip.pennywise.bff.realtime.GroupInvalidation
+import com.subhrodip.pennywise.bff.realtime.LiveUpdate
+import com.subhrodip.pennywise.bff.realtime.LiveUpdateFanout
+import com.subhrodip.pennywise.bff.transport.model.input.AllocationInput
+import com.subhrodip.pennywise.bff.transport.model.input.AllocationItemInput
+import com.subhrodip.pennywise.bff.transport.model.output.BffAllocation
+import com.subhrodip.pennywise.bff.transport.model.output.BffBalance
+import com.subhrodip.pennywise.bff.transport.model.output.BffCreateGroup
+import com.subhrodip.pennywise.bff.transport.model.output.BffExpense
+import com.subhrodip.pennywise.bff.transport.model.output.BffGroup
+import com.subhrodip.pennywise.bff.transport.model.output.BffMember
+import com.subhrodip.pennywise.bff.transport.model.output.BffMoney
+import com.subhrodip.pennywise.bff.transport.model.output.BffSettlement
+import com.subhrodip.pennywise.bff.transport.model.output.BffSuggestedSettlement
+import com.subhrodip.pennywise.bff.transport.model.input.CreateExpenseInput
+import com.subhrodip.pennywise.bff.transport.model.input.CreateGroupInput
+import com.subhrodip.pennywise.bff.transport.model.input.MoneyInput
+import com.subhrodip.pennywise.bff.transport.model.input.PayerInput
+import com.subhrodip.pennywise.bff.transport.model.input.RepaymentInput
+
+import com.subhrodip.pennywise.bff.transport.UpstreamServiceException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -14,7 +42,7 @@ import java.util.UUID
 class GroupGraphqlControllerTest {
 
     private val gateway = mock(ExpenseCoreGateway::class.java)
-    private val controller = GroupGraphqlController(gateway)
+    private val controller = GroupGraphqlController(gateway, LiveUpdateFanout())
     private val principal = Principal { "alice" }
 
     @Test

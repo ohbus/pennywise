@@ -1,5 +1,7 @@
 package com.subhrodip.pennywise.accounts.auth.session
 
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
+
 /**
  * Public response model for issued and rotated token bundles.
  *
@@ -12,7 +14,7 @@ package com.subhrodip.pennywise.accounts.auth.session
  */
 data class TokenResponse(
     val accessToken: String,
-    val tokenType: String = "Bearer",
+    val tokenType: String = ApiEndpoints.Headers.BEARER_SCHEME,
     val expiresIn: Long,
     val refreshToken: String
 )

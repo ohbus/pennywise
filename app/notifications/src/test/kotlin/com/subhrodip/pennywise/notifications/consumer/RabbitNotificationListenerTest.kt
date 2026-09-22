@@ -1,5 +1,16 @@
 package com.subhrodip.pennywise.notifications.consumer
 
+import com.subhrodip.pennywise.notifications.consumer.model.NotificationConsumptionOutcome
+import com.subhrodip.pennywise.notifications.consumer.model.NotificationEvent
+import com.subhrodip.pennywise.notifications.consumer.persistence.ProcessedNotificationEventRepository
+import com.subhrodip.pennywise.notifications.consumer.service.NotificationConsumer
+import com.subhrodip.pennywise.notifications.consumer.service.NotificationConsumerService
+import com.subhrodip.pennywise.notifications.consumer.service.NotificationEventConsumer
+import com.subhrodip.pennywise.notifications.consumer.service.TransactionalNotificationEventProcessor
+import com.subhrodip.pennywise.notifications.consumer.transport.BrokerEnvelopeParser
+import com.subhrodip.pennywise.notifications.consumer.transport.RabbitNotificationListener
+import com.subhrodip.pennywise.notifications.preferences.persistence.PreferenceStore
+
 import com.rabbitmq.client.Channel
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull

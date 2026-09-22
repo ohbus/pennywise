@@ -1,6 +1,11 @@
 spring:
   application:
     name: notifications
+  data:
+    redis:
+      host: ${PENNYWISE_REDIS_HOST}
+      port: ${PENNYWISE_REDIS_PORT:6379}
+      password: ${PENNYWISE_REDIS_PASSWORD}
   security:
     oauth2:
       resourceserver:
@@ -30,6 +35,14 @@ management:
         auto-startup: true
 
 pennywise:
+  notifications:
+    email:
+      host: ${PENNYWISE_NOTIFICATIONS_EMAIL_HOST}
+      port: ${PENNYWISE_NOTIFICATIONS_EMAIL_PORT}
+      from-address: ${PENNYWISE_NOTIFICATIONS_EMAIL_FROM_ADDRESS}
+      enabled: ${PENNYWISE_NOTIFICATIONS_EMAIL_ENABLED}
+      max-attempts: ${PENNYWISE_NOTIFICATIONS_EMAIL_MAX_ATTEMPTS:3}
+      retry-delay-ms: ${PENNYWISE_NOTIFICATIONS_EMAIL_RETRY_DELAY_MS:0}
   db:
     enabled: ${PENNYWISE_DB_ENABLED:false}
     writer:

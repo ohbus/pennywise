@@ -8,13 +8,14 @@ for path in files:
     json.loads(path.read_text(encoding="utf-8"))
     print(f"valid JSON: {path.relative_to(root)}")
 
-schema = root / "contracts/graphql/schema.graphqls"
-text = schema.read_text(encoding="utf-8")
+schema_dir = root / "contracts/graphql"
+schema_files = sorted(schema_dir.glob("*.graphqls"))
+text = "\n".join(path.read_text(encoding="utf-8") for path in schema_files)
 required = ["type Query", "type Mutation", "type Subscription", "scalar MoneyMinor"]
 missing = [item for item in required if item not in text]
 if missing:
     raise SystemExit(f"GraphQL contract missing required declarations: {missing}")
-print(f"valid GraphQL declaration set: {schema.relative_to(root)}")
+print(f"valid GraphQL declaration set: {len(schema_files)} files in {schema_dir.relative_to(root)}/")
 
 registry = json.loads((root / "docs/tasks/registry.yaml").read_text(encoding="utf-8"))
 ids = {task["id"] for task in registry["tasks"]}

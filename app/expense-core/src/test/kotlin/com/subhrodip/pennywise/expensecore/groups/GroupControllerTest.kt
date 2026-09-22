@@ -1,8 +1,10 @@
 package com.subhrodip.pennywise.expensecore.groups
-
+import com.subhrodip.pennywise.expensecore.groups.api.CreateGroupRequest
+import com.subhrodip.pennywise.expensecore.groups.api.CreateInviteRequest
+import com.subhrodip.pennywise.expensecore.groups.api.GroupController
+import com.subhrodip.pennywise.expensecore.groups.api.InviteClaimController
+import com.subhrodip.pennywise.expensecore.groups.persistence.store.InMemoryGroupStore
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -19,8 +21,8 @@ import java.security.Principal
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 
 /**
  * Tests for [GroupController] and [InviteClaimController] REST endpoints, covering group lifecycle,

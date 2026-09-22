@@ -1,6 +1,17 @@
 package com.subhrodip.pennywise.bff.messaging
 
-import com.subhrodip.pennywise.bff.LiveUpdateFanout
+import com.subhrodip.pennywise.bff.transport.ExpenseCoreGateway
+import com.subhrodip.pennywise.bff.transport.AccountsGateway
+import com.subhrodip.pennywise.bff.messaging.model.BffEventEnvelope
+import com.subhrodip.pennywise.bff.messaging.model.ConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.model.DuplicateConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.model.ProcessedConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.service.BffEventConsumer
+import com.subhrodip.pennywise.bff.messaging.persistence.BffEventDeduplicator
+import com.subhrodip.pennywise.bff.realtime.GroupInvalidation
+import com.subhrodip.pennywise.bff.realtime.LiveUpdate
+import com.subhrodip.pennywise.bff.realtime.LiveUpdateFanout
+
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -38,9 +49,9 @@ class BffEventConsumerTest {
         )
 
         val result = consumer.consume(envelope)
-        assertTrue(result is ConsumptionResult.Processed)
+        assertTrue(result is ProcessedConsumptionResult)
 
-        val processed = result as ConsumptionResult.Processed
+        val processed = result as ProcessedConsumptionResult
         assertEquals(groupId.toString(), processed.invalidation.groupId)
         assertEquals(5L, processed.invalidation.revision)
         assertEquals(eventId.toString(), processed.invalidation.changeId)
@@ -68,13 +79,13 @@ class BffEventConsumerTest {
         )
 
         val firstResult = consumer.consume(envelope)
-        assertTrue(firstResult is ConsumptionResult.Processed)
+        assertTrue(firstResult is ProcessedConsumptionResult)
         assertEquals(1, fanout.pendingCount(sub.id))
 
         // Second delivery with identical eventId
         val secondResult = consumer.consume(envelope)
-        assertTrue(secondResult is ConsumptionResult.Duplicate)
-        val duplicate = secondResult as ConsumptionResult.Duplicate
+        assertTrue(secondResult is DuplicateConsumptionResult)
+        val duplicate = secondResult as DuplicateConsumptionResult
         assertEquals(eventId, duplicate.eventId)
 
         // Queue must still have only 1 pending update, not 2
@@ -114,8 +125,8 @@ class BffEventConsumerTest {
 
         val result = consumer.consume(envelope)
 
-        assertTrue(result is ConsumptionResult.Processed)
-        assertEquals(1, (result as ConsumptionResult.Processed).deliveredQueues)
+        assertTrue(result is ProcessedConsumptionResult)
+        assertEquals(1, (result as ProcessedConsumptionResult).deliveredQueues)
         assertEquals(null, fanout.poll(removed.id))
         assertEquals(groupId.toString(), fanout.poll(retained.id)?.groupId)
     }

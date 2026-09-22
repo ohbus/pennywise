@@ -9,6 +9,7 @@ import unittest
 from pathlib import Path
 from urllib.parse import urlparse
 import sys
+from tests.http_constants import ACCEPTANCE_FAULT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, GRAPHQL_PATH
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 try:
@@ -27,22 +28,22 @@ class MockServicesHandler(http.server.BaseHTTPRequestHandler):
     renames = 0
 
     def do_PATCH(self) -> None:
-        if self.headers.get("Authorization") != "Bearer test-user":
+        if self.headers.get(AUTHORIZATION) != "Bearer test-user":
             self.send_response(401)
-            self.send_header("Content-Type", "application/json")
+            self.send_header(CONTENT_TYPE, "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({"code": "UNAUTHENTICATED"}).encode("utf-8"))
             return
-        if self.headers.get("X-Acceptance-Fault") == "rollback":
+        if self.headers.get(ACCEPTANCE_FAULT) == "rollback":
             self.send_response(409)
-            self.send_header("Content-Type", "application/json")
+            self.send_header(CONTENT_TYPE, "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({"code": "TEST_ROLLBACK"}).encode("utf-8"))
             return
         MockServicesHandler.renames += 1
         status = 409 if MockServicesHandler.renames > 1 else 200
         self.send_response(status)
-        self.send_header("Content-Type", "application/json")
+        self.send_header(CONTENT_TYPE, "application/json")
         self.end_headers()
         self.wfile.write(json.dumps({"revision": 1}).encode("utf-8"))
 
@@ -51,28 +52,28 @@ class MockServicesHandler(http.server.BaseHTTPRequestHandler):
         path = parsed.path
 
         if path.endswith("/members"):
-            if self.headers.get("Authorization") != "Bearer test-user":
+            if self.headers.get(AUTHORIZATION) != "Bearer test-user":
                 self.send_response(401)
-                self.send_header("Content-Type", "application/json")
+                self.send_header(CONTENT_TYPE, "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"code": "UNAUTHENTICATED"}).encode("utf-8"))
                 return
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
+            self.send_header(CONTENT_TYPE, "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({"members": []}).encode("utf-8"))
             return
 
         if path == "/actuator/health":
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
+            self.send_header(CONTENT_TYPE, "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({"status": "UP"}).encode("utf-8"))
             return
 
         if path.endswith("/balances"):
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
+            self.send_header(CONTENT_TYPE, "application/json")
             self.end_headers()
             self.wfile.write(
                 json.dumps(
@@ -91,7 +92,7 @@ class MockServicesHandler(http.server.BaseHTTPRequestHandler):
 
         if path.endswith("/sync/snapshot") or path.endswith("/sync/changes"):
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
+            self.send_header(CONTENT_TYPE, "application/json")
             self.end_headers()
             self.wfile.write(
                 json.dumps(
@@ -113,7 +114,7 @@ class MockServicesHandler(http.server.BaseHTTPRequestHandler):
 
         if path == "/expense-core/v1/groups":
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
+            self.send_header(CONTENT_TYPE, "application/json")
             self.end_headers()
             self.wfile.write(json.dumps([{"groupId": "00000000-0000-0000-0000-000000000001"}]).encode("utf-8"))
             return
@@ -124,12 +125,12 @@ class MockServicesHandler(http.server.BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         path = parsed.path
-        length = int(self.headers.get("Content-Length", 0))
+        length = int(self.headers.get(CONTENT_LENGTH, 0))
         body = self.rfile.read(length).decode("utf-8") if length > 0 else "{}"
 
         if path == "/expense-core/v1/groups":
             self.send_response(201)
-            self.send_header("Content-Type", "application/json")
+            self.send_header(CONTENT_TYPE, "application/json")
             self.end_headers()
             self.wfile.write(
                 json.dumps(
@@ -144,7 +145,7 @@ class MockServicesHandler(http.server.BaseHTTPRequestHandler):
 
         if "/expenses" in path:
             self.send_response(201)
-            self.send_header("Content-Type", "application/json")
+            self.send_header(CONTENT_TYPE, "application/json")
             self.end_headers()
             self.wfile.write(
                 json.dumps(
@@ -159,7 +160,7 @@ class MockServicesHandler(http.server.BaseHTTPRequestHandler):
 
         if "/settlements" in path:
             self.send_response(201)
-            self.send_header("Content-Type", "application/json")
+            self.send_header(CONTENT_TYPE, "application/json")
             self.end_headers()
             self.wfile.write(
                 json.dumps(
@@ -171,9 +172,9 @@ class MockServicesHandler(http.server.BaseHTTPRequestHandler):
             )
             return
 
-        if path == "/graphql":
+        if path == GRAPHQL_PATH:
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
+            self.send_header(CONTENT_TYPE, "application/json")
             self.end_headers()
             parsed_body = json.loads(body) if body else {}
             query = parsed_body.get("query", "")

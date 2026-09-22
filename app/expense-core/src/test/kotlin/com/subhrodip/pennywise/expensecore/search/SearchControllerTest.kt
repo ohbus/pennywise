@@ -1,13 +1,19 @@
 package com.subhrodip.pennywise.expensecore.search
 
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
+import com.subhrodip.pennywise.expensecore.search.api.SearchController
+import com.subhrodip.pennywise.expensecore.search.api.SearchQuery
+import com.subhrodip.pennywise.expensecore.search.model.SearchExpense
+import com.subhrodip.pennywise.expensecore.search.persistence.InMemorySearchStore
+import com.subhrodip.pennywise.expensecore.search.persistence.SearchStore
+import com.subhrodip.pennywise.expensecore.groups.api.CreateGroupRequest
+import com.subhrodip.pennywise.expensecore.groups.persistence.store.InMemoryGroupStore
+
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
 import com.subhrodip.pennywise.db.routing.DbContextHolder
 import com.subhrodip.pennywise.db.routing.DbOperationKind
 import com.subhrodip.pennywise.db.routing.ReadConsistency
 import com.subhrodip.pennywise.expensecore.categories.ExpenseCategory
-import com.subhrodip.pennywise.expensecore.groups.CreateGroupRequest
-import com.subhrodip.pennywise.expensecore.groups.InMemoryGroupStore
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -20,7 +26,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.security.Principal
-import java.util.UUID
 
 /**
  * Unit and standalone integration tests for [SearchController].
@@ -181,7 +186,7 @@ class SearchControllerTest {
         val response = mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupExport(group.groupId)).with(alice))
             .andExpect(status().isOk)
             .andExpect(header().string("Content-Disposition", "attachment; filename=\"expenses-" + group.groupId + ".csv\""))
-            .andExpect(content().contentType("text/csv; charset=UTF-8"))
+            .andExpect(content().contentType(ApiEndpoints.Headers.TEXT_CSV_UTF8))
             .andReturn().response.contentAsString
 
         // Formula injection neutralized with leading quote
@@ -228,7 +233,7 @@ class SearchControllerTest {
         mvc.perform(
             get(ApiEndpoints.ExpenseCore.V1.groupExport(group.groupId))
                 .with(alice)
-                .header("Accept", "application/json")
+                .header(ApiEndpoints.Headers.ACCEPT, ApiEndpoints.Headers.APPLICATION_JSON)
         )
             .andExpect(status().isNotAcceptable)
     }

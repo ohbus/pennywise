@@ -2,8 +2,8 @@ package com.subhrodip.pennywise.accounts.auth.session
 
 import com.subhrodip.pennywise.accounts.auth.credential.CredentialDigest
 import com.subhrodip.pennywise.accounts.auth.provider.IdentityProviderPort
-import com.subhrodip.pennywise.errors.ApplicationException
-import com.subhrodip.pennywise.errors.ErrorCode
+import com.subhrodip.pennywise.errors.domain.ApplicationException
+import com.subhrodip.pennywise.errors.domain.ErrorCode
 import java.security.SecureRandom
 import java.time.Duration
 import java.time.Instant

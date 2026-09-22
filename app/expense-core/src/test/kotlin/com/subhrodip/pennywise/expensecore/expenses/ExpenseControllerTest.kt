@@ -1,11 +1,13 @@
 package com.subhrodip.pennywise.expensecore.expenses
+import com.subhrodip.pennywise.expensecore.expenses.api.ExpenseController
+import com.subhrodip.pennywise.expensecore.expenses.persistence.store.InMemoryExpenseStore
+import com.subhrodip.pennywise.expensecore.groups.domain.GroupEntity
+import com.subhrodip.pennywise.expensecore.groups.persistence.repository.GroupMembershipRepository
+import com.subhrodip.pennywise.expensecore.groups.persistence.repository.GroupRepository
 
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
 import java.util.UUID
 import java.security.Principal
-import com.subhrodip.pennywise.expensecore.groups.GroupMembershipRepository
-import com.subhrodip.pennywise.expensecore.groups.GroupRepository
-import com.subhrodip.pennywise.expensecore.groups.GroupEntity
 import java.util.Optional
 import java.lang.reflect.Proxy
 import org.mockito.Mockito.`when`
@@ -25,7 +27,7 @@ import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder
 import jakarta.servlet.Filter
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletRequestWrapper
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 
 class ExpenseControllerTest {
     private val store = InMemoryExpenseStore()
@@ -60,15 +62,15 @@ class ExpenseControllerTest {
 
     @Test
     fun `rejects missing and blank authenticated subjects before membership lookup`() {
-        val missing = assertThrows<com.subhrodip.pennywise.errors.ApplicationException> {
+        val missing = assertThrows<com.subhrodip.pennywise.errors.domain.ApplicationException> {
             controller.getBalances(UUID.randomUUID(), null)
         }
-        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_03, missing.errorCode)
+        assertEquals(com.subhrodip.pennywise.errors.domain.ErrorCode.ERR_03, missing.errorCode)
 
-        val blank = assertThrows<com.subhrodip.pennywise.errors.ApplicationException> {
+        val blank = assertThrows<com.subhrodip.pennywise.errors.domain.ApplicationException> {
             controller.getBalances(UUID.randomUUID(), Principal { "   " })
         }
-        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_03, blank.errorCode)
+        assertEquals(com.subhrodip.pennywise.errors.domain.ErrorCode.ERR_03, blank.errorCode)
     }
 
     @Test

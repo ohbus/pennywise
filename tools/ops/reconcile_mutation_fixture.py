@@ -16,6 +16,7 @@ import sys
 import urllib.error
 import urllib.request
 from typing import Any
+from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE, IDEMPOTENCY_KEY
 
 
 def request_json(
@@ -25,12 +26,12 @@ def request_json(
     headers: dict[str, str] | None = None,
     timeout: float = 5.0,
 ) -> tuple[int, Any]:
-    req_headers = {"Accept": "application/json"}
+    req_headers = {ACCEPT: APPLICATION_JSON}
     if headers:
         req_headers.update(headers)
     data = None
     if body is not None:
-        req_headers["Content-Type"] = "application/json"
+        req_headers[CONTENT_TYPE] = APPLICATION_JSON
         data = json.dumps(body).encode("utf-8")
 
     req = urllib.request.Request(url, data=data, headers=req_headers, method=method)
@@ -54,7 +55,7 @@ def reconcile_group(
     token: str = "test-user",
     participant_id: str = "00000000-0000-7000-8000-000000000001",
 ) -> dict[str, Any]:
-    auth_headers = {"Authorization": f"Bearer {token}"}
+    auth_headers = {AUTHORIZATION: f"{BEARER_PREFIX}{token}"}
 
     # 1. Fetch group details
     group_url = f"{base_url}/expense-core/v1/groups/{group_id}"
@@ -123,7 +124,7 @@ def reconcile_group(
     # First replay attempt with identical Idempotency-Key and payload
     replay_headers = {
         **auth_headers,
-        "Idempotency-Key": expense_id,
+        IDEMPOTENCY_KEY: expense_id,
     }
     replay_url = f"{base_url}/expense-core/v1/groups/{group_id}/expenses"
     status, replay_resp = request_json(replay_url, method="POST", body=replay_payload, headers=replay_headers)
@@ -171,7 +172,7 @@ def main() -> int:
 
     group_id = args.group_id
     if not group_id:
-        status, groups = request_json(f"{args.base_url}/expense-core/v1/groups", headers={"Authorization": f"Bearer {args.token}"})
+        status, groups = request_json(f"{args.base_url}/expense-core/v1/groups", headers={AUTHORIZATION: f"{BEARER_PREFIX}{args.token}"})
         if status != 200 or not isinstance(groups, list) or not groups:
             print("ERROR: could not find any groups in Expense Core", file=sys.stderr)
             return 1

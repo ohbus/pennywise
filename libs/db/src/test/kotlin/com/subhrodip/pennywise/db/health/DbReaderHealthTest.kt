@@ -13,14 +13,14 @@ class DbReaderHealthTest {
     private val strongQuery = query.copy(consistency = ReadConsistency.STRONG)
 
     @Test
-    fun `opens circuit and bounds eventual fallback after repeated failures`() {
+    fun `fails closed after repeated reader failures`() {
         val health = DbReaderHealth(failureThreshold = 2, openDuration = Duration.ofSeconds(10))
         health.register("search")
         health.markFailure("search")
-        assertEquals(DbReaderDecision.BoundedWriterFallback, health.route(query, "search"))
+        assertEquals(DbReaderDecision.Fail, health.route(query, "search"))
         health.markFailure("search")
         assertEquals(DbReaderState.OPEN, health.state("search"))
-        assertEquals(DbReaderDecision.BoundedWriterFallback, health.route(query, "search"))
+        assertEquals(DbReaderDecision.Fail, health.route(query, "search"))
         assertEquals(DbReaderDecision.Writer, health.route(strongQuery, "search"))
     }
 
@@ -38,7 +38,7 @@ class DbReaderHealthTest {
         val health = DbReaderHealth()
         health.markHealthy("search", DbWatermark.parse("0/10"))
         val causal = query.copy(requiredWatermark = "0/20")
-        assertEquals(DbReaderDecision.BoundedWriterFallback, health.route(causal, "search"))
+        assertEquals(DbReaderDecision.Fail, health.route(causal, "search"))
         health.markHealthy("search", DbWatermark.parse("0/20"))
         assertEquals(DbReaderDecision.Reader, health.route(causal, "search"))
     }

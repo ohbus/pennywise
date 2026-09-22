@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional
 /** Application service for atomic passwordless login request throttling. */
 open class LoginRateLimitService(
     private val keyDeriver: LoginRateLimitKeyDeriver,
-    private val repository: RateLimitBucketRepository,
+    private val repository: RateLimitBucketStore,
     private val window: Duration = Duration.ofMinutes(15),
     private val maximumRequests: Int = 5,
     private val resendCooldown: Duration = Duration.ofSeconds(60)

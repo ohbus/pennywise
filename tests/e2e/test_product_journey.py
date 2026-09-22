@@ -24,6 +24,7 @@ import urllib.error
 import urllib.request
 import uuid
 from typing import Any, Tuple
+from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE
 
 BASE_URL = os.environ.get("PENNYWISE_BFF_URL", "http://localhost:8080")
 ACCOUNTS_URL = os.environ.get("PENNYWISE_ACCOUNTS_URL", "http://localhost:8081")
@@ -40,11 +41,11 @@ def request_json(
     timeout: float = 10.0,
 ) -> Tuple[int, Any]:
     headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
+        ACCEPT: APPLICATION_JSON,
+        CONTENT_TYPE: APPLICATION_JSON,
     }
     if bearer:
-        headers["Authorization"] = f"Bearer {bearer}"
+        headers[AUTHORIZATION] = f"{BEARER_PREFIX}{bearer}"
     if extra_headers:
         headers.update(extra_headers)
 

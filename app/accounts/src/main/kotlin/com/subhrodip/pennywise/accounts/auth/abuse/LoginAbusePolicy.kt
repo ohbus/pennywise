@@ -36,13 +36,3 @@ class LoginAbusePolicy(
         return LoginRateLimitDecision.ALLOW
     }
 }
-
-/** State atomically stored per canonical email/network abuse key. */
-data class LoginRateLimitState(
-    val windowStartedAt: Instant,
-    val requestCount: Int,
-    val lastRequestedAt: Instant?
-)
-
-/** Generic rate-limit result that does not encode account existence. */
-enum class LoginRateLimitDecision { ALLOW, DENY }

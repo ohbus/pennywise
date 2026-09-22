@@ -1,5 +1,7 @@
 package com.subhrodip.pennywise.expensecore.search
 
+import com.subhrodip.pennywise.expensecore.search.model.ExpenseSearch
+import com.subhrodip.pennywise.expensecore.search.model.SearchExpense
 import com.subhrodip.pennywise.expensecore.categories.ExpenseCategory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -33,10 +35,10 @@ class ExpenseSearchTest {
     @Test
     fun `rejects malformed cursors instead of silently changing the page`() {
         val search = ExpenseSearch()
-        val error = assertThrows(com.subhrodip.pennywise.errors.ApplicationException::class.java) {
+        val error = assertThrows(com.subhrodip.pennywise.errors.domain.ApplicationException::class.java) {
             search.page(listOf(SearchExpense("1", "Dinner", "EUR", "100")), cursor = "%%%invalid%%%")
         }
-        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_02, error.errorCode)
+        assertEquals(com.subhrodip.pennywise.errors.domain.ErrorCode.ERR_02, error.errorCode)
     }
 
     @Test
@@ -62,7 +64,7 @@ class ExpenseSearchTest {
 
     @Test
     fun `rejects unknown category`() {
-        val err = assertThrows(com.subhrodip.pennywise.errors.ApplicationException::class.java) { ExpenseCategory.fromKey("travel") }
-        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_02, err.errorCode)
+        val err = assertThrows(com.subhrodip.pennywise.errors.domain.ApplicationException::class.java) { ExpenseCategory.fromKey("travel") }
+        assertEquals(com.subhrodip.pennywise.errors.domain.ErrorCode.ERR_02, err.errorCode)
     }
 }

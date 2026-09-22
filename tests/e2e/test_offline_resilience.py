@@ -23,6 +23,7 @@ import urllib.error
 import urllib.request
 import uuid
 from typing import Any, Tuple
+from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE, IDEMPOTENCY_KEY
 
 BASE_URL = os.environ.get("PENNYWISE_BFF_URL", "http://localhost:8080")
 EXPENSE_CORE_URL = os.environ.get("PENNYWISE_EXPENSE_CORE_URL", "http://localhost:8082")
@@ -38,11 +39,11 @@ def request_json(
     timeout: float = 10.0,
 ) -> Tuple[int, Any]:
     headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
+        ACCEPT: APPLICATION_JSON,
+        CONTENT_TYPE: APPLICATION_JSON,
     }
     if bearer:
-        headers["Authorization"] = f"Bearer {bearer}"
+        headers[AUTHORIZATION] = f"{BEARER_PREFIX}{bearer}"
     if extra_headers:
         headers.update(extra_headers)
 
@@ -240,7 +241,7 @@ def run_offline_resilience_tests() -> int:
             "allocation": conflicting_payload["allocation"],
         },
         bearer=user_a,
-        extra_headers={"Idempotency-Key": conflicting_key}
+        extra_headers={IDEMPOTENCY_KEY: conflicting_key}
     )
     assert status_conflict == 409, f"Expected HTTP 409 Conflict, got {status_conflict}: {conflict_data}"
     assert conflict_data.get("code") in ("CONFLICT", "IDEMPOTENCY_CONFLICT", "ERR-06", "ERR_06"), f"Expected conflict error code, got: {conflict_data}"
@@ -275,7 +276,7 @@ def run_offline_resilience_tests() -> int:
             }
         },
         bearer=user_b,
-        extra_headers={"Idempotency-Key": f"idemp-bob-{uuid.uuid4()}"}
+        extra_headers={IDEMPOTENCY_KEY: f"idemp-bob-{uuid.uuid4()}"}
     )
     assert status_bob == 201, f"Failed to post Bob's expense: {bob_res}"
     print(f"  ✓ Bob recorded 'Campfire Firewood' (12.00 EUR) during offline gap")

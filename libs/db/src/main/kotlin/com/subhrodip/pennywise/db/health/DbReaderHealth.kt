@@ -9,9 +9,6 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-/** Lifecycle states used to keep an unhealthy reader out of query routing. */
-enum class DbReaderState { HEALTHY, LAGGING, OPEN, DISCONNECTED }
-
 /** A bounded, in-memory health policy for one named reader pool. */
 class DbReaderHealth(
     private val failureThreshold: Int = 3,
@@ -53,7 +50,7 @@ class DbReaderHealth(
         }
     }
 
-    /** Records replay lag without opening the circuit; callers can still choose writer fallback. */
+    /** Records replay lag without opening the circuit; affected reads fail closed until caught up. */
     fun markLagging(readerName: String) {
         val entry = readers.computeIfAbsent(readerName) { Entry() }
         synchronized(entry) { if (entry.state != DbReaderState.OPEN) entry.state = DbReaderState.LAGGING }
@@ -99,19 +96,11 @@ class DbReaderHealth(
         val required = context.requiredDbWatermark()
         val replayed = readers[readerName]?.replayedWatermark
         if (required != null && (replayed == null || replayed < required)) {
-            return if (context.consistency == ReadConsistency.EVENTUAL || context.consistency == ReadConsistency.BOUNDED_STALENESS) {
-                DbReaderDecision.BoundedWriterFallback
-            } else {
-                DbReaderDecision.Writer
-            }
+            return DbReaderDecision.Fail
         }
         return when (state(readerName)) {
             DbReaderState.HEALTHY -> DbReaderDecision.Reader
-            DbReaderState.LAGGING, DbReaderState.OPEN, DbReaderState.DISCONNECTED ->
-                if (context.consistency == ReadConsistency.EVENTUAL) DbReaderDecision.BoundedWriterFallback else DbReaderDecision.Fail
+            DbReaderState.LAGGING, DbReaderState.OPEN, DbReaderState.DISCONNECTED -> DbReaderDecision.Fail
         }
     }
 }
-
-/** Result of applying reader health to a query route. */
-enum class DbReaderDecision { Reader, BoundedWriterFallback, Writer, Fail }

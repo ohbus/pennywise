@@ -1,7 +1,9 @@
 package com.subhrodip.pennywise.expensecore.settlements
+import com.subhrodip.pennywise.expensecore.settlements.domain.Settlement
+import com.subhrodip.pennywise.expensecore.settlements.persistence.JpaSettlementStore
+import com.subhrodip.pennywise.expensecore.groups.domain.GroupEntity
+import com.subhrodip.pennywise.expensecore.groups.persistence.repository.GroupRepository
 
-import com.subhrodip.pennywise.expensecore.groups.GroupEntity
-import com.subhrodip.pennywise.expensecore.groups.GroupRepository
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

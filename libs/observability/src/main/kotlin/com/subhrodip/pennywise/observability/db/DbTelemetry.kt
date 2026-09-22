@@ -11,7 +11,6 @@ class DbTelemetry(
     private val slowQueryThresholdMs: Long = 500
 ) {
     init { require(slowQueryThresholdMs >= 1) { "slowQueryThresholdMs must be positive" } }
-    private val fallbackCount = AtomicLong()
     private val failureCount = AtomicLong()
     private val acquisitionCount = AtomicLong()
     private val acquisitionTotalMs = AtomicLong()
@@ -24,12 +23,6 @@ class DbTelemetry(
     /** Records a connection route for a validated operation name. */
     fun route(operation: String, route: String) {
         registry?.counter("pennywise.db.route", Tags.of("operation", operation, "route", route))?.increment()
-    }
-
-    /** Records a bounded writer fallback from a reader query. */
-    fun fallback(operation: String) {
-        fallbackCount.incrementAndGet()
-        registry?.counter("pennywise.db.fallback", "operation", operation)?.increment()
     }
 
     /** Records a reader connection/probe failure. */
@@ -88,7 +81,6 @@ class DbTelemetry(
 
     /** Snapshot counters useful to tests and diagnostic endpoints. */
     fun snapshot(): DbTelemetrySnapshot = DbTelemetrySnapshot(
-        fallbacks = fallbackCount.get(),
         failures = failureCount.get(),
         acquisitions = acquisitionCount.get(),
         acquisitionTotalMs = acquisitionTotalMs.get(),
@@ -99,16 +91,3 @@ class DbTelemetry(
         slowQueries = slowQueryCount.get()
     )
 }
-
-/** In-process counters retained even when no metrics registry is configured. */
-data class DbTelemetrySnapshot(
-    val fallbacks: Long,
-    val failures: Long,
-    val acquisitions: Long = 0,
-    val acquisitionTotalMs: Long = 0,
-    val lockWaits: Long = 0,
-    val deadlocks: Long = 0,
-    val queries: Long = 0,
-    val queryTotalMs: Long = 0,
-    val slowQueries: Long = 0
-)

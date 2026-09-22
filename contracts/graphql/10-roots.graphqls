@@ -1,0 +1,21 @@
+type Query {
+  me: Profile!
+  groups: [Group!]!
+  group(id: ID!): Group
+  settlementSuggestions(groupId: ID!): [SuggestedSettlement!]!
+}
+
+type Mutation {
+  createGroup(input: CreateGroupInput!): Group!
+  updateGroup(groupId: ID!, name: String!): Group!
+  createExpense(
+    groupId: ID!
+    input: CreateExpenseInput!
+    idempotencyKey: String!
+  ): Expense!
+  recordRepayment(input: RepaymentInput!): Settlement!
+}
+
+type Subscription {
+  groupChanged(groupId: ID!): GroupInvalidation!
+}

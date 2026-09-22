@@ -49,12 +49,7 @@ class DbRoutingDataSource(
         } catch (failure: SQLException) {
             readerHealth.markFailure(readerName)
             telemetry.failure(readerName)
-            if (readerHealth.route(DbContextHolder.current(), readerName) == DbReaderDecision.BoundedWriterFallback) {
-                telemetry.fallback(DbContextHolder.current().operationName)
-                writer.connection
-            } else {
-                throw failure
-            }
+            throw failure
         }
     }
 
@@ -63,7 +58,7 @@ class DbRoutingDataSource(
 
     private fun routeForCurrentContext(): DbRoute = when (readerHealth.route(DbContextHolder.current(), readers.keys.firstOrNull() ?: "")) {
         DbReaderDecision.Reader -> DbRoute.READER
-        DbReaderDecision.Writer, DbReaderDecision.BoundedWriterFallback -> DbRoute.WRITER
+        DbReaderDecision.Writer -> DbRoute.WRITER
         DbReaderDecision.Fail -> throw SQLException("No healthy reader is available for query '${DbContextHolder.current().operationName}'")
     }
 }

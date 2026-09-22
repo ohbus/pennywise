@@ -32,6 +32,22 @@ jobs:
           docker compose -f infra/local/docker-compose.yml config --quiet
           docker compose -f infra/local/docker-compose.dev.yml config --quiet
 
+  dependency-review:
+    name: Dependency vulnerability review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Review introduced dependencies
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
   lint:
     name: Lightweight lint and repository checks
     runs-on: ubuntu-slim
@@ -40,13 +56,31 @@ jobs:
         with: { persist-credentials: false }
       - name: Set up isolated Python tooling
         uses: astral-sh/setup-uv@v6
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: microsoft
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: gradle
+      - uses: gradle/actions/setup-gradle@v4
       - name: Check formatting and contracts
         run: |
           git diff --check
           python3 tools/contracts/validate.py
           python3 tools/contracts/validate_public_surface.py
+          python3 tools/ops/check_security_hygiene.py
+          python3 tools/ops/check_architecture.py
+          python3 tools/ops/validate_sbom_baseline.py
+          ./gradlew cyclonedxBom --no-daemon
           python3 -m unittest discover -s tests/acceptance
           make workflow-validate
+      - name: Upload CycloneDX SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: pennywise-sbom
+          path: '**/build/reports/cyclonedx/*.json'
+          if-no-files-found: error
+          retention-days: 14
       - name: Run Python type checker
         run: uvx --from mypy==1.17.1 mypy --config-file mypy.ini tests tools
 

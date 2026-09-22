@@ -7,3 +7,7 @@ services:
     extends:
       file: docker-compose.yml
       service: rabbitmq
+  idp-keycloak:
+    extends:
+      file: docker-compose.yml
+      service: idp-keycloak

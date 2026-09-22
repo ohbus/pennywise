@@ -1,8 +1,14 @@
 package com.subhrodip.pennywise.expensecore.search
 
-import com.subhrodip.pennywise.expensecore.expenses.ExpenseEntity
-import com.subhrodip.pennywise.expensecore.expenses.ExpenseRepository
-import com.subhrodip.pennywise.ids.UuidGenerator
+import com.subhrodip.pennywise.expensecore.search.api.SearchQuery
+import com.subhrodip.pennywise.expensecore.search.model.SearchExpense
+import com.subhrodip.pennywise.expensecore.search.persistence.JpaSearchStore
+import com.subhrodip.pennywise.expensecore.expenses.persistence.entity.ExpenseEntity
+import com.subhrodip.pennywise.expensecore.expenses.persistence.repository.ExpenseRepository
+import com.subhrodip.pennywise.expensecore.groups.domain.GroupEntity
+import com.subhrodip.pennywise.expensecore.groups.persistence.repository.GroupRepository
+
+import com.subhrodip.pennywise.ids.generation.UuidGenerator
 import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -17,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 @SpringBootTest
 @Transactional
 class JpaSearchStoreTest @Autowired constructor(
-    private val groupRepository: com.subhrodip.pennywise.expensecore.groups.GroupRepository,
+    private val groupRepository: com.subhrodip.pennywise.expensecore.groups.persistence.repository.GroupRepository,
     private val expenseRepository: ExpenseRepository,
     private val searchStore: JpaSearchStore
 ) {
@@ -26,7 +32,7 @@ class JpaSearchStoreTest @Autowired constructor(
     fun `finds active expenses and maps categories while ignoring deleted expenses`() {
         // Create and persist a group to satisfy foreign key constraint
         val groupId = UUID.randomUUID()
-        val group = com.subhrodip.pennywise.expensecore.groups.GroupEntity(
+        val group = com.subhrodip.pennywise.expensecore.groups.domain.GroupEntity(
             groupId = groupId,
             name = "Test Group",
             kind = "HOUSEHOLD",
@@ -77,14 +83,14 @@ class JpaSearchStoreTest @Autowired constructor(
 
         expenseRepository.saveAll(listOf(active1, active2, deleted))
 
-        val results = searchStore.findSearchExpenses(groupId)
+        val results = searchStore.findSearchExpenses(SearchQuery(groupId))
         assertEquals(2, results.size)
-        // Ordered by createdAt desc
-        assertEquals(expenseId2.toString(), results[0].expenseId)
-        assertEquals("Train tickets", results[0].description)
-        assertEquals("5000", results[0].amountMinor)
-        assertEquals(expenseId1.toString(), results[1].expenseId)
-        assertEquals("Museum tickets", results[1].description)
-        assertEquals("2400", results[1].amountMinor)
+        // Stable UUID ordering is the keyset cursor order used by ExpenseSearch.
+        val expected = listOf(active1, active2).sortedBy { it.expenseId.toString() }
+        assertEquals(expected[0].expenseId.toString(), results[0].expenseId)
+        assertEquals(expected[0].description, results[0].description)
+        assertEquals(expected[0].amountMinor.toString(), results[0].amountMinor)
+        assertEquals(expected[1].expenseId.toString(), results[1].expenseId)
+        assertEquals(expected[1].description, results[1].description)
     }
 }

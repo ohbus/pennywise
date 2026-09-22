@@ -1,7 +1,10 @@
 package com.subhrodip.pennywise.expensecore.recurring
-
-import com.subhrodip.pennywise.expensecore.groups.CreateGroupRequest
-import com.subhrodip.pennywise.expensecore.groups.JpaGroupStore
+import com.subhrodip.pennywise.expensecore.groups.api.CreateGroupRequest
+import com.subhrodip.pennywise.expensecore.groups.persistence.store.JpaGroupStore
+import com.subhrodip.pennywise.expensecore.recurring.api.CreateRecurringScheduleRequest
+import com.subhrodip.pennywise.expensecore.recurring.domain.RecurrenceFrequency
+import com.subhrodip.pennywise.expensecore.recurring.service.RecurringExpenseService
+import com.subhrodip.pennywise.expensecore.recurring.service.RecurringExpenseWorker
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

@@ -68,11 +68,12 @@ def graphql_fields(schema: str) -> dict[str, set[str]]:
 
 def validate_graphql(errors: list[str]) -> int:
     """Ensure every declared root field has exactly one annotated BFF resolver."""
-    schema_path = Path("contracts/graphql/schema.graphqls")
+    schema_files = sorted(Path("contracts/graphql").glob("*.graphqls"))
     sources = "\n".join(
         path.read_text(encoding="utf-8") for path in Path("app/bff/src/main/kotlin").rglob("*.kt")
     )
-    declared = graphql_fields(schema_path.read_text(encoding="utf-8"))
+    schema = "\n".join(path.read_text(encoding="utf-8") for path in schema_files)
+    declared = graphql_fields(schema)
     implemented: dict[str, list[str]] = {root: [] for root in GRAPHQL_ROOTS}
     for root, function in GRAPHQL_RESOLVER.findall(sources):
         implemented[root].append(function)

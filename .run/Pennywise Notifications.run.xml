@@ -5,7 +5,7 @@
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="VM_PARAMETERS" value="-Dspring.profiles.active=local" />
     <envs>
-      <env name="SPRING_PROFILES_ACTIVE" value="local" />
+      <env name="SPRING_PROFILES_ACTIVE" value="local-oidc" />
       <env name="SERVER_PORT" value="8083" />
       <env name="SPRING_DATASOURCE_URL" value="jdbc:postgresql://localhost:5432/pennywise_notifications" />
       <env name="SPRING_DATASOURCE_USERNAME" value="pennywise" />
@@ -16,6 +16,13 @@
       <env name="SPRING_RABBITMQ_PASSWORD" value="pennywise-local-only" />
       <env name="PENNYWISE_NOTIFICATIONS_EMAIL_HOST" value="localhost" />
       <env name="PENNYWISE_NOTIFICATIONS_EMAIL_PORT" value="1025" />
+      <env name="PENNYWISE_NOTIFICATIONS_EMAIL_FROM_ADDRESS" value="notifications@pennywise.local" />
+      <env name="PENNYWISE_NOTIFICATIONS_EMAIL_ENABLED" value="true" />
+      <env name="PENNYWISE_SECURITY_OIDC_ISSUER_URI" value="http://localhost:8090/realms/pennywise" />
+      <env name="PENNYWISE_SECURITY_OIDC_AUDIENCE" value="pennywise-api" />
+      <env name="PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY" value="ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=" />
+      <env name="PENNYWISE_REDIS_HOST" value="localhost" />
+      <env name="PENNYWISE_REDIS_PASSWORD" value="pennywise-redis-local-only" />
     </envs>
     <method v="2"><option name="Make" enabled="true" /></method>
   </configuration>

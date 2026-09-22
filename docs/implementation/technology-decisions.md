@@ -16,7 +16,12 @@ reduces mapping code while retaining transactions, optimistic `@Version`
 checks, and fetch planning. Use native SQL only for group-revision locking,
 outbox/job claiming and measured specialized queries. Flyway owns migrations;
 Hibernate validates. Disable Open Session in View, keep entities private, and
-return DTOs. The BFF has no database.
+return DTOs. The BFF has no database. Read/write separation is CQRS-oriented,
+not event-sourced: commands and consistency-critical reads use the writer;
+explicit query ports may use named read pools only under a documented
+consistency policy. `libs/db` owns routing, pool budgets, route guards, health,
+and database telemetry; it does not own business entities, repositories, or
+migrations. See `docs/implementation/cqrs-data-access-plan.md`.
 
 PostgreSQL is authoritative for money, audit, balances, synchronization and
 outbox records. Each service has separate credentials and tables. Databases may
@@ -53,6 +58,9 @@ hardening plan.
 Services enforce membership authorization themselves. Use Actuator,
 Micrometer and OpenTelemetry-compatible tracing; structured logs exclude money
 payloads, invitation secrets and tokens. Docker Compose supports local
-PostgreSQL, RabbitMQ and SMTP capture. Kubernetes, Kafka, Redis, JPA
-second-level caching, multi-region writes and sharding are deferred until
-measured requirements justify them.
+PostgreSQL, RabbitMQ, Redis and SMTP capture. Redis is mandatory for ephemeral
+distributed rate limiting in local, staging and production; it is not a source of
+truth for identity, sessions, audit or financial state. Local single-database
+reader mode is diagnostic only and is not replica evidence. Kubernetes, Kafka, JPA
+second-level caching, multi-region writes and sharding are deferred until measured
+requirements justify them.

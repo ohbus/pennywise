@@ -24,6 +24,7 @@ import urllib.error
 import urllib.request
 import uuid
 from typing import Any, Tuple
+from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE
 
 BASE_URL = os.environ.get("PENNYWISE_BFF_URL", "http://localhost:8080")
 ACCOUNTS_URL = os.environ.get("PENNYWISE_ACCOUNTS_URL", "http://localhost:8081")
@@ -40,11 +41,11 @@ def request_json(
     timeout: float = 10.0,
 ) -> Tuple[int, Any]:
     headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
+        ACCEPT: APPLICATION_JSON,
+        CONTENT_TYPE: APPLICATION_JSON,
     }
     if bearer:
-        headers["Authorization"] = f"Bearer {bearer}"
+        headers[AUTHORIZATION] = f"{BEARER_PREFIX}{bearer}"
     if extra_headers:
         headers.update(extra_headers)
 
@@ -382,6 +383,9 @@ def run_e2e_tests() -> int:
     subjects = [m.get("subject") for m in members]
     assert profile_a["displayName"] in subjects, f"Expected Alice subject in members: {subjects}"
     assert bob_me["displayName"] in subjects, f"Expected Bob subject in members: {subjects}"
+    member_ids = {m["subject"]: m["membershipId"] for m in members}
+    alice_id = member_ids[profile_a["displayName"]]
+    bob_id = member_ids[bob_me["displayName"]]
     print(f"  ✓ Group members verified: {subjects}")
 
     # 5. Add Expense via GraphQL createExpense

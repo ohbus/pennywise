@@ -1,5 +1,7 @@
 package com.subhrodip.pennywise.accounts.auth.provider
 
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
+
 /**
  * Encapsulates the issued token set.
  *
@@ -9,6 +11,6 @@ package com.subhrodip.pennywise.accounts.auth.provider
  */
 data class IssuedToken(
     val accessToken: String,
-    val tokenType: String = "Bearer",
+    val tokenType: String = ApiEndpoints.Headers.BEARER_SCHEME,
     val expiresIn: Long
 )

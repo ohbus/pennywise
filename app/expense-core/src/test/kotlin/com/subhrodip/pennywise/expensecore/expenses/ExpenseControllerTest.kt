@@ -1,11 +1,13 @@
 package com.subhrodip.pennywise.expensecore.expenses
+import com.subhrodip.pennywise.expensecore.expenses.api.ExpenseController
+import com.subhrodip.pennywise.expensecore.expenses.persistence.store.InMemoryExpenseStore
+import com.subhrodip.pennywise.expensecore.groups.domain.GroupEntity
+import com.subhrodip.pennywise.expensecore.groups.persistence.repository.GroupMembershipRepository
+import com.subhrodip.pennywise.expensecore.groups.persistence.repository.GroupRepository
 
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
 import java.util.UUID
 import java.security.Principal
-import com.subhrodip.pennywise.expensecore.groups.GroupMembershipRepository
-import com.subhrodip.pennywise.expensecore.groups.GroupRepository
-import com.subhrodip.pennywise.expensecore.groups.GroupEntity
 import java.util.Optional
 import java.lang.reflect.Proxy
 import org.mockito.Mockito.`when`
@@ -25,7 +27,7 @@ import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder
 import jakarta.servlet.Filter
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletRequestWrapper
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 
 class ExpenseControllerTest {
     private val store = InMemoryExpenseStore()
@@ -60,15 +62,15 @@ class ExpenseControllerTest {
 
     @Test
     fun `rejects missing and blank authenticated subjects before membership lookup`() {
-        val missing = assertThrows<com.subhrodip.pennywise.errors.ApplicationException> {
+        val missing = assertThrows<com.subhrodip.pennywise.errors.domain.ApplicationException> {
             controller.getBalances(UUID.randomUUID(), null)
         }
-        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_03, missing.errorCode)
+        assertEquals(com.subhrodip.pennywise.errors.domain.ErrorCode.ERR_03, missing.errorCode)
 
-        val blank = assertThrows<com.subhrodip.pennywise.errors.ApplicationException> {
+        val blank = assertThrows<com.subhrodip.pennywise.errors.domain.ApplicationException> {
             controller.getBalances(UUID.randomUUID(), Principal { "   " })
         }
-        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_03, blank.errorCode)
+        assertEquals(com.subhrodip.pennywise.errors.domain.ErrorCode.ERR_03, blank.errorCode)
     }
 
     @Test
@@ -483,5 +485,64 @@ class ExpenseControllerTest {
         mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId)).param("limit", "101"))
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+    }
+
+    @Test
+    fun `rejects oversized idempotency key before financial processing`() {
+        val groupId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val json = """
+            {"expenseId":"${UUID.randomUUID()}","description":"bounded",
+             "amount":{"currency":"EUR","minor":"100"},
+             "payers":[{"participantId":"$participantId","amount":{"currency":"EUR","minor":"100"}}],
+             "allocation":{"mode":"EQUAL","items":[{"participantId":"$participantId","value":"1"}]}}
+        """.trimIndent()
+
+        mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "x".repeat(201))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `rejects oversized category before financial processing`() {
+        val groupId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val json = """
+            {"expenseId":"${UUID.randomUUID()}","description":"bounded","category":"${"x".repeat(33)}",
+             "amount":{"currency":"EUR","minor":"100"},
+             "payers":[{"participantId":"$participantId","amount":{"currency":"EUR","minor":"100"}}],
+             "allocation":{"mode":"EQUAL","items":[{"participantId":"$participantId","value":"1"}]}}
+        """.trimIndent()
+
+        mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "bounded-category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `rejects oversized participant collections before financial processing`() {
+        val groupId = UUID.randomUUID()
+        val participantIds = (1..101).map { UUID.randomUUID() }
+        val payers = participantIds.joinToString(",") {
+            "{\"participantId\":\"$it\",\"amount\":{\"currency\":\"EUR\",\"minor\":\"1\"}}"
+        }
+        val json = """
+            {"expenseId":"${UUID.randomUUID()}","description":"bounded",
+             "amount":{"currency":"EUR","minor":"101"},"payers":[$payers],
+             "allocation":{"mode":"EQUAL","items":[{"participantId":"${participantIds.first()}","value":"1"}]}}
+        """.trimIndent()
+
+        mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.groupExpenses(groupId))
+                .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "bounded-participants")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+        ).andExpect(status().isBadRequest)
     }
 }

@@ -2,10 +2,10 @@ package com.subhrodip.pennywise.accounts.auth
 
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialEntity
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialRepository
-import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailOutboxEntity
-import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailOutboxRepository
-import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailOutboxService
-import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailTemplate
+import com.subhrodip.pennywise.accounts.auth.delivery.outbox.AuthEmailOutboxEntity
+import com.subhrodip.pennywise.accounts.auth.delivery.outbox.AuthEmailOutboxRepository
+import com.subhrodip.pennywise.accounts.auth.delivery.service.AuthEmailOutboxService
+import com.subhrodip.pennywise.accounts.auth.delivery.model.AuthEmailTemplate
 import com.subhrodip.pennywise.accounts.auth.session.AuthSessionEntity
 import com.subhrodip.pennywise.accounts.auth.session.AuthSessionRepository
 import java.time.Instant

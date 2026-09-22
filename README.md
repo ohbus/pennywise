@@ -129,7 +129,7 @@ If you prefer running and debugging microservices directly inside IntelliJ IDEA 
      ./gradlew :app:expense-core:bootRun
      ```
    - **Via IntelliJ IDEA**:
-     Checked-in run configurations are available under `.idea/runConfigurations/`:
+     Checked-in run configurations are available under `.run/`:
      - `Pennywise Accounts`
      - `Pennywise Expense Core`
      - `Pennywise Notifications`
@@ -166,7 +166,7 @@ Pennywise enforces a contract-first design. All schema definitions reside under 
   - Accounts OpenAPI: [`contracts/rest/accounts.openapi.json`](contracts/rest/accounts.openapi.json)
   - Expense Core OpenAPI: [`contracts/rest/expense-core.openapi.json`](contracts/rest/expense-core.openapi.json)
   - Notifications OpenAPI: [`contracts/rest/notifications.openapi.json`](contracts/rest/notifications.openapi.json)
-- **GraphQL Schema**: [`contracts/graphql/schema.graphqls`](contracts/graphql/schema.graphqls)
+- **GraphQL Schema**: [`contracts/graphql/`](contracts/graphql/) — split SDL files for scalars, roots, domain types, and inputs
 - **Event Mesh Envelopes**: [`contracts/events/envelope.schema.json`](contracts/events/envelope.schema.json)
 - **RFC 9457 Problem Details**: [`contracts/errors/problem.schema.json`](contracts/errors/problem.schema.json)
 - **Central Constants**: All endpoints and headers are centralized in `com.subhrodip.pennywise.ids.ApiEndpoints`.

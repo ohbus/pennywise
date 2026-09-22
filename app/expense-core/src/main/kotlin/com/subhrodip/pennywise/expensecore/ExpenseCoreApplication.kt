@@ -3,8 +3,8 @@ package com.subhrodip.pennywise.expensecore
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Import
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
-import com.subhrodip.pennywise.errors.RequestIdFilter
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
+import com.subhrodip.pennywise.errors.request.RequestIdFilter
 import com.subhrodip.pennywise.security.OidcConfigurationGuard
 
 @SpringBootApplication
@@ -12,4 +12,7 @@ import com.subhrodip.pennywise.security.OidcConfigurationGuard
 class ExpenseCoreApplication
 
 
-fun main(args: Array<String>) = runApplication<ExpenseCoreApplication>(*args)
+/** Starts the Expense Core Spring Boot application for IDE and command-line launches. */
+fun main(args: Array<String>) {
+    runApplication<ExpenseCoreApplication>(*args)
+}

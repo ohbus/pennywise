@@ -1,11 +1,14 @@
 package com.subhrodip.pennywise.expensecore.settlements
+import com.subhrodip.pennywise.expensecore.settlements.domain.SuggestedSettlement
+import com.subhrodip.pennywise.expensecore.settlements.service.SettlementSuggestionEngine
+import com.subhrodip.pennywise.expensecore.expenses.api.response.GroupBalanceItem
+import com.subhrodip.pennywise.expensecore.expenses.api.request.MoneyDto
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpenseAllocation
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpensePayer
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpenseRecord
+import com.subhrodip.pennywise.expensecore.expenses.persistence.store.ExpenseStore
+import com.subhrodip.pennywise.expensecore.expenses.persistence.store.InMemoryExpenseStore
 
-import com.subhrodip.pennywise.expensecore.expenses.ExpenseAllocation
-import com.subhrodip.pennywise.expensecore.expenses.ExpensePayer
-import com.subhrodip.pennywise.expensecore.expenses.ExpenseRecord
-import com.subhrodip.pennywise.expensecore.expenses.GroupBalanceItem
-import com.subhrodip.pennywise.expensecore.expenses.InMemoryExpenseStore
-import com.subhrodip.pennywise.expensecore.expenses.MoneyDto
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

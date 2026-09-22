@@ -6,6 +6,9 @@ publishes four application images. Verification, checks, and E2E execution live
 in `_reusable-ci.yml`, while container image delivery lives in `ci-master.yml` so
 feature branch and pull request workflows can operate with read-only permissions
 without encountering GitHub Actions reusable workflow permission validation errors.
+The PR and branch callers grant `pull-requests: read` because the reusable
+dependency-review job declares that least-privilege permission; the job remains
+skipped for non-PR events.
 
 The reusable workflow applies Gradle dependency and build caching with
 content-addressed keys and restore fallbacks. E2E uses the same policy, while
@@ -30,6 +33,9 @@ workflow YAML parsing, strict Python typing via `uvx`/mypy, and
 `git diff --check`. Jobs use Microsoft Build of OpenJDK. Local Python tooling
 must use `uv` or `uvx` rather than installing packages into the system
 interpreter.
+The lightweight lint job also installs the same Microsoft JDK 25 and Gradle
+setup before generating the CycloneDX SBOM; every job that invokes Gradle owns
+its toolchain setup explicitly.
 Every test run publishes a readable test summary directly to GitHub Actions job
 summaries (`test-summary/action@v2`) and uploads JUnit XML and HTML reports as
 job artifacts with `if: always()` retention.

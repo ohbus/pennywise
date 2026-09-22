@@ -1,9 +1,22 @@
 package com.subhrodip.pennywise.notifications.consumer
 
-import com.subhrodip.pennywise.notifications.email.EmailDeliveryOutcome
-import com.subhrodip.pennywise.notifications.email.EmailDispatcher
-import com.subhrodip.pennywise.notifications.preferences.NotificationPreferences
-import com.subhrodip.pennywise.notifications.preferences.PreferenceStore
+import com.subhrodip.pennywise.notifications.consumer.model.NotificationConsumptionOutcome
+import com.subhrodip.pennywise.notifications.consumer.model.NotificationEvent
+import com.subhrodip.pennywise.notifications.consumer.persistence.ProcessedNotificationEventRepository
+import com.subhrodip.pennywise.notifications.consumer.service.NotificationConsumer
+import com.subhrodip.pennywise.notifications.consumer.service.NotificationConsumerService
+import com.subhrodip.pennywise.notifications.consumer.service.NotificationEventConsumer
+import com.subhrodip.pennywise.notifications.consumer.service.TransactionalNotificationEventProcessor
+import com.subhrodip.pennywise.notifications.consumer.transport.BrokerEnvelopeParser
+import com.subhrodip.pennywise.notifications.consumer.transport.RabbitNotificationListener
+import com.subhrodip.pennywise.notifications.delivery.rate.TestDeliveryRateLimiter
+import com.subhrodip.pennywise.notifications.preferences.persistence.PreferenceStore
+
+import com.subhrodip.pennywise.notifications.email.delivery.EmailDeliveryOutcome
+import com.subhrodip.pennywise.notifications.email.delivery.EmailDispatcher
+
+import com.subhrodip.pennywise.notifications.delivery.rate.DeliveryRateLimiter
+import com.subhrodip.pennywise.notifications.preferences.model.NotificationPreferences
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -14,6 +27,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
+import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 
@@ -21,8 +35,9 @@ class NotificationConsumerServiceTest {
 
     private lateinit var processor: TransactionalNotificationEventProcessor
     private lateinit var processedEvents: ProcessedNotificationEventRepository
-    private lateinit var preferenceStore: NotificationPreferenceStore
+    private lateinit var preferenceStore: PreferenceStore
     private lateinit var emailDispatcher: EmailDispatcher
+    private lateinit var deliveryRateLimiter: DeliveryRateLimiter
     private lateinit var consumer: NotificationConsumerService
 
     @BeforeEach
@@ -31,28 +46,27 @@ class NotificationConsumerServiceTest {
         processedEvents = mock(ProcessedNotificationEventRepository::class.java)
         preferenceStore = mock(PreferenceStore::class.java)
         emailDispatcher = mock(EmailDispatcher::class.java)
+        deliveryRateLimiter = TestDeliveryRateLimiter(10, Duration.ofMinutes(1))
 
         consumer = NotificationConsumerService(
             processor = processor,
             processedEvents = processedEvents,
             preferenceStore = preferenceStore,
-            emailDispatcher = emailDispatcher
+            emailDispatcher = emailDispatcher,
+            deliveryRateLimiter = deliveryRateLimiter
         )
     }
 
     @Test
-    fun `dispatches email with default pennywise local address when email preferences enabled`() {
+    fun `suppresses delivery when only an unverified subject is available`() {
         val event = sampleEvent(subject = "alice")
         doReturn(NotificationConsumptionOutcome.APPLIED).`when`(processor).process(event)
         doReturn(NotificationPreferences(emailEnabled = true, pushEnabled = true)).`when`(preferenceStore).get("alice")
-        doReturn(EmailDeliveryOutcome.DELIVERED).`when`(emailDispatcher)
-            .send("alice@pennywise.local", "Notification: expense.created", "Dinner was added")
 
         val outcome = consumer.consume(event)
 
         assertEquals(NotificationConsumptionOutcome.APPLIED, outcome)
-        verify(emailDispatcher, times(1))
-            .send("alice@pennywise.local", "Notification: expense.created", "Dinner was added")
+        verify(emailDispatcher, never()).send(anyString(), anyString(), anyString())
     }
 
     @Test
@@ -103,32 +117,43 @@ class NotificationConsumerServiceTest {
     }
 
     @Test
-    fun `dispatches email when recipient preference returns null or store is missing entry`() {
+    fun `suppresses email when recipient preference is missing`() {
         val event = sampleEvent(subject = "charlie")
         doReturn(NotificationConsumptionOutcome.APPLIED).`when`(processor).process(event)
         doReturn(null).`when`(preferenceStore).get("charlie")
-        doReturn(EmailDeliveryOutcome.DELIVERED).`when`(emailDispatcher)
-            .send("charlie@pennywise.local", "Notification: expense.created", "Dinner was added")
-
         val outcome = consumer.consume(event)
 
         assertEquals(NotificationConsumptionOutcome.APPLIED, outcome)
-        verify(emailDispatcher, times(1))
-            .send("charlie@pennywise.local", "Notification: expense.created", "Dinner was added")
+        verify(emailDispatcher, never()).send(anyString(), anyString(), anyString())
     }
 
     @Test
-    fun `dispatches email when preference store throws an exception`() {
+    fun `suppresses email when preference store throws an exception`() {
         val event = sampleEvent(subject = "dave")
         doReturn(NotificationConsumptionOutcome.APPLIED).`when`(processor).process(event)
         doThrow(RuntimeException("Preferences database connection failure")).`when`(preferenceStore).get("dave")
-        doReturn(EmailDeliveryOutcome.DELIVERED).`when`(emailDispatcher)
-            .send("dave@pennywise.local", "Notification: expense.created", "Dinner was added")
-
         val outcome = consumer.consume(event)
         assertEquals(NotificationConsumptionOutcome.APPLIED, outcome)
+        verify(emailDispatcher, never()).send(anyString(), anyString(), anyString())
+    }
+
+    @Test
+    fun `suppresses delivery after the per-recipient rate limit`() {
+        deliveryRateLimiter = TestDeliveryRateLimiter(1, Duration.ofMinutes(1))
+        consumer = NotificationConsumerService(processor, processedEvents, preferenceStore, emailDispatcher, deliveryRateLimiter)
+        val first = sampleEvent(subject = "rate@example.com")
+        val second = sampleEvent(subject = "rate@example.com")
+        doReturn(NotificationConsumptionOutcome.APPLIED).`when`(processor).process(first)
+        doReturn(NotificationConsumptionOutcome.APPLIED).`when`(processor).process(second)
+        doReturn(NotificationPreferences(emailEnabled = true)).`when`(preferenceStore).get("rate@example.com")
+        doReturn(EmailDeliveryOutcome.DELIVERED).`when`(emailDispatcher)
+            .send("rate@example.com", "Notification: expense.created", "Dinner was added")
+
+        consumer.consume(first)
+        consumer.consume(second)
+
         verify(emailDispatcher, times(1))
-            .send("dave@pennywise.local", "Notification: expense.created", "Dinner was added")
+            .send("rate@example.com", "Notification: expense.created", "Dinner was added")
     }
 
     @Test

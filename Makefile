@@ -12,7 +12,7 @@ PROD_COMPOSE := infra/deploy/docker-compose.prod.yml
 SERVICES := accounts expense-core notifications bff
 
 .DEFAULT_GOAL := help
-.PHONY: help doctor bootstrap validate contracts lint python-typecheck test test-unit test-integration coverage build package check ci ci-e2e acceptance acceptance-live bruno-run workflow-validate observability-validate release-gate security-hygiene load-probe load-k6-validate load-k6 e2e e2e-rest-edge smoke docs-diagrams docs-diagrams-config compose-config deps-config deps-up deps-status deps-logs deps-down accounts-deps-config accounts-deps-up accounts-deps-status accounts-deps-logs accounts-deps-down expense-core-deps-config expense-core-deps-up expense-core-deps-status expense-core-deps-logs expense-core-deps-down notifications-deps-config notifications-deps-up notifications-deps-status notifications-deps-logs notifications-deps-down bff-deps-config bff-deps-up bff-deps-status bff-deps-logs bff-deps-down full-config full-up full-status full-logs full-down compose-dev-up compose-dev-down compose-dev-logs compose-up compose-down docker-build-all docker-build-% prod-config clean clean-gradle status
+.PHONY: help doctor bootstrap validate contracts lint python-typecheck test test-unit test-integration coverage build package check ci ci-e2e acceptance acceptance-live bruno-run workflow-validate observability-validate release-gate security-hygiene architecture-validate sbom-validate load-probe load-k6-validate load-k6 e2e e2e-rest-edge smoke docs-diagrams docs-diagrams-config compose-config deps-config deps-up deps-status deps-logs deps-down accounts-deps-config accounts-deps-up accounts-deps-status accounts-deps-logs accounts-deps-down expense-core-deps-config expense-core-deps-up expense-core-deps-status expense-core-deps-logs expense-core-deps-down notifications-deps-config notifications-deps-up notifications-deps-status notifications-deps-logs notifications-deps-down bff-deps-config bff-deps-up bff-deps-status bff-deps-logs bff-deps-down full-config full-up full-status full-logs full-down compose-dev-up compose-dev-down compose-dev-logs compose-up compose-down docker-build-all docker-build-% prod-config clean clean-gradle status
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Pennywise commands\n\n"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -100,6 +100,12 @@ release-gate: observability-validate ## Validate repository-owned production rel
 security-hygiene: ## Scan tracked configuration and source for obvious secret material
 	@python3 tools/ops/check_security_hygiene.py
 
+architecture-validate: ## Enforce application service dependency boundaries
+	@python3 tools/ops/check_architecture.py
+
+sbom-validate: ## Validate centralized dependency-version baseline for SBOM generation
+	@python3 tools/ops/validate_sbom_baseline.py
+
 load-probe: ## Run an HTTP load probe; set URL, CONCURRENCY, and DURATION
 	@test -n "$(URL)" || (echo "Set URL, e.g. make load-probe URL=http://localhost:8080/actuator/health"; exit 2)
 	@python3 tools/ops/http_load_probe.py "$(URL)" --concurrency "$${CONCURRENCY:-4}" --duration "$${DURATION:-10}"
@@ -114,6 +120,15 @@ load-k6: load-k6-validate ## Run one k6 script in Docker; set SCRIPT=tests/load/
 load-mutation-check: load-k6-validate ## Run fixture-backed mutation load and verify financial reconciliation
 	@DURATION="$${DURATION:-5s}" k6 run tests/load/k6/mutation-expense.js
 	@python3 tools/ops/reconcile_mutation_fixture.py
+
+cqrs-replica-smoke: ## Verify local PostgreSQL streaming replica and route telemetry
+	@sh tests/performance/cqrs-replica-smoke.sh
+
+expense-search-plan: ## Capture the bounded Expense Core search plan on the local replica
+	@sh tests/performance/expense-search-plan.sh
+
+replica-disconnect-recovery: ## Drill safe local reader disconnect and recovery
+	@sh tests/performance/replica-disconnect-recovery.sh
 
 e2e: ## Run the contract and deployment E2E smoke checks
 	@tests/e2e/contract-smoke.sh

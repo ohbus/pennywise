@@ -1,7 +1,16 @@
 package com.subhrodip.pennywise.notifications.inbox
 
-import com.subhrodip.pennywise.notifications.consumer.ProcessedNotificationEventRepository
-import com.subhrodip.pennywise.notifications.delivery.JpaEventDeduplicator
+import com.subhrodip.pennywise.notifications.inbox.persistence.JpaNotificationInboxStore
+import com.subhrodip.pennywise.notifications.inbox.persistence.NotificationInboxRepository
+
+import com.subhrodip.pennywise.notifications.inbox.api.InboxController
+import com.subhrodip.pennywise.notifications.inbox.model.InboxItem
+import com.subhrodip.pennywise.notifications.inbox.persistence.InMemoryNotificationInboxStore
+import com.subhrodip.pennywise.notifications.inbox.persistence.NotificationInboxStore
+import com.subhrodip.pennywise.notifications.inbox.service.NotificationInboxService
+
+import com.subhrodip.pennywise.notifications.consumer.persistence.ProcessedNotificationEventRepository
+import com.subhrodip.pennywise.notifications.delivery.persistence.JpaEventDeduplicator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -40,7 +49,7 @@ class JpaNotificationInboxStoreTest @Autowired constructor(
         store.append("alice", InboxItem(secondId, "expense.updated", "Second", occurredAt))
         store.append("bob", InboxItem(UUID.randomUUID(), "expense.created", "Other", occurredAt))
 
-        val inbox = NotificationInbox(store)
+        val inbox = NotificationInboxService(store)
         assertEquals(listOf(secondId), inbox.page("alice", null, 1).items.map(InboxItem::notificationId))
         val firstPage = inbox.page("alice", null, 1)
         assertEquals(listOf(firstId), inbox.page("alice", firstPage.nextCursor, 1).items.map(InboxItem::notificationId))

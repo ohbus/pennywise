@@ -26,12 +26,12 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+from tests.http_constants import APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE, GRAPHQL_PATH
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 BFF_URL = "http://localhost:8080"
 EXPENSE_CORE_URL = "http://localhost:8082"
-GRAPHQL_PATH = "/graphql"
 HTTP_TIMEOUT_SECONDS = 10
 SOCKET_SETUP_TIMEOUT_SECONDS = 10
 WS_HOST = "localhost"
@@ -40,9 +40,9 @@ WS_PORT = 8080
 
 def request_json(url: str, method: str = "GET", body: Any = None,
                  bearer: str | None = None, extra_headers: dict[str, str] | None = None) -> tuple[int, dict[str, Any]]:
-    headers = {"Content-Type": "application/json"}
+    headers = {CONTENT_TYPE: APPLICATION_JSON}
     if bearer:
-        headers["Authorization"] = f"Bearer {bearer}"
+        headers[AUTHORIZATION] = f"{BEARER_PREFIX}{bearer}"
     if extra_headers:
         headers.update(extra_headers)
 
@@ -263,6 +263,11 @@ def run_concurrency_and_subscriptions_test() -> None:
     assert status == 201, f"Failed to create invite: {invite}"
     status, claim = request_json(f"{EXPENSE_CORE_URL}/expense-core/v1/invites/{invite['token']}/claim", method="POST", bearer=user_b)
     assert status == 200, f"Bob failed to claim invite: {claim}"
+    status, members = request_json(f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/members", bearer=user_a)
+    assert status == 200, f"Failed to list group members: {members}"
+    member_ids = {member["subject"]: member["membershipId"] for member in members}
+    alice_id = member_ids[profile_a["displayName"]]
+    bob_id = member_ids[profile_b["displayName"]]
     print(f"  ✓ Members active: Alice={alice_id}, Bob={bob_id}")
 
     # Step 2: Establish Real-time GraphQL WebSocket Subscription (groupChanged)

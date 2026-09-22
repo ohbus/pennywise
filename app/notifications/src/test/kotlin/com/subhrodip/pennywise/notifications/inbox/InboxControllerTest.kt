@@ -1,7 +1,19 @@
 package com.subhrodip.pennywise.notifications.inbox
 
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.notifications.inbox.persistence.JpaNotificationInboxStore
+import com.subhrodip.pennywise.notifications.inbox.persistence.NotificationInboxRepository
+
+import com.subhrodip.pennywise.notifications.inbox.api.InboxController
+import com.subhrodip.pennywise.notifications.inbox.model.InboxItem
+import com.subhrodip.pennywise.notifications.inbox.persistence.InMemoryNotificationInboxStore
+import com.subhrodip.pennywise.notifications.inbox.persistence.NotificationInboxStore
+import com.subhrodip.pennywise.notifications.inbox.service.NotificationInboxService
+
+import com.subhrodip.pennywise.db.routing.DbContextHolder
+import com.subhrodip.pennywise.db.routing.DbOperationKind
+import com.subhrodip.pennywise.db.routing.ReadConsistency
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -17,15 +29,27 @@ import java.time.Instant
 import java.util.UUID
 
 class InboxControllerTest {
-    private val inbox = NotificationInbox()
+    private val recordingStore = RecordingInboxStore(InMemoryNotificationInboxStore())
+    private val inbox = NotificationInboxService(recordingStore)
     private val controller = InboxController(inbox)
     private val mvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(GlobalErrorHandler()).build()
     private val user = RequestPostProcessor { request -> request.userPrincipal = Principal { "alice" }; request }
 
     @Test
+    fun `historical inbox listing uses the approved eventual reader policy`() {
+        mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_INBOX).with(user))
+            .andExpect(status().isOk)
+
+        assertEquals("notification.inbox.history", recordingStore.lastContext?.operationName)
+        assertEquals(DbOperationKind.QUERY, recordingStore.lastContext?.kind)
+        assertEquals(ReadConsistency.EVENTUAL, recordingStore.lastContext?.consistency)
+        assertTrue(recordingStore.lastContext?.readerEligible == true)
+    }
+
+    @Test
     fun `orders inbox newest first and isolates subjects`() {
-        val testInbox = NotificationInbox()
+        val testInbox = NotificationInboxService(InMemoryNotificationInboxStore())
         testInbox.append("alice", InboxItem(UUID.randomUUID(), "expense.created", "Expense", Instant.EPOCH))
         testInbox.append("alice", InboxItem(UUID.randomUUID(), "repayment.created", "Repayment", Instant.ofEpochSecond(2)))
         testInbox.append("bob", InboxItem(UUID.randomUUID(), "expense.created", "Other", Instant.now()))
@@ -36,7 +60,7 @@ class InboxControllerTest {
 
     @Test
     fun `returns stable cursor pages`() {
-        val testInbox = NotificationInbox()
+        val testInbox = NotificationInboxService(InMemoryNotificationInboxStore())
         repeat(3) { index -> testInbox.append("alice", InboxItem(UUID.randomUUID(), "event-$index", "Event", Instant.ofEpochSecond(index.toLong()))) }
         val first = testInbox.page("alice", null, 2)
         assertEquals(listOf("event-2", "event-1"), first.items.map { it.eventType })
@@ -47,11 +71,11 @@ class InboxControllerTest {
 
     @Test
     fun `rejects malformed cursor`() {
-        val testInbox = NotificationInbox()
-        val err = org.junit.jupiter.api.Assertions.assertThrows(com.subhrodip.pennywise.errors.ApplicationException::class.java) {
+        val testInbox = NotificationInboxService(InMemoryNotificationInboxStore())
+        val err = org.junit.jupiter.api.Assertions.assertThrows(com.subhrodip.pennywise.errors.domain.ApplicationException::class.java) {
             testInbox.page("alice", "bad", 10)
         }
-        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_02, err.errorCode)
+        assertEquals(com.subhrodip.pennywise.errors.domain.ErrorCode.ERR_02, err.errorCode)
     }
 
     @Test
@@ -120,4 +144,18 @@ class InboxControllerTest {
         assertTrue(store.markAsRead("alice", id))
         assertTrue(store.list("alice").first().read)
     }
+}
+
+private class RecordingInboxStore(private val delegate: NotificationInboxStore) : NotificationInboxStore {
+    var lastContext: com.subhrodip.pennywise.db.routing.DbExecutionContext? = null
+
+    override fun append(subject: String, item: InboxItem) = delegate.append(subject, item)
+
+    override fun list(subject: String): List<InboxItem> {
+        lastContext = DbContextHolder.current()
+        return delegate.list(subject)
+    }
+
+    override fun markAsRead(subject: String, notificationId: UUID): Boolean =
+        delegate.markAsRead(subject, notificationId)
 }

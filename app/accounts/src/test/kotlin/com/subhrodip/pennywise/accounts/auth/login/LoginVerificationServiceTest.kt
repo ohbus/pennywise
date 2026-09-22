@@ -7,9 +7,9 @@ import com.subhrodip.pennywise.accounts.auth.credential.OneTimeCredentialIssuer
 import com.subhrodip.pennywise.accounts.auth.provider.InternalJwtTokenProvider
 import com.subhrodip.pennywise.accounts.auth.session.AuthSessionRepository
 import com.subhrodip.pennywise.accounts.auth.session.TokenSessionService
-import com.subhrodip.pennywise.accounts.profile.InMemoryProfileStore
-import com.subhrodip.pennywise.errors.ApplicationException
-import com.subhrodip.pennywise.errors.ErrorCode
+import com.subhrodip.pennywise.accounts.profile.persistence.InMemoryProfileStore
+import com.subhrodip.pennywise.errors.domain.ApplicationException
+import com.subhrodip.pennywise.errors.domain.ErrorCode
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull

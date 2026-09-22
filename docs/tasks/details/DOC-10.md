@@ -39,3 +39,6 @@ documented Docker Compose development workflow.
   with the imported Gradle module and Kotlin-generated `*ApplicationKt` main
   class. This directly invokes the verified `main(String[])` entry point without
   Spring Boot plugin start-point inference.
+- The BFF bootstrap remains in the root `com.subhrodip.pennywise.bff` package so
+  component scanning covers the complete application; the IntelliJ configuration
+  and Spring Boot `mainClass` setting target the same root launcher.

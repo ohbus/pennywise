@@ -8,6 +8,10 @@
     {"type":"timeseries","title":"Request rate","gridPos":{"h":8,"w":12,"x":0,"y":0},"targets":[{"expr":"sum by (service) (rate(http_server_requests_seconds_count{job=\"pennywise\"}[5m]))","legendFormat":"{{service}}"}]},
     {"type":"timeseries","title":"5xx error rate","gridPos":{"h":8,"w":12,"x":12,"y":0},"targets":[{"expr":"sum by (service) (rate(http_server_requests_seconds_count{job=\"pennywise\",status=~\"5..\"}[5m]))","legendFormat":"{{service}}"}]},
     {"type":"timeseries","title":"p95 latency","gridPos":{"h":8,"w":12,"x":0,"y":8},"targets":[{"expr":"histogram_quantile(0.95, sum by (service, le) (rate(http_server_requests_seconds_bucket{job=\"pennywise\"}[5m])))","legendFormat":"{{service}}"}]},
-    {"type":"timeseries","title":"JVM heap utilization","gridPos":{"h":8,"w":12,"x":12,"y":8},"targets":[{"expr":"jvm_memory_used_bytes{job=\"pennywise\",area=\"heap\"} / jvm_memory_max_bytes{job=\"pennywise\",area=\"heap\"}","legendFormat":"{{service}}"}]}
+    {"type":"timeseries","title":"JVM heap utilization","gridPos":{"h":8,"w":12,"x":12,"y":8},"targets":[{"expr":"jvm_memory_used_bytes{job=\"pennywise\",area=\"heap\"} / jvm_memory_max_bytes{job=\"pennywise\",area=\"heap\"}","legendFormat":"{{service}}"}]},
+    {"type":"timeseries","title":"CQRS reader lag","gridPos":{"h":8,"w":12,"x":0,"y":16},"targets":[{"expr":"pennywise_db_reader_lag_ms","legendFormat":"{{service}} / {{reader}}"}]},
+    {"type":"timeseries","title":"CQRS writer fallback rate","gridPos":{"h":8,"w":12,"x":12,"y":16},"targets":[{"expr":"sum by (service, operation) (rate(pennywise_db_fallback_total[5m]))","legendFormat":"{{service}} / {{operation}}"}]},
+    {"type":"timeseries","title":"DB pool acquisition p95","gridPos":{"h":8,"w":12,"x":0,"y":24},"targets":[{"expr":"histogram_quantile(0.95, sum by (service, operation, pool, le) (rate(pennywise_db_pool_acquisition_seconds_bucket[5m])))","legendFormat":"{{service}} / {{operation}} / {{pool}}"}]},
+    {"type":"timeseries","title":"DB lock and deadlock signals","gridPos":{"h":8,"w":12,"x":12,"y":24},"targets":[{"expr":"sum by (service, operation) (rate(pennywise_db_lock_wait_total[5m]))","legendFormat":"lock wait {{service}} / {{operation}}"},{"expr":"sum by (service, operation) (rate(pennywise_db_deadlock_total[5m]))","legendFormat":"deadlock {{service}} / {{operation}}"}]}
   ]
 }

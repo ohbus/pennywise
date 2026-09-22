@@ -1,4 +1,6 @@
 package com.subhrodip.pennywise.expensecore.expenses
+import com.subhrodip.pennywise.expensecore.expenses.api.AllocationPreviewController
+import com.subhrodip.pennywise.expensecore.expenses.domain.AllocationCalculator
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -8,9 +10,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
 
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 
 class AllocationPreviewControllerTest {
     private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(AllocationPreviewController())

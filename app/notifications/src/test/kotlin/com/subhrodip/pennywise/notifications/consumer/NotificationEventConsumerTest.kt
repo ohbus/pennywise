@@ -1,11 +1,20 @@
 package com.subhrodip.pennywise.notifications.consumer
 
-import com.subhrodip.pennywise.notifications.inbox.NotificationInboxEntity
-import com.subhrodip.pennywise.notifications.inbox.NotificationInboxRepository
+import com.subhrodip.pennywise.notifications.consumer.model.NotificationConsumptionOutcome
+import com.subhrodip.pennywise.notifications.consumer.model.NotificationEvent
+import com.subhrodip.pennywise.notifications.consumer.persistence.ProcessedNotificationEventRepository
+import com.subhrodip.pennywise.notifications.consumer.service.NotificationConsumer
+import com.subhrodip.pennywise.notifications.consumer.service.NotificationConsumerService
+import com.subhrodip.pennywise.notifications.consumer.service.NotificationEventConsumer
+import com.subhrodip.pennywise.notifications.consumer.service.TransactionalNotificationEventProcessor
+import com.subhrodip.pennywise.notifications.consumer.transport.BrokerEnvelopeParser
+import com.subhrodip.pennywise.notifications.consumer.transport.RabbitNotificationListener
+import com.subhrodip.pennywise.notifications.preferences.persistence.PreferenceStore
+
+import com.subhrodip.pennywise.notifications.inbox.persistence.NotificationInboxEntity
+import com.subhrodip.pennywise.notifications.inbox.persistence.NotificationInboxRepository
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import org.hibernate.exception.ConstraintViolationException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import java.time.Instant
@@ -43,7 +52,7 @@ class NotificationEventConsumerTest @Autowired constructor(
     }
 
     @Test
-    fun `rolls back deduplication marker when inbox effect fails and permits retry`() {
+    fun `treats an existing notification identity as an acknowledged duplicate`() {
         clearState()
         val occupiedNotificationId = UUID.fromString("00000000-0000-7000-8000-000000000103")
         inboxItems.saveAndFlush(
@@ -56,20 +65,31 @@ class NotificationEventConsumerTest @Autowired constructor(
             )
         )
         val eventId = UUID.fromString("00000000-0000-7000-8000-000000000104")
-        val failingEvent = event(eventId, occupiedNotificationId)
+        val duplicateEvent = event(eventId, occupiedNotificationId)
 
-        assertThrows(ConstraintViolationException::class.java) {
-            consumer.consume(failingEvent)
-        }
+        assertEquals(NotificationConsumptionOutcome.DUPLICATE, consumer.consume(duplicateEvent))
         assertEquals(0, processedEvents.count())
         assertEquals(1, inboxItems.count())
 
-        val retry = failingEvent.copy(
+        val retry = duplicateEvent.copy(
             notificationId = UUID.fromString("00000000-0000-7000-8000-000000000105")
         )
         assertEquals(NotificationConsumptionOutcome.APPLIED, consumer.consume(retry))
         assertEquals(1, processedEvents.count())
         assertEquals(2, inboxItems.count())
+    }
+
+    @Test
+    fun `acknowledges replay with a new event identity for the same notification`() {
+        clearState()
+        val notificationId = UUID.fromString("00000000-0000-7000-8000-000000000108")
+        val first = event(UUID.fromString("00000000-0000-7000-8000-000000000109"), notificationId)
+        val replay = first.copy(eventId = UUID.fromString("00000000-0000-7000-8000-000000000110"))
+
+        assertEquals(NotificationConsumptionOutcome.APPLIED, consumer.consume(first))
+        assertEquals(NotificationConsumptionOutcome.DUPLICATE, consumer.consume(replay))
+        assertEquals(1, inboxItems.count())
+        assertEquals(1, processedEvents.count())
     }
 
     @Test

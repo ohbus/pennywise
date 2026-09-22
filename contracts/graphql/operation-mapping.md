@@ -1,5 +1,16 @@
 # GraphQL operation ownership
 
+The schema is split into focused SDL files under this directory:
+
+- `00-scalars.graphqls` — shared scalar declarations.
+- `10-roots.graphqls` — public `Query`, `Mutation`, and `Subscription` entry points.
+- `20-domain-types.graphqls` — returned objects and `GroupKind`.
+- `30-inputs.graphqls` — mutation and query input objects.
+
+Spring GraphQL loads all `*.graphqls` files from `classpath:graphql/`. The BFF
+build copies this contract directory into that classpath location. The files
+together form one schema, not separate schemas or API versions.
+
 `me` maps to Accounts `GET /v1/me`. Group and expense queries/mutations map to
 Expense Core. `recordRepayment` maps to Expense Core settlement APIs. The BFF
 forwards stable idempotency keys and expected versions; it never calculates

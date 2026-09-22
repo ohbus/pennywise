@@ -1,5 +1,8 @@
-package com.subhrodip.pennywise.errors
+package com.subhrodip.pennywise.errors.http
 
+import com.subhrodip.pennywise.errors.domain.ApplicationException
+import com.subhrodip.pennywise.errors.domain.ErrorCode
+import com.subhrodip.pennywise.errors.request.RequestIdContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.dao.OptimisticLockingFailureException

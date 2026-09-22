@@ -1,5 +1,18 @@
 package com.subhrodip.pennywise.bff
 
+import com.subhrodip.pennywise.bff.transport.ExpenseCoreGateway
+import com.subhrodip.pennywise.bff.transport.AccountsGateway
+import com.subhrodip.pennywise.bff.messaging.model.BffEventEnvelope
+import com.subhrodip.pennywise.bff.messaging.model.ConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.model.DuplicateConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.model.ProcessedConsumptionResult
+import com.subhrodip.pennywise.bff.messaging.service.BffEventConsumer
+import com.subhrodip.pennywise.bff.messaging.persistence.BffEventDeduplicator
+import com.subhrodip.pennywise.bff.realtime.GroupInvalidation
+import com.subhrodip.pennywise.bff.realtime.LiveUpdate
+import com.subhrodip.pennywise.bff.realtime.LiveUpdateFanout
+
+
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -7,8 +20,37 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 
 class LiveUpdateFanoutTest {
+    @Test
+    fun `bounds subscriptions per user`() {
+        val fanout = LiveUpdateFanout(maxSubscriptionsPerUser = 1)
+        fanout.subscribe("user-1", "group-1")
+
+        assertThrows<IllegalArgumentException> { fanout.subscribe("user-1", "group-2") }
+    }
+
+    @Test
+    fun `concurrent subscription admission cannot exceed user limit`() {
+        val fanout = LiveUpdateFanout(maxSubscriptionsPerUser = 1)
+        val pool = Executors.newFixedThreadPool(8)
+        val start = CountDownLatch(1)
+        try {
+            val attempts = (1..8).map {
+                pool.submit<Boolean> {
+                    start.await()
+                    runCatching { fanout.subscribe("user-1", "group-$it") }.isSuccess
+                }
+            }
+            start.countDown()
+
+            assertThat(attempts.count { it.get() }).isEqualTo(1)
+        } finally {
+            pool.shutdownNow()
+        }
+    }
     private val update = LiveUpdate("group-1", 7)
 
     @Test

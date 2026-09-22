@@ -1,4 +1,6 @@
 package com.subhrodip.pennywise.expensecore.expenses
+import com.subhrodip.pennywise.expensecore.expenses.domain.AllocationCalculator
+import com.subhrodip.pennywise.expensecore.expenses.domain.FinancialArithmetic
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -30,5 +32,21 @@ class AllocationCalculatorTest {
     fun `empty and duplicate participants are rejected`() {
         assertThrows(IllegalArgumentException::class.java) { AllocationCalculator.equal(1, emptyList()) }
         assertThrows(IllegalArgumentException::class.java) { AllocationCalculator.equal(1, listOf("a", "a")) }
+    }
+
+    @Test
+    fun `rejects multiplication and aggregation overflow`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.percentage(Long.MAX_VALUE, mapOf("a" to 10_000L))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.exact(Long.MAX_VALUE, mapOf("a" to Long.MAX_VALUE, "b" to 1L))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            FinancialArithmetic.add(Long.MAX_VALUE, 1L)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            FinancialArithmetic.negate(Long.MIN_VALUE)
+        }
     }
 }

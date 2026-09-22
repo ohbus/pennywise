@@ -1,6 +1,7 @@
-package com.subhrodip.pennywise.errors
+package com.subhrodip.pennywise.errors.request
 
-import com.subhrodip.pennywise.ids.UuidGenerator
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
+import com.subhrodip.pennywise.ids.generation.UuidGenerator
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -50,7 +51,7 @@ class RequestIdFilter : OncePerRequestFilter() {
     }
 
     companion object {
-        const val HEADER: String = com.subhrodip.pennywise.ids.ApiEndpoints.Headers.REQUEST_ID
+        const val HEADER: String = ApiEndpoints.Headers.REQUEST_ID
         private val log = LoggerFactory.getLogger(RequestIdFilter::class.java)
     }
 }

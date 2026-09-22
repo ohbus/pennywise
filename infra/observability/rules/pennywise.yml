@@ -37,3 +37,30 @@ groups:
           summary: Pennywise JVM heap pressure is high
           description: "{{ $labels.service }} heap usage is above 85%."
           runbook: docs/operations/production-hardening.md#jvm-pressure
+      - alert: PennywiseReaderReplayLag
+        expr: pennywise_db_reader_lag_ms{job="pennywise"} > 5000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Pennywise reader replay lag is elevated
+          description: "{{ $labels.service }} reader {{ $labels.reader }} exceeds the 5 second local policy budget."
+          runbook: docs/operations/cqrs-replica.md#reader-lag
+      - alert: PennywiseReaderFailures
+        expr: sum by (service, reader) (rate(pennywise_db_reader_failure_total{job="pennywise"}[5m])) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Pennywise reader health failures detected
+          description: "{{ $labels.service }} reader {{ $labels.reader }} is failing health or connection checks."
+          runbook: docs/operations/cqrs-replica.md#reader-outage
+      - alert: PennywiseReaderFallbackPressure
+        expr: sum by (service) (rate(pennywise_db_fallback_total{job="pennywise"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Pennywise is frequently falling back to the writer
+          description: "{{ $labels.service }} is using more than one bounded reader fallback per second."
+          runbook: docs/operations/cqrs-replica.md#writer-fallback

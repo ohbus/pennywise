@@ -7,6 +7,14 @@ services:
     extends:
       file: docker-compose.yml
       service: rabbitmq
+  redis:
+    extends:
+      file: docker-compose.yml
+      service: redis
+  idp-keycloak:
+    extends:
+      file: docker-compose.yml
+      service: idp-keycloak
   mailpit:
     extends:
       file: docker-compose.yml

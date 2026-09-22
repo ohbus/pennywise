@@ -2,6 +2,7 @@ package com.subhrodip.pennywise.accounts.security
 
 import com.subhrodip.pennywise.security.OidcJwtDecoderFactory
 import com.subhrodip.pennywise.security.OidcSecurityConstants
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -31,9 +32,9 @@ class ProductionSecurityConfig(
         .csrf { it.disable() }
         .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
         .authorizeHttpRequests {
-            it.requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/accounts/v1/auth/login/**").permitAll()
-                .requestMatchers("/accounts/v1/auth/token/refresh").permitAll()
+            it.requestMatchers(ApiEndpoints.Operations.HEALTH).permitAll()
+                .requestMatchers(ApiEndpoints.Accounts.V1.BASE + "/auth/login/**").permitAll()
+                .requestMatchers(ApiEndpoints.Accounts.V1.PATH_TOKEN_REFRESH).permitAll()
                 .anyRequest().authenticated()
         }
         .oauth2ResourceServer { it.jwt {} }

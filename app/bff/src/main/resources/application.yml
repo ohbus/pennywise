@@ -1,6 +1,8 @@
 spring:
   application:
     name: bff
+  codec:
+    max-in-memory-size: ${PENNYWISE_BFF_MAX_BODY_SIZE:256KB}
   security:
     oauth2:
       resourceserver:
@@ -26,7 +28,12 @@ management:
     tags:
       service: bff
 
+server:
+  max-http-request-header-size: ${PENNYWISE_BFF_MAX_HEADER_SIZE:16KB}
+
 pennywise:
+  accounts-url: ${PENNYWISE_ACCOUNTS_URL}
+  expense-core-url: ${PENNYWISE_EXPENSE_CORE_URL}
   security:
     oidc:
       audience: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:}

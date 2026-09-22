@@ -14,7 +14,7 @@ interface SearchStore {
     /**
      * Finds all active (non-deleted) expenses belonging to the specified group.
      *
-     * @param groupId the UUID of the group
+     * @param query bounded group-scoped search request
      * @return sequence or list of domain [SearchExpense] records
      */
     fun findSearchExpenses(query: SearchQuery): List<SearchExpense>

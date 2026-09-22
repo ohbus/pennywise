@@ -48,7 +48,7 @@ class SearchController(
      * @param limit maximum number of results to return (1..1000, default 100)
      * @param principal authenticated user principal
      * @return [ExpenseSearchPage] containing matching expenses, cursor, and currency totals
-     * @throws ResponseStatusException if group not found or user not a member
+     * @throws org.springframework.web.server.ResponseStatusException if group not found or user not a member
      */
     @GetMapping(ApiEndpoints.ExpenseCore.V1.SEARCH_SUBPATH)
     fun search(
@@ -99,7 +99,7 @@ class SearchController(
      * @param maxRows maximum number of export rows permitted (1..10000, default 10000)
      * @param principal authenticated user principal
      * @return [ResponseEntity] containing CSV data with Content-Disposition attachment header
-     * @throws ResponseStatusException if group not found, user not a member, or export exceeds limit
+     * @throws org.springframework.web.server.ResponseStatusException if group not found, user not a member, or export exceeds limit
      */
     @GetMapping(ApiEndpoints.ExpenseCore.V1.EXPORT_SUBPATH, produces = [ApiEndpoints.Headers.TEXT_CSV_UTF8])
     fun export(

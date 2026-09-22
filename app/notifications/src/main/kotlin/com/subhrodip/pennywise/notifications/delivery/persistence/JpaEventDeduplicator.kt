@@ -13,7 +13,7 @@ import java.util.UUID
  * JPA and database-backed implementation of [EventDeduplicator] utilizing unique constraint violations
  * on [ProcessedNotificationEventEntity] table to guarantee at-most-once processing across concurrent deliveries.
  *
- * @property transactionManager Spring transaction manager used to manage isolation of deduplication checks.
+ * @param transactionManager Spring transaction manager used to manage isolation of deduplication checks.
  * @property entityManager Entity manager used for persisting processed event markers.
  */
 @Service

@@ -24,7 +24,7 @@ class JpaSearchStore(
     /**
      * Finds active expenses for a group in persistent storage.
      *
-     * @param groupId the UUID of the group
+     * @param query bounded group-scoped search request
      * @return list of [SearchExpense] domain records
      */
     @Transactional(readOnly = true)

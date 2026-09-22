@@ -12,7 +12,7 @@ enum class ExpenseCategory(val key: String, val label: String) {
     OTHER("other", "Other");
 
     companion object {
-        fun fromKey(key: String): ExpenseCategory = values().firstOrNull { it.key == key.trim().lowercase() }
+        fun fromKey(key: String): ExpenseCategory = entries.firstOrNull { it.key == key.trim().lowercase() }
             ?: throw ApplicationException(ErrorCode.ERR_02, "Unknown expense category")
     }
 }

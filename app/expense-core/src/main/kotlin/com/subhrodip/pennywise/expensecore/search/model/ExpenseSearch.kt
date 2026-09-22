@@ -8,29 +8,6 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 /**
- * Representation of an expense for search and export matching.
- *
- * @property expenseId canonical identifier of the expense
- * @property description human-readable summary of the expense
- * @property currency 3-letter uppercase ISO currency code
- * @property amountMinor total expense amount in minor units
- * @property category financial classification category
- */
-/**
- * Aggregated total amount for a specific currency within a search page.
- *
- * @property currency 3-letter currency code
- * @property amountMinor total minor units for this currency
- */
-/**
- * Page response containing matching expenses, pagination cursor, and per-currency totals.
- *
- * @property expenses list of matching expenses in the current page
- * @property nextCursor opaque pagination cursor for the next page, or null if no further pages
- * @property hasMore true if there are additional matching expenses beyond this page
- * @property totals per-currency subtotals computed across the current page
- */
-/**
  * Search and export domain service providing deterministic filtering, stable cursor pagination,
  * currency subtotal calculations, and CSV serialization with spreadsheet formula escaping.
  */

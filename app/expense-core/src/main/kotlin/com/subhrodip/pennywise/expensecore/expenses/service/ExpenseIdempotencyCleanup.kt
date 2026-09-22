@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.expensecore.expenses.service
 import com.subhrodip.pennywise.expensecore.expenses.persistence.repository.ExpenseIdempotencyRepository
 

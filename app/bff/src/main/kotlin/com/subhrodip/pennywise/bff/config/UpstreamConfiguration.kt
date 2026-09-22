@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.bff.config
 
 import org.springframework.beans.factory.annotation.Value

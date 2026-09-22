@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.expensecore.recurring.service
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled

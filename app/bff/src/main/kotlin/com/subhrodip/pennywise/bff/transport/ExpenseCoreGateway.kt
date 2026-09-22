@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.bff.transport
 import com.subhrodip.pennywise.bff.transport.model.output.BffBalancesResponse
 import com.subhrodip.pennywise.bff.transport.model.output.BffCreateGroup

@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.notifications.consumer.transport
 import com.subhrodip.pennywise.notifications.consumer.model.NotificationEvent
 import com.subhrodip.pennywise.notifications.consumer.service.NotificationConsumer

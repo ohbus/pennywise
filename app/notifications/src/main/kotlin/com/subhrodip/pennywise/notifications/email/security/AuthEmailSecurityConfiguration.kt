@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.notifications.email.security
 import java.util.Base64
 import org.springframework.beans.factory.annotation.Value

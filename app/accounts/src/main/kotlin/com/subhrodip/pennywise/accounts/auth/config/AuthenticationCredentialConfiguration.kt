@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.accounts.auth.config
 
 import com.subhrodip.pennywise.accounts.auth.credential.CredentialDigest

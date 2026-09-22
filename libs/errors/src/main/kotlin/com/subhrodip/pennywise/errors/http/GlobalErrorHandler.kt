@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.errors.http
 
 import com.subhrodip.pennywise.errors.domain.ApplicationException

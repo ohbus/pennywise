@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.accounts.auth.delivery.outbox
 
 import com.subhrodip.pennywise.accounts.auth.delivery.model.AuthEmailPublishOutcome

@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.expensecore.messaging.config
 import com.subhrodip.pennywise.expensecore.messaging.outbox.service.OutboxPublisher
 import com.subhrodip.pennywise.expensecore.messaging.outbox.model.PublishBatchResult

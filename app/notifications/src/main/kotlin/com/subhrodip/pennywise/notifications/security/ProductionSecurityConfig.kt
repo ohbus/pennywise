@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.notifications.security
 
 import com.subhrodip.pennywise.ids.contracts.ApiEndpoints

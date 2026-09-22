@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.notifications.email.delivery
 import com.rabbitmq.client.Channel
 import com.subhrodip.pennywise.notifications.consumer.transport.InvalidEnvelopeException

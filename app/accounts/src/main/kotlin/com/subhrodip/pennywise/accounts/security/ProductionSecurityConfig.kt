@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.accounts.security
 
 import com.subhrodip.pennywise.security.OidcJwtDecoderFactory

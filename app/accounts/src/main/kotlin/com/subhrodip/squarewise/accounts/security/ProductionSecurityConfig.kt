@@ -35,7 +35,10 @@ class ProductionSecurityConfig(
         .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
         .authorizeHttpRequests {
             it.requestMatchers(ApiEndpoints.Operations.HEALTH).permitAll()
-                .requestMatchers(ApiEndpoints.Accounts.V1.BASE + "/auth/login/**").permitAll()
+                .requestMatchers(
+                    ApiEndpoints.Accounts.V1.PATH_LOGIN_START,
+                    ApiEndpoints.Accounts.V1.PATH_LOGIN_VERIFY
+                ).permitAll()
                 .requestMatchers(ApiEndpoints.Accounts.V1.PATH_TOKEN_REFRESH).permitAll()
                 .anyRequest().authenticated()
         }

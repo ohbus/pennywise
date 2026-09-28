@@ -15,6 +15,9 @@ WebSocket, and full live-evidence work is still tracked below.
 - Current increment: writer-backed account identity restoration, deletion fail
   closed behavior, authenticated family logout, OpenAPI logout request contract,
   and controller/service tests.
+- Follow-up hardening: Accounts production security now permits only the two
+  login operations and token refresh by exact path; logout and all other routes
+  remain authenticated.
 
 ## Objective
 

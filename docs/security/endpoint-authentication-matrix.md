@@ -31,6 +31,13 @@ not query Accounts or the session database merely to validate a bearer token.
 | OIDC discovery | Provider boundary | HTTPS and issuer allow-list |
 | Metrics/diagnostics | Restricted | Network and role protection; no credentials |
 
+The Accounts production chain permits only these authentication routes by exact
+path: `POST /accounts/v1/auth/login/start`, `POST
+/accounts/v1/auth/login/verify`, and `POST /accounts/v1/auth/token/refresh`,
+plus the configured health endpoints. The logout route and every other Accounts
+route remain authenticated. Prefix wildcards are intentionally prohibited so a
+future `/auth/login/*` route cannot become public accidentally.
+
 ## Protected endpoint classes
 
 | Class | Required checks |

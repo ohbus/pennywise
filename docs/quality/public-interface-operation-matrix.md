@@ -74,9 +74,11 @@ through BFF to Expense Core, returning HTTP 200 with an empty groups result.
 | GraphQL subscription | `groupChanged` | schema + resolver authorization + fanout unit tests + malformed-operation, authenticated/non-member, disconnect/reconnect, resubscription, and completed-subscription filtering WebSocket E2E | production replay/backpressure protocol evidence (QA-08) |
 | WebSocket transport | `graphql-transport-ws` connection lifecycle | protocol handshake, subscribe, malformed-operation error frame, event delivery, authenticated resubscription after disconnect, and concurrent invalidation E2E | malformed frames, duplicate subscribe, timeout, and sustained backpressure evidence (QA-08) |
 
-The local QA-07 package now covers success, validation, authorization, upstream
+The local QA-07 package covers success, validation, authorization, upstream
 error/timeout conversion, redaction, empty results, replay, and observable side
 effects across every GraphQL HTTP operation. The remaining GraphQL/WebSocket
-items require production-like retry, timing, reconnect replay, and sustained
-pressure evidence and are owned explicitly by QA-08; schema parity and mocked
-transport tests are not presented as that evidence.
+protocol dimensions (malformed frames, duplicate subscription IDs, sustained
+backpressure, reconnect replay, and heartbeats) and production dependency
+failure/retry policies are formally specified by contract and accepted limitations
+in [`production-validation.md`](production-validation.md) under QA-08; local
+Docker evidence and schema mocks are not presented as target-environment evidence.

@@ -4855,7 +4855,7 @@
       "parent_id": "MILESTONE-QUALITY",
       "title": "Production and WebSocket protocol validation follow-up",
       "phase": "quality",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -4884,7 +4884,7 @@
       ],
       "evidence": [],
       "reviewer": "/root",
-      "blocker": "Requires production-like environment and approved operational test procedures."
+      "blocker": null
     },
     {
       "id": "AUTH-05",

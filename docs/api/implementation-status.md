@@ -18,6 +18,13 @@ level.
 
 Current authorization and lifecycle invariants include:
 
+Authentication lifecycle hardening is tracked separately under AUTH-08. The
+current public surface must not be interpreted as proof that every operation has
+complete session-expiry, logout, cache-failure, GraphQL, WebSocket, and
+production-provider evidence. The endpoint inventory and required negative
+matrix are maintained in
+[`endpoint-authentication-matrix.md`](../security/endpoint-authentication-matrix.md).
+
 - every expense and settlement money value carries an explicit ISO 4217 currency
   in the REST and GraphQL request contract; the server never substitutes a
   currency. A future client may retain the last selected currency locally only

@@ -21,6 +21,24 @@ Accounts-to-Notifications delivery, and live Mailpit evidence. The complete
 slice is recorded as done in `docs/tasks/registry.yaml`; future browser-policy,
 managed-provider, and incident-response work remains outside this slice.
 
+## AUTH-08 hardening boundary
+
+AUTH-08 is the registered parent task for the next increment. It does not claim
+runtime completion in the documentation-only branch. The planned scope is:
+
+- RFC-aligned idle and absolute session expiry.
+- Atomic refresh rotation with trusted identity restoration.
+- Effective logout and family revocation.
+- Existing REST, GraphQL, and WebSocket endpoint protection.
+- Cache use for safe acceleration without bypassing writer-authoritative
+  revocation or authorization.
+- Browser/native client security policy.
+- Full unit, persistence, controller, contract, Bruno, E2E, cache-failure, and
+  endpoint-matrix evidence.
+
+Until those checks pass, the current readiness claims must not be expanded to
+include complete session-management or production browser-session readiness.
+
 ## Evidence-based status
 
 | Capability | Current evidence | Assessment |

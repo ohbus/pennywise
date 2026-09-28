@@ -6744,6 +6744,64 @@
       "blocker": "Requires production-like deployment and alerting environment."
     },
     {
+      "id": "AUTH-08",
+      "parent_id": "AUTH-01",
+      "title": "RFC-aligned authentication and session hardening",
+      "phase": "security",
+      "status": "planned",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [
+        "AUTH-07",
+        "DB-08",
+        "ERR-03",
+        "QA-07",
+        "OPS-24"
+      ],
+      "owned_paths": [
+        "app/accounts/src/main/kotlin/**/*auth*/",
+        "app/accounts/src/main/resources/db/migration/",
+        "app/accounts/src/main/resources/application.yml",
+        "app/accounts/src/test/kotlin/**/*auth*/",
+        "app/bff/src/main/kotlin/",
+        "app/bff/src/test/kotlin/",
+        "contracts/rest/accounts.openapi.json",
+        "contracts/graphql/",
+        "tests/e2e/",
+        "tests/acceptance/",
+        "docs/security/",
+        "docs/architecture/",
+        "docs/api/",
+        "docs/operations/",
+        "docs/tasks/details/AUTH-08.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/AUTH-08.md",
+      "acceptance_criteria": [
+        "Document and implement RFC-aligned short-lived access tokens, rotating refresh tokens, idle expiry, absolute expiry, logout, and family revocation.",
+        "Protect every existing REST, GraphQL, and WebSocket endpoint with explicit authentication and service-owned resource authorization.",
+        "Keep PostgreSQL authoritative for session, identity, revocation, and security state; use existing cache facilities only for safe acceleration and fail closed on uncertainty.",
+        "Remove caller-controlled or synthetic refresh identities and preserve provider-neutral OIDC boundaries.",
+        "Provide unit, persistence, controller, contract, Bruno, live OIDC, cache-failure, endpoint-matrix, GraphQL, and WebSocket security evidence.",
+        "Update all affected security, architecture, API, operations, task, and progress documentation without claiming unrun evidence."
+      ],
+      "validation_commands": [
+        "./gradlew.bat :app:accounts:test --rerun-tasks --no-daemon",
+        "./gradlew.bat :app:bff:test --rerun-tasks --no-daemon",
+        "./gradlew.bat test check jacocoTestReport bootJar --parallel --no-daemon",
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/contracts/validate_public_surface.py",
+        "make security-hygiene",
+        "make workflow-validate",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Documentation-only registration increment created on branch docs/auth-rfc-session-hardening; runtime implementation and security-test evidence remain pending."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
       "id": "DB-17",
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Complete CQRS architecture and acceptance reconciliation",

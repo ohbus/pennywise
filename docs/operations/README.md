@@ -16,6 +16,15 @@ The [fallback mechanism audit](../architecture/fallback-mechanisms.md) documents
 outage behavior, startup requirements, retries, defaults, and known silent
 suppression risks.
 
+Authentication lifecycle hardening is tracked by AUTH-08. PostgreSQL remains
+authoritative for sessions, refresh-token families, revocations, and identity
+changes. Existing Redis/cache facilities may accelerate discovery, JWK,
+rate-limit, and bounded projection paths, but a stale cache must never approve a
+revoked session or authorization decision. The implementation and evidence plan
+is documented in
+[`cache-and-session-consistency.md`](../security/cache-and-session-consistency.md)
+and [`AUTH-08`](../tasks/details/AUTH-08.md).
+
 ## Production readiness
 
 > [!IMPORTANT]

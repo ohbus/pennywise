@@ -4967,7 +4967,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Financial ledger reconciliation and durable mutation idempotency",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5009,7 +5009,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Bounded persistence reads and mutation-time authorization",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5048,7 +5048,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Messaging retry, dead-letter, and poison-message handling",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5087,7 +5087,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "GraphQL abuse controls",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5125,7 +5125,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "CI, security, SBOM, and architecture gates",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5164,7 +5164,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Remove production in-memory persistence fallbacks",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5188,7 +5188,9 @@
         "./gradlew.bat :app:notifications:test --rerun-tasks --no-daemon",
         "git diff --check"
       ],
-      "evidence": [],
+      "evidence": [
+        "Removed constructor default that silently selected InMemoryNotificationInboxStore; Spring wiring requires JPA adapter; unit/controller tests construct in-memory adapter explicitly; Notifications tests passed."
+      ],
       "reviewer": "/root",
       "blocker": null
     },
@@ -5197,7 +5199,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Profile and financial adapter production wiring",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5222,7 +5224,9 @@
         "./gradlew.bat :app:accounts:test :app:expense-core:test --rerun-tasks --no-daemon",
         "git diff --check"
       ],
-      "evidence": [],
+      "evidence": [
+        "Removed Spring component scanning from in-memory profile, settlement, and synchronization adapters; durable JPA adapters remain application beans; Accounts and Expense Core test suites passed."
+      ],
       "reviewer": "/root",
       "blocker": null
     },
@@ -5231,7 +5235,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Remove Accounts request-service in-memory defaults",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5265,7 +5269,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Fail closed on production identity-provider wiring",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5298,7 +5302,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Expense participant and request-bound validation",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5332,7 +5336,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Notification fail-closed delivery policy",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5366,7 +5370,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "BFF fail-closed upstream configuration",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5399,7 +5403,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Checked financial arithmetic",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5433,7 +5437,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Subscription revocation on membership removal",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5466,7 +5470,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Required production messaging capabilities",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5501,7 +5505,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Deployment overlay configuration alignment",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5534,7 +5538,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Security hygiene fixture classification",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5567,7 +5571,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Notification log redaction",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5600,7 +5604,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Actuator exposure hardening",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5636,7 +5640,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Versioned notification queue topology",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5670,7 +5674,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "GraphQL abuse-control transport evidence",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5702,7 +5706,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "CI workflow and release-gate parity",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5735,7 +5739,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Production application topology controls",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5768,7 +5772,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Idempotency retention and cleanup",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5801,7 +5805,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "BFF fail-closed financial fanout",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5834,7 +5838,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Bound RabbitMQ transient redelivery",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5868,7 +5872,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Wire configurable GraphQL subscription bounds",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5902,7 +5906,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Serialize GraphQL subscription admission",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5935,7 +5939,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Lock recurring schedules during worker claims",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -5968,7 +5972,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Add durable settlement recording idempotency",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -6004,7 +6008,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Add PostgreSQL populated-settlement reconciliation evidence",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -6036,7 +6040,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Add CI dependency vulnerability review gate",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -6068,7 +6072,7 @@
       "parent_id": "MILESTONE-PRODUCTION-HARDENING",
       "title": "Bound GraphQL transport request sizes",
       "phase": "production_hardening",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [

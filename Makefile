@@ -79,7 +79,7 @@ acceptance: ## Run the public-interface acceptance harness and write a JSON repo
 	@bash tests/acceptance/run.sh
 
 acceptance-live: ## Run the acceptance test harness requiring live running services
-	@python3 tests/acceptance/runner.py --require-services
+	@PYTHONPATH=. python3 tests/acceptance/runner.py --require-services
 
 bruno-run: ## Run the ordered Bruno collection; override BRUNO_ENV, BRUNO_TOKEN, negative tokens, and BRUNO_REPORT
 	@command -v npx >/dev/null || (echo "Node.js/npm is required for Bruno CLI"; exit 1)

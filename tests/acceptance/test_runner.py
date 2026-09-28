@@ -61,7 +61,14 @@ class MockServicesHandler(http.server.BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header(CONTENT_TYPE, "application/json")
             self.end_headers()
-            self.wfile.write(json.dumps({"members": []}).encode("utf-8"))
+            self.wfile.write(
+                json.dumps(
+                    [
+                        {"membershipId": "00000000-0000-0000-0000-000000000001", "status": "ACTIVE"},
+                        {"membershipId": "00000000-0000-0000-0000-000000000002", "status": "ACTIVE"},
+                    ]
+                ).encode("utf-8")
+            )
             return
 
         if path == "/actuator/health":

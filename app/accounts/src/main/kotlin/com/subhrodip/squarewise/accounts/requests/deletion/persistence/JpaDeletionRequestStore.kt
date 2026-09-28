@@ -4,6 +4,8 @@ import com.subhrodip.squarewise.accounts.requests.deletion.model.DeletionRequest
 import com.subhrodip.squarewise.accounts.requests.deletion.model.DeletionStatus
 import com.subhrodip.squarewise.accounts.profile.service.ProfileRules
 import com.subhrodip.squarewise.accounts.profile.persistence.ProfileStore
+import com.subhrodip.squarewise.accounts.profile.persistence.ProfileRepository
+import com.subhrodip.squarewise.accounts.auth.session.AuthSessionRepository
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,6 +19,9 @@ import java.time.Instant
  *
  * @param repository Spring Data JPA repository for deletion request entities.
  * @param profileStore Store used to flag profiles as deletion-requested.
+ * @param profileRepository Writer-side profile lookup used to resolve the local
+ *        account identifier without trusting the caller's subject as a session key.
+ * @param authSessionRepository Writer-authoritative refresh-session revocation port.
  * @param clock Timestamp supplier, defaulting to [Instant.now].
  */
 @Primary
@@ -24,6 +29,8 @@ import java.time.Instant
 class JpaDeletionRequestStore(
     private val repository: DeletionRequestRepository,
     private val profileStore: ProfileStore,
+    private val profileRepository: ProfileRepository,
+    private val authSessionRepository: AuthSessionRepository,
     private val clock: () -> Instant = Instant::now
 ) : DeletionRequestStore {
 
@@ -44,6 +51,10 @@ class JpaDeletionRequestStore(
 
         // Retain historical financial attribution by preserving profile record with deletionRequested = true
         profileStore.requestDeletion(subject)
+        val accountId = profileRepository.findBySubject(subject)?.accountId
+        if (accountId != null) {
+            authSessionRepository.revokeAllForAccount(accountId, clock())
+        }
 
         val entity = AccountDeletionRequestEntity(
             subject = subject,

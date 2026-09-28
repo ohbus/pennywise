@@ -23,8 +23,10 @@ managed-provider, and incident-response work remains outside this slice.
 
 ## AUTH-08 hardening boundary
 
-AUTH-08 is the registered parent task for the next increment. It does not claim
-runtime completion in the documentation-only branch. The planned scope is:
+AUTH-08 is the registered parent task and remains in progress. The current
+branch implements and verifies the session-policy, migration, trusted-identity,
+logout, endpoint-matcher, and local negative-path slices. It does not claim
+browser/native or production-scale completion. Remaining scope is:
 
 - RFC-aligned idle and absolute session expiry.
 - Atomic refresh rotation with trusted identity restoration.
@@ -37,7 +39,8 @@ runtime completion in the documentation-only branch. The planned scope is:
   endpoint-matrix evidence.
 
 Until those checks pass, the current readiness claims must not be expanded to
-include complete session-management or production browser-session readiness.
+include complete browser-session, managed-provider, or production-scale
+readiness.
 
 ## Evidence-based status
 

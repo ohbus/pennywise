@@ -99,8 +99,9 @@ parity, provider compatibility, evidence, and operations.
 
 ## Owned implementation paths
 
-The future runtime increment owns the following paths. This documentation-only
-increment does not modify them:
+The runtime increment owns the following paths; the current branch has modified
+the session/auth and evidence paths below. Browser cookie and native PKCE
+behavior remains explicitly planned under the related client-security work:
 
 ```text
 app/accounts/src/main/kotlin/**/accounts/auth/

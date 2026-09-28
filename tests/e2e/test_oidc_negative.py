@@ -20,6 +20,10 @@ TOKEN: Final[str] = os.environ.get("BEARER_TOKEN", "")
 WRONG_ISSUER_TOKEN: Final[str] = os.environ.get("WRONG_ISSUER_TOKEN", "")
 EXPIRED_TOKEN: Final[str] = os.environ.get("EXPIRED_TOKEN", "")
 INVALID_SUBJECT_TOKEN: Final[str] = os.environ.get("INVALID_SUBJECT_TOKEN", "")
+ACCOUNTS_URL: Final[str] = os.environ.get("ACCOUNTS_URL", "http://localhost:8081")
+EXPENSE_CORE_URL: Final[str] = os.environ.get("EXPENSE_CORE_URL", "http://localhost:8082")
+NOTIFICATIONS_URL: Final[str] = os.environ.get("NOTIFICATIONS_URL", "http://localhost:8083")
+BFF_URL: Final[str] = os.environ.get("BFF_URL", "http://localhost:8080")
 EXPECTED_STATUS: Final[int] = 401
 
 
@@ -34,10 +38,10 @@ class Probe:
 
 
 PROBES: Final[tuple[Probe, ...]] = (
-    Probe("Accounts", "http://localhost:8081/accounts/v1/me"),
-    Probe("Expense Core", "http://localhost:8082/expense-core/v1/groups"),
-    Probe("Notifications", "http://localhost:8083/notifications/v1/preferences"),
-    Probe("BFF", "http://localhost:8080/graphql", "POST", b'{"query":"{ groups { id name } }"}'),
+    Probe("Accounts", f"{ACCOUNTS_URL}/accounts/v1/me"),
+    Probe("Expense Core", f"{EXPENSE_CORE_URL}/expense-core/v1/groups"),
+    Probe("Notifications", f"{NOTIFICATIONS_URL}/notifications/v1/preferences"),
+    Probe("BFF", f"{BFF_URL}/graphql", "POST", b'{"query":"{ groups { id name } }"}'),
 )
 
 

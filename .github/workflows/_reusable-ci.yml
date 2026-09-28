@@ -63,6 +63,12 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: gradle
       - uses: gradle/actions/setup-gradle@v4
+      - name: Cache Gradle wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-wrapper-${{ runner.os }}-
       - name: Check formatting and contracts
         run: |
           git diff --check
@@ -72,7 +78,7 @@ jobs:
           python3 tools/ops/check_architecture.py
           python3 tools/ops/validate_sbom_baseline.py
           ./gradlew cyclonedxBom --no-daemon
-          python3 -m unittest discover -s tests/acceptance
+          PYTHONPATH=. python3 -m unittest discover -s tests/acceptance
           make workflow-validate
       - name: Upload CycloneDX SBOM
         uses: actions/upload-artifact@v4
@@ -129,6 +135,12 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: gradle
       - uses: gradle/actions/setup-gradle@v4
+      - name: Cache Gradle wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-wrapper-${{ runner.os }}-
       - name: Restore shared Gradle build cache
         uses: actions/cache@v4
         with:
@@ -205,6 +217,7 @@ jobs:
           INCLUDE_EXPIRED=true tests/e2e/acquire_local_tokens.sh
       - name: Run negative OIDC security paths and live REST edge checks
         env:
+          PYTHONPATH: .
           BEARER_TOKEN: ${{ steps.oidc-token.outputs.token }}
           PENNYWISE_E2E_TOKEN_A: ${{ steps.oidc-token.outputs.token }}
           PENNYWISE_E2E_TOKEN_B: ${{ steps.oidc-token.outputs.e2e_bob_token }}
@@ -274,6 +287,7 @@ jobs:
           INCLUDE_EXPIRED=true tests/e2e/acquire_local_tokens.sh
       - name: Run acceptance, Bruno, product lifecycle, and offline replay suites
         env:
+          PYTHONPATH: .
           BRUNO_ENV: local-oidc
           BRUNO_TOKEN: ${{ steps.oidc-token.outputs.token }}
           PENNYWISE_BRUNO_TOKEN: ${{ steps.oidc-token.outputs.token }}
@@ -332,6 +346,7 @@ jobs:
           tests/e2e/acquire_local_tokens.sh
       - name: Run concurrency, WebSocket subscriptions, and chaos recovery suites
         env:
+          PYTHONPATH: .
           BEARER_TOKEN: ${{ steps.oidc-token.outputs.token }}
           PENNYWISE_E2E_TOKEN_A: ${{ steps.oidc-token.outputs.token }}
           PENNYWISE_E2E_TOKEN_B: ${{ steps.oidc-token.outputs.e2e_bob_token }}

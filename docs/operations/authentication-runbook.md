@@ -10,6 +10,12 @@
 5. Use a newly minted signed test token; never reuse a production credential in
    diagnostics.
 
+Redis command and connection waits default to two seconds. If Redis is
+unavailable, refresh admission must fail closed with `429`; do not replace the
+rate-limit store with an in-memory fallback. Run `make e2e-auth-cache` only
+against the dedicated local/CI Compose topology to verify eviction, outage,
+bounded timeout, and restart recovery.
+
 Ordinary bearer requests validate locally and must not require an Accounts or
 `auth_sessions` lookup. Refresh and logout are writer-authoritative operations.
 

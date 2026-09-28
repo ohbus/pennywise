@@ -31,7 +31,9 @@ Gradle test runs and compilation. Instead, the parallel E2E jobs depend directly
 `verify` and consume the pre-built application `bootJar` artifacts (`app-jar-*`),
 allowing `Dockerfile.fast` to package lightweight runtime containers in seconds.
 The monolithic E2E stage is split into three parallel streams:
-1. `e2e-edge-and-security`: Contract smoke, negative OIDC JWT path probes, and live REST edge cases (`make e2e-rest-edge`).
+1. `e2e-edge-and-security`: Contract smoke, Redis authentication-cache
+   eviction/outage/restart checks (`make e2e-auth-cache`), negative OIDC JWT
+   path probes, and live REST edge cases (`make e2e-rest-edge`).
 2. `e2e-product-and-offline`: Public acceptance suite (`make acceptance-live`), ordered Bruno collection (`make bruno-run`), live multi-service product lifecycle (`make e2e-live`), and offline client synchronization / replay resilience (`make e2e-offline`).
 3. `e2e-concurrency-and-chaos`: Real-time WebSocket GraphQL subscription invalidation, concurrent member edit race resolution (`make e2e-concurrency`), message broker outage chaos, and transactional outbox drain recovery (`make e2e-chaos`).
 

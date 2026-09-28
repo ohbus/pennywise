@@ -10,9 +10,10 @@ GraphQL/WebSocket/Redis failure evidence are now recorded. The current flow is
 Squarewise-owned, so provider-grant revocation is explicitly not applicable;
 the provider boundary and future delegated-grant requirements are documented in
 `docs/security/provider-grant-revocation-boundary.md`. The BFF browser
-cookie/CSRF runtime boundary is now implemented; full cache-matrix and
-hosted/production evidence remain tracked below. Native application integration
-remains outside the deferred UI boundary.
+cookie/CSRF runtime boundary is now implemented; the local cache matrix and
+local OIDC negative evidence are complete. Hosted/production-scale evidence
+remains a separately recorded boundary. Native application integration remains
+outside the deferred UI boundary.
 
 ## Implemented increments
 
@@ -283,6 +284,11 @@ Tokens must not be placed in query parameters or logs.
 - Provider-subject change revocation.
 - Writer-only routing.
 - Cache invalidation after mutation.
+
+The live cache-resilience matrix is implemented by
+`tests/e2e/test_auth_cache_resilience.py` and `make e2e-auth-cache`. It proves
+rate-limit bucket eviction, Redis outage fail-closed behavior, bounded client
+waits, and restart recovery against the dedicated Compose Redis instance.
 
 ### Controller and boundary tests
 

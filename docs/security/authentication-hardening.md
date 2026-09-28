@@ -64,8 +64,9 @@ The current status for AUTH-01 through AUTH-08 is maintained in
 trusted refresh identity, logout, exact public-route matching, and local REST,
 GraphQL, WebSocket-negative, Redis-failure, and BFF browser cookie/CSRF evidence
 are implemented. Native application integration, provider-owned revocation where
-a provider owns the grant, full cache eviction/restart evidence, and
-production-scale evidence remain separate follow-up gates. Account
+a provider owns the grant, and production-scale evidence remain separate
+follow-up gates. Local cache eviction/restart evidence is implemented by the
+AUTH-08 E2E matrix. Account
 deletion now bulk-revokes active sessions, refresh sessions bind the original
 provider-qualified subject, and token responses prohibit intermediary caching.
 

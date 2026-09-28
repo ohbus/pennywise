@@ -62,6 +62,12 @@ logout is idempotent and does not disclose session existence.
 
 ## Security requirements
 
+The browser-facing BFF proxies these operations without exposing the Accounts
+token body. Verification sets Secure, HttpOnly access/refresh cookies; refresh
+and logout require the exact configured Origin plus a matching readable CSRF
+nonce/header pair. Native clients continue to call the Accounts contract with
+bearer-token storage governed by the native-client policy.
+
 - Generic anti-enumeration responses and bounded request cost.
 - Email normalization before lookup, throttling, or credential issuance.
 - Atomic single-use redemption and concurrent redemption tests.

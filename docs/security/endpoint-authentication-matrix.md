@@ -84,7 +84,8 @@ The complete operation inventory is maintained in the companion
 [`public-interface-operation-matrix.md`](../quality/public-interface-operation-matrix.md)
 and contract validator. AUTH-08 local evidence now covers the authentication
 boundary, resource authorization, malformed/anonymous/forged-token paths,
-GraphQL HTTP, WebSocket handshake rejection, and Redis-unavailable refresh
-admission. A route is not considered complete from a shared filter test alone;
+GraphQL HTTP, WebSocket handshake rejection, Redis eviction/restart, and
+Redis-unavailable refresh admission. A route is not considered complete from a
+shared filter test alone;
 the companion matrix records remaining dependency, retry, timeout, replay,
 backpressure, and production-environment dimensions per operation.

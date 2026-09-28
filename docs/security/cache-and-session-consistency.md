@@ -70,6 +70,11 @@ Session mutation must invalidate or advance a version for relevant cached data:
 Cache failure must cause a safe writer fallback or a fail-closed security result.
 It must never silently disable revocation or rate limiting.
 
+Accounts bounds Redis connection and command waits to two seconds by default via
+`SQUAREWISE_REDIS_CONNECT_TIMEOUT` and `SQUAREWISE_REDIS_COMMAND_TIMEOUT`.
+This keeps the fail-closed rate-limit result observable as a bounded `429`
+instead of allowing an unavailable cache to hold an authentication request open.
+
 The implemented refresh path now also persists the provider-qualified subject
 with each session and compares it with the writer lookup before issuing a child
 token. Account deletion uses a single writer bulk update to revoke all active
@@ -86,4 +91,11 @@ become an accidental credential cache.
 - Redis unavailable.
 - Cache eviction during refresh.
 - Writer update followed by cache read.
+
+The executable local matrix is `tests/e2e/test_auth_cache_resilience.py` (also
+available as `make e2e-auth-cache`). It deletes only Squarewise rate-limit keys,
+fills the refresh admission bucket, verifies eviction restores admission, stops
+Redis and expects a bounded fail-closed `429`, then starts Redis and verifies the
+normal invalid-token `401` path returns. It must run only against the dedicated
+local/CI Compose Redis instance; it must never target a shared environment.
 - No raw credential in key/value/log output.

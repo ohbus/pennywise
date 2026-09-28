@@ -25,6 +25,12 @@ production-provider evidence. The endpoint inventory and required negative
 matrix are maintained in
 [`endpoint-authentication-matrix.md`](../security/endpoint-authentication-matrix.md).
 
+The BFF browser session routes (`/auth/login/start`, `/auth/login/verify`,
+`/auth/token/refresh`, and `/auth/logout`) are implemented as a cookie boundary;
+their access and refresh credentials are never returned to browser JavaScript.
+The remaining production-provider and production-scale claims are intentionally
+separate from local implementation status.
+
 - every expense and settlement money value carries an explicit ISO 4217 currency
   in the REST and GraphQL request contract; the server never substitutes a
   currency. A future client may retain the last selected currency locally only

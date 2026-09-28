@@ -19,7 +19,7 @@ Update the GitHub Actions workflows and documentation to target `master` as the 
 ## Acceptance criteria
 
 - `ci-branch.yml` ignores pushes to `master` (`branches-ignore: [master]`).
-- `ci-main.yml` is renamed/migrated to `ci-master.yml` triggering on pushes to `master` (`branches: [master]`) with concurrency group `pennywise-master`.
+- `ci-main.yml` is renamed/migrated to `ci-master.yml` triggering on pushes to `master` (`branches: [master]`) with concurrency group `squarewise-master`.
 - `docs/operations/ci.md` documents `ci-master.yml` and `master` branch image publishing.
 - `make workflow-validate`, `python3 tools/contracts/validate.py`, and `git diff --check` pass.
 

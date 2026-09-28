@@ -29,14 +29,14 @@ tests, and REST contracts.
 
 ## Owned Paths
 
-- `app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/search/`
-- `app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/search/`
+- `app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/search/`
+- `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/search/`
 - `contracts/rest/expense-core.openapi.json`
-- `libs/ids/src/main/kotlin/com/subhrodip/pennywise/ids/ApiEndpoints.kt`
+- `libs/ids/src/main/kotlin/com/subhrodip/squarewise/ids/ApiEndpoints.kt`
 - `docs/tasks/details/CORE-21.md`
 
 ## Verification Evidence
 
 - `python3 tools/contracts/validate.py`: All 6 JSON contracts, GraphQL declarations, and task registry valid.
-- `./gradlew :app:expense-core:test --tests "com.subhrodip.pennywise.expensecore.search.*" --no-daemon`: BUILD SUCCESSFUL.
+- `./gradlew :app:expense-core:test --tests "com.subhrodip.squarewise.expensecore.search.*" --no-daemon`: BUILD SUCCESSFUL.
 - `make check`: All tests, Spotless formatting, coverage, and build checks passed cleanly.

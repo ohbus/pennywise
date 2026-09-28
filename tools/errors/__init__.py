@@ -1,1 +1,1 @@
-"""Pennywise error taxonomy and governance tools."""
+"""Squarewise error taxonomy and governance tools."""

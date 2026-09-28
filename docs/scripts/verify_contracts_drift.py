@@ -5,7 +5,7 @@ import re
 from typing import Dict, List, Set, Tuple, Any
 
 def get_api_endpoints_map() -> Dict[str, str]:
-    with open('libs/ids/src/main/kotlin/com/subhrodip/pennywise/ids/contracts/ApiEndpoints.kt', 'r', encoding='utf-8') as f:
+    with open('libs/ids/src/main/kotlin/com/subhrodip/squarewise/ids/contracts/ApiEndpoints.kt', 'r', encoding='utf-8') as f:
         lines = f.readlines()
     
     # Track current context/object
@@ -62,7 +62,7 @@ def evaluate_path_expression(expr: str, class_prefix: str, constants: Dict[str, 
             val = expr
     
     # If val starts with service_base (e.g. /accounts/v1/...), strip the service_base to get the OpenAPI relative path
-    # Because OpenAPI paths in Pennywise are relative to servers url (/accounts/v1, /expense-core/v1, /notifications/v1)
+    # Because OpenAPI paths in Squarewise are relative to servers url (/accounts/v1, /expense-core/v1, /notifications/v1)
     if class_prefix and not val.startswith(service_base):
         combined = (class_prefix.rstrip('/') + '/' + val.lstrip('/')).replace('//', '/')
     else:

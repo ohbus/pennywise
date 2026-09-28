@@ -2,7 +2,7 @@
 
 ## Current assessment
 
-Pennywise has a sound service-level authorization boundary and uses Spring
+Squarewise has a sound service-level authorization boundary and uses Spring
 Security resource-server APIs, but its concrete authentication is currently a
 local acceptance harness. Under the `local` profile, any bearer token is
 accepted literally as the user subject. This is intentionally non-production
@@ -11,7 +11,7 @@ behavior and does not prove OIDC integration.
 Keycloak service, realm, issuer/JWK configuration, and reusable resource-server
 adapters now exist for local OIDC and production/staging profiles. Discovery
 startup and security-library tests are evidenced. There is still no
-Pennywise-owned passwordless login flow, refresh-token lifecycle, or complete
+Squarewise-owned passwordless login flow, refresh-token lifecycle, or complete
 real-token application E2E proof. See the detailed
 [authentication audit](authentication-audit.md).
 
@@ -21,7 +21,7 @@ The application owns the login UX and identity mapping; an OIDC provider owns
 identity proof and token signing. The provider is selected by configuration:
 
 ```text
-Client -> Pennywise auth endpoints -> configured OIDC provider
+Client -> Squarewise auth endpoints -> configured OIDC provider
                                       |-- local Keycloak
                                       |-- Auth0
                                       |-- Okta / Entra / other OIDC
@@ -33,7 +33,7 @@ identity key is a provider-qualified subject, never an email address.
 
 ## Login experience
 
-The default path should be a Pennywise-branded email magic link. A short-lived,
+The default path should be a Squarewise-branded email magic link. A short-lived,
 single-use email code is the fallback for mobile or interrupted browser flows.
 Both paths require generic responses, request throttling, resend cooldowns,
 attempt limits, hashed credential storage, expiry, audit events, and no raw
@@ -73,7 +73,7 @@ completed slice.
 | AUTH-04 | Issuer, audience, algorithm, expiry, and subject validation | P0 | AUTH-03 | Planned |
 | AUTH-05 | Explicit opt-in/localhost safeguards for local demo auth | P0 | AUTH-01 | Planned |
 | AUTH-06 | Optional local Keycloak realm and Mailpit bootstrap | P1 | AUTH-03 | Planned |
-| AUTH-07 | Pennywise-owned login start/callback contracts | P1 | AUTH-01 | Planned |
+| AUTH-07 | Squarewise-owned login start/callback contracts | P1 | AUTH-01 | Planned |
 | AUTH-08 | Magic-link and one-time-code implementation | P1 | AUTH-07 | Planned |
 | AUTH-09 | Rate limiting and email-enumeration protection | P0 | AUTH-08 | Planned |
 | AUTH-10 | Identity mapping using provider-qualified subjects | P0 | AUTH-03 | Planned |
@@ -114,7 +114,7 @@ acquisition. Keep a separate Bruno environment and never commit credentials.
 
 ### AUTH-07/AUTH-09 — Passwordless login
 
-Define Pennywise-owned login endpoints for start, callback, code verification,
+Define Squarewise-owned login endpoints for start, callback, code verification,
 resend, and logout. Responses must not reveal whether an email exists. Links
 and codes are single-use, hashed at rest, expiry-bound, attempt-limited,
 resend-throttled, and excluded from logs/traces. Test replay, expiry, brute

@@ -1,4 +1,4 @@
-# Pennywise Production Readiness Audit
+# Squarewise Production Readiness Audit
 
 ## Current implementation status (2026-09-21)
 
@@ -31,7 +31,7 @@ provisioned until the remaining code and configuration work is complete.
 ## How to read this document
 
 This audit is the **single authoritative decision document** for whether the
-Pennywise backend can be shipped to production for 1–10 million daily active
+Squarewise backend can be shipped to production for 1–10 million daily active
 users. It is structured so that any engineer — including an intern with zero
 context — can:
 
@@ -99,7 +99,7 @@ context — can:
 
 **Decision: 🔴 DO NOT approve production launch or a 1M+ user capacity claim.**
 
-Pennywise is a substantial, well-structured backend implementation with strong
+Squarewise is a substantial, well-structured backend implementation with strong
 local contract validation, authentication coverage, integration testing, and
 reconciliation evidence. However, the code and configuration contain multiple
 **fail-open defaults**, **incomplete security boundaries**, **unbounded data
@@ -166,7 +166,7 @@ closed before production-readiness approval.
 | CRIT-01 | 🔴 Critical | Financial correctness | Settlements are not included in the balance-posting aggregation; `SettlementSuggestionEngine` reads only expense balance postings, so recording a repayment does not change balances or suggestions | **One transactional financial model** — every financial effect (expense, settlement, reversal) must produce ledger postings that feed the same aggregation query. Add durable mutation idempotency, reconciliation scripts, and concurrent retry tests. | **Event Sourcing** / **Ledger Pattern** — all state changes produce immutable entries; **CQRS** — derive balances from the single posting stream |
 | CRIT-02 | 🔴 Critical | Data integrity | `JpaExpenseStore.create` accepts `idempotencyKey` but **never persists or compares it**. Idempotency is based only on client-supplied `expenseId`; a retry with a new expense ID creates duplicate financial postings. Cross-group collision: existing expense ID lookup happens before group verification | **Durable idempotency record** with unique constraint on `(groupId, actorId, operationScope, idempotencyKey)`, payload hash, replayed response, conflict semantics, and tests for unknown outcomes, cross-group collisions, concurrent retries, and altered payloads | **Idempotent Receiver** pattern — persist the idempotency key atomically with the side effect; **Optimistic Locking** for conflict detection |
 | CRIT-03 | 🔴 Critical | Authentication | `AuthSessionConfiguration.kt` is not profile-restricted and wires `InternalJwtTokenProvider` when no `IdentityProviderPort` bean exists. Constructor supplies **fallback JWT secret, issuer, and audience values**. Production passwordless flow can mint internally signed HMAC tokens instead of using the configured external OIDC provider | Production provider selection must **fail closed**. Remove fallback values. Use `@Profile("test", "local")` for internal JWT provider. Add startup validation that rejects missing OIDC configuration. Add provider-issued token integration test | **Fail-Closed Security** principle; **Dependency Injection** with profile-gated beans; **Strategy Pattern** for identity provider selection |
-| CRIT-04 | 🔴 Critical | Messaging | `OutboxRelayDaemon` supplies `InMemoryBroker` via `@ConditionalOnMissingBean(BrokerPublisher::class)`, while RabbitMQ publisher requires `pennywise.outbox.rabbit-enabled=true`. If outbox is enabled without RabbitMQ flag, committed financial events stay **process-local** and are lost on restart | Production must **require** an explicit durable broker publisher and fail startup when absent. `InMemoryBroker` must be `@Profile("test", "local")` only. Add Spring context test for production profile | **Transactional Outbox** pattern requires a durable downstream; **Fail-Fast** principle — detect misconfiguration at startup, not at runtime |
+| CRIT-04 | 🔴 Critical | Messaging | `OutboxRelayDaemon` supplies `InMemoryBroker` via `@ConditionalOnMissingBean(BrokerPublisher::class)`, while RabbitMQ publisher requires `squarewise.outbox.rabbit-enabled=true`. If outbox is enabled without RabbitMQ flag, committed financial events stay **process-local** and are lost on restart | Production must **require** an explicit durable broker publisher and fail startup when absent. `InMemoryBroker` must be `@Profile("test", "local")` only. Add Spring context test for production profile | **Transactional Outbox** pattern requires a durable downstream; **Fail-Fast** principle — detect misconfiguration at startup, not at runtime |
 | CRIT-05 | 🔴 Critical | Persistence | `InMemoryNotificationInboxStore` and `InMemoryProfileStore` are registered as Spring `@Service`/`@Component` alongside JPA implementations. `NotificationInbox` constructor defaults to `InMemoryNotificationInboxStore`. A missing bean or context change silently selects process-local storage that loses data on restart | Make in-memory stores `@Profile("test", "local")` only. Remove constructor default arguments that select in-memory stores. Add Spring context tests proving production profile selects JPA implementations | **Port/Adapter** pattern (Hexagonal Architecture) — adapters are wired via DI, not constructor defaults; **Liskov Substitution** violation risk — in-memory and durable stores have different durability contracts |
 
 ---
@@ -399,8 +399,8 @@ user.
 > local memory and **lost forever when the process restarts**.
 
 **What happens at 1M+ DAU**: If the operator enables the outbox worker
-(`pennywise.outbox.enabled=true`) but forgets to set
-`pennywise.outbox.rabbit-enabled=true`, all committed financial events
+(`squarewise.outbox.enabled=true`) but forgets to set
+`squarewise.outbox.rabbit-enabled=true`, all committed financial events
 (expense created, settlement recorded, balance changed) are silently
 discarded. Notifications are never sent. The BFF never receives change hints.
 Users see stale data. Financial audit trails are incomplete.
@@ -408,7 +408,7 @@ Users see stale data. Financial audit trails are incomplete.
 **Where to look in code**:
 - `app/expense-core/.../OutboxRelayDaemon.kt` — `@ConditionalOnMissingBean(BrokerPublisher::class)`
   supplies `InMemoryBroker`
-- `pennywise.outbox.rabbit-enabled` property gates the RabbitMQ publisher
+- `squarewise.outbox.rabbit-enabled` property gates the RabbitMQ publisher
 
 **Design principle**: **Transactional Outbox Pattern** requires a **durable**
 downstream. An in-memory publisher violates the fundamental guarantee.
@@ -434,7 +434,7 @@ downstream. An in-memory publisher violates the fundamental guarantee.
        init {
            requireNotNull(brokerPublisher) {
                "Production outbox requires a durable BrokerPublisher. " +
-               "Set pennywise.outbox.rabbit-enabled=true or provide a " +
+               "Set squarewise.outbox.rabbit-enabled=true or provide a " +
                "BrokerPublisher bean."
            }
        }
@@ -660,7 +660,7 @@ thousands of operations.
 > **Plain English**: When the notification system can't look up a user's email
 > preferences (e.g., database is down), it defaults to "email is enabled" and
 > sends the notification anyway. If no email address is found, it **invents**
-> a `@pennywise.local` address. If sending fails, the error is swallowed.
+> a `@squarewise.local` address. If sending fails, the error is swallowed.
 
 **What happens at 1M+ DAU**: A user who opted out of email notifications
 starts receiving them during a database outage. Users who haven't provided
@@ -732,11 +732,11 @@ Notifications DB, and modify any financial data. This violates the
 **Implementation steps**:
 1. Create separate PostgreSQL roles per service:
    ```sql
-   CREATE ROLE pennywise_accounts WITH LOGIN PASSWORD '...';
-   CREATE ROLE pennywise_expense WITH LOGIN PASSWORD '...';
-   CREATE ROLE pennywise_notifications WITH LOGIN PASSWORD '...';
-   GRANT ALL ON DATABASE accounts_db TO pennywise_accounts;
-   REVOKE ALL ON DATABASE accounts_db FROM pennywise_expense;
+   CREATE ROLE squarewise_accounts WITH LOGIN PASSWORD '...';
+   CREATE ROLE squarewise_expense WITH LOGIN PASSWORD '...';
+   CREATE ROLE squarewise_notifications WITH LOGIN PASSWORD '...';
+   GRANT ALL ON DATABASE accounts_db TO squarewise_accounts;
+   REVOKE ALL ON DATABASE accounts_db FROM squarewise_expense;
    -- etc.
    ```
 2. Create separate RabbitMQ users with vhost permissions
@@ -933,7 +933,7 @@ correlation. See [error-flow.md](../architecture/error-flow.md).
 > configuration is missing, the BFF starts and routes requests to localhost.
 
 **Implementation**: Make URLs required with `@NotBlank` validation. Use
-`@ConfigurationProperties(prefix = "pennywise.bff.upstream")` with
+`@ConfigurationProperties(prefix = "squarewise.bff.upstream")` with
 `@Validated`. Production startup fails on missing/malformed URLs. Add context
 test.
 
@@ -1040,8 +1040,8 @@ use Redis or database-backed rate limiting.
 
 ### HIGH-23: Feature flags default to disabled
 
-> **Plain English**: `pennywise.outbox.enabled` and
-> `pennywise.auth-email-outbox.enabled` default to `false`. A production
+> **Plain English**: `squarewise.outbox.enabled` and
+> `squarewise.auth-email-outbox.enabled` default to `false`. A production
 > service can start successfully while silently not publishing events or
 > sending auth emails.
 

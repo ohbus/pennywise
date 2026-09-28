@@ -66,8 +66,8 @@ subject and independently checks group membership in the owning service.
 - Added reusable servlet and reactive decoder factories in `libs/security`.
 - Added production/staging JWT security chains to Accounts, Expense Core,
   Notifications, and the reactive BFF.
-- Issuer URI is supplied by `PENNYWISE_SECURITY_OIDC_ISSUER_URI`; audience is
-  supplied by `PENNYWISE_SECURITY_OIDC_AUDIENCE`.
+- Issuer URI is supplied by `SQUAREWISE_SECURITY_OIDC_ISSUER_URI`; audience is
+  supplied by `SQUAREWISE_SECURITY_OIDC_AUDIENCE`.
 - Keycloak discovery/JWK is used through standard Spring OIDC APIs; no
   Keycloak-specific SDK or claim is used.
 - Real Keycloak issuer availability and signed-token REST/GraphQL HTTP journeys
@@ -76,7 +76,7 @@ subject and independently checks group membership in the owning service.
   wrong-issuer, forged-signature, and unsupported-algorithm rejection are
   verified across all four HTTP boundaries. Forged-token WebSocket upgrade
   rejection is also verified. A separately signed token from the configured
-  `pennywise` issuer is rejected after its one-second expiry and the configured
+  `squarewise` issuer is rejected after its one-second expiry and the configured
   clock-skew window at all four HTTP boundaries. A dedicated provider-signed
   whitespace-only-subject token is rejected across REST, GraphQL, WebSocket,
   and Bruno boundaries; this evidence is isolated from production Compose.
@@ -100,7 +100,7 @@ The shared security library now exposes one provider-neutral claim policy and
 reuses it from both servlet and reactive decoder factories. It enforces a
 bounded, non-blank `sub` claim before identity reaches application code,
 preserves issuer/audience/time validation, and rejects unsupported algorithms.
-`PENNYWISE_SECURITY_OIDC_ALLOWED_ALGORITHMS` defaults to `RS256`; applications
+`SQUAREWISE_SECURITY_OIDC_ALLOWED_ALGORITHMS` defaults to `RS256`; applications
 may explicitly select a compatible asymmetric algorithm set for their provider.
 Symmetric algorithms and blank/absent algorithm headers are rejected. This is
 a policy guard in addition to JWK signature verification, not a replacement

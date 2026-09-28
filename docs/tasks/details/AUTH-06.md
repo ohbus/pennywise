@@ -14,11 +14,11 @@ use those names rather than localhost or ambiguous container identifiers.
   production secrets.
 - Mailpit is the local SMTP sink for passwordless-link/code tests.
 - The local Keycloak image is pinned centrally in `infra/versions.env.example`
-  and imports `infra/local/keycloak/realm/pennywise-realm.json`.
+  and imports `infra/local/keycloak/realm/squarewise-realm.json`.
 - Keycloak issuer, JWKS, and application audience are configured through
   environment variables.
 - Compose hostnames use `idp-keycloak`, `accounts-api`, `expense-core-api`,
-  `notifications-api`, `pennywise-bff`, `postgres-db`, `message-broker`, and
+  `notifications-api`, `squarewise-bff`, `postgres-db`, `message-broker`, and
   `mailpit-email`.
 - Health checks and startup dependencies use these stable names.
 - Real signed tokens replace arbitrary local bearer strings in OIDC E2E tests.
@@ -33,7 +33,7 @@ port.
 - Dependency and full-stack Compose configurations render successfully.
 - Keycloak starts healthy and exposes discovery/JWKS through its meaningful
   hostname.
-- A seeded local user can obtain a signed token for the Pennywise audience.
+- A seeded local user can obtain a signed token for the Squarewise audience.
 - All four applications accept valid tokens and reject invalid/expired tokens.
 - Mailpit receives passwordless authentication messages without leaking codes
   into application logs.
@@ -44,9 +44,9 @@ port.
 - Official Keycloak container guidance was checked before pinning the image;
   realm import uses `/opt/keycloak/data/import` and `--import-realm`.
 - Keycloak `26.7.4` started from the full local Compose topology.
-- The `pennywise` realm imported successfully from the checked-in fixture.
+- The `squarewise` realm imported successfully from the checked-in fixture.
 - OIDC discovery returned HTTP 200 at
-  `http://localhost:8090/realms/pennywise/.well-known/openid-configuration`.
+  `http://localhost:8090/realms/squarewise/.well-known/openid-configuration`.
 - Application token acquisition and real-token REST/GraphQL/WebSocket journeys
   are verified under `local-oidc`; invalid-token rejection is covered by the
   Keycloak and isolated test-issuer matrices. The applications no longer use
@@ -57,7 +57,7 @@ port.
   defaults in `infra/versions.env.example`; no application-facing local URL is
   required to be edited in the Compose YAML.
 - Added `tools/bruno/environments/local-oidc.bru`, which requires an injected
-  signed token through `PENNYWISE_BRUNO_TOKEN`.
+  signed token through `SQUAREWISE_BRUNO_TOKEN`.
 - The REST edge harness now refuses to run authenticated checks without an
   injected `BEARER_TOKEN`, preventing placeholder bearer strings from being
   mistaken for identities under OIDC validation.

@@ -18,7 +18,7 @@ Refactor multi-responsibility persistence files in Expense Core `recurring` into
 
 ## Owned paths
 
-- `app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/recurring/`
+- `app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/recurring/`
 - `docs/tasks/details/CORE-28.md`
 
 ## Acceptance criteria

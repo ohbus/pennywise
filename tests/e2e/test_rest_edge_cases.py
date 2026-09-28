@@ -18,8 +18,8 @@ ACCOUNTS_URL = os.environ.get("ACCOUNTS_URL", "http://localhost:8081")
 EXPENSE_CORE_URL = os.environ.get("EXPENSE_CORE_URL", "http://localhost:8082")
 NOTIFICATIONS_URL = os.environ.get("NOTIFICATIONS_URL", "http://localhost:8083")
 TOKEN = os.environ.get("BEARER_TOKEN")
-SECONDARY_TOKEN = os.environ.get("PENNYWISE_E2E_TOKEN_B", TOKEN)
-NON_MEMBER_TOKEN = os.environ.get("PENNYWISE_E2E_TOKEN_NONMEMBER", SECONDARY_TOKEN)
+SECONDARY_TOKEN = os.environ.get("SQUAREWISE_E2E_TOKEN_B", TOKEN)
+NON_MEMBER_TOKEN = os.environ.get("SQUAREWISE_E2E_TOKEN_NONMEMBER", SECONDARY_TOKEN)
 SIGNED_SECONDARY_PERSONAS = frozenset({
     "invite-claim-user",
     "invite-replay-user",

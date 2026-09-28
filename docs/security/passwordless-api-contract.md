@@ -1,4 +1,4 @@
-# Pennywise passwordless API contract
+# Squarewise passwordless API contract
 
 This contract is provider-neutral. It is the same in local, staging, and
 production; only the configured OIDC/email adapters and secrets differ.
@@ -32,7 +32,7 @@ Request:
 
 The credential is compared against a hash, atomically marked consumed, and
 rejected when expired, replayed, over-attempted, or revoked. Successful
-verification creates the configured Pennywise session/token response. Raw
+verification creates the configured Squarewise session/token response. Raw
 credentials never appear in logs, URLs, traces, metrics, or errors.
 
 ## `POST /accounts/v1/auth/token/refresh`

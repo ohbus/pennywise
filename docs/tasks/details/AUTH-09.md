@@ -110,7 +110,7 @@ The Redis implementation must:
 - create or increment the counter and assign expiry atomically;
 - return a deterministic retry duration;
 - use bounded key and value sizes;
-- namespace and version all keys, for example `pennywise:rl:v1:<digest>`;
+- namespace and version all keys, for example `squarewise:rl:v1:<digest>`;
 - avoid unbounded cardinality and provide expiry for every key;
 - handle Redis time consistently, or document the trusted application-clock policy;
 - expose timeout and error metrics without logging keys or payloads.

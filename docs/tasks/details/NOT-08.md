@@ -39,8 +39,8 @@ Ensure `contracts/rest/notifications.openapi.json` fully declares request and re
 
 ## Owned paths
 
-- `app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/`
-- `app/notifications/src/test/kotlin/com/subhrodip/pennywise/notifications/`
+- `app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/`
+- `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/`
 - `contracts/rest/notifications.openapi.json`
 - `docs/tasks/details/NOT-08.md`
 

@@ -54,7 +54,7 @@ To satisfy Level 4 / Level 5 validation requirements, the target execution envir
 ### 1.2 Production test-data and synthetic load policy
 
 1. **Zero Production PII in Testing**:
-   - Synthetic load generation must generate deterministic or pseudo-random personas with synthetic email domains (e.g., `@loadtest.pennywise.internal`).
+   - Synthetic load generation must generate deterministic or pseudo-random personas with synthetic email domains (e.g., `@loadtest.squarewise.internal`).
    - Real user profiles, financial numbers, or production database dumps must **never** be copied into staging or test environments without an approved, automated irreversible pseudonymization/masking pipeline.
 2. **Deterministic Financial Fixtures**:
    - Workload mutation data must adhere to ISO 4217 minor-unit currency formatting and zero-sum balance principles (`SELECT SUM(amount) FROM balance_postings = 0`).
@@ -89,7 +89,7 @@ The BFF real-time subscription interface uses the RFC 6455 WebSocket transport r
 | **Rollback** | Deployment rollback rehearsal, post-rollback reconciliation, version-skew evidence | 🟡 Backward-compatible migrations verified; Rollback drill required during staging deployment | Zero data loss on rollback | Phase 7 (PR-14, PR-16) |
 | **WebSocket protocol** | Malformed frames, duplicate IDs, backpressure, replay-after-reconnect, timeout/retry semantics | 🟢 Specified by contract above; local conformance verified in QA-07 and E2E suites | Stable under 100K+ connections | Phase 7 (PR-16) |
 | **Secret rotation** | JWT signing key, DB credential, broker credential, OIDC secret rotation without downtime | 🟡 Decoupled config validated; Live zero-downtime rotation drill required | Zero user-visible interruption | Phase 4 (PR-07) |
-| **Alert routing** | Each alert condition triggers correct on-call notification within SLA | 🟡 Alerts defined in `infra/observability/rules/pennywise.yml`; PagerDuty/webhook routing verified in target environment | Alert delivery < 5 min | Phase 7 (PR-16) |
+| **Alert routing** | Each alert condition triggers correct on-call notification within SLA | 🟡 Alerts defined in `infra/observability/rules/squarewise.yml`; PagerDuty/webhook routing verified in target environment | Alert delivery < 5 min | Phase 7 (PR-16) |
 | **Multi-replica** | ≥3 replicas per service, cross-replica event fanout, no sticky sessions | 🟡 Multi-replica Compose configured; Cloud cluster deployment required | Traffic distributed, zero errors during scale events | Phase 7 (PR-16) |
 
 ---
@@ -107,11 +107,11 @@ The BFF real-time subscription interface uses the RFC 6455 WebSocket transport r
 ### 4.2 Failover and restore drill procedure
 1. **PostgreSQL Failover**: Trigger controlled failover to standby replica while k6 mutation load is running. Verify that client connections retry and reconnect within 30 seconds; zero financial transactions are lost.
 2. **RabbitMQ Broker Outage**: Stop primary broker node for 60 seconds. Verify that Expense Core buffers committed events in the transactional outbox without failing client write requests. Verify that outbox relay resumes delivery upon broker recovery.
-3. **Backup and Restore**: Take automated snapshot/WAL backup of `pennywise_expense_core`. Restore into an isolated database instance. Execute reconciliation script `tools/ops/reconcile_mutation_fixture.py` against the restored database to confirm zero data corruption.
+3. **Backup and Restore**: Take automated snapshot/WAL backup of `squarewise_expense_core`. Restore into an isolated database instance. Execute reconciliation script `tools/ops/reconcile_mutation_fixture.py` against the restored database to confirm zero data corruption.
 
 ### 4.3 Security scanning and hygiene verification
 1. Execute `make security-hygiene` to confirm 0 leaked credentials in tracked assets.
-2. Run container vulnerability scanner (Trivy / Grype) against built release images (`pennywise-accounts`, `pennywise-expense-core`, `pennywise-notifications`, `pennywise-bff`). Confirm zero Unresolved Critical or High CVEs.
+2. Run container vulnerability scanner (Trivy / Grype) against built release images (`squarewise-accounts`, `squarewise-expense-core`, `squarewise-notifications`, `squarewise-bff`). Confirm zero Unresolved Critical or High CVEs.
 3. Validate software supply chain using `make sbom-validate`.
 
 ### 4.4 Rollback procedure and version-skew verification

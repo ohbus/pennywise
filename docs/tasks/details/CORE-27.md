@@ -34,9 +34,9 @@ Refactor multi-responsibility persistence files in Expense Core (`expenses`, `sy
 
 ## Owned paths
 
-- `app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/`
-- `app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/sync/`
-- `app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/messaging/`
+- `app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/expenses/`
+- `app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/sync/`
+- `app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/messaging/`
 - `docs/tasks/details/CORE-27.md`
 
 ## Acceptance criteria

@@ -1,0 +1,66 @@
+groups:
+  - name: squarewise-availability
+    rules:
+      - alert: SquarewiseServiceDown
+        expr: up{job="squarewise"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Squarewise service is unavailable
+          description: "{{ $labels.instance }} has not been scrapeable for two minutes."
+          runbook: docs/operations/production-hardening.md#service-unavailable
+      - alert: SquarewiseHighServerErrorRate
+        expr: sum by (service) (rate(http_server_requests_seconds_count{job="squarewise",status=~"5.."}[5m])) / clamp_min(sum by (service) (rate(http_server_requests_seconds_count{job="squarewise"}[5m])), 0.001) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: Squarewise server error rate is high
+          description: "{{ $labels.service }} is returning more than 5% server errors."
+          runbook: docs/operations/production-hardening.md#high-error-rate
+      - alert: SquarewiseHighRequestLatency
+        expr: histogram_quantile(0.95, sum by (service, le) (rate(http_server_requests_seconds_bucket{job="squarewise"}[10m]))) > 1.0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Squarewise request latency is elevated
+          description: "{{ $labels.service }} p95 request latency exceeds one second."
+          runbook: docs/operations/production-hardening.md#high-latency
+      - alert: SquarewiseJvmMemoryPressure
+        expr: jvm_memory_used_bytes{job="squarewise",area="heap"} / jvm_memory_max_bytes{job="squarewise",area="heap"} > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Squarewise JVM heap pressure is high
+          description: "{{ $labels.service }} heap usage is above 85%."
+          runbook: docs/operations/production-hardening.md#jvm-pressure
+      - alert: SquarewiseReaderReplayLag
+        expr: squarewise_db_reader_lag_ms{job="squarewise"} > 5000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Squarewise reader replay lag is elevated
+          description: "{{ $labels.service }} reader {{ $labels.reader }} exceeds the 5 second local policy budget."
+          runbook: docs/operations/cqrs-replica.md#reader-lag
+      - alert: SquarewiseReaderFailures
+        expr: sum by (service, reader) (rate(squarewise_db_reader_failure_total{job="squarewise"}[5m])) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Squarewise reader health failures detected
+          description: "{{ $labels.service }} reader {{ $labels.reader }} is failing health or connection checks."
+          runbook: docs/operations/cqrs-replica.md#reader-outage
+      - alert: SquarewiseReaderFallbackPressure
+        expr: sum by (service) (rate(squarewise_db_fallback_total{job="squarewise"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Squarewise is frequently falling back to the writer
+          description: "{{ $labels.service }} is using more than one bounded reader fallback per second."
+          runbook: docs/operations/cqrs-replica.md#writer-fallback

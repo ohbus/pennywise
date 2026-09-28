@@ -24,7 +24,7 @@ promotion.
 - [ ] Production backup/restore, alert routing, secret rotation, ingress controls, image/license scanning, and rollback compatibility remain deployment gates.
 
 Evidence is recorded in `docs/tasks/progress.md`; automated reconciliation verified via `tools/ops/reconcile_mutation_fixture.py`, Bruno output was written to
-`/tmp/pennywise-bruno/assertions.json`, quality assertions to
-`/tmp/pennywise-bruno/quality2.json`, and Prometheus/Grafana were verified on
+`/tmp/squarewise-bruno/assertions.json`, quality assertions to
+`/tmp/squarewise-bruno/quality2.json`, and Prometheus/Grafana were verified on
 ports 9090 and 3000. Local metrics and latency results must not be presented as
 production capacity guarantees.

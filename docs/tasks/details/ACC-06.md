@@ -15,7 +15,7 @@ Refactor multi-responsibility persistence files in the Accounts service into ent
 
 ## Owned paths
 
-- `app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/`
+- `app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/`
 - `docs/tasks/details/ACC-06.md`
 
 ## Acceptance criteria

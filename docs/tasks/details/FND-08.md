@@ -3,14 +3,14 @@
 ## Objective
 
 Refactor remaining multi-class and port files across the codebase to adhere to clean enterprise design:
-1. `app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/ProfileStore.kt`:
+1. `app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/ProfileStore.kt`:
    - Extract `ProfileStore` interface, `StoredProfile` data class, and `InMemoryProfileStore` from `ProfileController.kt` into dedicated `ProfileStore.kt` and `InMemoryProfileStore.kt`.
    - Update `ProfileController` to inject `DeletionRequestService` and `ExportRequestService` via Spring constructor injection without inline instantations.
-2. `app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/`:
+2. `app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/`:
    - Extract `GroupStore` interface and `InMemoryGroupStore` from `GroupController.kt` into dedicated `GroupStore.kt` and `InMemoryGroupStore.kt`.
-3. `app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/`:
+3. `app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/`:
    - Extract `Settlement` domain model, `SettlementStatus` enum, `SettlementStore` interface, and `InMemorySettlementStore` from `SettlementService.kt` into dedicated `Settlement.kt`, `SettlementStore.kt`, and `InMemorySettlementStore.kt`.
-4. `app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/`:
+4. `app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/`:
    - Extract `TransactionalNotificationEventProcessor` from `NotificationEventConsumer.kt` into `TransactionalNotificationEventProcessor.kt`.
 5. Retain 100% existing test passing rate, API compatibility, and provide structured KDoc comments.
 
@@ -21,10 +21,10 @@ Refactor remaining multi-class and port files across the codebase to adhere to c
 
 ## Owned paths
 
-- `app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/`
-- `app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/`
-- `app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/`
-- `app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/`
+- `app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/`
+- `app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/`
+- `app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/`
+- `app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/`
 - `docs/tasks/details/FND-08.md`
 
 ## Acceptance criteria

@@ -1801,9 +1801,9 @@
         "CORE-13"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/recurring/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/recurring/",
         "app/expense-core/src/main/resources/db/migration/",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/recurring/"
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/recurring/"
       ],
       "specification": "docs/tasks/details/CORE-15.md",
       "acceptance_criteria": [
@@ -1869,8 +1869,8 @@
         "NOT-05"
       ],
       "owned_paths": [
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/email/",
-        "app/notifications/src/test/kotlin/com/subhrodip/pennywise/notifications/email/"
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/email/",
+        "app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/email/"
       ],
       "specification": "docs/tasks/details/NOT-06.md",
       "acceptance_criteria": [
@@ -1902,8 +1902,8 @@
         "ACC-02"
       ],
       "owned_paths": [
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/",
-        "app/accounts/src/test/kotlin/com/subhrodip/pennywise/accounts/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/",
+        "app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/",
         "contracts/rest/accounts.openapi.json"
       ],
       "specification": "docs/tasks/details/ACC-03.md",
@@ -1937,8 +1937,8 @@
         "CORE-13"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/settlements/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/settlements/",
         "contracts/rest/expense-core.openapi.json"
       ],
       "specification": "docs/tasks/details/CORE-16.md",
@@ -1973,8 +1973,8 @@
         "CORE-16"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/",
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/",
         "contracts/graphql/schema.graphqls"
       ],
       "specification": "docs/tasks/details/BFF-04.md",
@@ -2009,8 +2009,8 @@
         "NOT-06"
       ],
       "owned_paths": [
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/",
-        "app/notifications/src/test/kotlin/com/subhrodip/pennywise/notifications/"
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/",
+        "app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/"
       ],
       "specification": "docs/tasks/details/NOT-07.md",
       "acceptance_criteria": [
@@ -2049,7 +2049,7 @@
       ],
       "specification": "docs/tasks/details/OPS-08.md",
       "acceptance_criteria": [
-        "docker-compose.dev.yml supplies PENNYWISE_ACCOUNTS_URL to bff and email host/port to notifications.",
+        "docker-compose.dev.yml supplies SQUAREWISE_ACCOUNTS_URL to bff and email host/port to notifications.",
         "Makefile defines acceptance-live target executing runner.py with --require-services.",
         "docker compose -f infra/local/docker-compose.dev.yml config --quiet succeeds."
       ],
@@ -2078,8 +2078,8 @@
         "CORE-09"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/groups/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/",
         "contracts/rest/expense-core.openapi.json"
       ],
       "specification": "docs/tasks/details/CORE-17.md",
@@ -2114,8 +2114,8 @@
         "BFF-03"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/",
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/"
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/"
       ],
       "specification": "docs/tasks/details/BFF-05.md",
       "acceptance_criteria": [
@@ -2149,8 +2149,8 @@
         "NOT-02"
       ],
       "owned_paths": [
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/",
-        "app/notifications/src/test/kotlin/com/subhrodip/pennywise/notifications/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/",
+        "app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/",
         "contracts/rest/notifications.openapi.json"
       ],
       "specification": "docs/tasks/details/NOT-08.md",
@@ -2184,8 +2184,8 @@
         "ACC-01"
       ],
       "owned_paths": [
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/",
-        "app/accounts/src/test/kotlin/com/subhrodip/pennywise/accounts/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/",
+        "app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/",
         "contracts/rest/accounts.openapi.json"
       ],
       "specification": "docs/tasks/details/ACC-04.md",
@@ -2221,8 +2221,8 @@
         "CORE-17"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/groups/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/",
         "contracts/rest/expense-core.openapi.json"
       ],
       "specification": "docs/tasks/details/CORE-18.md",
@@ -2258,8 +2258,8 @@
         "CORE-18"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/",
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/",
         "contracts/graphql/schema.graphqls"
       ],
       "specification": "docs/tasks/details/BFF-06.md",
@@ -2294,8 +2294,8 @@
         "NOT-03"
       ],
       "owned_paths": [
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/",
-        "app/notifications/src/test/kotlin/com/subhrodip/pennywise/notifications/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/",
+        "app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/",
         "contracts/rest/notifications.openapi.json"
       ],
       "specification": "docs/tasks/details/NOT-09.md",
@@ -2329,8 +2329,8 @@
         "ACC-04"
       ],
       "owned_paths": [
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/",
-        "app/accounts/src/test/kotlin/com/subhrodip/pennywise/accounts/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/",
+        "app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/",
         "contracts/rest/accounts.openapi.json"
       ],
       "specification": "docs/tasks/details/ACC-05.md",
@@ -2533,8 +2533,8 @@
         "CORE-17"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/groups/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/",
         "app/expense-core/src/main/resources/db/migration/",
         "contracts/rest/expense-core.openapi.json"
       ],
@@ -2568,8 +2568,8 @@
         "NOT-07"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/recurring/",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/recurring/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/recurring/",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/recurring/",
         "contracts/rest/expense-core.openapi.json",
         "contracts/events/"
       ],
@@ -2602,8 +2602,8 @@
         "CORE-13"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/search/",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/search/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/search/",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/search/",
         "contracts/rest/expense-core.openapi.json"
       ],
       "specification": "docs/tasks/details/CORE-21.md",
@@ -2636,8 +2636,8 @@
         "CORE-10"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/groups/"
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/"
       ],
       "specification": "docs/tasks/details/CORE-22.md",
       "acceptance_criteria": [
@@ -2669,8 +2669,8 @@
         "CORE-17"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/",
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/",
         "contracts/graphql/schema.graphqls"
       ],
       "specification": "docs/tasks/details/BFF-07.md",
@@ -3084,7 +3084,7 @@
       ],
       "evidence": [
         "ci-branch.yml updated to branches-ignore: [master].",
-        "ci-main.yml renamed and updated to ci-master.yml targeting master with pennywise-master concurrency group.",
+        "ci-main.yml renamed and updated to ci-master.yml targeting master with squarewise-master concurrency group.",
         "docs/operations/ci.md updated to document ci-master.yml and master workflows.",
         "make workflow-validate, python3 tools/contracts/validate.py, and git diff --check passed."
       ],
@@ -3137,8 +3137,8 @@
         "CORE-22"
       ],
       "owned_paths": [
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/groups/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/"
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/"
       ],
       "specification": "docs/tasks/details/CORE-23.md",
       "acceptance_criteria": [
@@ -3168,7 +3168,7 @@
         "CORE-22"
       ],
       "owned_paths": [
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/groups/"
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/"
       ],
       "specification": "docs/tasks/details/CORE-24.md",
       "acceptance_criteria": [
@@ -3199,7 +3199,7 @@
         "OPS-09"
       ],
       "owned_paths": [
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/groups/",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/",
         "tests/acceptance/"
       ],
       "specification": "docs/tasks/details/CORE-25.md",
@@ -3207,7 +3207,7 @@
         "Real PostgreSQL two-transaction evidence proves serialized revisions and one effect set per commit."
       ],
       "validation_commands": [
-        "PENNYWISE_POSTGRES_TESTS=true SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pennywise_expense_core SPRING_DATASOURCE_USERNAME=pennywise SPRING_DATASOURCE_PASSWORD=pennywise-local-only ./gradlew :app:expense-core:test --tests '*PostgresGroupConcurrencyTest' --rerun-tasks --no-daemon",
+        "SQUAREWISE_POSTGRES_TESTS=true SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/squarewise_expense_core SPRING_DATASOURCE_USERNAME=squarewise SPRING_DATASOURCE_PASSWORD=squarewise-local-only ./gradlew :app:expense-core:test --tests '*PostgresGroupConcurrencyTest' --rerun-tasks --no-daemon",
         "python3 tools/contracts/validate.py",
         "git diff --check"
       ],
@@ -3230,7 +3230,7 @@
         "BFF-07"
       ],
       "owned_paths": [
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/"
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/"
       ],
       "specification": "docs/tasks/details/BFF-08.md",
       "acceptance_criteria": [
@@ -3260,8 +3260,8 @@
         "BFF-07"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/",
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/",
         "app/bff/build.gradle.kts",
         "app/bff/src/main/resources/",
         "graphql.config.yml",
@@ -3300,7 +3300,7 @@
         "BFF-07"
       ],
       "owned_paths": [
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/",
         "contracts/graphql/schema.graphqls"
       ],
       "specification": "docs/tasks/details/BFF-09.md",
@@ -3369,7 +3369,7 @@
         "CORE-22"
       ],
       "owned_paths": [
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/messaging/JpaOutboxStoreTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/messaging/JpaOutboxStoreTest.kt",
         "docs/tasks/details/QA-06.md"
       ],
       "specification": "docs/tasks/details/QA-06.md",
@@ -3515,8 +3515,8 @@
         "DOC-24"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/",
         "docs/tasks/details/CORE-26.md"
       ],
       "specification": "docs/tasks/details/CORE-26.md",
@@ -3552,7 +3552,7 @@
         "DOC-24"
       ],
       "owned_paths": [
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/",
         "docs/tasks/details/ACC-06.md"
       ],
       "specification": "docs/tasks/details/ACC-06.md",
@@ -3586,7 +3586,7 @@
         "DOC-24"
       ],
       "owned_paths": [
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/",
         "docs/tasks/details/NOT-10.md"
       ],
       "specification": "docs/tasks/details/NOT-10.md",
@@ -3620,9 +3620,9 @@
         "CORE-26"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/sync/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/messaging/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/expenses/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/sync/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/messaging/",
         "docs/tasks/details/CORE-27.md"
       ],
       "specification": "docs/tasks/details/CORE-27.md",
@@ -3658,7 +3658,7 @@
         "CORE-26"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/recurring/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/recurring/",
         "docs/tasks/details/CORE-28.md"
       ],
       "specification": "docs/tasks/details/CORE-28.md",
@@ -3691,10 +3691,10 @@
         "CORE-28"
       ],
       "owned_paths": [
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/",
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/",
         "docs/tasks/details/FND-08.md"
       ],
       "specification": "docs/tasks/details/FND-08.md",
@@ -3764,8 +3764,8 @@
         "BFF-09"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/GraphQlScalarConfiguration.kt",
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/GraphQlScalarConfiguration.kt",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/",
         "docs/quality/"
       ],
       "specification": "docs/tasks/details/BFF-10.md",
@@ -3797,7 +3797,7 @@
       ],
       "owned_paths": [
         "app/bff/src/main/resources/",
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/",
         "docs/operations/",
         "docs/api/"
       ],
@@ -3830,12 +3830,12 @@
         "QA-04"
       ],
       "owned_paths": [
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/LocalSecurityConfig.kt",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/LocalSecurityConfig.kt",
         "app/accounts/src/main/resources/db/migration/V3__alter_default_currency_varchar.sql",
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/LocalSecurityConfig.kt",
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/RestGateway.kt",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/",
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/LocalSecurityConfig.kt",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/LocalSecurityConfig.kt",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/RestGateway.kt",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/LocalSecurityConfig.kt",
         "tools/bruno/",
         "docs/operations/quickstart.md",
         "docs/tasks/details/DOC-26.md",
@@ -4260,7 +4260,7 @@
         "ERR-03"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/",
         "app/expense-core/src/test/",
         "contracts/errors/error-catalog.yaml",
         "docs/tasks/details/ERR-05.md"
@@ -4291,7 +4291,7 @@
         "ERR-05"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/expenses/",
         "app/expense-core/src/test/",
         "contracts/errors/error-catalog.yaml",
         "docs/tasks/details/ERR-06.md"
@@ -4323,9 +4323,9 @@
         "ERR-06"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/recurring/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/sync/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/recurring/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/sync/",
         "app/expense-core/src/test/",
         "docs/tasks/details/ERR-07.md"
       ],
@@ -4614,8 +4614,8 @@
         "ERR-03"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseController.kt",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseControllerTest.kt",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/expenses/ExpenseController.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/ExpenseControllerTest.kt",
         "tests/e2e/",
         "tools/bruno/",
         "docs/tasks/details/AUTH-02.md",
@@ -4657,10 +4657,10 @@
       ],
       "owned_paths": [
         "libs/security/",
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/security/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/",
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/",
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/config/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/security/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/config/",
         "app/*/src/test/kotlin/**/*Security*",
         "docs/operations/",
         "docs/tasks/details/AUTH-03.md",
@@ -4725,7 +4725,7 @@
       ],
       "evidence": [
         "Shared servlet/reactive decoder factories and production/staging security chains compile across all four applications.",
-        "Issuer and audience are externalized through PENNYWISE_SECURITY_OIDC_ISSUER_URI and PENNYWISE_SECURITY_OIDC_AUDIENCE.",
+        "Issuer and audience are externalized through SQUAREWISE_SECURITY_OIDC_ISSUER_URI and SQUAREWISE_SECURITY_OIDC_AUDIENCE.",
         "Real signed-token REST/GraphQL HTTP journeys, malformed-bearer, wrong-audience, wrong-issuer, forged-signature, unsupported-algorithm, forged-token WebSocket, expired-token, and provider-signed whitespace-only-subject 401 coverage pass across the normal Keycloak stack and isolated OIDC fixture."
       ],
       "reviewer": "/root",
@@ -4769,7 +4769,7 @@
       "evidence": [
         "Full local Compose services now have meaningful stable hostnames and application-to-dependency URLs use them in docker-compose.dev.yml.",
         "Pinned Keycloak 26.7.4 service and local realm import fixture added; Compose render and contract validation passed.",
-        "Live Keycloak startup imported the pennywise realm and OIDC discovery returned HTTP 200 at the local realm discovery endpoint.",
+        "Live Keycloak startup imported the squarewise realm and OIDC discovery returned HTTP 200 at the local realm discovery endpoint.",
         "Real token acquisition and REST/GraphQL HTTP validation pass against local Keycloak; forged-token WebSocket rejection, malformed bearer, wrong-audience, wrong-issuer, forged-signature, unsupported-algorithm, expired-token, and isolated provider-signed invalid-subject checks are executable, while compatibility-only seeded-user fixtures remain isolated from live CI."
       ],
       "reviewer": "/root",
@@ -4799,17 +4799,17 @@
         "tools/errors/validate_catalog.py",
         "tools/ops/check_security_hygiene.py",
         "tools/ops/validate_release_gate.py",
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/BffFanoutTest.kt",
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/GraphqlHttpTransportTest.kt",
-        "app/accounts/src/test/kotlin/com/subhrodip/pennywise/accounts/ProfileControllerTest.kt",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/groups/GroupControllerTest.kt",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/recurring/RecurringExpenseControllerTest.kt",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/settlements/SettlementControllerTest.kt",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/settlements/JpaSettlementStoreTest.kt",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseControllerTest.kt",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseController.kt",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/InMemorySettlementStore.kt",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/JpaSettlementStore.kt",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/BffFanoutTest.kt",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/GraphqlHttpTransportTest.kt",
+        "app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/ProfileControllerTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/GroupControllerTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/recurring/RecurringExpenseControllerTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/settlements/SettlementControllerTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/settlements/JpaSettlementStoreTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/ExpenseControllerTest.kt",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/expenses/ExpenseController.kt",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/InMemorySettlementStore.kt",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/JpaSettlementStore.kt",
         "README.md",
         "docs/implementation/technology-decisions.md",
         "docs/quality/",
@@ -5034,7 +5034,7 @@
     {
       "id": "AUTH-07",
       "parent_id": "AUTH-01",
-      "title": "Define Pennywise-owned passwordless authentication contract",
+      "title": "Define Squarewise-owned passwordless authentication contract",
       "phase": "security",
       "status": "done",
       "owner_role": "coordinator",
@@ -5053,7 +5053,7 @@
       ],
       "specification": "docs/tasks/details/AUTH-07.md",
       "acceptance_criteria": [
-        "Pennywise-owned magic-link and one-time-code endpoints are provider-neutral and environment-parity compliant.",
+        "Squarewise-owned magic-link and one-time-code endpoints are provider-neutral and environment-parity compliant.",
         "Email normalization, generic responses, expiry, hashing, single-use redemption, throttling, and anti-enumeration are specified before implementation.",
         "RFC 9700 authorization-code, PKCE, redirect, state, nonce, and refresh-token constraints are represented in contracts and tests."
       ],
@@ -5084,8 +5084,8 @@
         "OPS-09"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/expenses/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/",
         "app/expense-core/src/main/resources/db/migration/",
         "app/expense-core/src/test/",
         "docs/operations/ledger-reconciliation.md",
@@ -5107,7 +5107,7 @@
       "evidence": [
         "Settlement ledger postings and compensating reversals implemented with V10 migration; focused JpaSettlementStoreTest passed.",
         "Scoped durable expense idempotency entity/repository, payload fingerprint, replay, and altered-payload conflict handling implemented with V11 migration; focused JpaExpenseStoreTest passed.",
-        "PostgreSQL concurrent same-key test passed against local Compose `pennywise_expense_core`; reconciliation procedure executed with zero non-zero group ledgers, zero uncovered active expenses, and zero invalid settlements (local database currently has zero settlements)."
+        "PostgreSQL concurrent same-key test passed against local Compose `squarewise_expense_core`; reconciliation procedure executed with zero non-zero group ledgers, zero uncovered active expenses, and zero invalid settlements (local database currently has zero settlements)."
       ],
       "reviewer": "/root",
       "blocker": null
@@ -5126,9 +5126,9 @@
         "CORE-25"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/ExpenseEntity.kt",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/expenses/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/expenses/ExpenseEntity.kt",
         "app/expense-core/src/test/",
         "docs/tasks/details/PR-18.md",
         "docs/tasks/progress.md"
@@ -5165,8 +5165,8 @@
         "PR-17"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/messaging/",
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/consumer/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/messaging/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/consumer/",
         "app/*/src/test/",
         "docs/operations/messaging-topology-migration.md",
         "docs/tasks/details/PR-19.md",
@@ -5185,7 +5185,7 @@
         "git diff --check"
       ],
       "evidence": [
-        "Notifications test suite passed with listener poison/requeue coverage; live local RabbitMQ now has active .v2 consumers and DLX arguments, and a malformed published event was rejected into pennywise.notifications.v2.dlq; production-like retry/alert evidence remains open."
+        "Notifications test suite passed with listener poison/requeue coverage; live local RabbitMQ now has active .v2 consumers and DLX arguments, and a malformed published event was rejected into squarewise.notifications.v2.dlq; production-like retry/alert evidence remains open."
       ],
       "reviewer": "/root",
       "blocker": null
@@ -5205,8 +5205,8 @@
         "QA-07"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/config/",
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/realtime/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/config/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/realtime/",
         "app/bff/src/test/",
         "docs/tasks/details/PR-20.md",
         "docs/tasks/progress.md"
@@ -5281,7 +5281,7 @@
         "FND-08"
       ],
       "owned_paths": [
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/inbox/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/inbox/",
         "app/notifications/src/test/",
         "docs/tasks/details/PR-22.md",
         "docs/tasks/progress.md"
@@ -5316,9 +5316,9 @@
         "AUTH-03"
       ],
       "owned_paths": [
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/profile/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/sync/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/profile/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/sync/",
         "app/*/src/test/",
         "docs/tasks/details/PR-23.md",
         "docs/tasks/progress.md"
@@ -5351,8 +5351,8 @@
         "FND-08"
       ],
       "owned_paths": [
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/requests/export/",
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/requests/deletion/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/requests/export/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/requests/deletion/",
         "app/accounts/src/test/",
         "docs/tasks/details/PR-24.md",
         "docs/tasks/progress.md"
@@ -5385,7 +5385,7 @@
         "PR-23"
       ],
       "owned_paths": [
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/auth/config/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/auth/config/",
         "app/accounts/src/test/",
         "docs/tasks/details/PR-25.md",
         "docs/tasks/progress.md"
@@ -5419,7 +5419,7 @@
         "CORE-22"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/expenses/",
         "app/expense-core/src/test/",
         "docs/tasks/details/PR-26.md",
         "docs/tasks/progress.md"
@@ -5452,8 +5452,8 @@
         "NOT-10"
       ],
       "owned_paths": [
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/consumer/",
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/delivery/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/consumer/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/delivery/",
         "app/notifications/src/test/",
         "docs/tasks/details/PR-27.md",
         "docs/tasks/progress.md"
@@ -5486,7 +5486,7 @@
         "BFF-11"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/transport/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/transport/",
         "app/bff/src/test/",
         "docs/tasks/details/PR-28.md",
         "docs/tasks/progress.md"
@@ -5519,8 +5519,8 @@
         "PR-26"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/expenses/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/",
         "app/expense-core/src/test/",
         "docs/tasks/details/PR-29.md",
         "docs/tasks/progress.md"
@@ -5553,7 +5553,7 @@
         "CORE-01"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/",
         "app/bff/src/test/",
         "docs/tasks/details/PR-30.md",
         "docs/tasks/progress.md"
@@ -5586,9 +5586,9 @@
         "PR-25"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/messaging/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/messaging/",
         "app/expense-core/src/test/",
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/auth/delivery/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/auth/delivery/",
         "app/accounts/src/test/",
         "docs/tasks/details/PR-31.md",
         "docs/tasks/progress.md"
@@ -5687,7 +5687,7 @@
         "OBS-01"
       ],
       "owned_paths": [
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/email/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/email/",
         "app/notifications/src/test/",
         "docs/tasks/details/PR-34.md",
         "docs/tasks/progress.md"
@@ -5720,10 +5720,10 @@
         "OPS-01"
       ],
       "owned_paths": [
-        "app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/security/",
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/",
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/",
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/config/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/security/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/config/",
         "app/*/src/test/",
         "docs/tasks/details/PR-35.md",
         "docs/tasks/progress.md"
@@ -5756,7 +5756,7 @@
         "PR-32"
       ],
       "owned_paths": [
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/",
         "app/notifications/src/test/",
         "docs/operations/messaging-topology-migration.md",
         "docs/tasks/details/PR-36.md",
@@ -5789,8 +5789,8 @@
         "PR-20"
       ],
       "owned_paths": [
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/graphql/GraphqlHttpTransportTest.kt",
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/config/",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/GraphqlHttpTransportTest.kt",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/config/",
         "docs/tasks/details/PR-37.md",
         "docs/tasks/progress.md"
       ],
@@ -5888,7 +5888,7 @@
         "PR-31"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/expenses/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/expenses/",
         "app/expense-core/src/test/",
         "docs/tasks/details/PR-40.md",
         "docs/tasks/progress.md"
@@ -5921,8 +5921,8 @@
         "PR-20"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/transport/RestGateway.kt",
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/BffFanoutTest.kt",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/transport/RestGateway.kt",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/BffFanoutTest.kt",
         "docs/tasks/details/PR-41.md",
         "docs/tasks/progress.md"
       ],
@@ -5954,8 +5954,8 @@
         "PR-36"
       ],
       "owned_paths": [
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/consumer/RabbitNotificationListener.kt",
-        "app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/email/AuthEmailRabbitListener.kt",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/consumer/RabbitNotificationListener.kt",
+        "app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/email/AuthEmailRabbitListener.kt",
         "app/notifications/src/test/",
         "docs/tasks/details/PR-42.md",
         "docs/tasks/progress.md"
@@ -5988,8 +5988,8 @@
         "PR-37"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/config/",
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/realtime/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/config/",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/realtime/",
         "app/bff/src/test/",
         "docs/tasks/details/PR-43.md",
         "docs/tasks/progress.md"
@@ -6022,8 +6022,8 @@
         "PR-43"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/realtime/LiveUpdateFanout.kt",
-        "app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/LiveUpdateFanoutTest.kt",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/realtime/LiveUpdateFanout.kt",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/LiveUpdateFanoutTest.kt",
         "docs/tasks/details/PR-44.md",
         "docs/tasks/progress.md"
       ],
@@ -6055,8 +6055,8 @@
         "PR-18"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/recurring/RecurringExpenseScheduleRepository.kt",
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/recurring/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/recurring/RecurringExpenseScheduleRepository.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/recurring/",
         "docs/tasks/details/PR-45.md",
         "docs/tasks/progress.md"
       ],
@@ -6088,7 +6088,7 @@
         "PR-26"
       ],
       "owned_paths": [
-        "app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/",
+        "app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/",
         "app/expense-core/src/main/resources/db/migration/",
         "app/expense-core/src/test/",
         "contracts/rest/expense-core.openapi.json",
@@ -6124,7 +6124,7 @@
         "PR-46"
       ],
       "owned_paths": [
-        "app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/settlements/PostgresSettlementReconciliationTest.kt",
+        "app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/settlements/PostgresSettlementReconciliationTest.kt",
         "docs/tasks/details/PR-47.md",
         "docs/tasks/progress.md"
       ],
@@ -6738,7 +6738,7 @@
       ],
       "evidence": [
         "Documented CQRS replica runbooks, alert rules, and repeatable safe disconnect/recovery drills.",
-        "Implemented and validated the forced writer-only rollback switch (pennywise.db.reader-is-writer-diagnostic) and verified static release-gate prerequisites."
+        "Implemented and validated the forced writer-only rollback switch (squarewise.db.reader-is-writer-diagnostic) and verified static release-gate prerequisites."
       ],
       "reviewer": "/root",
       "blocker": "Requires production-like deployment and alerting environment."

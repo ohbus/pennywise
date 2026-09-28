@@ -88,8 +88,8 @@ be inherited by production.
 
 The reader-to-writer fallback was removed, but obsolete references remain in:
 
-- `infra/observability/rules/pennywise.yml`
-- `infra/observability/grafana/dashboards/pennywise-overview.json`
+- `infra/observability/rules/squarewise.yml`
+- `infra/observability/grafana/dashboards/squarewise-overview.json`
 - `docs/operations/cqrs-replica.md`
 
 Replace them with reader failure, lag, and fail-closed read metrics. Alerts must

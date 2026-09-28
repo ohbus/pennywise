@@ -15,8 +15,8 @@ Expose settlement suggestions through the GraphQL BFF to allow clients to query 
 
 ## Owned paths
 
-- `app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/`
-- `app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/`
+- `app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/`
+- `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/`
 - `contracts/graphql/10-roots.graphqls`, `contracts/graphql/20-domain-types.graphqls`
 
 ## Implementation details
@@ -26,16 +26,16 @@ Expose settlement suggestions through the GraphQL BFF to allow clients to query 
     - Added `settlementSuggestions(groupId: ID!): [SuggestedSettlement!]!` to `type Query`.
     - Added `type SuggestedSettlement { fromParticipantId: ID!, toParticipantId: ID!, amount: Money! }`.
 - **REST Gateway**:
-  - In `app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/RestGateway.kt`:
+  - In `app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/RestGateway.kt`:
     - Added `data class BffSuggestedSettlement(val fromParticipantId: String, val toParticipantId: String, val amountMinor: Long, val currency: String)` with computed getter `val amount: BffMoney get() = BffMoney(currency, amountMinor.toString())`.
     - Added `fun getSettlementSuggestions(groupId: String, bearer: String?): Mono<List<BffSuggestedSettlement>>` to `ExpenseCoreGateway`, calling `GET /expense-core/v1/groups/{groupId}/settlements/suggestions` and parsing into `BffSuggestedSettlement` list.
 - **GraphQL Resolver**:
-  - In `app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/GroupGraphqlController.kt`:
+  - In `app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/GroupGraphqlController.kt`:
     - Added `@QueryMapping fun settlementSuggestions(@Argument groupId: String, principal: Principal?): Mono<List<BffSuggestedSettlement>> = gateway.getSettlementSuggestions(groupId, principal?.name)`.
 - **Testing**:
-  - In `app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/GroupGraphqlControllerTest.kt`:
+  - In `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/GroupGraphqlControllerTest.kt`:
     - Added `resolves settlementSuggestions query` testing the GraphQL query resolver against mocked gateway response.
-  - In `app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/RestGatewayTest.kt`:
+  - In `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/RestGatewayTest.kt`:
     - Added verification of `BffSuggestedSettlement` fields and amount formatting into `BffMoney`.
 
 ## Verification evidence

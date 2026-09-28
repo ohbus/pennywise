@@ -10,8 +10,8 @@ decisions; scripts or estimates alone are not completion evidence.
 ### 1. Isolated Backup and Restore Rehearsal
 - **Environment & Runtime:** PostgreSQL 17 running in container `local-postgres-1`.
 - **Procedure:**
-  - Exported real database `pennywise_expense_core` with custom-format dump (`pg_dump -F c`). Dump size: 33,248 bytes.
-  - Initialized isolated clean rehearsal database: `pennywise_expense_core_rehearsal`.
+  - Exported real database `squarewise_expense_core` with custom-format dump (`pg_dump -F c`). Dump size: 33,248 bytes.
+  - Initialized isolated clean rehearsal database: `squarewise_expense_core_rehearsal`.
   - Restored full schema, tables, constraints, sequences, and data using `pg_restore`.
   - Reconciled entity and financial audit row counts between original and restored databases (`expense_groups`: 3, `group_audit`: 4, `sync_changes`: 4, `expense_outbox`: 4). 100% exact match achieved.
   - Successfully dropped rehearsal database and purged temporary dump. Total rehearsal execution time: 1 second.

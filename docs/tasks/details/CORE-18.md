@@ -17,8 +17,8 @@ are required before this task can be accepted as complete.
 
 ## Owned paths
 
-- `app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/groups/`
-- `app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/groups/`
+- `app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/groups/`
+- `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/`
 - `contracts/rest/expense-core.openapi.json`
 
 ## Validation commands

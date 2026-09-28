@@ -21,22 +21,22 @@ services:
       args: {APP_PROJECT: accounts}
     environment:
       SPRING_PROFILES_ACTIVE: local-oidc
-      PENNYWISE_SECURITY_OIDC_ISSUER_URI: ${PENNYWISE_SECURITY_OIDC_ISSUER_URI:-http://${PENNYWISE_IDP_HOSTNAME:-idp-keycloak}:8080/realms/${KEYCLOAK_REALM:-pennywise}}
-      PENNYWISE_SECURITY_OIDC_AUDIENCE: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:-pennywise-api}
-      PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET: ${PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET:?Set a unique base64 credential digest secret}
-      PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY: ${PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY:?Set a unique base64 auth email envelope key}
-      PENNYWISE_REDIS_HOST: ${PENNYWISE_REDIS_HOSTNAME:-rate-limit-redis}
-      PENNYWISE_REDIS_PASSWORD: ${REDIS_PASSWORD:-pennywise-redis-local-only}
-      SPRING_RABBITMQ_HOST: ${PENNYWISE_RABBITMQ_HOSTNAME:-message-broker}
+      SQUAREWISE_SECURITY_OIDC_ISSUER_URI: ${SQUAREWISE_SECURITY_OIDC_ISSUER_URI:-http://${SQUAREWISE_IDP_HOSTNAME:-idp-keycloak}:8080/realms/${KEYCLOAK_REALM:-squarewise}}
+      SQUAREWISE_SECURITY_OIDC_AUDIENCE: ${SQUAREWISE_SECURITY_OIDC_AUDIENCE:-squarewise-api}
+      SQUAREWISE_SECURITY_CREDENTIAL_DIGEST_SECRET: ${SQUAREWISE_SECURITY_CREDENTIAL_DIGEST_SECRET:?Set a unique base64 credential digest secret}
+      SQUAREWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY: ${SQUAREWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY:?Set a unique base64 auth email envelope key}
+      SQUAREWISE_REDIS_HOST: ${SQUAREWISE_REDIS_HOSTNAME:-rate-limit-redis}
+      SQUAREWISE_REDIS_PASSWORD: ${REDIS_PASSWORD:-squarewise-redis-local-only}
+      SPRING_RABBITMQ_HOST: ${SQUAREWISE_RABBITMQ_HOSTNAME:-message-broker}
       SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-pennywise}
-      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-pennywise-local-only}
-      PENNYWISE_AUTH_EMAIL_OUTBOX_ENABLED: "true"
-      PENNYWISE_AUTH_EMAIL_OUTBOX_EXCHANGE: pennywise.events
-      PENNYWISE_AUTH_EMAIL_OUTBOX_ROUTING_KEY: auth.email.requested.v1
-      SPRING_DATASOURCE_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_accounts
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-pennywise}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-squarewise}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-squarewise-local-only}
+      SQUAREWISE_AUTH_EMAIL_OUTBOX_ENABLED: "true"
+      SQUAREWISE_AUTH_EMAIL_OUTBOX_EXCHANGE: squarewise.events
+      SQUAREWISE_AUTH_EMAIL_OUTBOX_ROUTING_KEY: auth.email.requested.v1
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${SQUAREWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/squarewise_accounts
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-squarewise}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-squarewise-local-only}
     ports: ["8081:8080"]
     healthcheck:
       test: ["CMD-SHELL", "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /actuator/health/readiness HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"200\" <&3'"]
@@ -56,17 +56,17 @@ services:
       args: {APP_PROJECT: expense-core}
     environment:
       SPRING_PROFILES_ACTIVE: local-oidc
-      PENNYWISE_SECURITY_OIDC_ISSUER_URI: ${PENNYWISE_SECURITY_OIDC_ISSUER_URI:-http://${PENNYWISE_IDP_HOSTNAME:-idp-keycloak}:8080/realms/${KEYCLOAK_REALM:-pennywise}}
-      PENNYWISE_SECURITY_OIDC_AUDIENCE: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:-pennywise-api}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_expense_core
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-pennywise}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
-      SPRING_RABBITMQ_HOST: ${PENNYWISE_RABBITMQ_HOSTNAME:-message-broker}
+      SQUAREWISE_SECURITY_OIDC_ISSUER_URI: ${SQUAREWISE_SECURITY_OIDC_ISSUER_URI:-http://${SQUAREWISE_IDP_HOSTNAME:-idp-keycloak}:8080/realms/${KEYCLOAK_REALM:-squarewise}}
+      SQUAREWISE_SECURITY_OIDC_AUDIENCE: ${SQUAREWISE_SECURITY_OIDC_AUDIENCE:-squarewise-api}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${SQUAREWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/squarewise_expense_core
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-squarewise}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-squarewise-local-only}
+      SPRING_RABBITMQ_HOST: ${SQUAREWISE_RABBITMQ_HOSTNAME:-message-broker}
       SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-pennywise}
-      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-pennywise-local-only}
-      PENNYWISE_OUTBOX_ENABLED: "true"
-      PENNYWISE_OUTBOX_RABBIT_ENABLED: "true"
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-squarewise}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-squarewise-local-only}
+      SQUAREWISE_OUTBOX_ENABLED: "true"
+      SQUAREWISE_OUTBOX_RABBIT_ENABLED: "true"
     ports: ["8082:8080"]
     healthcheck:
       test: ["CMD-SHELL", "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /actuator/health/readiness HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"200\" <&3'"]
@@ -86,22 +86,22 @@ services:
       args: {APP_PROJECT: notifications}
     environment:
       SPRING_PROFILES_ACTIVE: local-oidc
-      PENNYWISE_SECURITY_OIDC_ISSUER_URI: ${PENNYWISE_SECURITY_OIDC_ISSUER_URI:-http://${PENNYWISE_IDP_HOSTNAME:-idp-keycloak}:8080/realms/${KEYCLOAK_REALM:-pennywise}}
-      PENNYWISE_SECURITY_OIDC_AUDIENCE: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:-pennywise-api}
-      PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY: ${PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY:?Set a unique base64 auth email envelope key}
-      PENNYWISE_REDIS_HOST: ${PENNYWISE_REDIS_HOSTNAME:-rate-limit-redis}
-      PENNYWISE_REDIS_PASSWORD: ${REDIS_PASSWORD:-pennywise-redis-local-only}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_notifications
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-pennywise}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
-      SPRING_RABBITMQ_HOST: ${PENNYWISE_RABBITMQ_HOSTNAME:-message-broker}
+      SQUAREWISE_SECURITY_OIDC_ISSUER_URI: ${SQUAREWISE_SECURITY_OIDC_ISSUER_URI:-http://${SQUAREWISE_IDP_HOSTNAME:-idp-keycloak}:8080/realms/${KEYCLOAK_REALM:-squarewise}}
+      SQUAREWISE_SECURITY_OIDC_AUDIENCE: ${SQUAREWISE_SECURITY_OIDC_AUDIENCE:-squarewise-api}
+      SQUAREWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY: ${SQUAREWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY:?Set a unique base64 auth email envelope key}
+      SQUAREWISE_REDIS_HOST: ${SQUAREWISE_REDIS_HOSTNAME:-rate-limit-redis}
+      SQUAREWISE_REDIS_PASSWORD: ${REDIS_PASSWORD:-squarewise-redis-local-only}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${SQUAREWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/squarewise_notifications
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-squarewise}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-squarewise-local-only}
+      SPRING_RABBITMQ_HOST: ${SQUAREWISE_RABBITMQ_HOSTNAME:-message-broker}
       SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-pennywise}
-      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-pennywise-local-only}
-      PENNYWISE_NOTIFICATIONS_EMAIL_HOST: ${PENNYWISE_MAILPIT_HOSTNAME:-mailpit-email}
-      PENNYWISE_NOTIFICATIONS_EMAIL_PORT: ${MAILPIT_SMTP_PORT:-1025}
-      PENNYWISE_NOTIFICATIONS_EMAIL_FROM_ADDRESS: ${PENNYWISE_NOTIFICATIONS_EMAIL_FROM_ADDRESS:-notifications@pennywise.local}
-      PENNYWISE_NOTIFICATIONS_EMAIL_ENABLED: "true"
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-squarewise}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-squarewise-local-only}
+      SQUAREWISE_NOTIFICATIONS_EMAIL_HOST: ${SQUAREWISE_MAILPIT_HOSTNAME:-mailpit-email}
+      SQUAREWISE_NOTIFICATIONS_EMAIL_PORT: ${MAILPIT_SMTP_PORT:-1025}
+      SQUAREWISE_NOTIFICATIONS_EMAIL_FROM_ADDRESS: ${SQUAREWISE_NOTIFICATIONS_EMAIL_FROM_ADDRESS:-notifications@squarewise.local}
+      SQUAREWISE_NOTIFICATIONS_EMAIL_ENABLED: "true"
     ports: ["8083:8080"]
     healthcheck:
       test: ["CMD-SHELL", "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /actuator/health/readiness HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"200\" <&3'"]
@@ -110,7 +110,7 @@ services:
       retries: 30
     depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, redis: {condition: service_healthy}, mailpit: {condition: service_healthy}, idp-keycloak: {condition: service_healthy}}
   bff:
-    hostname: pennywise-bff
+    hostname: squarewise-bff
     deploy:
       resources:
         reservations: {cpus: "0.25", memory: 192m}
@@ -121,15 +121,15 @@ services:
       args: {APP_PROJECT: bff}
     environment:
       SPRING_PROFILES_ACTIVE: local-oidc
-      PENNYWISE_SECURITY_OIDC_ISSUER_URI: ${PENNYWISE_SECURITY_OIDC_ISSUER_URI:-http://${PENNYWISE_IDP_HOSTNAME:-idp-keycloak}:8080/realms/${KEYCLOAK_REALM:-pennywise}}
-      PENNYWISE_SECURITY_OIDC_AUDIENCE: ${PENNYWISE_SECURITY_OIDC_AUDIENCE:-pennywise-api}
-      SPRING_RABBITMQ_HOST: ${PENNYWISE_RABBITMQ_HOSTNAME:-message-broker}
+      SQUAREWISE_SECURITY_OIDC_ISSUER_URI: ${SQUAREWISE_SECURITY_OIDC_ISSUER_URI:-http://${SQUAREWISE_IDP_HOSTNAME:-idp-keycloak}:8080/realms/${KEYCLOAK_REALM:-squarewise}}
+      SQUAREWISE_SECURITY_OIDC_AUDIENCE: ${SQUAREWISE_SECURITY_OIDC_AUDIENCE:-squarewise-api}
+      SPRING_RABBITMQ_HOST: ${SQUAREWISE_RABBITMQ_HOSTNAME:-message-broker}
       SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-pennywise}
-      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-pennywise-local-only}
-      PENNYWISE_EXPENSE_CORE_URL: ${PENNYWISE_EXPENSE_CORE_URL:-http://expense-core-api:8080}
-      PENNYWISE_ACCOUNTS_URL: ${PENNYWISE_ACCOUNTS_URL:-http://accounts-api:8080}
-      PENNYWISE_BFF_MESSAGING_ENABLED: "true"
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-squarewise}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-squarewise-local-only}
+      SQUAREWISE_EXPENSE_CORE_URL: ${SQUAREWISE_EXPENSE_CORE_URL:-http://expense-core-api:8080}
+      SQUAREWISE_ACCOUNTS_URL: ${SQUAREWISE_ACCOUNTS_URL:-http://accounts-api:8080}
+      SQUAREWISE_BFF_MESSAGING_ENABLED: "true"
     ports: ["8080:8080"]
     healthcheck:
       test: ["CMD-SHELL", "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /actuator/health/readiness HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"200\" <&3'"]

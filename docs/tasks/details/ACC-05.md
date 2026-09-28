@@ -15,8 +15,8 @@ Allow internal services and client aggregators to resolve multiple profiles in a
 
 ## Owned paths
 
-- `app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/`
-- `app/accounts/src/test/kotlin/com/subhrodip/pennywise/accounts/`
+- `app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/`
+- `app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/`
 - `contracts/rest/accounts.openapi.json`
 
 ## Validation commands

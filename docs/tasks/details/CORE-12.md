@@ -11,8 +11,8 @@ transactional outbox events to RabbitMQ in the background.
 
 ## Decisions and implementation notes
 
-- Added `OutboxRelayProperties` binding to `pennywise.outbox.*` (`enabled`, `batchSize`, `pollDelayMs`, `leaseSeconds`, `maxAttempts`, `retryAfterSeconds`).
+- Added `OutboxRelayProperties` binding to `squarewise.outbox.*` (`enabled`, `batchSize`, `pollDelayMs`, `leaseSeconds`, `maxAttempts`, `retryAfterSeconds`).
 - Implemented `OutboxMessagingConfiguration` providing `BrokerPublisher` (defaulting to `InMemoryBroker` when no external broker is configured) and configuring `OutboxPublisher` beans with `@EnableScheduling`.
-- Implemented `OutboxRelayDaemon` annotated with `@Scheduled(fixedDelayString = "\${pennywise.outbox.poll-delay-ms:1000}")` and conditionally enabled via `@ConditionalOnProperty(prefix = "pennywise.outbox", name = ["enabled"], havingValue = "true")`.
-- By default `pennywise.outbox.enabled` is false in `application.yml` ensuring deterministic isolation in test runs and preventing uncoordinated worker loops.
+- Implemented `OutboxRelayDaemon` annotated with `@Scheduled(fixedDelayString = "\${squarewise.outbox.poll-delay-ms:1000}")` and conditionally enabled via `@ConditionalOnProperty(prefix = "squarewise.outbox", name = ["enabled"], havingValue = "true")`.
+- By default `squarewise.outbox.enabled` is false in `application.yml` ensuring deterministic isolation in test runs and preventing uncoordinated worker loops.
 - Added comprehensive unit and context tests in `OutboxRelayDaemonTest` verifying conditional creation and batch execution.

@@ -234,8 +234,8 @@ and tail latency remain within SLO.
 Capabilities required for correctness must **not** default to silently disabled.
 
 Current violations:
-- `pennywise.outbox.enabled` defaults to `false`
-- `pennywise.auth-email-outbox.enabled` defaults to `false`
+- `squarewise.outbox.enabled` defaults to `false`
+- `squarewise.auth-email-outbox.enabled` defaults to `false`
 
 **What each owner must do**: Production profiles must explicitly activate
 durable publication **or fail startup**. Add Spring context tests covering

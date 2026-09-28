@@ -21,7 +21,7 @@ CONTENT_LENGTH: Final[str] = "Content-Length"
 
 
 ISSUER: Final[str] = os.environ.get("INVALID_SUBJECT_OIDC_ISSUER", "http://invalid-subject-oidc:8080")
-AUDIENCE: Final[str] = "pennywise-api"
+AUDIENCE: Final[str] = "squarewise-api"
 PRIVATE_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 PUBLIC_KEY = PRIVATE_KEY.public_key()
 KEY_ID: Final[str] = "invalid-subject-test-key"

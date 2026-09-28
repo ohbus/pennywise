@@ -16,14 +16,14 @@ trap restore_replica EXIT
 
 compose config --quiet
 compose stop "$REPLICA_SERVICE" >/dev/null
-writer_status=$(compose exec -T "$PRIMARY_SERVICE" pg_isready -U pennywise -d postgres)
+writer_status=$(compose exec -T "$PRIMARY_SERVICE" pg_isready -U squarewise -d postgres)
 printf '%s\n' "$writer_status"
 printf '%s\n' 'replica_disconnect=writer_healthy'
 
 compose start "$REPLICA_SERVICE" >/dev/null
 compose up -d --wait "$REPLICA_SERVICE" >/dev/null
-streaming=$(compose exec -T "$PRIMARY_SERVICE" psql -U pennywise -d postgres -tAc "SELECT COALESCE(bool_and(state = 'streaming'), false) FROM pg_stat_replication;" | tr -d '[:space:]')
-recovery=$(compose exec -T "$REPLICA_SERVICE" psql -U pennywise -d postgres -tAc "SELECT pg_is_in_recovery();" | tr -d '[:space:]')
+streaming=$(compose exec -T "$PRIMARY_SERVICE" psql -U squarewise -d postgres -tAc "SELECT COALESCE(bool_and(state = 'streaming'), false) FROM pg_stat_replication;" | tr -d '[:space:]')
+recovery=$(compose exec -T "$REPLICA_SERVICE" psql -U squarewise -d postgres -tAc "SELECT pg_is_in_recovery();" | tr -d '[:space:]')
 printf 'replica_recovery_streaming=%s\n' "$streaming"
 printf 'replica_recovery_mode=%s\n' "$recovery"
 [ "$streaming" = true ] || [ "$streaming" = t ]

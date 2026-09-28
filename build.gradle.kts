@@ -10,13 +10,13 @@ plugins {
 
 spotless {
     format("approvedKotlinBaseline") {
-        target("app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/categories/ExpenseCategory.kt")
+        target("app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/categories/ExpenseCategory.kt")
         trimTrailingWhitespace()
         endWithNewline()
     }
 }
 
-group = "com.subhrodip.pennywise"
+group = "com.subhrodip.squarewise"
 version = "0.1.0-SNAPSHOT"
 
 subprojects {

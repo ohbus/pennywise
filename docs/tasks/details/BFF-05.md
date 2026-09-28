@@ -13,8 +13,8 @@ Connect the GraphQL subscription `groupChanged(groupId: ID!): GroupInvalidation!
 
 ## Owned paths
 
-- `app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/`
-- `app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/`
+- `app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/`
+- `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/`
 
 ## Validation commands
 

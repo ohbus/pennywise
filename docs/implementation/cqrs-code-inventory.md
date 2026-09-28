@@ -14,16 +14,16 @@ configuration, routing, transaction guard, policy, health, or tests.
 
 Target files for DB-03 through DB-05:
 
-- `libs/db/src/main/kotlin/com/subhrodip/pennywise/db/config/DbProperties.kt`
-- `libs/db/src/main/kotlin/com/subhrodip/pennywise/db/config/DbAutoConfiguration.kt`
-- `libs/db/src/main/kotlin/com/subhrodip/pennywise/db/routing/DbRoute.kt`
-- `libs/db/src/main/kotlin/com/subhrodip/pennywise/db/routing/DbExecutionContext.kt`
-- `libs/db/src/main/kotlin/com/subhrodip/pennywise/db/routing/DbRoutingDataSource.kt`
-- `libs/db/src/main/kotlin/com/subhrodip/pennywise/db/routing/DbTransactionGuard.kt`
-- `libs/db/src/main/kotlin/com/subhrodip/pennywise/db/policy/ReadPolicy.kt`
-- `libs/db/src/main/kotlin/com/subhrodip/pennywise/db/health/ReaderHealthRegistry.kt`
-- `libs/db/src/main/kotlin/com/subhrodip/pennywise/db/metrics/DbMetrics.kt`
-- `libs/db/src/test/kotlin/com/subhrodip/pennywise/db/` (route, pool, guard, and failure tests)
+- `libs/db/src/main/kotlin/com/subhrodip/squarewise/db/config/DbProperties.kt`
+- `libs/db/src/main/kotlin/com/subhrodip/squarewise/db/config/DbAutoConfiguration.kt`
+- `libs/db/src/main/kotlin/com/subhrodip/squarewise/db/routing/DbRoute.kt`
+- `libs/db/src/main/kotlin/com/subhrodip/squarewise/db/routing/DbExecutionContext.kt`
+- `libs/db/src/main/kotlin/com/subhrodip/squarewise/db/routing/DbRoutingDataSource.kt`
+- `libs/db/src/main/kotlin/com/subhrodip/squarewise/db/routing/DbTransactionGuard.kt`
+- `libs/db/src/main/kotlin/com/subhrodip/squarewise/db/policy/ReadPolicy.kt`
+- `libs/db/src/main/kotlin/com/subhrodip/squarewise/db/health/ReaderHealthRegistry.kt`
+- `libs/db/src/main/kotlin/com/subhrodip/squarewise/db/metrics/DbMetrics.kt`
+- `libs/db/src/test/kotlin/com/subhrodip/squarewise/db/` (route, pool, guard, and failure tests)
 
 The package spelling in the metrics path must match the chosen canonical
 package; no duplicate technical package may be introduced.

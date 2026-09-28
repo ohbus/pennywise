@@ -38,8 +38,8 @@
 
 ## Owned paths
 
-- `app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/`
-- `app/accounts/src/main/kotlin/com/subhrodip/pennywise/accounts/`
+- `app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/`
+- `app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/`
 - `app/bff/build.gradle.kts`
 - `app/bff/src/main/resources/`
 - `.graphqlconfig` or `graphql.config.yml`

@@ -80,7 +80,7 @@ subject, and key rotation.
   are supplied by the completed AUTH-04 shared policy and boundary evidence.
 - Compose operations must use meaningful, stable hostnames for all auth and
   service endpoints (for example `idp-keycloak`, `accounts-api`,
-  `expense-core-api`, `notifications-api`, and `pennywise-bff`). Issuer and
+  `expense-core-api`, `notifications-api`, and `squarewise-bff`). Issuer and
   internal service URLs must use those names rather than `localhost`, random
   container names, or ambiguous abbreviations. Hostname changes require
   synchronized Compose, environment, operations, and E2E documentation.

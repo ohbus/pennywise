@@ -6,7 +6,7 @@
 
 ## How to read this document
 
-This checklist is the **final release gate** for the Pennywise backend. It must
+This checklist is the **final release gate** for the Squarewise backend. It must
 be completed against the **actual release candidate** in the **target deployment
 environment** (or a validated production-like environment). Local Compose, unit
 tests, and static validation are supporting evidence only; they do **not**
@@ -81,10 +81,10 @@ subjective judgments. Either the evidence exists or it doesn't.
 ./gradlew.bat cyclonedxBom
 
 # Get image digests
-docker inspect --format='{{.RepoDigests}}' pennywise-accounts:latest
-docker inspect --format='{{.RepoDigests}}' pennywise-expense-core:latest
-docker inspect --format='{{.RepoDigests}}' pennywise-notifications:latest
-docker inspect --format='{{.RepoDigests}}' pennywise-bff:latest
+docker inspect --format='{{.RepoDigests}}' squarewise-accounts:latest
+docker inspect --format='{{.RepoDigests}}' squarewise-expense-core:latest
+docker inspect --format='{{.RepoDigests}}' squarewise-notifications:latest
+docker inspect --format='{{.RepoDigests}}' squarewise-bff:latest
 
 # Verify commit
 git rev-parse HEAD
@@ -585,8 +585,8 @@ git rev-parse HEAD
 
 - [ ] **Immutable images**: Promoted by digest, NOT mutable tags
   ```text
-  ✅ pennywise-accounts@sha256:abc123...
-  ❌ pennywise-accounts:latest
+  ✅ squarewise-accounts@sha256:abc123...
+  ❌ squarewise-accounts:latest
   ```
 
 - [ ] **Deployment safety**:
@@ -599,7 +599,7 @@ git rev-parse HEAD
       secret names but without exposing secret values
   ```bash
   # Render config (redacted)
-  docker run --env-file .env.redacted pennywise-accounts:sha256... \
+  docker run --env-file .env.redacted squarewise-accounts:sha256... \
     --spring.profiles.active=production \
     --spring.cloud.config.enabled=false \
     env
@@ -656,7 +656,7 @@ At minimum, retain the following signed or access-controlled artifacts:
 
 ---
 
-## Current Pennywise baseline
+## Current Squarewise baseline
 
 > [!WARNING]
 > The existing local release record is **not sufficient for promotion**. It

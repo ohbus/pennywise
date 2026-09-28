@@ -27,5 +27,5 @@ dependencies {
     testRuntimeOnly(libs.h2)
 }
 tasks.withType<Test> { useJUnitPlatform() }
-base { archivesName.set("pennywise-accounts") }
-springBoot { mainClass.set("com.subhrodip.pennywise.accounts.AccountsApplicationKt") }
+base { archivesName.set("squarewise-accounts") }
+springBoot { mainClass.set("com.subhrodip.squarewise.accounts.AccountsApplicationKt") }

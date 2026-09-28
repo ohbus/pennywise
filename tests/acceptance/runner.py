@@ -1,4 +1,4 @@
-"""Multi-service acceptance test runner for Pennywise MVP."""
+"""Multi-service acceptance test runner for Squarewise MVP."""
 
 import argparse
 import json
@@ -533,7 +533,7 @@ def run_acceptance_suite(
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Multi-service acceptance harness for Pennywise")
+    parser = argparse.ArgumentParser(description="Multi-service acceptance harness for Squarewise")
     parser.add_argument("--task-id", default="QA-04", help="Task ID for acceptance report (e.g. QA-01, QA-04)")
     parser.add_argument("--require-services", action="store_true", help="Fail if services are unavailable")
     parser.add_argument("--timeout", type=float, default=2.0, help="HTTP request timeout in seconds")

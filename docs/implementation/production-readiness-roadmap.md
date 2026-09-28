@@ -592,7 +592,7 @@ This section provides a quick lookup for all design patterns and principles
 referenced throughout this roadmap. When implementing any phase, check this
 table for the relevant pattern.
 
-| Pattern / Principle | What it is | When to use it | Example in Pennywise |
+| Pattern / Principle | What it is | When to use it | Example in Squarewise |
 |---|---|---|---|
 | **Hexagonal Architecture** (Port/Adapter) | Business logic defines ports (interfaces); adapters implement them | Every service boundary with external systems | `NotificationInboxStore` (port) → `JpaNotificationInboxStore` (adapter) |
 | **Transactional Outbox** | Write event + business data in same DB transaction; relay publishes asynchronously | Every outgoing event from a mutation | Expense creation → posting + outbox row in same TX |

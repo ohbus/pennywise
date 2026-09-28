@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive End-to-End Test Suite for Pennywise Backend.
+Comprehensive End-to-End Test Suite for Squarewise Backend.
 
 Verifies the entire product lifecycle across all four microservices
 (Accounts, Expense Core, Notifications, GraphQL BFF) in the Docker environment:
@@ -27,10 +27,10 @@ import uuid
 from typing import Any, Tuple
 from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE
 
-BASE_URL = os.environ.get("PENNYWISE_BFF_URL", "http://localhost:8080")
-ACCOUNTS_URL = os.environ.get("PENNYWISE_ACCOUNTS_URL", "http://localhost:8081")
-EXPENSE_CORE_URL = os.environ.get("PENNYWISE_EXPENSE_CORE_URL", "http://localhost:8082")
-NOTIFICATIONS_URL = os.environ.get("PENNYWISE_NOTIFICATIONS_URL", "http://localhost:8083")
+BASE_URL = os.environ.get("SQUAREWISE_BFF_URL", "http://localhost:8080")
+ACCOUNTS_URL = os.environ.get("SQUAREWISE_ACCOUNTS_URL", "http://localhost:8081")
+EXPENSE_CORE_URL = os.environ.get("SQUAREWISE_EXPENSE_CORE_URL", "http://localhost:8082")
+NOTIFICATIONS_URL = os.environ.get("SQUAREWISE_NOTIFICATIONS_URL", "http://localhost:8083")
 
 
 def request_json(
@@ -131,7 +131,7 @@ def run_e2e_tests() -> int:
     if isinstance(sys.stderr, io.TextIOWrapper):
         sys.stderr.reconfigure(encoding="utf-8")
     print("=" * 70)
-    print("🚀 Running Pennywise End-to-End Multi-Service Production Test Suite")
+    print("🚀 Running Squarewise End-to-End Multi-Service Production Test Suite")
     print("=" * 70)
 
     # 1. Health checks across all services
@@ -160,9 +160,9 @@ def run_e2e_tests() -> int:
 
     # 2. User profiles in Accounts & GraphQL me
     print("\n[Step 2] Testing User Profiles (Alice & Bob)...")
-    user_a = os.environ.get("PENNYWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
-    user_b = os.environ.get("PENNYWISE_E2E_TOKEN_B", user_a)
-    user_nonmember = os.environ.get("PENNYWISE_E2E_TOKEN_NONMEMBER", user_b)
+    user_a = os.environ.get("SQUAREWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
+    user_b = os.environ.get("SQUAREWISE_E2E_TOKEN_B", user_a)
+    user_nonmember = os.environ.get("SQUAREWISE_E2E_TOKEN_NONMEMBER", user_b)
     if not user_a or not user_b or not user_nonmember:
         raise RuntimeError("E2E persona variables must contain signed tokens")
 

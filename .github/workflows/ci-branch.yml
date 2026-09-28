@@ -1,4 +1,4 @@
-name: Pennywise branch CI
+name: Squarewise branch CI
 on:
   push:
     branches-ignore: [master]
@@ -7,7 +7,7 @@ permissions:
   contents: read
   pull-requests: read
 concurrency:
-  group: pennywise-branch-${{ github.ref }}
+  group: squarewise-branch-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   ci:

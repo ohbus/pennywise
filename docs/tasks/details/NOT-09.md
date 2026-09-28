@@ -14,8 +14,8 @@ Allow users to mark specific inbox notifications as read in the Notifications se
 
 ## Owned paths
 
-- `app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/`
-- `app/notifications/src/test/kotlin/com/subhrodip/pennywise/notifications/`
+- `app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/`
+- `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/`
 - `contracts/rest/notifications.openapi.json`
 
 ## Validation commands

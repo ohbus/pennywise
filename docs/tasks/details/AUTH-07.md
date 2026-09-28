@@ -1,9 +1,9 @@
-# AUTH-07 — Pennywise-owned passwordless authentication contract
+# AUTH-07 — Squarewise-owned passwordless authentication contract
 
 ## Objective
 
 Define the provider-neutral application flow for low-friction email login.
-Pennywise owns the user-facing endpoints and session policy; the configured
+Squarewise owns the user-facing endpoints and session policy; the configured
 OIDC provider remains responsible for identity proof and token signing. Local
 Keycloak, Auth0, Okta, and Entra must fit the same port without domain changes.
 
@@ -12,10 +12,10 @@ Keycloak, Auth0, Okta, and Entra must fit the same port without domain changes.
 1. `POST /auth/v1/login/start` accepts an email and optional client context.
 2. The service always returns the same generic response, regardless of account
    existence, and queues a single-use email link/code when allowed.
-3. The browser opens a Pennywise-owned verification route. The credential is
+3. The browser opens a Squarewise-owned verification route. The credential is
    never logged and is stored only as a hash.
 4. `POST /auth/v1/login/verify` atomically redeems the credential and creates a
-   Pennywise session or completes the configured provider adapter flow.
+   Squarewise session or completes the configured provider adapter flow.
 5. Browser clients receive a secure HttpOnly session cookie; native clients
    receive a short-lived access token and rotating refresh token.
 6. `POST /auth/v1/token/refresh`, `POST /auth/v1/logout`, and session-management
@@ -96,7 +96,7 @@ are implemented in this completed AUTH-07 slice.
 The provider-neutral endpoint contract is recorded in
 `docs/security/passwordless-api-contract.md` before controller or persistence
 implementation. It is intentionally application-owned so users remain on a
-Pennywise-branded flow; provider-hosted interaction is reserved for MFA,
+Squarewise-branded flow; provider-hosted interaction is reserved for MFA,
 recovery, consent, or step-up requirements.
 
 ## Implementation increment: one-time credential core
@@ -165,7 +165,7 @@ expiry. Encryption and key-management adapters must be implemented before the
 event is published; a plaintext fallback is explicitly prohibited.
 
 The AES-GCM key is required through
-`PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY` in all production-like profiles
+`SQUAREWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY` in all production-like profiles
 and local Compose. It has no default and must be exactly 32 decoded bytes;
 missing or malformed configuration fails startup.
 
@@ -226,7 +226,7 @@ database, while production may use a shared atomic store. No controller may
 implement ad-hoc counters.
 
 Deployment wiring for the credential core is profile-gated and fail-closed:
-`PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET` is required in `local-oidc`,
+`SQUAREWISE_SECURITY_CREDENTIAL_DIGEST_SECRET` is required in `local-oidc`,
 `staging`, and `production`. It has no application default and is never
 committed. The configured secret is used only by the HMAC digest adapter; a
 rotation procedure and existing-credential migration policy must be completed

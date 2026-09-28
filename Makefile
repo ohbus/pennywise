@@ -9,14 +9,14 @@ NOTIFICATIONS_COMPOSE := infra/local/docker-compose.notifications.yml
 BFF_COMPOSE := infra/local/docker-compose.bff.yml
 DEV_COMPOSE := infra/local/docker-compose.dev.yml
 PROD_COMPOSE := infra/deploy/docker-compose.prod.yml
-export PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET ?= AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=
-export PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY ?= ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=
+export SQUAREWISE_SECURITY_CREDENTIAL_DIGEST_SECRET ?= AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=
+export SQUAREWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY ?= ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=
 
 .DEFAULT_GOAL := help
 .PHONY: help doctor bootstrap sync validate contracts lint python-typecheck test test-unit test-integration coverage build package check ci ci-e2e acceptance acceptance-live bruno-run workflow-validate observability-validate release-gate security-hygiene architecture-validate sbom-validate load-probe load-k6-validate load-k6 e2e e2e-rest-edge smoke docs-diagrams docs-diagrams-config compose-config deps-config deps-up deps-status deps-logs deps-down accounts-deps-config accounts-deps-up accounts-deps-status accounts-deps-logs accounts-deps-down expense-core-deps-config expense-core-deps-up expense-core-deps-status expense-core-deps-logs expense-core-deps-down notifications-deps-config notifications-deps-up notifications-deps-status notifications-deps-logs notifications-deps-down bff-deps-config bff-deps-up bff-deps-status bff-deps-logs bff-deps-down full-config full-up full-status full-logs full-down compose-dev-up compose-dev-down compose-dev-logs compose-up compose-down docker-build-all docker-build-% prod-config clean clean-gradle status
 
 help: ## Show available commands
-	@awk 'BEGIN {FS = ":.*##"; printf "Pennywise commands\n\n"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "Squarewise commands\n\n"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 doctor: ## Check required local tools and versions
 	@command -v docker >/dev/null || (echo "Docker is required"; exit 1)
@@ -85,17 +85,17 @@ acceptance-live: ## Run the acceptance test harness requiring live running servi
 
 bruno-run: ## Run the ordered Bruno collection; override BRUNO_ENV, BRUNO_TOKEN, negative tokens, and BRUNO_REPORT
 	@command -v npx >/dev/null || (echo "Node.js/npm is required for Bruno CLI"; exit 1)
-	@report="$${BRUNO_REPORT:-/tmp/pennywise-bruno-$$(date +%s).json}"; mkdir -p "$$(dirname "$$report")"; \
-		(cd tools/bruno && npx --yes @usebruno/cli@4.1.0 run accounts bff expense-core/groups expense-core/expenses expense-core/settlements expense-core/sync expense-core/recurring notifications expense-core/lifecycle quality -r --env "$${BRUNO_ENV:-local}" --env-var "token=$${BRUNO_TOKEN:-test-user}" --env-var "wrongAudienceToken=$${BRUNO_WRONG_AUDIENCE_TOKEN:-$${PENNYWISE_BRUNO_WRONG_AUDIENCE_TOKEN}}" --env-var "wrongIssuerToken=$${BRUNO_WRONG_ISSUER_TOKEN:-$${PENNYWISE_BRUNO_WRONG_ISSUER_TOKEN}}" --env-var "expiredToken=$${BRUNO_EXPIRED_TOKEN:-$${PENNYWISE_BRUNO_EXPIRED_TOKEN}}" --reporter-json "$$report" --reporter-skip-headers --reporter-skip-body); \
+	@report="$${BRUNO_REPORT:-/tmp/squarewise-bruno-$$(date +%s).json}"; mkdir -p "$$(dirname "$$report")"; \
+		(cd tools/bruno && npx --yes @usebruno/cli@4.1.0 run accounts bff expense-core/groups expense-core/expenses expense-core/settlements expense-core/sync expense-core/recurring notifications expense-core/lifecycle quality -r --env "$${BRUNO_ENV:-local}" --env-var "token=$${BRUNO_TOKEN:-test-user}" --env-var "wrongAudienceToken=$${BRUNO_WRONG_AUDIENCE_TOKEN:-$${SQUAREWISE_BRUNO_WRONG_AUDIENCE_TOKEN}}" --env-var "wrongIssuerToken=$${BRUNO_WRONG_ISSUER_TOKEN:-$${SQUAREWISE_BRUNO_WRONG_ISSUER_TOKEN}}" --env-var "expiredToken=$${BRUNO_EXPIRED_TOKEN:-$${SQUAREWISE_BRUNO_EXPIRED_TOKEN}}" --reporter-json "$$report" --reporter-skip-headers --reporter-skip-body); \
 		echo "Bruno report: $$report"
 
 workflow-validate: ## Parse all GitHub Actions workflow YAML files
 	@uv run yamllint -d '{extends: relaxed, rules: {truthy: disable, line-length: disable}}' .github/workflows
 
 observability-validate: ## Validate Prometheus rules and Grafana dashboard assets
-	@ruby -e 'require "yaml"; %w[infra/observability/prometheus.yml infra/observability/rules/pennywise.yml].each { |file| YAML.load_file(file); puts "valid observability YAML: #{file}" }'
-	@uv run python3 -m json.tool infra/observability/grafana/dashboards/pennywise-overview.json >/dev/null
-	@uv run python3 -c 'import json; d=json.load(open("infra/observability/grafana/dashboards/pennywise-overview.json")); assert d["panels"] and all(p["targets"] for p in d["panels"]); print("valid Grafana dashboard")'
+	@ruby -e 'require "yaml"; %w[infra/observability/prometheus.yml infra/observability/rules/squarewise.yml].each { |file| YAML.load_file(file); puts "valid observability YAML: #{file}" }'
+	@uv run python3 -m json.tool infra/observability/grafana/dashboards/squarewise-overview.json >/dev/null
+	@uv run python3 -c 'import json; d=json.load(open("infra/observability/grafana/dashboards/squarewise-overview.json")); assert d["panels"] and all(p["targets"] for p in d["panels"]); print("valid Grafana dashboard")'
 
 release-gate: observability-validate ## Validate repository-owned production release prerequisites
 	@uv run python3 tools/ops/validate_release_gate.py
@@ -261,20 +261,20 @@ docker-build-all: $(addprefix docker-build-,$(SERVICES)) ## Build all production
 
 docker-build-%: ## Build one production image, e.g. make docker-build-accounts
 	@test -n "$*" || (echo "Provide a service name"; exit 2)
-	@docker build --build-arg APP_PROJECT=$* -f infra/docker/Dockerfile.jvm -t pennywise-$*:local .
+	@docker build --build-arg APP_PROJECT=$* -f infra/docker/Dockerfile.jvm -t squarewise-$*:local .
 
 DOCKER_FAST_TARGETS = $(addprefix docker-fast-,$(SERVICES))
 
 docker-fast-all: package $(DOCKER_FAST_TARGETS) ## Build all local runtime images quickly from host jars
 
 $(DOCKER_FAST_TARGETS): docker-fast-%:
-	@docker build --build-arg APP_PROJECT=$* -f infra/docker/Dockerfile.fast -t pennywise-$*:local .
+	@docker build --build-arg APP_PROJECT=$* -f infra/docker/Dockerfile.fast -t squarewise-$*:local .
 
 prod-config: ## Validate production Compose using image variables from the environment
-	@test -n "$(PENNYWISE_ACCOUNTS_IMAGE)" || (echo "Set PENNYWISE_ACCOUNTS_IMAGE"; exit 2)
-	@test -n "$(PENNYWISE_EXPENSE_CORE_IMAGE)" || (echo "Set PENNYWISE_EXPENSE_CORE_IMAGE"; exit 2)
-	@test -n "$(PENNYWISE_NOTIFICATIONS_IMAGE)" || (echo "Set PENNYWISE_NOTIFICATIONS_IMAGE"; exit 2)
-	@test -n "$(PENNYWISE_BFF_IMAGE)" || (echo "Set PENNYWISE_BFF_IMAGE"; exit 2)
+	@test -n "$(SQUAREWISE_ACCOUNTS_IMAGE)" || (echo "Set SQUAREWISE_ACCOUNTS_IMAGE"; exit 2)
+	@test -n "$(SQUAREWISE_EXPENSE_CORE_IMAGE)" || (echo "Set SQUAREWISE_EXPENSE_CORE_IMAGE"; exit 2)
+	@test -n "$(SQUAREWISE_NOTIFICATIONS_IMAGE)" || (echo "Set SQUAREWISE_NOTIFICATIONS_IMAGE"; exit 2)
+	@test -n "$(SQUAREWISE_BFF_IMAGE)" || (echo "Set SQUAREWISE_BFF_IMAGE"; exit 2)
 	@$(COMPOSE) -f $(PROD_COMPOSE) config --quiet
 
 staging-config: ## Validate the production-like staging overlay

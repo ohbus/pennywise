@@ -1,25 +1,25 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Pennywise Accounts" type="Application" factoryName="Application">
+  <configuration default="false" name="Squarewise Accounts" type="Application" factoryName="Application">
     <envs>
       <env name="SPRING_PROFILES_ACTIVE" value="local-oidc" />
       <env name="SERVER_PORT" value="8081" />
-      <env name="SPRING_DATASOURCE_URL" value="jdbc:postgresql://localhost:5432/pennywise_accounts" />
-      <env name="SPRING_DATASOURCE_USERNAME" value="pennywise" />
-      <env name="SPRING_DATASOURCE_PASSWORD" value="pennywise-local-only" />
-      <env name="PENNYWISE_SECURITY_OIDC_ISSUER_URI" value="http://localhost:8090/realms/pennywise" />
-      <env name="PENNYWISE_SECURITY_OIDC_AUDIENCE" value="pennywise-api" />
-      <env name="PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET" value="AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=" />
-      <env name="PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY" value="ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=" />
-      <env name="PENNYWISE_REDIS_HOST" value="localhost" />
-      <env name="PENNYWISE_REDIS_PASSWORD" value="pennywise-redis-local-only" />
+      <env name="SPRING_DATASOURCE_URL" value="jdbc:postgresql://localhost:5432/squarewise_accounts" />
+      <env name="SPRING_DATASOURCE_USERNAME" value="squarewise" />
+      <env name="SPRING_DATASOURCE_PASSWORD" value="squarewise-local-only" />
+      <env name="SQUAREWISE_SECURITY_OIDC_ISSUER_URI" value="http://localhost:8090/realms/squarewise" />
+      <env name="SQUAREWISE_SECURITY_OIDC_AUDIENCE" value="squarewise-api" />
+      <env name="SQUAREWISE_SECURITY_CREDENTIAL_DIGEST_SECRET" value="AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=" />
+      <env name="SQUAREWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY" value="ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=" />
+      <env name="SQUAREWISE_REDIS_HOST" value="localhost" />
+      <env name="SQUAREWISE_REDIS_PASSWORD" value="squarewise-redis-local-only" />
       <env name="SPRING_RABBITMQ_HOST" value="localhost" />
       <env name="SPRING_RABBITMQ_PORT" value="5672" />
-      <env name="SPRING_RABBITMQ_USERNAME" value="pennywise" />
-      <env name="SPRING_RABBITMQ_PASSWORD" value="pennywise-local-only" />
-      <env name="PENNYWISE_AUTH_EMAIL_OUTBOX_ENABLED" value="true" />
+      <env name="SPRING_RABBITMQ_USERNAME" value="squarewise" />
+      <env name="SPRING_RABBITMQ_PASSWORD" value="squarewise-local-only" />
+      <env name="SQUAREWISE_AUTH_EMAIL_OUTBOX_ENABLED" value="true" />
     </envs>
-    <option name="MAIN_CLASS_NAME" value="com.subhrodip.pennywise.accounts.AccountsApplicationKt" />
-    <module name="pennywise.app.accounts.main" />
+    <option name="MAIN_CLASS_NAME" value="com.subhrodip.squarewise.accounts.AccountsApplicationKt" />
+    <module name="squarewise.app.accounts.main" />
     <option name="VM_PARAMETERS" value="-Dspring.profiles.active=local" />
     <method v="2">
       <option name="Make" enabled="true" />

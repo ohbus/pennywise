@@ -6,14 +6,14 @@ x-healthcheck: &healthcheck
   start_period: 30s
 
 x-app-deploy: &app-deploy
-  replicas: ${PENNYWISE_APP_REPLICAS:-3}
+  replicas: ${SQUAREWISE_APP_REPLICAS:-3}
   resources:
     limits:
-      cpus: ${PENNYWISE_APP_CPU_LIMIT:-4.0}
-      memory: ${PENNYWISE_APP_MEMORY_LIMIT:-8G}
+      cpus: ${SQUAREWISE_APP_CPU_LIMIT:-4.0}
+      memory: ${SQUAREWISE_APP_MEMORY_LIMIT:-8G}
     reservations:
-      cpus: ${PENNYWISE_APP_CPU_RESERVATION:-1.0}
-      memory: ${PENNYWISE_APP_MEMORY_RESERVATION:-2G}
+      cpus: ${SQUAREWISE_APP_CPU_RESERVATION:-1.0}
+      memory: ${SQUAREWISE_APP_MEMORY_RESERVATION:-2G}
 
 x-service-defaults: &service-defaults
   restart: unless-stopped
@@ -26,7 +26,7 @@ x-service-defaults: &service-defaults
   environment:
     SPRING_PROFILES_ACTIVE: production
     SPRING_MAIN_BANNER_MODE: "off"
-    LOGGING_STRUCTURED_FORMAT: ${PENNYWISE_LOG_FORMAT:-ecs}
+    LOGGING_STRUCTURED_FORMAT: ${SQUAREWISE_LOG_FORMAT:-ecs}
     MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus
     MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
     MANAGEMENT_SERVER_SHUTDOWN: graceful
@@ -34,19 +34,19 @@ x-service-defaults: &service-defaults
 
 services:
   accounts:
-    image: ${PENNYWISE_ACCOUNTS_IMAGE:?set PENNYWISE_ACCOUNTS_IMAGE}
+    image: ${SQUAREWISE_ACCOUNTS_IMAGE:?set SQUAREWISE_ACCOUNTS_IMAGE}
     <<: *service-defaults
     healthcheck: *healthcheck
   expense-core:
-    image: ${PENNYWISE_EXPENSE_CORE_IMAGE:?set PENNYWISE_EXPENSE_CORE_IMAGE}
+    image: ${SQUAREWISE_EXPENSE_CORE_IMAGE:?set SQUAREWISE_EXPENSE_CORE_IMAGE}
     <<: *service-defaults
     healthcheck: *healthcheck
   notifications:
-    image: ${PENNYWISE_NOTIFICATIONS_IMAGE:?set PENNYWISE_NOTIFICATIONS_IMAGE}
+    image: ${SQUAREWISE_NOTIFICATIONS_IMAGE:?set SQUAREWISE_NOTIFICATIONS_IMAGE}
     <<: *service-defaults
     healthcheck: *healthcheck
   bff:
-    image: ${PENNYWISE_BFF_IMAGE:?set PENNYWISE_BFF_IMAGE}
+    image: ${SQUAREWISE_BFF_IMAGE:?set SQUAREWISE_BFF_IMAGE}
     <<: *service-defaults
     healthcheck: *healthcheck
 

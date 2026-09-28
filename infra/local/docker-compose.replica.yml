@@ -18,15 +18,15 @@ services:
 
   postgres-replica:
     image: ${POSTGRES_IMAGE:-postgres:17}
-    hostname: ${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}
+    hostname: ${SQUAREWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}
     networks:
       default:
-        aliases: ["${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}"]
+        aliases: ["${SQUAREWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}"]
     environment:
       PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-pennywise_replica}
-      POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-pennywise-replica-local-only}
-      POSTGRES_PRIMARY_HOST: ${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}
+      POSTGRES_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-squarewise_replica}
+      POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-squarewise-replica-local-only}
+      POSTGRES_PRIMARY_HOST: ${SQUAREWISE_POSTGRES_HOSTNAME:-postgres-db}
       POSTGRES_PRIMARY_PORT: "5432"
     entrypoint: ["/usr/local/bin/replica-entrypoint.sh"]
     volumes:
@@ -36,46 +36,46 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-pennywise} -d pennywise_accounts"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-squarewise} -d squarewise_accounts"]
       interval: 5s
       timeout: 3s
       retries: 30
 
   expense-core:
     environment:
-      PENNYWISE_DB_ENABLED: "true"
-      PENNYWISE_DB_WRITER_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_expense_core
-      PENNYWISE_DB_WRITER_USERNAME: ${POSTGRES_USER:-pennywise}
-      PENNYWISE_DB_WRITER_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
-      PENNYWISE_DB_READER_SEARCH_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}:5432/pennywise_expense_core
-      PENNYWISE_DB_READER_SEARCH_USERNAME: ${POSTGRES_USER:-pennywise}
-      PENNYWISE_DB_READER_SEARCH_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+      SQUAREWISE_DB_ENABLED: "true"
+      SQUAREWISE_DB_WRITER_URL: jdbc:postgresql://${SQUAREWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/squarewise_expense_core
+      SQUAREWISE_DB_WRITER_USERNAME: ${POSTGRES_USER:-squarewise}
+      SQUAREWISE_DB_WRITER_PASSWORD: ${POSTGRES_PASSWORD:-squarewise-local-only}
+      SQUAREWISE_DB_READER_SEARCH_URL: jdbc:postgresql://${SQUAREWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}:5432/squarewise_expense_core
+      SQUAREWISE_DB_READER_SEARCH_USERNAME: ${POSTGRES_USER:-squarewise}
+      SQUAREWISE_DB_READER_SEARCH_PASSWORD: ${POSTGRES_PASSWORD:-squarewise-local-only}
     depends_on:
       postgres-replica:
         condition: service_healthy
 
   accounts:
     environment:
-      PENNYWISE_DB_ENABLED: "true"
-      PENNYWISE_DB_WRITER_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_accounts
-      PENNYWISE_DB_WRITER_USERNAME: ${POSTGRES_USER:-pennywise}
-      PENNYWISE_DB_WRITER_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
-      PENNYWISE_DB_READER_PROFILE_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}:5432/pennywise_accounts
-      PENNYWISE_DB_READER_PROFILE_USERNAME: ${POSTGRES_USER:-pennywise}
-      PENNYWISE_DB_READER_PROFILE_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+      SQUAREWISE_DB_ENABLED: "true"
+      SQUAREWISE_DB_WRITER_URL: jdbc:postgresql://${SQUAREWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/squarewise_accounts
+      SQUAREWISE_DB_WRITER_USERNAME: ${POSTGRES_USER:-squarewise}
+      SQUAREWISE_DB_WRITER_PASSWORD: ${POSTGRES_PASSWORD:-squarewise-local-only}
+      SQUAREWISE_DB_READER_PROFILE_URL: jdbc:postgresql://${SQUAREWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}:5432/squarewise_accounts
+      SQUAREWISE_DB_READER_PROFILE_USERNAME: ${POSTGRES_USER:-squarewise}
+      SQUAREWISE_DB_READER_PROFILE_PASSWORD: ${POSTGRES_PASSWORD:-squarewise-local-only}
     depends_on:
       postgres-replica:
         condition: service_healthy
 
   notifications:
     environment:
-      PENNYWISE_DB_ENABLED: "true"
-      PENNYWISE_DB_WRITER_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_notifications
-      PENNYWISE_DB_WRITER_USERNAME: ${POSTGRES_USER:-pennywise}
-      PENNYWISE_DB_WRITER_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
-      PENNYWISE_DB_READER_INBOX_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}:5432/pennywise_notifications
-      PENNYWISE_DB_READER_INBOX_USERNAME: ${POSTGRES_USER:-pennywise}
-      PENNYWISE_DB_READER_INBOX_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+      SQUAREWISE_DB_ENABLED: "true"
+      SQUAREWISE_DB_WRITER_URL: jdbc:postgresql://${SQUAREWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/squarewise_notifications
+      SQUAREWISE_DB_WRITER_USERNAME: ${POSTGRES_USER:-squarewise}
+      SQUAREWISE_DB_WRITER_PASSWORD: ${POSTGRES_PASSWORD:-squarewise-local-only}
+      SQUAREWISE_DB_READER_INBOX_URL: jdbc:postgresql://${SQUAREWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}:5432/squarewise_notifications
+      SQUAREWISE_DB_READER_INBOX_USERNAME: ${POSTGRES_USER:-squarewise}
+      SQUAREWISE_DB_READER_INBOX_PASSWORD: ${POSTGRES_PASSWORD:-squarewise-local-only}
     depends_on:
       postgres-replica:
         condition: service_healthy

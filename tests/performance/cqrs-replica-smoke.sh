@@ -12,11 +12,11 @@ compose() { # shellcheck disable=SC2086
 }
 
 compose ps --status running "$PRIMARY_SERVICE" "$REPLICA_SERVICE" >/dev/null
-replication_state=$(compose exec -T "$PRIMARY_SERVICE" psql -U pennywise -d postgres -tAc \
+replication_state=$(compose exec -T "$PRIMARY_SERVICE" psql -U squarewise -d postgres -tAc \
   "SELECT COALESCE(bool_and(state = 'streaming'), false) FROM pg_stat_replication;" | tr -d '[:space:]')
-recovery_state=$(compose exec -T "$REPLICA_SERVICE" psql -U pennywise -d postgres -tAc \
+recovery_state=$(compose exec -T "$REPLICA_SERVICE" psql -U squarewise -d postgres -tAc \
   "SELECT pg_is_in_recovery();" | tr -d '[:space:]')
-replay_lsn=$(compose exec -T "$REPLICA_SERVICE" psql -U pennywise -d postgres -tAc \
+replay_lsn=$(compose exec -T "$REPLICA_SERVICE" psql -U squarewise -d postgres -tAc \
   "SELECT COALESCE(pg_last_wal_replay_lsn()::text, 'NULL');" | tr -d '[:space:]')
 if [ -n "$AUTH_HEADER" ]; then
   metrics=$(curl -fsS -H "$AUTH_HEADER" "$EXPENSE_CORE_URL/actuator/prometheus")
@@ -28,7 +28,7 @@ printf 'replica_streaming=%s\n' "$replication_state"
 printf 'replica_in_recovery=%s\n' "$recovery_state"
 printf 'replica_replay_lsn=%s\n' "$replay_lsn"
 if [ -n "$AUTH_HEADER" ]; then
-  telemetry_present=$(printf '%s\n' "$metrics" | grep -q 'pennywise_db_' && echo true || echo false)
+  telemetry_present=$(printf '%s\n' "$metrics" | grep -q 'squarewise_db_' && echo true || echo false)
 else
   telemetry_present=not_checked
 fi

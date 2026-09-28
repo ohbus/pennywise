@@ -1,6 +1,6 @@
 # OPS-02 performance and recovery drills
 
-These scripts are reproducible probes for an isolated Pennywise environment.
+These scripts are reproducible probes for an isolated Squarewise environment.
 They do not provision infrastructure or claim production capacity.
 
 ```sh

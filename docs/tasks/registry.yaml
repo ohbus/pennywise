@@ -4936,7 +4936,67 @@
       "blocker": null
     },
     {
+      "id": "OPS-25",
+      "parent_id": "MILESTONE-QUALITY",
+      "title": "Migrate Python tooling to pyproject.toml + uv sync + uv run",
+      "phase": "quality",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["QA-09"],
+      "owned_paths": [
+        "pyproject.toml",
+        "uv.lock",
+        "Makefile",
+        ".github/workflows/_reusable-ci.yml",
+        "tests/__init__.py",
+        "tests/e2e/__init__.py",
+        "tools/__init__.py",
+        "tools/contracts/__init__.py",
+        "tools/ops/__init__.py",
+        "tools/errors/__init__.py",
+        "docs/operations/ci.md",
+        "docs/operations/quickstart.md",
+        "docs/implementation/technology-decisions.md",
+        "docs/tasks/details/OPS-25.md"
+      ],
+      "specification": "docs/tasks/details/OPS-25.md",
+      "acceptance_criteria": [
+        "uv sync completes from a clean checkout with no system Python packages required.",
+        "uv run mypy tests tools exits 0 with the existing rule set.",
+        "uv run python3 -m unittest discover -s tests/acceptance exits 0 (10/10).",
+        "No PYTHONPATH=. appears in Makefile or _reusable-ci.yml.",
+        "mypy.ini deleted; mypy config lives in pyproject.toml [tool.mypy].",
+        "uv.lock committed; CI runs uv sync --frozen.",
+        "All make e2e-* targets pass without PYTHONPATH prefix.",
+        "make workflow-validate and make python-typecheck pass."
+      ],
+      "validation_commands": [
+        "uv sync",
+        "uv run mypy tests tools",
+        "uv run python3 -m unittest discover -s tests/acceptance",
+        "make python-typecheck",
+        "make acceptance-live",
+        "make e2e-rest-edge",
+        "make workflow-validate",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Created pyproject.toml with Hatchling build backend and editable packages tests and tools, pinned dev dependencies, and migrated tool.mypy config.",
+        "Added __init__.py files in tests/, tests/e2e/, tools/, tools/contracts/, tools/ops/, and tools/errors/.",
+        "Generated and committed uv.lock via uv sync.",
+        "Deleted mypy.ini in favor of [tool.mypy] in pyproject.toml.",
+        "Migrated all Makefile python targets to uv run and added sync target, completely removing PYTHONPATH=.",
+        "Updated .github/workflows/_reusable-ci.yml with uv sync --frozen and uv run, removing PYTHONPATH env blocks.",
+        "Updated quickstart.md, ci.md, and technology-decisions.md.",
+        "Verified with uv sync, uv run mypy tests tools (30 files clean), uv run python3 -m unittest discover -s tests/acceptance (10/10), make check, make workflow-validate, make acceptance-live (10/10), make e2e-rest-edge (97 checks), make e2e-live (11 steps), make e2e-offline (6 steps), make e2e-concurrency (5 steps), and make e2e-chaos (8 steps)."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
       "id": "AUTH-05",
+
       "parent_id": "AUTH-01",
       "title": "Remove weaker local authentication modes",
       "phase": "security",

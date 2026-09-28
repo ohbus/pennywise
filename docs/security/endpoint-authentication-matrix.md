@@ -80,7 +80,11 @@ Every protected route or operation must have evidence for:
 
 ## Evidence status
 
-The matrix must be populated per operation during AUTH-08 implementation. A
-route cannot be marked complete from a shared filter test alone; it requires
-transport, authentication, resource authorization, and failure evidence at the
-appropriate test level.
+The complete operation inventory is maintained in the companion
+[`public-interface-operation-matrix.md`](../quality/public-interface-operation-matrix.md)
+and contract validator. AUTH-08 local evidence now covers the authentication
+boundary, resource authorization, malformed/anonymous/forged-token paths,
+GraphQL HTTP, WebSocket handshake rejection, and Redis-unavailable refresh
+admission. A route is not considered complete from a shared filter test alone;
+the companion matrix records remaining dependency, retry, timeout, replay,
+backpressure, and production-environment dimensions per operation.

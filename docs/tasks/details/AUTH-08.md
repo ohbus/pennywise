@@ -5,8 +5,10 @@
 In progress. The first runtime increment implements bounded idle/absolute refresh
 sessions and the second increment restores trusted account identity on refresh,
 adds authenticated refresh-token logout, and removes caller-controlled client
-identity from refresh rotation. Remaining endpoint, browser, cache, GraphQL,
-WebSocket, and full live-evidence work is still tracked below.
+identity from refresh rotation. REST/resource authorization and local
+GraphQL/WebSocket/Redis failure evidence are now recorded; browser/native,
+provider-owned revocation, cache-matrix, and hosted/production evidence remain
+tracked below.
 
 ## Implemented increments
 

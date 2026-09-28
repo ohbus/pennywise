@@ -136,4 +136,46 @@ class TokenSessionServiceTest @Autowired constructor(
         val rotatedSession = sessionRepository.findByRefreshTokenDigest(digest.digest(rotated.refreshToken))
         assertNotNull(rotatedSession?.revokedAt)
     }
+
+    @Test
+    fun `logout does not revoke a family when authenticated subject does not own it`() {
+        val now = Instant.now()
+        val initial = service.createSession(
+            accountId = UUID.randomUUID(),
+            subject = "internal:owner@example.com",
+            email = "owner@example.com",
+            clientKind = "BROWSER",
+            deviceLabel = "test",
+            now = now
+        )
+
+        service.revokeSessionByRefreshToken(
+            rawRefreshToken = initial.refreshToken,
+            expectedSubject = "internal:attacker@example.com",
+            now = now.plusSeconds(1)
+        )
+
+        val stored = sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))
+        assertEquals(null, stored?.revokedAt)
+    }
+
+    @Test
+    fun `logout is idempotent for an already revoked family`() {
+        val now = Instant.now()
+        val initial = service.createSession(
+            accountId = UUID.randomUUID(),
+            subject = "internal:logout@example.com",
+            email = "logout@example.com",
+            clientKind = "BROWSER",
+            deviceLabel = "test",
+            now = now
+        )
+
+        service.revokeSessionByRefreshToken(initial.refreshToken, now = now.plusSeconds(1))
+        val firstRevocation = sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))?.revokedAt
+        service.revokeSessionByRefreshToken(initial.refreshToken, now = now.plusSeconds(2))
+        val secondRevocation = sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))?.revokedAt
+
+        assertEquals(firstRevocation, secondRevocation)
+    }
 }

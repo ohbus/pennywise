@@ -16,6 +16,7 @@ dependencies {
         exclude(group = "org.springframework.boot", module = "spring-boot-starter-web")
     }
     implementation(libs.boot.actuator)
+    implementation(libs.boot.validation)
     runtimeOnly(libs.micrometer.prometheus)
     implementation(libs.boot.security)
     implementation(libs.boot.resource.server)

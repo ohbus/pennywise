@@ -19,10 +19,18 @@ class BrowserOriginWebFilter(properties: BrowserOriginProperties) : WebFilter {
     private val policy = BrowserOriginPolicy(properties.allowedOrigins)
 
     override fun filter(exchange: ServerWebExchange, chain: WebFilterChain): Mono<Void> {
-        if (exchange.request.path.value() != ApiEndpoints.Bff.GRAPHQL) return chain.filter(exchange)
+        val path = exchange.request.path.value()
+        val isGraphql = path == ApiEndpoints.Bff.GRAPHQL
+        val isBrowserAuth = path in setOf(
+            ApiEndpoints.Bff.BROWSER_LOGIN_START,
+            ApiEndpoints.Bff.BROWSER_LOGIN_VERIFY,
+            ApiEndpoints.Bff.BROWSER_TOKEN_REFRESH,
+            ApiEndpoints.Bff.BROWSER_LOGOUT
+        )
+        if (!isGraphql && !isBrowserAuth) return chain.filter(exchange)
 
         val origin = exchange.request.headers.getFirst(HttpHeaders.ORIGIN)
-        if (!policy.allows(origin)) {
+        if (!policy.allows(origin) || (isBrowserAuth && origin == null)) {
             exchange.response.statusCode = HttpStatus.FORBIDDEN
             return exchange.response.setComplete()
         }
@@ -30,12 +38,16 @@ class BrowserOriginWebFilter(properties: BrowserOriginProperties) : WebFilter {
 
         exchange.response.headers.add(HttpHeaders.VARY, HttpHeaders.ORIGIN)
         exchange.response.headers.accessControlAllowOrigin = origin
+        exchange.response.headers.accessControlAllowCredentials = isBrowserAuth
         if (exchange.request.method == HttpMethod.OPTIONS) {
             exchange.response.headers.accessControlAllowMethods = listOf(
                 HttpMethod.GET, HttpMethod.POST, HttpMethod.OPTIONS
             )
             exchange.response.headers.accessControlAllowHeaders = listOf(
-                HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE, HttpHeaders.ACCEPT
+                HttpHeaders.AUTHORIZATION,
+                HttpHeaders.CONTENT_TYPE,
+                HttpHeaders.ACCEPT,
+                ApiEndpoints.Headers.X_CSRF_TOKEN
             )
             exchange.response.statusCode = HttpStatus.NO_CONTENT
             return exchange.response.setComplete()

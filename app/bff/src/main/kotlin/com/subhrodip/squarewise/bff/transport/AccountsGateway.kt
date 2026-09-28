@@ -2,6 +2,9 @@
 
 package com.subhrodip.squarewise.bff.transport
 import com.subhrodip.squarewise.bff.transport.model.output.BffProfile
+import com.subhrodip.squarewise.bff.transport.model.auth.AccountsTokenResponse
+import com.subhrodip.squarewise.bff.transport.model.auth.BrowserLoginStartRequest
+import com.subhrodip.squarewise.bff.transport.model.auth.BrowserLoginStartResponse
 import com.subhrodip.squarewise.bff.transport.UpstreamServiceException
 
 import com.subhrodip.squarewise.bff.transport.BffGatewayFilters
@@ -28,4 +31,41 @@ class AccountsGateway(
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Accounts returned HTTP ${response.statusCode().value()}")) }
             .bodyToMono(BffProfile::class.java)
             .timeout(timeout)
+
+    /** Starts a browser passwordless login without exposing Accounts directly to the browser. */
+    fun startBrowserLogin(request: BrowserLoginStartRequest): Mono<BrowserLoginStartResponse> =
+        client.post().uri(ApiEndpoints.Accounts.V1.PATH_LOGIN_START)
+            .bodyValue(request)
+            .retrieve()
+            .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Accounts returned HTTP ${response.statusCode().value()}")) }
+            .bodyToMono(BrowserLoginStartResponse::class.java)
+            .timeout(timeout)
+
+    /** Verifies a browser credential and keeps the returned refresh token inside the BFF. */
+    fun verifyBrowserLogin(credential: String): Mono<AccountsTokenResponse> =
+        client.post().uri(ApiEndpoints.Accounts.V1.PATH_LOGIN_VERIFY)
+            .bodyValue(mapOf("credential" to credential, "clientKind" to "BROWSER"))
+            .retrieve()
+            .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Accounts returned HTTP ${response.statusCode().value()}")) }
+            .bodyToMono(AccountsTokenResponse::class.java)
+            .timeout(timeout)
+
+    /** Rotates a browser refresh token received from the HttpOnly cookie. */
+    fun refreshBrowserSession(refreshToken: String): Mono<AccountsTokenResponse> =
+        client.post().uri(ApiEndpoints.Accounts.V1.PATH_TOKEN_REFRESH)
+            .bodyValue(mapOf("refreshToken" to refreshToken))
+            .retrieve()
+            .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Accounts returned HTTP ${response.statusCode().value()}")) }
+            .bodyToMono(AccountsTokenResponse::class.java)
+            .timeout(timeout)
+
+    /** Revokes the browser session family using the current BFF access token. */
+    fun logoutBrowserSession(accessToken: String, refreshToken: String): Mono<Void> =
+        client.post().uri(ApiEndpoints.Accounts.V1.PATH_LOGOUT)
+            .headers { headers -> headers.setBearerAuth(accessToken) }
+            .bodyValue(mapOf("refreshToken" to refreshToken))
+            .retrieve()
+            .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Accounts returned HTTP ${response.statusCode().value()}")) }
+            .toBodilessEntity()
+            .then()
 }

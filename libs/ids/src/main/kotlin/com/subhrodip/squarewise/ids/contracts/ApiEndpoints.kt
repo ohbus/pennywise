@@ -9,6 +9,10 @@ object ApiEndpoints {
     /** GraphQL BFF transport paths and acceptance-only fault values. */
     object Bff {
         const val GRAPHQL: String = "/graphql"
+        const val BROWSER_LOGIN_START: String = "/auth/login/start"
+        const val BROWSER_LOGIN_VERIFY: String = "/auth/login/verify"
+        const val BROWSER_TOKEN_REFRESH: String = "/auth/token/refresh"
+        const val BROWSER_LOGOUT: String = "/auth/logout"
         const val ACCEPTANCE_FAULT_FANOUT: String = "fanout"
     }
 
@@ -35,6 +39,8 @@ object ApiEndpoints {
         const val TEXT_CSV_UTF8: String = "text/csv; charset=UTF-8"
         const val TEXT_PLAIN_UTF8: String = "text/plain; charset=UTF-8"
         const val BEARER_SCHEME: String = "Bearer"
+        const val ORIGIN: String = "Origin"
+        const val X_CSRF_TOKEN: String = "X-CSRF-Token"
     }
 
     /** Accounts service API endpoints */

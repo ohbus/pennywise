@@ -31,7 +31,16 @@ class ProductionSecurityConfig(
     @Bean
     fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain = http
         .csrf { it.disable() }
-        .authorizeExchange { it.pathMatchers(ApiEndpoints.Operations.HEALTH).permitAll().anyExchange().authenticated() }
+        .authorizeExchange {
+            it.pathMatchers(ApiEndpoints.Operations.HEALTH).permitAll()
+                .pathMatchers(
+                    ApiEndpoints.Bff.BROWSER_LOGIN_START,
+                    ApiEndpoints.Bff.BROWSER_LOGIN_VERIFY,
+                    ApiEndpoints.Bff.BROWSER_TOKEN_REFRESH,
+                    ApiEndpoints.Bff.BROWSER_LOGOUT
+                ).permitAll()
+                .anyExchange().authenticated()
+        }
         .oauth2ResourceServer { it.jwt {} }
         .build()
 }

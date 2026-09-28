@@ -28,6 +28,11 @@ tracked below.
   allow-listed preflight receives `204 No Content` with a specific origin, and
   no credentialed or wildcard CORS response is emitted. Origin-less requests are
   retained for native/non-browser bearer clients.
+- Follow-up hardening: an accepted account-deletion request now resolves the
+  writer-owned account identifier and bulk-revokes all active refresh sessions in
+  the same transaction. This prevents an already-issued refresh token from
+  restoring access after deletion begins while retaining the profile for audit
+  and financial attribution.
 
 ## Objective
 

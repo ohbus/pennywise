@@ -120,7 +120,7 @@ load-k6: load-k6-validate ## Run one k6 script in Docker; set SCRIPT=tests/load/
 
 load-mutation-check: load-k6-validate ## Run fixture-backed mutation load and verify financial reconciliation
 	@DURATION="$${DURATION:-5s}" k6 run tests/load/k6/mutation-expense.js
-	@python3 tools/ops/reconcile_mutation_fixture.py
+	@PYTHONPATH=. python3 tools/ops/reconcile_mutation_fixture.py --token "$${BEARER_TOKEN:-test-user}"
 
 cqrs-replica-smoke: ## Verify local PostgreSQL streaming replica and route telemetry
 	@sh tests/performance/cqrs-replica-smoke.sh

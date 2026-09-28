@@ -57,6 +57,12 @@ def reconcile_group(
 ) -> dict[str, Any]:
     auth_headers = {AUTHORIZATION: f"{BEARER_PREFIX}{token}"}
 
+    # Fetch active member to obtain valid participantId
+    members_url = f"{base_url}/expense-core/v1/groups/{group_id}/members"
+    status_m, members_data = request_json(members_url, headers=auth_headers)
+    if status_m == 200 and isinstance(members_data, list) and len(members_data) > 0:
+        participant_id = str(members_data[0].get("membershipId", participant_id))
+
     # 1. Fetch group details
     group_url = f"{base_url}/expense-core/v1/groups/{group_id}"
     status, group_data = request_json(group_url, headers=auth_headers)

@@ -158,6 +158,6 @@ The following evidence is recorded in the task registry and progress ledger:
 - REST/OpenAPI, GraphQL, Bruno, unit, persistence, concurrency, and E2E
   artifacts are synchronized with the tracker and progress ledger.
 
-Browser-cookie policy, managed-provider runs, and incident-response procedures
-remain separately scoped future hardening work and are not represented as gaps
-in the completed AUTH-03 through AUTH-07 implementation.
+BFF browser-cookie/CSRF policy is implemented in the AUTH-08 increment. Managed-
+provider runs, full cache restart/eviction evidence, native application
+integration, and incident-response procedures remain separately scoped gates.

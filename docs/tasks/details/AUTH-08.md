@@ -9,8 +9,10 @@ identity from refresh rotation. REST/resource authorization and local
 GraphQL/WebSocket/Redis failure evidence are now recorded. The current flow is
 Squarewise-owned, so provider-grant revocation is explicitly not applicable;
 the provider boundary and future delegated-grant requirements are documented in
-`docs/security/provider-grant-revocation-boundary.md`. Browser-cookie delivery,
-full cache-matrix, and hosted/production evidence remain tracked below.
+`docs/security/provider-grant-revocation-boundary.md`. The BFF browser
+cookie/CSRF runtime boundary is now implemented; full cache-matrix and
+hosted/production evidence remain tracked below. Native application integration
+remains outside the deferred UI boundary.
 
 ## Implemented increments
 
@@ -122,8 +124,9 @@ parity, provider compatibility, evidence, and operations.
 ## Owned implementation paths
 
 The runtime increment owns the following paths; the current branch has modified
-the session/auth and evidence paths below. Browser cookie and native PKCE
-behavior remains explicitly planned under the related client-security work:
+the session/auth and evidence paths below. BFF browser cookie/CSRF behavior is
+implemented here; native PKCE application integration remains explicitly
+deferred under the accepted UI boundary:
 
 ```text
 app/accounts/src/main/kotlin/**/accounts/auth/
@@ -224,9 +227,10 @@ strict CORS/origin policy, and no JavaScript-visible refresh token. Native
 clients must use Authorization Code + PKCE through the system browser and keep
 refresh tokens in platform secure storage.
 
-If browser cookies are delivered under AUTH-12 rather than this increment, the
-contract and documentation must explicitly mark them as planned rather than
-implemented.
+The BFF browser contract is implemented with HttpOnly access/refresh cookies,
+double-submit CSRF, exact Origin checks, and browser-safe response metadata.
+Native clients retain the bearer-token contract and use the provider's PKCE
+configuration; application secure-storage integration remains deferred.
 
 ### AUTH-08H — GraphQL and WebSocket parity
 

@@ -6805,7 +6805,7 @@
         "Passwordless verification and refresh responses now emit no-store/no-cache directives, covered by controller tests and documented in the passwordless API contract.",
         "BFF browser-origin canonicalization now normalizes HTTP(S) default ports and rejects non-HTTP(S) schemes, covered by focused policy and GraphQL transport tests.",
         "The final hygiene scan passed after a non-behavioral legacy-session fixture rename; current scan covers 999 tracked files.",
-        "Remaining before completion: browser cookie/CSRF runtime delivery, full cache eviction/restart matrix, and hosted/production-scale evidence. Native PKCE is enforced by the local OIDC client policy and its application/UI integration remains deferred by the accepted UI boundary; provider-owned revocation is not applicable to the current Squarewise-owned refresh flow."
+        "Remaining before completion: full cache eviction/restart matrix and hosted/production-scale evidence. BFF browser cookie/CSRF runtime delivery is implemented with exact origins, HttpOnly access/refresh cookies, double-submit CSRF, and browser-safe responses. Native PKCE is enforced by the local OIDC client policy and its application/UI integration remains deferred by the accepted UI boundary; provider-owned revocation is not applicable to the current Squarewise-owned refresh flow."
       ],
       "reviewer": "/root",
       "blocker": null

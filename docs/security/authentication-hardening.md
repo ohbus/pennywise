@@ -62,9 +62,10 @@ audience, or client settings are missing.
 The current status for AUTH-01 through AUTH-08 is maintained in
 `docs/tasks/registry.yaml`. AUTH-08 is in progress: session policy, migration,
 trusted refresh identity, logout, exact public-route matching, and local REST,
-GraphQL, WebSocket-negative, and Redis-failure evidence are implemented. Browser
-cookie/CSRF, native PKCE, provider-owned revocation where a provider owns the
-grant, and production-scale evidence remain separate follow-up gates. Account
+GraphQL, WebSocket-negative, Redis-failure, and BFF browser cookie/CSRF evidence
+are implemented. Native application integration, provider-owned revocation where
+a provider owns the grant, full cache eviction/restart evidence, and
+production-scale evidence remain separate follow-up gates. Account
 deletion now bulk-revokes active sessions, refresh sessions bind the original
 provider-qualified subject, and token responses prohibit intermediary caching.
 
@@ -82,7 +83,7 @@ provider-qualified subject, and token responses prohibit intermediary caching.
 | AUTH-10 | Identity mapping using provider-qualified subjects | P0 | AUTH-03 | Planned |
 | AUTH-11 | Short-lived access credentials and rotating refresh tokens | P0 | AUTH-10 | Planned |
 | AUTH-12 | Logout, revocation, reuse detection, and session management | P0 | AUTH-11 | Planned |
-| AUTH-13 | Secure browser cookies and CSRF policy | P0 | AUTH-11 | Planned |
+| AUTH-13 | Secure browser cookies and CSRF policy | P0 | AUTH-11 | Implemented in AUTH-08 |
 | AUTH-14 | GraphQL HTTP/WebSocket authentication parity | P0 | AUTH-03 | Planned |
 | AUTH-15 | Real-provider integration and security regression suites | P0 | AUTH-06, AUTH-12 | Planned |
 | AUTH-16 | Operations, key rotation, incident response, and recovery runbooks | P1 | AUTH-12 | Planned |

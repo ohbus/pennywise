@@ -1,21 +1,22 @@
 # Browser session security
 
-Browser cookie delivery is not enabled by AUTH-08. The current REST and GraphQL
-boundaries accept bearer tokens and therefore do not issue JavaScript-readable or
-HttpOnly refresh-token cookies. The BFF GraphQL transport now enforces an exact
-allow-list through `SQUAREWISE_SECURITY_BROWSER_ALLOWED_ORIGINS`; missing origins
-remain accepted for native/non-browser clients, while a supplied origin that is
-not an exact scheme/host/port match receives `403 Forbidden`. Preflight requests
-are answered only for an allow-listed origin and never grant credentials or a
-wildcard origin.
+The BFF owns the browser session boundary. `POST /auth/login/start` and
+`POST /auth/login/verify` proxy the Squarewise-owned passwordless flow; successful
+verification sets Secure, HttpOnly, SameSite=Lax access and rotating refresh
+cookies. Browser responses contain only session metadata, so JavaScript never
+receives either credential. The access cookie is adapted to the existing GraphQL
+bearer boundary server-side.
 
-When AUTH-12 implements browser sessions, it must use a BFF-owned `Secure`,
-`HttpOnly`, `SameSite` cookie, reject cross-site state-changing requests with an
-explicit origin/CSRF policy, and clear the cookie on logout, expiry, and account
-deletion. Refresh tokens must never appear in URLs, browser storage, logs, or
-GraphQL variables exposed to browser code.
+`POST /auth/token/refresh` and `POST /auth/logout` require both an exact
+allow-listed `Origin` and a double-submit CSRF proof: the readable nonce cookie
+must equal `X-CSRF-Token`. The refresh cookie is scoped to `/auth`; the access
+cookie is scoped to `/`; logout clears all three cookies. Refresh tokens never
+appear in URLs, browser storage, logs, or GraphQL variables exposed to browser
+code.
 
-Cookie delivery and CSRF protection remain a planned AUTH-12 boundary, not
-current runtime behavior. The exact-origin BFF transport rule is covered by the
-focused GraphQL transport tests; deployment must provide explicit origins before
-browser clients are enabled.
+`SQUAREWISE_SECURITY_BROWSER_ALLOWED_ORIGINS` is an explicit comma-separated
+origin allow-list. Wildcards, paths, credentials in origins, and non-HTTP(S)
+schemes are rejected. Credentialed CORS is limited to the browser-auth routes;
+origin-less GraphQL requests remain compatible with native bearer clients.
+Deployments must set the allow-list before enabling browser clients and serve the
+BFF over HTTPS because the cookies are always marked Secure.

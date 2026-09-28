@@ -63,8 +63,10 @@ The current status for AUTH-01 through AUTH-08 is maintained in
 `docs/tasks/registry.yaml`. AUTH-08 is in progress: session policy, migration,
 trusted refresh identity, logout, exact public-route matching, and local REST,
 GraphQL, WebSocket-negative, and Redis-failure evidence are implemented. Browser
-cookie/CSRF, native PKCE, provider-owned revocation, and production-scale
-evidence remain separate follow-up gates.
+cookie/CSRF, native PKCE, provider-owned revocation where a provider owns the
+grant, and production-scale evidence remain separate follow-up gates. Account
+deletion now bulk-revokes active sessions, refresh sessions bind the original
+provider-qualified subject, and token responses prohibit intermediary caching.
 
 | ID | Deliverable | Priority | Dependency | Status |
 |---|---|---:|---|---|

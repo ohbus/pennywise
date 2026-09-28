@@ -70,6 +70,13 @@ Session mutation must invalidate or advance a version for relevant cached data:
 Cache failure must cause a safe writer fallback or a fail-closed security result.
 It must never silently disable revocation or rate limiting.
 
+The implemented refresh path now also persists the provider-qualified subject
+with each session and compares it with the writer lookup before issuing a child
+token. Account deletion uses a single writer bulk update to revoke all active
+sessions for the resolved account. Token-bearing login/refresh responses use
+`Cache-Control: no-store` and `Pragma: no-cache` so HTTP intermediaries cannot
+become an accidental credential cache.
+
 ## Required cache tests
 
 - Hit and miss behavior.

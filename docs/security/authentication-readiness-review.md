@@ -38,6 +38,10 @@ browser/native or production-scale completion. Remaining scope is:
 - Full unit, persistence, controller, contract, Bruno, E2E, cache-failure, and
   endpoint-matrix evidence.
 
+The latest hardening also binds refresh sessions to the provider-qualified
+subject captured at issuance, revokes all active sessions when deletion begins,
+and marks token-bearing verification/refresh responses `no-store`/`no-cache`.
+
 Until those checks pass, the current readiness claims must not be expanded to
 include complete browser-session, managed-provider, or production-scale
 readiness.

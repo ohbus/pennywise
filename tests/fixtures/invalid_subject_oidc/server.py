@@ -8,12 +8,16 @@ import os
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Final
-from tests.http_constants import APPLICATION_JSON, CONTENT_LENGTH, CONTENT_TYPE
 
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.hashes import SHA256
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+
+# Inlined so this module is self-contained when running inside Docker
+# (the tests/ package root is not available in the container image).
+APPLICATION_JSON: Final[str] = "application/json"
+CONTENT_TYPE: Final[str] = "Content-Type"
+CONTENT_LENGTH: Final[str] = "Content-Length"
 
 
 ISSUER: Final[str] = os.environ.get("INVALID_SUBJECT_OIDC_ISSUER", "http://invalid-subject-oidc:8080")

@@ -31,12 +31,13 @@ class BrowserOriginPolicy(allowedOrigins: List<String>) {
         val uri = runCatching { URI(value.trim()) }.getOrNull() ?: return null
         val scheme = uri.scheme?.lowercase() ?: return null
         val host = uri.host?.lowercase() ?: return null
+        if (scheme != "http" && scheme != "https") return null
         if (uri.userInfo != null || uri.rawPath.isNotEmpty() || uri.rawQuery != null || uri.rawFragment != null) return null
         val port = when {
-            uri.port >= 0 -> ":${uri.port}"
-            scheme == "http" || scheme == "ws" -> ""
-            scheme == "https" || scheme == "wss" -> ""
-            else -> return null
+            uri.port < 0 -> ""
+            scheme == "http" && uri.port == 80 -> ""
+            scheme == "https" && uri.port == 443 -> ""
+            else -> ":${uri.port}"
         }
         return "$scheme://$host$port"
     }

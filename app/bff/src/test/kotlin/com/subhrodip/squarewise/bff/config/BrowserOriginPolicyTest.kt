@@ -17,9 +17,11 @@ class BrowserOriginPolicyTest {
     @Test
     fun `accepts only exact configured origins`() {
         assertTrue(policy.allows("https://app.example.test"))
+        assertTrue(policy.allows("https://app.example.test:443"))
         assertTrue(policy.allows("HTTP://LOCALHOST:3000"))
         assertFalse(policy.allows("https://evil.example.test"))
         assertFalse(policy.allows("https://app.example.test/path"))
+        assertFalse(policy.allows("ws://app.example.test"))
     }
 
     @Test

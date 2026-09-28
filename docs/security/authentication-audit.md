@@ -138,10 +138,10 @@ validated provider-qualified subject and enforce its own resource policy.
 | P0 | AUTH-05 | Remove weaker local mode | no raw-token runtime path; local OIDC profile tests | done |
 | P0 | AUTH-06 | Prove local Keycloak integration | real REST/GraphQL/WS token journeys | done |
 | P0 | AUTH-07 | Define Squarewise-owned auth contracts | API/session contract and threat model | done |
-| P0 | AUTH-08 | Implement identity and session issuance | persistence and provider adapter tests | planned |
+| P0 | AUTH-08 | Implement identity and session issuance | persistence, provider-boundary, and session lifecycle tests | in progress |
 | P0 | AUTH-09 | Implement passwordless links/codes | replay, brute force, enumeration, Mailpit tests | planned |
 | P0 | AUTH-10 | Implement rotating refresh lifecycle | hashing, rotation, family revocation, reuse detection | planned |
-| P0 | AUTH-11 | Implement logout and session revocation | races, deletion, provider-subject changes | planned |
+| P0 | AUTH-11 | Implement logout and session revocation | races, deletion, provider-subject changes | implemented in AUTH-08 increment |
 | P0 | AUTH-12 | Define browser/native security policy | CSRF/CORS/PKCE/state/nonce/cookie tests | planned |
 | P0 | AUTH-13 | Secure GraphQL HTTP/WebSocket parity | handshake, reconnect, expiry, revocation tests | planned |
 | P1 | AUTH-14 | Prove managed-provider compatibility | second OIDC provider contract run | planned |

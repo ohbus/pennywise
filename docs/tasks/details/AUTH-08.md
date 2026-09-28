@@ -6,9 +6,11 @@ In progress. The first runtime increment implements bounded idle/absolute refres
 sessions and the second increment restores trusted account identity on refresh,
 adds authenticated refresh-token logout, and removes caller-controlled client
 identity from refresh rotation. REST/resource authorization and local
-GraphQL/WebSocket/Redis failure evidence are now recorded; browser/native,
-provider-owned revocation, cache-matrix, and hosted/production evidence remain
-tracked below.
+GraphQL/WebSocket/Redis failure evidence are now recorded. The current flow is
+Squarewise-owned, so provider-grant revocation is explicitly not applicable;
+the provider boundary and future delegated-grant requirements are documented in
+`docs/security/provider-grant-revocation-boundary.md`. Browser-cookie delivery,
+full cache-matrix, and hosted/production evidence remain tracked below.
 
 ## Implemented increments
 

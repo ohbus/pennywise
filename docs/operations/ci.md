@@ -21,9 +21,22 @@ Node 24 ahead of runner deprecation deadlines.
 Each verification-matrix job receives isolated PostgreSQL 17 and RabbitMQ 4.3
 service containers. Docker health checks (`pg_isready` and
 `rabbitmq-diagnostics ping`) must pass before job steps begin, and no service
-state is shared between matrix jobs. The E2E job instead lets the complete local
-Compose topology exclusively own PostgreSQL and RabbitMQ; declaring duplicate
-job services would contend for host ports `5432` and `5672`.
+state is shared between matrix jobs. The parallelized E2E jobs instead let the complete
+local Compose topology exclusively own PostgreSQL, RabbitMQ, Keycloak, Redis, and
+Mailpit; declaring duplicate job services on the host would contend for host ports `5432`
+and `5672`.
+
+To achieve fast feedback and conserve runner CPU, the E2E stages eliminate redundant
+Gradle test runs and compilation. Instead, the parallel E2E jobs depend directly on
+`verify` and consume the pre-built application `bootJar` artifacts (`app-jar-*`),
+allowing `Dockerfile.fast` to package lightweight runtime containers in seconds.
+The monolithic E2E stage is split into three parallel streams:
+1. `e2e-edge-and-security`: Contract smoke, negative OIDC JWT path probes, and live REST edge cases (`make e2e-rest-edge`).
+2. `e2e-product-and-offline`: Public acceptance suite (`make acceptance-live`), ordered Bruno collection (`make bruno-run`), live multi-service product lifecycle (`make e2e-live`), and offline client synchronization / replay resilience (`make e2e-offline`).
+3. `e2e-concurrency-and-chaos`: Real-time WebSocket GraphQL subscription invalidation, concurrent member edit race resolution (`make e2e-concurrency`), message broker outage chaos, and transactional outbox drain recovery (`make e2e-chaos`).
+
+An aggregate gate job (`e2e-gate`) monitors all parallel streams and provides a single,
+authoritative status check for branch protection rules.
 
 The matrix tests every application and library in parallel after a single
 preflight, validates contracts, REST path structure, GraphQL schema/resolver

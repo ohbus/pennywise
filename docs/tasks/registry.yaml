@@ -4893,6 +4893,49 @@
       "blocker": null
     },
     {
+      "id": "QA-09",
+      "parent_id": "MILESTONE-QUALITY",
+      "title": "Optimized and parallelized E2E pipeline with artifact reuse",
+      "phase": "quality",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [
+        "QA-08"
+      ],
+      "owned_paths": [
+        ".github/workflows/_reusable-ci.yml",
+        ".github/workflows/ci-pr.yml",
+        ".github/workflows/ci-branch.yml",
+        ".github/workflows/ci-master.yml",
+        "docs/operations/ci.md",
+        "docs/tasks/details/QA-09.md"
+      ],
+      "specification": "docs/tasks/details/QA-09.md",
+      "acceptance_criteria": [
+        "Artifact Reuse: E2E runner jobs consume pre-built application bootJar artifacts, eliminating redundant Gradle compilation and unit testing.",
+        "Parallelized Execution: Monolithic E2E suite is partitioned into focused, parallelized jobs (API edge/security, product/offline journeys, concurrency/chaos).",
+        "Aggregate Gate: An e2e-gate job provides unified branch protection reporting.",
+        "Local Parity: Local workflows (make e2e-all, make ci-e2e) preserve identical behavior.",
+        "Validation: Workflow files validate with yamllint, Python type checks pass, and contract registry validates cleanly."
+      ],
+      "validation_commands": [
+        "make workflow-validate",
+        "make python-typecheck",
+        "python3 tools/contracts/validate.py",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Eliminated redundant Gradle compilation and testing in E2E jobs by reusing app-jar-* bootJar artifacts produced during matrix verification.",
+        "Partitioned the monolithic E2E stage into 3 parallel jobs: e2e-edge-and-security, e2e-product-and-offline, and e2e-concurrency-and-chaos, reducing wall-clock runtime.",
+        "Added unified e2e-gate job evaluating parallel results with if: always() for reliable branch protection status reporting.",
+        "Extracted tests/e2e/acquire_local_tokens.sh for clean token acquisition across test scripts.",
+        "Verified with make workflow-validate, make python-typecheck, python3 tools/contracts/validate.py, and git diff --check."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
       "id": "AUTH-05",
       "parent_id": "AUTH-01",
       "title": "Remove weaker local authentication modes",

@@ -39,6 +39,7 @@ query classification, and evidence gates are complete.
 | --- | --- | --- | --- |
 | QA-07 | coordinator | done | Contract-driven REST, GraphQL, WebSocket, negative-path, concurrency, recovery, and evidence matrix |
 | QA-08 | coordinator | done | Production-scale, deployment-resilience, security, and unresolved WebSocket protocol evidence |
+| QA-09 | coordinator | done | Optimized and parallelized E2E pipeline with artifact reuse |
 
 ## Production hardening milestone
 

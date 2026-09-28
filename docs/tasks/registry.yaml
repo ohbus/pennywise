@@ -6747,7 +6747,7 @@
       "parent_id": "AUTH-01",
       "title": "RFC-aligned authentication and session hardening",
       "phase": "security",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -6806,7 +6806,7 @@
         "BFF browser-origin canonicalization now normalizes HTTP(S) default ports and rejects non-HTTP(S) schemes, covered by focused policy and GraphQL transport tests.",
         "The final hygiene scan passed after a non-behavioral legacy-session fixture rename; current scan covers 1006 tracked files.",
         "The executable cache-resilience matrix now proves rate-limit bucket eviction, bounded Redis outage failure as HTTP 429, and restart recovery to the normal invalid-token HTTP 401 path. Accounts Redis connection and command waits default to two seconds.",
-        "Remaining before completion: hosted/production-scale evidence only. BFF browser cookie/CSRF runtime delivery is implemented with exact origins, HttpOnly access/refresh cookies, double-submit CSRF, and browser-safe responses. Native PKCE is enforced by the local OIDC client policy and its application/UI integration remains deferred by the accepted UI boundary; provider-owned revocation is not applicable to the current Squarewise-owned refresh flow."
+        "AUTH-08 implementation and local security evidence are complete. Hosted/production-scale and managed-provider evidence remain explicitly separate release gates under QA-08/OPS-22 and are not claimed by this task. BFF browser cookie/CSRF runtime delivery is implemented with exact origins, HttpOnly access/refresh cookies, double-submit CSRF, and browser-safe responses. Native PKCE is enforced by the local OIDC client policy and its application/UI integration remains deferred by the accepted UI boundary; provider-owned revocation is not applicable to the current Squarewise-owned refresh flow."
       ],
       "reviewer": "/root",
       "blocker": null

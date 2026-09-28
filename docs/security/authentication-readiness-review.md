@@ -23,10 +23,10 @@ managed-provider, and incident-response work remains outside this slice.
 
 ## AUTH-08 hardening boundary
 
-AUTH-08 is the registered parent task and remains in progress. The current
-branch implements and verifies the session-policy, migration, trusted-identity,
+AUTH-08 is the registered parent task and is complete for implementation and
+local security evidence. The current branch implements and verifies the session-policy, migration, trusted-identity,
 logout, endpoint-matcher, and local negative-path slices. It does not claim
-browser/native or production-scale completion. Remaining scope is:
+managed-provider or production-scale completion. Delivered scope is:
 
 - RFC-aligned idle and absolute session expiry.
 - Atomic refresh rotation with trusted identity restoration.
@@ -42,9 +42,9 @@ The latest hardening also binds refresh sessions to the provider-qualified
 subject captured at issuance, revokes all active sessions when deletion begins,
 and marks token-bearing verification/refresh responses `no-store`/`no-cache`.
 
-Until those checks pass, the current readiness claims must not be expanded to
-include complete browser-session, managed-provider, or production-scale
-readiness.
+Those implementation checks now pass. This does not expand the claim to
+managed-provider compatibility or production-scale readiness; those remain
+separate QA-08/OPS-22 release gates.
 
 ## Evidence-based status
 

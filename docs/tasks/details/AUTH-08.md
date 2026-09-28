@@ -2,7 +2,7 @@
 
 ## Status
 
-In progress. The first runtime increment implements bounded idle/absolute refresh
+Complete for the implementation and local security-evidence scope. The first runtime increment implements bounded idle/absolute refresh
 sessions and the second increment restores trusted account identity on refresh,
 adds authenticated refresh-token logout, and removes caller-controlled client
 identity from refresh rotation. REST/resource authorization and local
@@ -12,8 +12,8 @@ the provider boundary and future delegated-grant requirements are documented in
 `docs/security/provider-grant-revocation-boundary.md`. The BFF browser
 cookie/CSRF runtime boundary is now implemented; the local cache matrix and
 local OIDC negative evidence are complete. Hosted/production-scale evidence
-remains a separately recorded boundary. Native application integration remains
-outside the deferred UI boundary.
+remains a separately recorded release boundary under QA-08/OPS-22. Native
+application integration remains outside the deferred UI boundary.
 
 ## Implemented increments
 

@@ -16,6 +16,8 @@ class AuthSessionEntity(
     var sessionId: UUID,
     @Column(name = "account_id")
     var accountId: UUID? = null,
+    @Column(name = "subject", length = 200)
+    var subject: String? = null,
     @Column(name = "family_id", nullable = false)
     var familyId: UUID,
     @Column(name = "refresh_token_digest", nullable = false, unique = true)

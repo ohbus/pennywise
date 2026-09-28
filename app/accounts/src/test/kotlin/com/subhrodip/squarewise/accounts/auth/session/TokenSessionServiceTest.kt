@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional
 class TokenSessionServiceTest @Autowired constructor(
     private val sessionRepository: AuthSessionRepository
 ) {
+    private var currentSubject = "internal:test@example.com"
     private val secret = ByteArray(32) { it.toByte() }
     private val digest = HmacCredentialDigest(secret)
     private val tokenProvider = InternalJwtTokenProvider(
@@ -41,7 +42,7 @@ class TokenSessionServiceTest @Autowired constructor(
             clockSkew = java.time.Duration.ZERO
         ),
         accountIdentityStore = AccountIdentityStore { id ->
-            AccountIdentity(id, "internal:test@example.com", "test@example.com", false)
+            AccountIdentity(id, currentSubject, "test@example.com", false)
         }
     )
 
@@ -66,6 +67,7 @@ class TokenSessionServiceTest @Autowired constructor(
         val stored = sessionRepository.findByRefreshTokenDigest(digest.digest(response.refreshToken))
         assertNotNull(stored)
         assertEquals(accountId, stored?.accountId)
+        assertEquals(currentSubject, stored?.subject)
         assertEquals("BROWSER", stored?.clientKind)
     }
 
@@ -75,7 +77,7 @@ class TokenSessionServiceTest @Autowired constructor(
         val accountId = UUID.randomUUID()
         val initial = service.createSession(
             accountId = accountId,
-            subject = "internal:rotate@example.com",
+            subject = currentSubject,
             email = "rotate@example.com",
             clientKind = "BROWSER",
             deviceLabel = "test",
@@ -109,7 +111,7 @@ class TokenSessionServiceTest @Autowired constructor(
         val accountId = UUID.randomUUID()
         val initial = service.createSession(
             accountId = accountId,
-            subject = "internal:reuse@example.com",
+            subject = currentSubject,
             email = "reuse@example.com",
             clientKind = "BROWSER",
             deviceLabel = "test",
@@ -143,7 +145,7 @@ class TokenSessionServiceTest @Autowired constructor(
         val now = Instant.now()
         val initial = service.createSession(
             accountId = UUID.randomUUID(),
-            subject = "internal:owner@example.com",
+            subject = currentSubject,
             email = "owner@example.com",
             clientKind = "BROWSER",
             deviceLabel = "test",
@@ -165,7 +167,7 @@ class TokenSessionServiceTest @Autowired constructor(
         val now = Instant.now()
         val initial = service.createSession(
             accountId = UUID.randomUUID(),
-            subject = "internal:logout@example.com",
+            subject = currentSubject,
             email = "logout@example.com",
             clientKind = "BROWSER",
             deviceLabel = "test",
@@ -178,5 +180,28 @@ class TokenSessionServiceTest @Autowired constructor(
         val secondRevocation = sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))?.revokedAt
 
         assertEquals(firstRevocation, secondRevocation)
+    }
+
+    @Test
+    fun `provider subject change revokes the existing session family`() {
+        val now = Instant.now()
+        val accountId = UUID.randomUUID()
+        val initial = service.createSession(
+            accountId = accountId,
+            subject = currentSubject,
+            email = "test@example.com",
+            clientKind = "NATIVE",
+            deviceLabel = "test",
+            now = now
+        )
+        currentSubject = "internal:remapped@example.com"
+
+        val ex = assertThrows(ApplicationException::class.java) {
+            service.rotateSession(initial.refreshToken, "test", now.plusSeconds(1))
+        }
+
+        assertEquals(ErrorCode.ERR_03, ex.errorCode)
+        val stored = sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))
+        assertNotNull(stored?.revokedAt)
     }
 }

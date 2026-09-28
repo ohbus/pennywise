@@ -71,6 +71,7 @@ open class TokenSessionService(
         val session = AuthSessionEntity(
             sessionId = sessionId,
             accountId = accountId,
+            subject = subject,
             familyId = familyId,
             refreshTokenDigest = digest,
             createdAt = now,
@@ -145,10 +146,15 @@ open class TokenSessionService(
             sessionRepository.revokeFamily(existingSession.familyId, now)
             throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
         }
+        if (existingSession.subject == null || existingSession.subject != identity.subject) {
+            sessionRepository.revokeFamily(existingSession.familyId, now)
+            throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
+        }
 
         val newSession = AuthSessionEntity(
             sessionId = newSessionId,
             accountId = accountId,
+            subject = existingSession.subject,
             familyId = existingSession.familyId,
             refreshTokenDigest = newDigest,
             createdAt = now,

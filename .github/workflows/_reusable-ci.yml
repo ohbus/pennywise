@@ -234,6 +234,7 @@ jobs:
           WRONG_ISSUER_TOKEN: ${{ steps.oidc-token.outputs.wrong_issuer_token }}
           EXPIRED_TOKEN: ${{ steps.oidc-token.outputs.expired_token }}
         run: |
+          uv run python3 tests/e2e/test_auth_cache_resilience.py
           uv run python3 tests/e2e/test_oidc_negative.py --variant forged-signature &
           forged_pid=$!
           uv run python3 tests/e2e/test_oidc_negative.py --variant unsupported-algorithm &

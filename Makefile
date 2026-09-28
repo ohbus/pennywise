@@ -13,7 +13,7 @@ export SQUAREWISE_SECURITY_CREDENTIAL_DIGEST_SECRET ?= AAECAwQFBgcICQoLDA0ODxARE
 export SQUAREWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY ?= ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=
 
 .DEFAULT_GOAL := help
-.PHONY: help doctor bootstrap sync validate contracts lint python-typecheck test test-unit test-integration coverage build package check ci ci-e2e acceptance acceptance-live bruno-run workflow-validate observability-validate release-gate security-hygiene architecture-validate sbom-validate load-probe load-k6-validate load-k6 e2e e2e-rest-edge smoke docs-diagrams docs-diagrams-config compose-config deps-config deps-up deps-status deps-logs deps-down accounts-deps-config accounts-deps-up accounts-deps-status accounts-deps-logs accounts-deps-down expense-core-deps-config expense-core-deps-up expense-core-deps-status expense-core-deps-logs expense-core-deps-down notifications-deps-config notifications-deps-up notifications-deps-status notifications-deps-logs notifications-deps-down bff-deps-config bff-deps-up bff-deps-status bff-deps-logs bff-deps-down full-config full-up full-status full-logs full-down compose-dev-up compose-dev-down compose-dev-logs compose-up compose-down docker-build-all docker-build-% prod-config clean clean-gradle status
+.PHONY: help doctor bootstrap sync validate contracts lint python-typecheck test test-unit test-integration coverage build package check ci ci-e2e acceptance acceptance-live bruno-run workflow-validate observability-validate release-gate security-hygiene architecture-validate sbom-validate load-probe load-k6-validate load-k6 e2e e2e-rest-edge e2e-auth-cache smoke docs-diagrams docs-diagrams-config compose-config deps-config deps-up deps-status deps-logs deps-down accounts-deps-config accounts-deps-up accounts-deps-status accounts-deps-logs accounts-deps-down expense-core-deps-config expense-core-deps-up expense-core-deps-status expense-core-deps-logs expense-core-deps-down notifications-deps-config notifications-deps-up notifications-deps-status notifications-deps-logs notifications-deps-down bff-deps-config bff-deps-up bff-deps-status bff-deps-logs bff-deps-down full-config full-up full-status full-logs full-down compose-dev-up compose-dev-down compose-dev-logs compose-up compose-down docker-build-all docker-build-% prod-config clean clean-gradle status
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Squarewise commands\n\n"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -138,6 +138,9 @@ e2e: ## Run the contract and deployment E2E smoke checks
 
 e2e-rest-edge: ## Run live REST validation, authorization, boundary, and idempotency checks
 	@uv run python3 tests/e2e/test_rest_edge_cases.py
+
+e2e-auth-cache: ## Run live Redis eviction, outage, and restart authentication checks
+	@uv run python3 tests/e2e/test_auth_cache_resilience.py
 
 e2e-live: ## Run the comprehensive multi-service product journey E2E test against live stack
 	@uv run python3 tests/e2e/test_product_journey.py

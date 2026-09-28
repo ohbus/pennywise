@@ -204,4 +204,29 @@ class TokenSessionServiceTest @Autowired constructor(
         val stored = sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))
         assertNotNull(stored?.revokedAt)
     }
+
+    @Test
+    fun `legacy session without a backfilled subject fails closed`() {
+        val now = Instant.now()
+        val rawRefreshToken = "legacy-refresh-token"
+        val familyId = UUID.randomUUID()
+        sessionRepository.save(AuthSessionEntity(
+            sessionId = UUID.randomUUID(),
+            accountId = UUID.randomUUID(),
+            familyId = familyId,
+            refreshTokenDigest = digest.digest(rawRefreshToken),
+            createdAt = now,
+            lastUsedAt = now,
+            expiresAt = now.plusSeconds(300),
+            absoluteExpiresAt = now.plusSeconds(600),
+            subject = null,
+            clientKind = "NATIVE"
+        ))
+
+        assertThrows(ApplicationException::class.java) {
+            service.rotateSession(rawRefreshToken, "legacy", now.plusSeconds(1))
+        }
+
+        assertNotNull(sessionRepository.findByRefreshTokenDigest(digest.digest(rawRefreshToken))?.revokedAt)
+    }
 }

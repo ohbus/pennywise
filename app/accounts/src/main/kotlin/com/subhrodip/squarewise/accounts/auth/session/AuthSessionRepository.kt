@@ -23,6 +23,7 @@ interface AuthSessionRepository : JpaRepository<AuthSessionEntity, UUID> {
          WHERE s.sessionId = :sessionId
            AND s.revokedAt IS NULL
            AND s.expiresAt > :revokedAt
+           AND s.absoluteExpiresAt > :revokedAt
         """
     )
     fun rotateIfActive(

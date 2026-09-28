@@ -18,6 +18,9 @@ WebSocket, and full live-evidence work is still tracked below.
 - Follow-up hardening: Accounts production security now permits only the two
   login operations and token refresh by exact path; logout and all other routes
   remain authenticated.
+- Follow-up hardening: the atomic refresh update enforces both idle and absolute
+  expiry predicates, closing the race between the service pre-check and the
+  database update at the hard session boundary.
 
 ## Objective
 

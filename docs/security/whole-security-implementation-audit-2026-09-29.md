@@ -1,11 +1,11 @@
 # Whole security implementation audit
 
-**Audit date:** 2026-09-29  
+**Audit date:** 2026-09-29
 **Scope:** Accounts, Expense Core, Notifications, GraphQL BFF, shared security
 library, persistence, cache, messaging, browser/native sessions, WebSocket
 subscriptions, local/deployment configuration, CI evidence, and security
-documentation.  
-**Branch:** `docs/auth-rfc-session-hardening`  
+documentation.
+**Branch:** `docs/auth-rfc-session-hardening`
 **Audit mode:** Evidence review and documentation only. No application fix was
 implemented by this audit.
 
@@ -112,7 +112,7 @@ against its own resource state; cache and BFF filtering never grant access.**
 
 ### SEC-001 — Passwordless verification cannot issue deployed access tokens
 
-**Severity:** Critical  
+**Severity:** Critical
 **Evidence level:** Direct source inspection; isolated tests use a different
 provider; current local runtime did not provide a successful deployed
 passwordless proof in this audit.
@@ -153,7 +153,7 @@ the old refresh token, and verify generic failure without raw-token logging.
 
 ### SEC-002 — Identity lifecycle is email-derived rather than provider-qualified
 
-**Severity:** High  
+**Severity:** High
 **Evidence level:** Direct source inspection.
 
 `LoginVerificationService.kt:53-56` constructs `internal:$canonicalEmail` and
@@ -180,7 +180,7 @@ derive an authorization subject by concatenating email.
 
 ### SEC-003 — Existing WebSocket subscriptions are not re-authorized after membership changes
 
-**Severity:** High  
+**Severity:** High
 **Evidence level:** Direct source inspection; initial-subscription tests do not
 prove continuous revocation.
 
@@ -210,7 +210,7 @@ revocation, token expiry, reconnect, duplicate subscriptions, and stale events.
 
 ### SEC-004 — Authenticated profile lookup endpoints permit arbitrary account-ID reads
 
-**Severity:** High  
+**Severity:** High
 **Evidence level:** Direct source inspection and contract review.
 
 `ProfileController.kt:111-123` exposes `GET /profiles/{accountId}` and
@@ -236,7 +236,7 @@ BFF is bypassed. Do not rely on UUID unpredictability as authorization.
 
 ### SEC-005 — Service-to-service trust is network-dependent, not cryptographically scoped
 
-**Severity:** High  
+**Severity:** High
 **Evidence level:** Source/configuration review; production network proof not
 available.
 
@@ -259,7 +259,7 @@ do not infer trust from a private network alone.
 
 ### SEC-006 — CSRF protection is narrower than the complete cookie-authenticated surface
 
-**Severity:** Medium  
+**Severity:** Medium
 **Evidence level:** Direct source inspection and focused BFF tests.
 
 `BrowserCsrfWebFilter.kt:22-36` requires the double-submit nonce only for
@@ -281,7 +281,7 @@ origins, preflight, and WebSocket origin handling.
 
 ### SEC-007 — Refresh/login rate limiting uses a coarse and proxy-sensitive network key
 
-**Severity:** Medium  
+**Severity:** Medium
 **Evidence level:** Direct source inspection.
 
 `AuthController.kt:158-161` uses `remoteAddr`, and for IPv4 reduces it to the
@@ -302,7 +302,7 @@ IPv4, IPv6, NAT, proxy chains, spoofed forwarding headers, and Redis outage.
 
 ### SEC-008 — Access-token revocation is not immediate
 
-**Severity:** Medium  
+**Severity:** Medium
 **Evidence level:** Confirmed design behavior.
 
 PostgreSQL authoritatively revokes refresh sessions, logout families, and
@@ -322,7 +322,7 @@ for the maximum post-revocation access window.
 
 ### SEC-009 — External-provider portability is an interface, not an implementation
 
-**Severity:** Medium  
+**Severity:** Medium
 **Evidence level:** Direct source inspection and documentation reconciliation.
 
 The provider-neutral SPI is a good boundary, but `ExternalOidcTokenProvider`
@@ -340,7 +340,7 @@ managed-provider support from the SPI alone.
 
 ### SEC-010 — Key rotation and incident-response controls are incomplete
 
-**Severity:** Medium  
+**Severity:** Medium
 **Evidence level:** Documentation/configuration review.
 
 The repository requires deployment secrets and protects auth-email envelopes,
@@ -362,7 +362,7 @@ system; never rely on environment variables as the entire operational control.
 
 ### SEC-011 — Supply-chain and deployment security are only partially evidenced
 
-**Severity:** Medium  
+**Severity:** Medium
 **Evidence level:** CI/repository review.
 
 The repository has dependency centralization, SBOM generation, hygiene checks,
@@ -379,7 +379,7 @@ expiry, affected artifact, and compensating control.
 
 ### SEC-012 — Security telemetry is useful but not a complete audit trail
 
-**Severity:** Low/Medium  
+**Severity:** Low/Medium
 **Evidence level:** Source/docs review.
 
 Token redaction and structured observability controls exist, and the login path
@@ -598,4 +598,3 @@ claiming passwordless token issuance must be reconciled with the current
 No production approval should be recorded until the P0 findings have a linked
 task, implementation commit, focused regression tests, live evidence, and an
 updated endpoint/security matrix.
-

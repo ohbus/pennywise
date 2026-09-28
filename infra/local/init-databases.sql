@@ -1,3 +1,3 @@
-CREATE DATABASE pennywise_accounts;
-CREATE DATABASE pennywise_expense_core;
-CREATE DATABASE pennywise_notifications;
+CREATE DATABASE squarewise_accounts;
+CREATE DATABASE squarewise_expense_core;
+CREATE DATABASE squarewise_notifications;

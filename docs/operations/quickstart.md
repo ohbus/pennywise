@@ -17,10 +17,10 @@ only that application's prerequisites:
 
 | Native application | Start prerequisites | Start application |
 | --- | --- | --- |
-| Accounts | `make accounts-deps-up` | IntelliJ `Pennywise Accounts` or `./gradlew :app:accounts:bootRun` with the documented local environment |
-| Expense Core | `make expense-core-deps-up` | IntelliJ `Pennywise Expense Core` |
-| Notifications | `make notifications-deps-up` | IntelliJ `Pennywise Notifications` |
-| BFF | `make bff-deps-up` | IntelliJ `Pennywise BFF`; the Compose topology supplies Accounts and Expense Core upstreams |
+| Accounts | `make accounts-deps-up` | IntelliJ `Squarewise Accounts` or `./gradlew :app:accounts:bootRun` with the documented local environment |
+| Expense Core | `make expense-core-deps-up` | IntelliJ `Squarewise Expense Core` |
+| Notifications | `make notifications-deps-up` | IntelliJ `Squarewise Notifications` |
+| BFF | `make bff-deps-up` | IntelliJ `Squarewise BFF`; the Compose topology supplies Accounts and Expense Core upstreams |
 
 Use the corresponding `-status`, `-logs`, and `-down` targets shown by
 `make help`. Do not start multiple topologies simultaneously: they intentionally
@@ -35,8 +35,8 @@ make full-up
 Before the first local start, provide the required credential-digest secret
 and auth-email envelope key without committing either secret. Copy
 `infra/local/auth.env.example` to a private env file or export
-`PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET` with at least 32 random bytes and
-`PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY` with exactly 32 random bytes,
+`SQUAREWISE_SECURITY_CREDENTIAL_DIGEST_SECRET` with at least 32 random bytes and
+`SQUAREWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY` with exactly 32 random bytes,
 encoded as base64. The Compose profile fails closed when either is missing;
 local authentication intentionally does not use a shared default.
 
@@ -70,13 +70,13 @@ that directory into Bruno and start the stack with `make full-up` before
 sending requests. The legacy `local` environment is retained only for isolated
 compatibility tests and is not an application deployment profile. For the
 Keycloak-backed topology, select
-`local-oidc` and inject a real signed token through `PENNYWISE_BRUNO_TOKEN`;
+`local-oidc` and inject a real signed token through `SQUAREWISE_BRUNO_TOKEN`;
 never place credentials in request files. Override base URLs and tokens
 centrally for CI or staging. The collection contains no production
 credentials.
 
 The hosted E2E workflow follows the same rule: after starting Compose it uses
-the fixture's non-user `pennywise-ci` service account with the OAuth
+the fixture's non-user `squarewise-ci` service account with the OAuth
 client-credentials grant to obtain a short-lived signed token. It deliberately
 does not use the legacy `test-user` placeholder or require a manually copied
 token. The service account is local-CI-only and cannot perform password grants.
@@ -95,6 +95,6 @@ python3 tests/acceptance/runner.py --require-services
 The `--require-services` flag enforces that all live endpoints (Accounts, Expense Core, Notifications, BFF) are reachable and healthy; if any service is offline or a scenario fails, the command exits with code 1. For non-blocking runs when services are offline, `make acceptance` records unavailable services as `blocked` without failing.
 
 For production, build and scan each immutable image with `infra/docker/Dockerfile.jvm`,
-run owner migrations, set the four `PENNYWISE_*_IMAGE` variables, inject secrets
+run owner migrations, set the four `SQUAREWISE_*_IMAGE` variables, inject secrets
 through the deployment platform, and use
 `infra/deploy/docker-compose.prod.yml`. Do not commit `.env` files or credentials.

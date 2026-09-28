@@ -57,8 +57,8 @@ included in this narrow topology.
 
 | Component | Container port | Host port | Local access |
 | --- | ---: | ---: | --- |
-| PostgreSQL | 5432 | 5432 | user `pennywise`, password `pennywise-local-only` |
-| RabbitMQ AMQP | 5672 | 5672 | user `pennywise`, password `pennywise-local-only` |
+| PostgreSQL | 5432 | 5432 | user `squarewise`, password `squarewise-local-only` |
+| RabbitMQ AMQP | 5672 | 5672 | user `squarewise`, password `squarewise-local-only` |
 | RabbitMQ management | 15672 | 15672 | `http://localhost:15672` with the RabbitMQ local credentials |
 | Mailpit SMTP | 1025 | 1025 | no authentication |
 | Mailpit web UI | 8025 | 8025 | `http://localhost:8025` |
@@ -69,8 +69,8 @@ included in this narrow topology.
 | Notifications | 8080 | 8083 | `http://localhost:8083` |
 
 On first creation PostgreSQL runs `init-databases.sql`, which creates
-`pennywise_accounts`, `pennywise_expense_core`, and
-`pennywise_notifications`. Removing containers with `down` does not request
+`squarewise_accounts`, `squarewise_expense_core`, and
+`squarewise_notifications`. Removing containers with `down` does not request
 volume deletion; use explicit Docker volume administration only when a clean
 database is intended.
 
@@ -81,9 +81,9 @@ shell launches must set them before the corresponding Gradle `bootRun` task.
 
 | Application | Port | Required local environment |
 | --- | ---: | --- |
-| Accounts | 8081 | `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pennywise_accounts`, datasource user/password above |
-| Expense Core | 8082 | `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pennywise_expense_core`, datasource credentials, RabbitMQ host `localhost`, port `5672`, and credentials |
-| Notifications | 8083 | `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pennywise_notifications`, datasource and RabbitMQ values, email host `localhost`, email port `1025` |
+| Accounts | 8081 | `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/squarewise_accounts`, datasource user/password above |
+| Expense Core | 8082 | `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/squarewise_expense_core`, datasource credentials, RabbitMQ host `localhost`, port `5672`, and credentials |
+| Notifications | 8083 | `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/squarewise_notifications`, datasource and RabbitMQ values, email host `localhost`, email port `1025` |
 | BFF | 8080 | Accounts URL `http://localhost:8081`, Expense Core URL `http://localhost:8082` |
 
 Set `SPRING_PROFILES_ACTIVE=local-oidc`, configure the local Keycloak issuer and
@@ -93,7 +93,7 @@ exact variable names are version-controlled in `.run/`.
 ## Health and startup order
 
 PostgreSQL is healthy only after `pg_isready` confirms the application
-`pennywise_accounts` database is accepting connections; this prevents dependent
+`squarewise_accounts` database is accepting connections; this prevents dependent
 services from racing the local init script that creates the service databases.
 RabbitMQ uses `rabbitmq-diagnostics -q ping`; Mailpit checks its HTTP UI. Compose waits for
 these checks before starting dependent applications. In the full topology,
@@ -110,7 +110,7 @@ second terminal for `make full-status` or `make acceptance-live`.
 
 The full local topology assigns stable meaningful internal hostnames:
 `postgres-db`, `message-broker`, `mailpit-email`, `accounts-api`,
-`expense-core-api`, `notifications-api`, and `pennywise-bff`. Container-to-
+`expense-core-api`, `notifications-api`, and `squarewise-bff`. Container-to-
 container URLs should use these names; `localhost` is reserved for host-native
 development. The dependency services declare these names as explicit network
 aliases, because a Compose `hostname` alone does not guarantee service-DNS

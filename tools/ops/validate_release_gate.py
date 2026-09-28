@@ -21,8 +21,8 @@ def main() -> int:
     required = [
         "infra/deploy/docker-compose.prod.yml",
         "infra/observability/prometheus.yml",
-        "infra/observability/rules/pennywise.yml",
-        "infra/observability/grafana/dashboards/pennywise-overview.json",
+        "infra/observability/rules/squarewise.yml",
+        "infra/observability/grafana/dashboards/squarewise-overview.json",
         "docs/operations/release-hardening-checklist.md",
     ]
     for path in required:
@@ -34,7 +34,7 @@ def main() -> int:
             raise AssertionError(f"production Compose is missing safety marker: {marker}")
 
     dashboard = json.loads(
-        (ROOT / "infra/observability/grafana/dashboards/pennywise-overview.json").read_text(encoding="utf-8")
+        (ROOT / "infra/observability/grafana/dashboards/squarewise-overview.json").read_text(encoding="utf-8")
     )
     if not dashboard.get("panels"):
         raise AssertionError("Grafana dashboard has no panels")

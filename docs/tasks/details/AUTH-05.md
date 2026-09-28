@@ -12,7 +12,7 @@ security.
 
 `local-oidc` is the only supported application security profile for local
 containers and native runs. Keycloak is the local issuer adapter, while
-Pennywise login/session and authorization behavior remain the same as every
+Squarewise login/session and authorization behavior remain the same as every
 other environment. The former `local` opaque-token passthrough is removed,
 not merely hidden behind a weaker opt-in profile.
 

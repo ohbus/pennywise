@@ -28,5 +28,5 @@ dependencies {
     testImplementation(libs.boot.test)
 }
 tasks.withType<Test> { useJUnitPlatform() }
-base { archivesName.set("pennywise-expense-core") }
-springBoot { mainClass.set("com.subhrodip.pennywise.expensecore.ExpenseCoreApplicationKt") }
+base { archivesName.set("squarewise-expense-core") }
+springBoot { mainClass.set("com.subhrodip.squarewise.expensecore.ExpenseCoreApplicationKt") }

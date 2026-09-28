@@ -9,7 +9,7 @@ failures to `application/problem+json` with this shape:
 
 ```json
 {
-  "type": "https://pennywise.example/problems",
+  "type": "https://squarewise.example/problems",
   "title": "Request validation failed",
   "status": 400,
   "code": "VALIDATION_FAILED",

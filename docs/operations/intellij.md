@@ -2,7 +2,7 @@
 
 Shared run configurations live in `.run/` and are committed so a fresh clone
 has the same developer entry points. Open the repository as a Gradle project,
-start Docker Desktop, and run `Pennywise Local Infrastructure` before starting
+start Docker Desktop, and run `Squarewise Local Infrastructure` before starting
 an application. The infrastructure configuration starts PostgreSQL, RabbitMQ,
 and Mailpit from `infra/local/docker-compose.yml`.
 
@@ -19,12 +19,12 @@ values mirror the dependency-only Compose topology and host native-run ports.
 
 | Configuration | Gradle project / main class | Purpose |
 |---|---|---|
-| Pennywise Accounts | `AccountsApplicationKt` / `pennywise.app.accounts.main` | Accounts REST service |
-| Pennywise Expense Core | `ExpenseCoreApplicationKt` / `pennywise.app.expense-core.main` | Financial REST service |
-| Pennywise Notifications | `NotificationsApplicationKt` / `pennywise.app.notifications.main` | Notification REST service |
-| Pennywise BFF | `BffApplicationKt` / `pennywise.app.bff.main` | GraphQL and WebSocket edge |
-| Pennywise JVM Tests | Gradle `test` | Complete JVM test suite |
-| Pennywise Local Infrastructure | `infra/local/docker-compose.yml` | PostgreSQL, RabbitMQ, Mailpit |
+| Squarewise Accounts | `AccountsApplicationKt` / `squarewise.app.accounts.main` | Accounts REST service |
+| Squarewise Expense Core | `ExpenseCoreApplicationKt` / `squarewise.app.expense-core.main` | Financial REST service |
+| Squarewise Notifications | `NotificationsApplicationKt` / `squarewise.app.notifications.main` | Notification REST service |
+| Squarewise BFF | `BffApplicationKt` / `squarewise.app.bff.main` | GraphQL and WebSocket edge |
+| Squarewise JVM Tests | Gradle `test` | Complete JVM test suite |
+| Squarewise Local Infrastructure | `infra/local/docker-compose.yml` | PostgreSQL, RabbitMQ, Mailpit |
 
 When adding a service, first register its task and update the architecture and
 operations documents. Then add its `.run` configuration, main class, port and

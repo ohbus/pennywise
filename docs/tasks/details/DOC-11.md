@@ -1,6 +1,6 @@
 # DOC-11 — Document endpoint-specific pagination policy
 
-Document endpoint-specific pagination policy across collection resources in Pennywise,
+Document endpoint-specific pagination policy across collection resources in Squarewise,
 establishing bounded pagination limits, opaque cursor semantics, and point operation guidance.
 Authoritative architecture specification is maintained in `docs/architecture/pagination.md`.
 

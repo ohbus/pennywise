@@ -4,7 +4,7 @@ This is the target after the documentation gate; describing it does not authoriz
 application creation before DOC-08 passes.
 
 ```text
-pennywise/
+squarewise/
 ├── AGENTS.md
 ├── README.md
 ├── settings.gradle.kts

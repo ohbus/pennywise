@@ -29,7 +29,7 @@ tests, related contracts, and required event schemas.
    - Implemented active group membership validation before generating due occurrences. If members leave or custom allocations reference invalid members, schedule generation automatically pauses (`schedule.paused = true`) and appends an outbox message (`eventType = "recurring.schedule.paused"`, `reason = "invalid_membership"`).
 
 4. **Scheduled Background Runner (`RecurringExpenseWorker.kt`)**:
-   - Injected `@Value("\${pennywise.recurring.max-catch-up-occurrences:12}") var maxCatchUpOccurrences: Int = 12`.
+   - Injected `@Value("\${squarewise.recurring.max-catch-up-occurrences:12}") var maxCatchUpOccurrences: Int = 12`.
    - Passes limit to `service.processDueOccurrences(LocalDate.now(), maxCatchUpOccurrences)` on each poll tick.
 
 5. **Unit & Integration Tests**:
@@ -38,14 +38,14 @@ tests, related contracts, and required event schemas.
 
 ## Owned Paths
 
-- `app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/recurring/`
-- `app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/recurring/`
+- `app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/recurring/`
+- `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/recurring/`
 - `contracts/rest/expense-core.openapi.json`
-- `libs/ids/src/main/kotlin/com/subhrodip/pennywise/ids/ApiEndpoints.kt`
+- `libs/ids/src/main/kotlin/com/subhrodip/squarewise/ids/ApiEndpoints.kt`
 - `docs/tasks/details/CORE-20.md`
 
 ## Verification Evidence
 
 - `python3 tools/contracts/validate.py`: All 6 JSON contracts, GraphQL declarations, and task registry valid.
-- `./gradlew :app:expense-core:test --tests "com.subhrodip.pennywise.expensecore.recurring.*" --no-daemon`: BUILD SUCCESSFUL.
+- `./gradlew :app:expense-core:test --tests "com.subhrodip.squarewise.expensecore.recurring.*" --no-daemon`: BUILD SUCCESSFUL.
 - `./gradlew :app:notifications:test --no-daemon`: BUILD SUCCESSFUL (38 tests passed).

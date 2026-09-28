@@ -15,7 +15,7 @@ Refactor multi-responsibility persistence files in the Notifications service int
 
 ## Owned paths
 
-- `app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/`
+- `app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/`
 - `docs/tasks/details/NOT-10.md`
 
 ## Acceptance criteria

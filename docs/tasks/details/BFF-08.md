@@ -24,6 +24,6 @@ Add gateway HTTP tests for zero, one, and many groups; verify at most four membe
 
 ## Evidence
 
-- Added `app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/BffFanoutTest.kt` covering all fanout, error, ordering, and concurrency bound scenarios using OkHttp `MockWebServer`.
+- Added `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/BffFanoutTest.kt` covering all fanout, error, ordering, and concurrency bound scenarios using OkHttp `MockWebServer`.
 - `./gradlew :app:bff:test --rerun-tasks --no-daemon` completed successfully on 2026-09-18.
 - `git diff --check` passed cleanly.

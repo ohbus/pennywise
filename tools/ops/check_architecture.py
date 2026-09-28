@@ -9,12 +9,12 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 APP_PACKAGES = {
-    "accounts": "com.subhrodip.pennywise.accounts",
-    "expense-core": "com.subhrodip.pennywise.expensecore",
-    "notifications": "com.subhrodip.pennywise.notifications",
-    "bff": "com.subhrodip.pennywise.bff",
+    "accounts": "com.subhrodip.squarewise.accounts",
+    "expense-core": "com.subhrodip.squarewise.expensecore",
+    "notifications": "com.subhrodip.squarewise.notifications",
+    "bff": "com.subhrodip.squarewise.bff",
 }
-IMPORT_PATTERN = re.compile(r"^import\s+(com\.subhrodip\.pennywise\.[\w.]+)")
+IMPORT_PATTERN = re.compile(r"^import\s+(com\.subhrodip\.squarewise\.[\w.]+)")
 
 
 def source_files(app: str) -> list[Path]:

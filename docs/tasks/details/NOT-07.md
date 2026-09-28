@@ -18,12 +18,12 @@ Connect `NotificationConsumerService` with `EmailDispatcher` so that incoming no
   - Injected `PreferenceStore` and `EmailDispatcher` into `NotificationEventConsumer`.
   - Enriched `NotificationEvent` with convenience accessors `recipientId`, `title`, `body`, and optional `recipientEmail`.
   - When an event is applied (`NotificationConsumptionOutcome.APPLIED`), checks recipient preference via `preferenceStore.get(recipientId)`. If preferences are absent/null or `emailEnabled` is true, proceeds to dispatch.
-  - Resolves email address from `event.recipientEmail`, or `event.subject` if it contains `@`, or defaults to `${recipientId}@pennywise.local`.
+  - Resolves email address from `event.recipientEmail`, or `event.subject` if it contains `@`, or defaults to `${recipientId}@squarewise.local`.
   - Formats email subject as `Notification: ${event.title}` and body as `${event.body}`.
   - Calls `emailDispatcher.send(recipientEmail, subject, body)` outside the transactional boundary.
   - Wraps preference lookup and email dispatch in comprehensive try-catch blocks and checks `EmailDeliveryOutcome` so that neither unexpected runtime exceptions nor delivery failures can cause the database transaction or inbox item storage to roll back.
 - **Unit and Integration Tests (`NotificationConsumerServiceTest.kt`)**:
-  - Verified email dispatch when preferences have `emailEnabled = true` with default `${recipientId}@pennywise.local` address.
+  - Verified email dispatch when preferences have `emailEnabled = true` with default `${recipientId}@squarewise.local` address.
   - Verified email dispatch using explicit `recipientEmail` and email-formatted subject.
   - Verified email dispatch is skipped when `emailEnabled = false`.
   - Verified default dispatch behavior when preferences return null or preference store throws an exception.
@@ -32,8 +32,8 @@ Connect `NotificationConsumerService` with `EmailDispatcher` so that incoming no
 
 ## Owned paths
 
-- `app/notifications/src/main/kotlin/com/subhrodip/pennywise/notifications/`
-- `app/notifications/src/test/kotlin/com/subhrodip/pennywise/notifications/`
+- `app/notifications/src/main/kotlin/com/subhrodip/squarewise/notifications/`
+- `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/`
 - `docs/tasks/details/NOT-07.md`
 
 ## Verification evidence

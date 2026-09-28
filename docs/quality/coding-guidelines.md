@@ -4,7 +4,7 @@ The mandatory principle policy is documented in
 [programming-principles.md](programming-principles.md). Review every change
 against that policy before treating a task as complete.
 
-Pennywise follows the Kotlin conventions in this document and uses Gradle
+Squarewise follows the Kotlin conventions in this document and uses Gradle
 checks as the current quality baseline. Spotless 8.1.0 provides the compatible
 Kotlin formatting check for the approved baseline without rewriting existing
 layout. A repository-wide migration remains separately scoped. Run `make lint`

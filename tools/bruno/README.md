@@ -10,7 +10,7 @@ schedules and explicit quality/error probes.
 
 The legacy local environment uses `test-user` only for non-OIDC compatibility.
 For the Keycloak-backed stack, select `local-oidc` and provide a real signed
-access token through `PENNYWISE_BRUNO_TOKEN`; request files never contain a
+access token through `SQUAREWISE_BRUNO_TOKEN`; request files never contain a
 credential. The complete
 stack must be running first:
 
@@ -24,8 +24,8 @@ files never contain environment-specific credentials. Override it without
 editing the collection:
 
 ```sh
-make bruno-run BRUNO_ENV=local-oidc BRUNO_TOKEN="${PENNYWISE_BRUNO_TOKEN}"
-make bruno-run BRUNO_ENV=local-oidc BRUNO_TOKEN="${PENNYWISE_BRUNO_TOKEN}"
+make bruno-run BRUNO_ENV=local-oidc BRUNO_TOKEN="${SQUAREWISE_BRUNO_TOKEN}"
+make bruno-run BRUNO_ENV=local-oidc BRUNO_TOKEN="${SQUAREWISE_BRUNO_TOKEN}"
 ```
 
 Base URLs are likewise environment variables (`baseUrlBff`,

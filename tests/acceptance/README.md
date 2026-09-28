@@ -1,6 +1,6 @@
 # Acceptance Test Harness (QA-01, QA-03 & QA-05)
 
-This directory contains the backend acceptance runner for the Pennywise MVP.
+This directory contains the backend acceptance runner for the Squarewise MVP.
 It exercises real public HTTP and GraphQL interfaces and writes a machine-readable report to `build/reports/acceptance/qa-01.json`. Browser offline and accessibility journeys remain deferred until `app/web/` exists.
 
 QA-05 adds public-interface edge-case probes in `qa05.py` for rollback,

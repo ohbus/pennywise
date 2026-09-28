@@ -2,7 +2,7 @@
 
 **Review date:** 2026-09-20  
 **Scope:** OIDC resource-server validation, local Keycloak integration,
-Pennywise-owned passwordless login, session/token lifecycle, email
+Squarewise-owned passwordless login, session/token lifecycle, email
 normalization, and resource authorization.
 
 ## Executive conclusion
@@ -40,7 +40,7 @@ managed-provider, and incident-response work remains outside this slice.
 ## Keycloak decision
 
 Keycloak should remain a local and test-environment OIDC provider, not a
-Pennywise domain dependency. Pennywise should own the user experience and its
+Squarewise domain dependency. Squarewise should own the user experience and its
 application authorization model. The provider adapter should only supply
 identity proof, issuer metadata, signing keys, and—when required—provider-hosted
 step-up/MFA/consent interaction.
@@ -56,14 +56,14 @@ or email-as-identity matching.
 
 ### Browser
 
-1. The client posts a normalized email to the Pennywise-owned login-start
+1. The client posts a normalized email to the Squarewise-owned login-start
    endpoint.
-2. Pennywise always returns the same accepted response and queues a single-use
+2. Squarewise always returns the same accepted response and queues a single-use
    link. Unknown accounts are indistinguishable from known accounts.
-3. The link opens a Pennywise-branded verification route. The credential is
+3. The link opens a Squarewise-branded verification route. The credential is
    redeemed once, then removed from the URL before any third-party request or
    analytics event.
-4. Pennywise creates a server-side session and sends a `Secure`, `HttpOnly`,
+4. Squarewise creates a server-side session and sends a `Secure`, `HttpOnly`,
    `SameSite=Lax` cookie with bounded idle/absolute expiry. CSRF protection is
    required for cookie-authenticated state-changing requests.
 
@@ -121,7 +121,7 @@ The following evidence is recorded in the task registry and progress ledger:
 
 - A complete local Keycloak journey obtains a real signed token and exercises
   Accounts, Expense Core, BFF GraphQL, and WebSocket behavior.
-- Pennywise-owned email link and code journeys work without redirecting users to
+- Squarewise-owned email link and code journeys work without redirecting users to
   an unknown provider page for ordinary login.
 - Access tokens are short-lived, refresh tokens are opaque, stored only as
   digests, rotated on every use, and family-revoked on replay.

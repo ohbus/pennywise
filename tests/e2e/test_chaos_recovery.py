@@ -30,9 +30,9 @@ BFF_URL = "http://localhost:8080"
 ACCOUNTS_URL = "http://localhost:8081"
 EXPENSE_CORE_URL = "http://localhost:8082"
 NOTIFICATIONS_URL = "http://localhost:8083"
-EXPENSE_CORE_CONTAINER = os.environ.get("PENNYWISE_EXPENSE_CORE_CONTAINER", "local-expense-core-1")
-RABBITMQ_CONTAINER = os.environ.get("PENNYWISE_RABBITMQ_CONTAINER", "local-rabbitmq-1")
-POSTGRES_CONTAINER = os.environ.get("PENNYWISE_POSTGRES_CONTAINER", "local-postgres-1")
+EXPENSE_CORE_CONTAINER = os.environ.get("SQUAREWISE_EXPENSE_CORE_CONTAINER", "local-expense-core-1")
+RABBITMQ_CONTAINER = os.environ.get("SQUAREWISE_RABBITMQ_CONTAINER", "local-rabbitmq-1")
+POSTGRES_CONTAINER = os.environ.get("SQUAREWISE_POSTGRES_CONTAINER", "local-postgres-1")
 
 
 def run_cmd(cmd: str) -> str:
@@ -43,7 +43,7 @@ def run_cmd(cmd: str) -> str:
 
 
 def query_postgres(sql: str) -> str:
-    cmd = f'docker exec -i {POSTGRES_CONTAINER} psql -U pennywise -d pennywise_expense_core -t -A -c "{sql}"'
+    cmd = f'docker exec -i {POSTGRES_CONTAINER} psql -U squarewise -d squarewise_expense_core -t -A -c "{sql}"'
     return run_cmd(cmd)
 
 
@@ -113,10 +113,10 @@ def run_chaos_recovery_tests() -> None:
 
     # Step 1: Provision test users and active group
     print("\n[Step 1] Provisioning test users and active group...")
-    user_a = os.environ.get("PENNYWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
-    user_b = os.environ.get("PENNYWISE_E2E_TOKEN_B", user_a)
+    user_a = os.environ.get("SQUAREWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
+    user_b = os.environ.get("SQUAREWISE_E2E_TOKEN_B", user_a)
     if not user_a or not user_b:
-        raise RuntimeError("PENNYWISE_E2E_TOKEN_A and PENNYWISE_E2E_TOKEN_B must contain signed tokens")
+        raise RuntimeError("SQUAREWISE_E2E_TOKEN_A and SQUAREWISE_E2E_TOKEN_B must contain signed tokens")
 
     status, profile_a = request_json(f"{ACCOUNTS_URL}/accounts/v1/me", bearer=user_a)
     assert status == 200, f"Failed Alice profile: {profile_a}"

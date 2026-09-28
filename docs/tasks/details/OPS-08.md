@@ -7,8 +7,8 @@ Harden `infra/local/docker-compose.dev.yml` and `Makefile` for complete local pa
 ## Acceptance criteria
 
 - `docker-compose.dev.yml` supplies:
-  - `PENNYWISE_ACCOUNTS_URL: http://accounts:8080` to `bff`
-  - `PENNYWISE_NOTIFICATIONS_EMAIL_HOST: mailpit` and `PENNYWISE_NOTIFICATIONS_EMAIL_PORT: 1025` to `notifications`
+  - `SQUAREWISE_ACCOUNTS_URL: http://accounts:8080` to `bff`
+  - `SQUAREWISE_NOTIFICATIONS_EMAIL_HOST: mailpit` and `SQUAREWISE_NOTIFICATIONS_EMAIL_PORT: 1025` to `notifications`
   - Healthy service dependencies across all containers
 - `Makefile` includes `acceptance-live` target running `python3 tests/acceptance/runner.py --require-services`.
 - Compose configuration validates cleanly with `docker compose -f infra/local/docker-compose.dev.yml config --quiet`.
@@ -28,9 +28,9 @@ Harden `infra/local/docker-compose.dev.yml` and `Makefile` for complete local pa
 ## Implementation notes
 
 - Configured `infra/local/docker-compose.dev.yml`:
-  - Added `PENNYWISE_NOTIFICATIONS_EMAIL_HOST: mailpit` and `PENNYWISE_NOTIFICATIONS_EMAIL_PORT: 1025` to the `notifications` service.
+  - Added `SQUAREWISE_NOTIFICATIONS_EMAIL_HOST: mailpit` and `SQUAREWISE_NOTIFICATIONS_EMAIL_PORT: 1025` to the `notifications` service.
   - Updated `notifications.depends_on` to include `mailpit: {condition: service_healthy}`.
-  - Added `PENNYWISE_ACCOUNTS_URL: http://accounts:8080` to the `bff` service environment.
+  - Added `SQUAREWISE_ACCOUNTS_URL: http://accounts:8080` to the `bff` service environment.
 - Configured `Makefile`:
   - Added `acceptance-live` to `.PHONY`.
   - Added `acceptance-live: ## Run the acceptance test harness requiring live running services` target executing `python3 tests/acceptance/runner.py --require-services`.

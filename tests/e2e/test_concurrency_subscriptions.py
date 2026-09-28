@@ -254,9 +254,9 @@ def run_concurrency_and_subscriptions_test() -> None:
 
     # Step 1: Provision Users and Group
     print("\n[Step 1] Provisioning test users and active group...")
-    user_a = os.environ.get("PENNYWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
-    user_b = os.environ.get("PENNYWISE_E2E_TOKEN_B", user_a)
-    user_nonmember = os.environ.get("PENNYWISE_E2E_TOKEN_NONMEMBER", user_b)
+    user_a = os.environ.get("SQUAREWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
+    user_b = os.environ.get("SQUAREWISE_E2E_TOKEN_B", user_a)
+    user_nonmember = os.environ.get("SQUAREWISE_E2E_TOKEN_NONMEMBER", user_b)
     if not user_a or not user_b or not user_nonmember:
         raise RuntimeError("E2E persona variables must contain signed tokens")
 

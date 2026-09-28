@@ -1,1 +1,1 @@
-"""Pennywise operational, contract, and maintenance tools package."""
+"""Squarewise operational, contract, and maintenance tools package."""

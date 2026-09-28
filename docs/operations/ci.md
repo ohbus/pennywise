@@ -62,7 +62,7 @@ JVM compilation inside Docker.
 Master image jobs create an explicit `docker-container` Buildx builder before
 using the GitHub Actions cache backend; each service matrix entry has its own
 cache scope. They publish SHA and branch tags to
-`ghcr.io/<owner>/pennywise-<service>` with the job-scoped `GITHUB_TOKEN`.
+`ghcr.io/<owner>/squarewise-<service>` with the job-scoped `GITHUB_TOKEN`.
 
 Run the complete hosted verification equivalent locally with:
 

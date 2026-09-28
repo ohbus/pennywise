@@ -11,7 +11,7 @@ Implement real SMTP email dispatch adapter in `app/notifications` connecting to 
 ## Implementation details
 
 - **Configuration (`EmailProperties.kt`)**:
-  - `host: "localhost"`, `port: 1025` (Mailpit default SMTP), `fromAddress: "notifications@pennywise.local"`, `enabled: true`.
+  - `host: "localhost"`, `port: 1025` (Mailpit default SMTP), `fromAddress: "notifications@squarewise.local"`, `enabled: true`.
 - **Client & Dispatcher (`EmailDispatcher.kt`, `JavaMailSender.kt`)**:
   - `SimpleMailMessage` and `JavaMailSender` contract with socket-based SMTP client.
   - `EmailDispatcher`: validates email format, retries transient socket/network errors up to 3 attempts, marks validation failures as `PERMANENT_FAILURE`, and returns `DELIVERED` on success.

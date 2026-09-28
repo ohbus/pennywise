@@ -1,6 +1,6 @@
 # Messaging topology migration
 
-The Notifications release adds `x-dead-letter-exchange=pennywise.events.dlx`
+The Notifications release adds `x-dead-letter-exchange=squarewise.events.dlx`
 to the durable source queues. RabbitMQ does not permit changing queue arguments
 by redeclaring an existing queue; an older queue without that argument causes
 `PRECONDITION_FAILED` and prevents the listener container from starting.
@@ -14,15 +14,15 @@ blind delete in production.
 After recreation, verify:
 
 ```text
-pennywise.notifications.v2       durable, DLX pennywise.events.dlx
-pennywise.auth-email.v2          durable, DLX pennywise.events.dlx
-pennywise.notifications.v2.dlq   durable
-pennywise.auth-email.v2.dlq      durable
+squarewise.notifications.v2       durable, DLX squarewise.events.dlx
+squarewise.auth-email.v2          durable, DLX squarewise.events.dlx
+squarewise.notifications.v2.dlq   durable
+squarewise.auth-email.v2.dlq      durable
 ```
 
 The `.v2` defaults intentionally avoid redeclaring legacy queues whose
 arguments cannot be changed in place. Operators must drain and account for
-legacy `pennywise.notifications` and `pennywise.auth-email` queues, then
+legacy `squarewise.notifications` and `squarewise.auth-email` queues, then
 replay retained messages into the versioned queues according to the approved
 release procedure.
 

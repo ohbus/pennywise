@@ -3,7 +3,7 @@
 ## Objective
 
 Provide maintainable high-level, low-level, and component diagrams that explain
-the Pennywise boundaries and can be rendered reproducibly without installing a
+the Squarewise boundaries and can be rendered reproducibly without installing a
 Node toolchain on the host.
 
 ## Deliverables

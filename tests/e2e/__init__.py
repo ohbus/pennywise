@@ -1,1 +1,1 @@
-"""Pennywise end-to-end and live test suites package."""
+"""Squarewise end-to-end and live test suites package."""

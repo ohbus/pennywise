@@ -32,5 +32,5 @@ sourceSets {
 tasks.processResources {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
-base { archivesName.set("pennywise-bff") }
-springBoot { mainClass.set("com.subhrodip.pennywise.bff.BffApplicationKt") }
+base { archivesName.set("squarewise-bff") }
+springBoot { mainClass.set("com.subhrodip.squarewise.bff.BffApplicationKt") }

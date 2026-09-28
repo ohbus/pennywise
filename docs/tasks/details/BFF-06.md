@@ -21,8 +21,8 @@ Support group renaming and member discovery in the GraphQL BFF.
 
 ## Owned paths
 
-- `app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/`
-- `app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/`
+- `app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/`
+- `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/`
 - `contracts/graphql/10-roots.graphqls`, `contracts/graphql/20-domain-types.graphqls`
 
 ## Validation commands

@@ -10,7 +10,7 @@ import urllib.request
 from typing import Any
 from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, CONTENT_TYPE, REQUIRED_WATERMARK, WRITER_WATERMARK
 
-ACCOUNTS_URL = os.environ.get("PENNYWISE_ACCOUNTS_URL", "http://localhost:8081")
+ACCOUNTS_URL = os.environ.get("SQUAREWISE_ACCOUNTS_URL", "http://localhost:8081")
 REQUIRED_HEADER = REQUIRED_WATERMARK
 WRITER_HEADER = WRITER_WATERMARK
 
@@ -32,9 +32,9 @@ def request_json(url: str, token: str, method: str, body: dict[str, Any] | None 
 
 
 def main() -> int:
-    token = os.environ.get("PENNYWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
+    token = os.environ.get("SQUAREWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
     if not token:
-        raise RuntimeError("PENNYWISE_E2E_TOKEN_A or BEARER_TOKEN is required")
+        raise RuntimeError("SQUAREWISE_E2E_TOKEN_A or BEARER_TOKEN is required")
 
     status, headers, profile = request_json(f"{ACCOUNTS_URL}/accounts/v1/me", token, "GET")
     if status != 200:

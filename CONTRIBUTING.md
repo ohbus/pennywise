@@ -1,7 +1,7 @@
-# Contributing to Pennywise
+# Contributing to Squarewise
 
-Thank you for your interest in contributing to Pennywise! We welcome contributions from the community.
-Pennywise is a documentation-first, tracker-driven, modular Kotlin/Spring application. To ensure high code quality, clean architecture, and maintainable operations, all contributors follow the guidelines outlined below.
+Thank you for your interest in contributing to Squarewise! We welcome contributions from the community.
+Squarewise is a documentation-first, tracker-driven, modular Kotlin/Spring application. To ensure high code quality, clean architecture, and maintainable operations, all contributors follow the guidelines outlined below.
 
 ---
 
@@ -48,7 +48,7 @@ Before building a major new capability or changing service boundaries:
 2. Open an issue or discussion proposing the change and outlining its motivation, design trade-offs, and boundary implications.
 
 ### Working Agreement & Task Registry
-Pennywise operates under a strict documentation-first workflow:
+Squarewise operates under a strict documentation-first workflow:
 - The authoritative task registry lives in [`docs/tasks/registry.yaml`](docs/tasks/registry.yaml).
 - The current work queue is visible in [`docs/tasks/board.md`](docs/tasks/board.md).
 - Verified implementation evidence is logged in [`docs/tasks/progress.md`](docs/tasks/progress.md).
@@ -59,7 +59,7 @@ Pennywise operates under a strict documentation-first workflow:
 ## Development Setup
 
 ### Prerequisites
-- **JDK 25+**: Pennywise uses modern Kotlin and JVM 25 features.
+- **JDK 25+**: Squarewise uses modern Kotlin and JVM 25 features.
 - **Docker & Docker Compose v2**: For PostgreSQL 17, RabbitMQ 4.3, and Mailpit.
 - **Python 3.11+**: Used for contract and schema validation tools.
 - **Gradle**: Provided via `./gradlew` wrapper (no separate installation required).
@@ -73,8 +73,8 @@ make doctor
 
 1. **Clone the repository**:
    ```sh
-   git clone https://github.com/ohbus/pennywise.git
-   cd pennywise
+   git clone https://github.com/ohbus/squarewise.git
+   cd squarewise
    ```
 
 2. **Verify prerequisites and build toolchain**:
@@ -187,7 +187,7 @@ In enterprise code, each class or interface must reside in its own dedicated sou
 - Follow enterprise packaging (`entities/`, `repositories/`, `services/`, etc.).
 
 ### API Endpoints & Contracts
-- **Centralized API Constants**: Hardcoded URL strings and standard headers (`X-Request-Id`, `Idempotency-Key`) are prohibited in controllers, gateways, and tests. Always reference `com.subhrodip.pennywise.ids.ApiEndpoints` (e.g. `ApiEndpoints.ExpenseCore.V1.PATH_GROUPS`).
+- **Centralized API Constants**: Hardcoded URL strings and standard headers (`X-Request-Id`, `Idempotency-Key`) are prohibited in controllers, gateways, and tests. Always reference `com.subhrodip.squarewise.ids.ApiEndpoints` (e.g. `ApiEndpoints.ExpenseCore.V1.PATH_GROUPS`).
 - **Contracts First**: Any change to REST or GraphQL contracts must be reflected in `contracts/` and verified with `make contracts`.
 
 ### KDoc Documentation Requirement

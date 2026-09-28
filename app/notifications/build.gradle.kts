@@ -27,5 +27,5 @@ dependencies {
     testRuntimeOnly(libs.h2)
 }
 tasks.withType<Test> { useJUnitPlatform() }
-base { archivesName.set("pennywise-notifications") }
-springBoot { mainClass.set("com.subhrodip.pennywise.notifications.NotificationsApplicationKt") }
+base { archivesName.set("squarewise-notifications") }
+springBoot { mainClass.set("com.subhrodip.squarewise.notifications.NotificationsApplicationKt") }

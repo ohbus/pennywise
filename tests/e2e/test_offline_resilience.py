@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Offline Client Sync & Replay Resilience Test Suite for Pennywise.
+Offline Client Sync & Replay Resilience Test Suite for Squarewise.
 
 Verifies offline simulation, idempotency guarantees, and sync recovery (OFF-01 through OFF-05):
 1. Client generates multiple mutations locally while disconnected (client-generated UUIDs + Idempotency-Keys).
@@ -26,9 +26,9 @@ import uuid
 from typing import Any, Tuple
 from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE, IDEMPOTENCY_KEY
 
-BASE_URL = os.environ.get("PENNYWISE_BFF_URL", "http://localhost:8080")
-EXPENSE_CORE_URL = os.environ.get("PENNYWISE_EXPENSE_CORE_URL", "http://localhost:8082")
-ACCOUNTS_URL = os.environ.get("PENNYWISE_ACCOUNTS_URL", "http://localhost:8081")
+BASE_URL = os.environ.get("SQUAREWISE_BFF_URL", "http://localhost:8080")
+EXPENSE_CORE_URL = os.environ.get("SQUAREWISE_EXPENSE_CORE_URL", "http://localhost:8082")
+ACCOUNTS_URL = os.environ.get("SQUAREWISE_ACCOUNTS_URL", "http://localhost:8081")
 
 
 def request_json(
@@ -115,10 +115,10 @@ def run_offline_resilience_tests() -> int:
 
     # Step 1: Provision two users and a group
     print("\n[Step 1] Provisioning test users and active group...")
-    user_a = os.environ.get("PENNYWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
-    user_b = os.environ.get("PENNYWISE_E2E_TOKEN_B", user_a)
+    user_a = os.environ.get("SQUAREWISE_E2E_TOKEN_A", os.environ.get("BEARER_TOKEN"))
+    user_b = os.environ.get("SQUAREWISE_E2E_TOKEN_B", user_a)
     if not user_a or not user_b:
-        raise RuntimeError("PENNYWISE_E2E_TOKEN_A and PENNYWISE_E2E_TOKEN_B must contain signed tokens")
+        raise RuntimeError("SQUAREWISE_E2E_TOKEN_A and SQUAREWISE_E2E_TOKEN_B must contain signed tokens")
 
     status, profile_a = request_json(f"{ACCOUNTS_URL}/accounts/v1/me", bearer=user_a)
     assert status == 200, f"Failed to get profile for Alice: {profile_a}"

@@ -12,7 +12,7 @@ Enhance GitHub Actions CI workflows to:
 
 - Currently, the `verify` matrix in `_reusable-ci.yml` runs `./gradlew ${{ matrix.path }}:bootJar`, producing the bootable jar, but discards it when the matrix runner shuts down.
 - `ci-master.yml` previously ran `Dockerfile.jvm`, which cloned/copied the entire repo and invoked Gradle to rebuild the project from scratch inside Docker for all 4 application images.
-- By uploading the built jar (`pennywise-${{ matrix.name }}-0.1.0-SNAPSHOT.jar`) as an artifact (`app-jar-${{ matrix.name }}`) during `verify`, `ci-master.yml` can download it and build images in seconds using `Dockerfile.fast` (`eclipse-temurin:25-jre` base, simple `COPY` of the pre-built jar).
+- By uploading the built jar (`squarewise-${{ matrix.name }}-0.1.0-SNAPSHOT.jar`) as an artifact (`app-jar-${{ matrix.name }}`) during `verify`, `ci-master.yml` can download it and build images in seconds using `Dockerfile.fast` (`eclipse-temurin:25-jre` base, simple `COPY` of the pre-built jar).
 - For test results, Gradle produces standard JUnit XML files at `**/build/test-results/test/TEST-*.xml` and HTML reports at `**/build/reports/tests/test/`. Uploading test reports with `actions/upload-artifact@v4` (with `if: always()`) preserves them for inspection.
 - Using `test-summary/action@v2` (with `if: always()`) renders test counts, passes, failures, and execution times directly into the GitHub Actions step summary (`$GITHUB_STEP_SUMMARY`) without requiring elevated permissions like `checks: write`.
 

@@ -10,14 +10,14 @@ present in all four applications, and domain authorization still performs
 independent membership checks. Keycloak is usable as a local OIDC issuer and
 can be replaced at the issuer/discovery configuration boundary. However, the
 repository does not yet prove a complete signed-token journey through the
-applications, and it does not yet implement Pennywise-owned passwordless
+applications, and it does not yet implement Squarewise-owned passwordless
 login, short-lived access/session issuance, rotating refresh tokens, logout,
 revocation, or reuse detection.
 
 The target boundary is:
 
 ```text
-Pennywise login/session boundary
+Squarewise login/session boundary
   -> provider-neutral OIDC adapter/port
      -> local Keycloak now
      -> Auth0, Okta, Entra, or another OIDC provider later
@@ -50,14 +50,14 @@ must not depend on Keycloak SDKs, realm roles, or vendor claim names.
    non-empty bounded `sub`, an approved algorithm set, token type, or a
    documented clock-skew policy. The required negative matrix is not
    executable evidence yet.
-2. **There is no Pennywise-owned login boundary.** No `login`, `identity`,
+2. **There is no Squarewise-owned login boundary.** No `login`, `identity`,
    `session`, or `provider` application feature currently owns login start,
    callback, code verification, or session issuance.
 3. **No passwordless flow exists.** Magic links and one-time codes are only
    documented. There is no hashed single-use credential store, expiry, attempt
    counter, resend cooldown, generic response, or concurrency protection.
 4. **No application token lifecycle exists.** There are no short-lived
-   Pennywise access credentials, rotating hashed refresh-token families, reuse
+   Squarewise access credentials, rotating hashed refresh-token families, reuse
    detection, session listing, logout revocation, or security-event
    invalidation.
 5. **The local Keycloak realm is a fixture, not the target UX.** It enables a
@@ -94,11 +94,11 @@ The planned OAuth flow follows [RFC 9700](https://www.rfc-editor.org/rfc/rfc9700
   source, while issuer allowlists remain deployment-controlled.
 
 The local Keycloak password-grant fixture must therefore remain test-only and
-must not be used by the Pennywise product flow.
+must not be used by the Squarewise product flow.
 
 ### Environment parity invariant
 
-Local, staging, and production use the same Pennywise-owned login/session
+Local, staging, and production use the same Squarewise-owned login/session
 contracts, the same provider-neutral JWT policy, and the same authorization
 checks. Only the configured OIDC issuer, client registration, email delivery,
 and operational secrets vary. Local Keycloak is an infrastructure substitute,
@@ -117,7 +117,7 @@ or weaker token validation for convenience.
   infrastructure adapters.
 - Browser clients receive secure HttpOnly SameSite-controlled sessions. Native
   clients receive 5–10 minute access tokens and rotating refresh families.
-- The default UX is a Pennywise-branded email magic link with a one-time code
+- The default UX is a Squarewise-branded email magic link with a one-time code
   fallback. Provider-hosted interaction is reserved for step-up security.
 - Store only hashes of magic-link codes and refresh tokens. Redemption must be
   atomic, single-use, expiry-bound, attempt-limited, and resend-throttled.
@@ -137,7 +137,7 @@ validated provider-qualified subject and enforce its own resource policy.
 | P0 | AUTH-04 | Complete JWT policy and servlet/reactive parity | signed-token unit matrix and invalid-token probes | done |
 | P0 | AUTH-05 | Remove weaker local mode | no raw-token runtime path; local OIDC profile tests | done |
 | P0 | AUTH-06 | Prove local Keycloak integration | real REST/GraphQL/WS token journeys | done |
-| P0 | AUTH-07 | Define Pennywise-owned auth contracts | API/session contract and threat model | done |
+| P0 | AUTH-07 | Define Squarewise-owned auth contracts | API/session contract and threat model | done |
 | P0 | AUTH-08 | Implement identity and session issuance | persistence and provider adapter tests | planned |
 | P0 | AUTH-09 | Implement passwordless links/codes | replay, brute force, enumeration, Mailpit tests | planned |
 | P0 | AUTH-10 | Implement rotating refresh lifecycle | hashing, rotation, family revocation, reuse detection | planned |

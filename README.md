@@ -1,11 +1,11 @@
-# Pennywise
+# Squarewise
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20-purple.svg)](https://kotlinlang.org)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://adoptium.net)
 
-A permanently free, privacy-centric expense-sharing platform for households, couples, roommates, and travel groups. Pennywise is built as a modular Kotlin/Spring Boot ecosystem with REST domain services, an asynchronous event mesh, a GraphQL BFF, and contract-driven API guarantees.
+A permanently free, privacy-centric expense-sharing platform for households, couples, roommates, and travel groups. Squarewise is built as a modular Kotlin/Spring Boot ecosystem with REST domain services, an asynchronous event mesh, a GraphQL BFF, and contract-driven API guarantees.
 
 ---
 
@@ -31,11 +31,11 @@ A permanently free, privacy-centric expense-sharing platform for households, cou
 
 ## Overview
 
-Pennywise provides a modern alternative to proprietary expense splitters with:
+Squarewise provides a modern alternative to proprietary expense splitters with:
 - **Fair Financial Allocations**: Equal splits, exact minor amounts, and percentage allocations (with basis-point rounding guarantees).
 - **Passwordless Native Authentication**: The Accounts passwordless slice includes email magic-link/code contracts, a decoupled token-minting SPI (`IdentityProviderPort`), refresh-token family policy, and provider-neutral delivery boundaries. AUTH-03 through AUTH-07 are implemented and verified with live OIDC, broker/Mailpit, REST, GraphQL, WebSocket, Bruno, and CI evidence.
 
-Pennywise is structured into four focused applications and technical libraries:
+Squarewise is structured into four focused applications and technical libraries:
 
 ```mermaid
 flowchart LR
@@ -85,8 +85,8 @@ Ensure you have the following installed on your workstation:
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/ohbus/pennywise.git
-   cd pennywise
+   git clone https://github.com/ohbus/squarewise.git
+   cd squarewise
    ```
 
 2. Run the environment verification check:
@@ -130,10 +130,10 @@ If you prefer running and debugging microservices directly inside IntelliJ IDEA 
      ```
    - **Via IntelliJ IDEA**:
      Checked-in run configurations are available under `.run/`:
-     - `Pennywise Accounts`
-     - `Pennywise Expense Core`
-     - `Pennywise Notifications`
-     - `Pennywise BFF`
+     - `Squarewise Accounts`
+     - `Squarewise Expense Core`
+     - `Squarewise Notifications`
+     - `Squarewise BFF`
 
 3. **Stop backing dependencies**:
    ```sh
@@ -153,14 +153,14 @@ When the stack is running, services are accessible at:
 | **Expense Core API** | `http://localhost:8082` | REST endpoints under `/expense-core/v1/` |
 | **Notifications API** | `http://localhost:8083` | REST endpoints under `/notifications/v1/` |
 | **Mailpit Web UI** | `http://localhost:8025` | Inspect outbound confirmation and notification emails |
-| **RabbitMQ Management** | `http://localhost:15672` | Credentials: `pennywise` / `pennywise-local-only` |
-| **PostgreSQL Database** | `localhost:5432` | Credentials: `pennywise` / `pennywise-local-only` |
+| **RabbitMQ Management** | `http://localhost:15672` | Credentials: `squarewise` / `squarewise-local-only` |
+| **PostgreSQL Database** | `localhost:5432` | Credentials: `squarewise` / `squarewise-local-only` |
 
 ---
 
 ## API & Schema Documentation
 
-Pennywise enforces a contract-first design. All schema definitions reside under [`contracts/`](contracts/):
+Squarewise enforces a contract-first design. All schema definitions reside under [`contracts/`](contracts/):
 
 - **REST Contracts**:
   - Accounts OpenAPI: [`contracts/rest/accounts.openapi.json`](contracts/rest/accounts.openapi.json)
@@ -169,13 +169,13 @@ Pennywise enforces a contract-first design. All schema definitions reside under 
 - **GraphQL Schema**: [`contracts/graphql/`](contracts/graphql/) — split SDL files for scalars, roots, domain types, and inputs
 - **Event Mesh Envelopes**: [`contracts/events/envelope.schema.json`](contracts/events/envelope.schema.json)
 - **RFC 9457 Problem Details**: [`contracts/errors/problem.schema.json`](contracts/errors/problem.schema.json)
-- **Central Constants**: All endpoints and headers are centralized in `com.subhrodip.pennywise.ids.ApiEndpoints`.
+- **Central Constants**: All endpoints and headers are centralized in `com.subhrodip.squarewise.ids.ApiEndpoints`.
 
 ---
 
 ## Quality & Verification
 
-Pennywise maintains rigorous quality gates. Run any of the following targets:
+Squarewise maintains rigorous quality gates. Run any of the following targets:
 
 ```sh
 # Run fast unit tests
@@ -202,7 +202,7 @@ make acceptance-live
 ## Project Structure
 
 ```text
-pennywise/
+squarewise/
 ├── app/                        # Deployable applications
 │   ├── accounts/               # User identity, profile & privacy service
 │   ├── bff/                    # GraphQL BFF gateway & WebFlux adapters
@@ -251,4 +251,4 @@ We welcome contributions! Please read our [**Contributing Guide (CONTRIBUTING.md
 
 ## License
 
-Pennywise is open-source software licensed under the [MIT License](LICENSE).
+Squarewise is open-source software licensed under the [MIT License](LICENSE).

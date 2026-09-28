@@ -1,6 +1,6 @@
 # CQRS data-access contract
 
-Pennywise uses explicit command/query policies at the application boundary. A
+Squarewise uses explicit command/query policies at the application boundary. A
 command, lock, claim, migration, reconciliation, or strong financial read uses
 the writer. Only an explicitly approved query may use a named reader pool.
 There is no blanket GET or read-only routing rule.

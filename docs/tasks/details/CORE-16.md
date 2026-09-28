@@ -14,8 +14,8 @@ Calculate suggested settlement payments for a group to settle all outstanding ba
 
 ## Owned paths
 
-- `app/expense-core/src/main/kotlin/com/subhrodip/pennywise/expensecore/settlements/`
-- `app/expense-core/src/test/kotlin/com/subhrodip/pennywise/expensecore/settlements/`
+- `app/expense-core/src/main/kotlin/com/subhrodip/squarewise/expensecore/settlements/`
+- `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/settlements/`
 - `contracts/rest/expense-core.openapi.json`
 
 ## Validation commands

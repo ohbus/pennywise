@@ -1,4 +1,4 @@
-# Pennywise visual documentation
+# Squarewise visual documentation
 
 The `.mmd` files in this directory are the source of truth for visual
 documentation. They are intentionally text-based so architecture changes can be

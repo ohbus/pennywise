@@ -1,4 +1,4 @@
-x-invalid-subject-oidc-issuer: &invalid_subject_oidc_issuer ${PENNYWISE_INVALID_SUBJECT_OIDC_ISSUER:-http://invalid-subject-oidc:8080}
+x-invalid-subject-oidc-issuer: &invalid_subject_oidc_issuer ${SQUAREWISE_INVALID_SUBJECT_OIDC_ISSUER:-http://invalid-subject-oidc:8080}
 
 services:
   invalid-subject-oidc:
@@ -15,21 +15,21 @@ services:
       retries: 20
   accounts:
     environment:
-      PENNYWISE_SECURITY_OIDC_ISSUER_URI: *invalid_subject_oidc_issuer
+      SQUAREWISE_SECURITY_OIDC_ISSUER_URI: *invalid_subject_oidc_issuer
     depends_on:
       invalid-subject-oidc: {condition: service_healthy}
   expense-core:
     environment:
-      PENNYWISE_SECURITY_OIDC_ISSUER_URI: *invalid_subject_oidc_issuer
+      SQUAREWISE_SECURITY_OIDC_ISSUER_URI: *invalid_subject_oidc_issuer
     depends_on:
       invalid-subject-oidc: {condition: service_healthy}
   notifications:
     environment:
-      PENNYWISE_SECURITY_OIDC_ISSUER_URI: *invalid_subject_oidc_issuer
+      SQUAREWISE_SECURITY_OIDC_ISSUER_URI: *invalid_subject_oidc_issuer
     depends_on:
       invalid-subject-oidc: {condition: service_healthy}
   bff:
     environment:
-      PENNYWISE_SECURITY_OIDC_ISSUER_URI: *invalid_subject_oidc_issuer
+      SQUAREWISE_SECURITY_OIDC_ISSUER_URI: *invalid_subject_oidc_issuer
     depends_on:
       invalid-subject-oidc: {condition: service_healthy}

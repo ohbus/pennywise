@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://pennywise.example/schemas/auth-email-requested-v1.json",
+  "$id": "https://squarewise.example/schemas/auth-email-requested-v1.json",
   "title": "Authentication email request v1",
   "type": "object",
   "required": ["recipient", "template", "encryptedCredential", "expiresAt"],

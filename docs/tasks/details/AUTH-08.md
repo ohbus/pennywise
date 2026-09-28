@@ -328,9 +328,13 @@ git diff --check
 
 Live commands and their exact evidence will be added when runtime work begins.
 
-## Documentation-only gate
+## Initial documentation gate
 
-This increment is complete when:
+The initial organization gate was satisfied by the documentation commit. The
+parent task remains `in_progress` until the runtime and live-evidence criteria
+above are complete.
+
+The initial gate was satisfied when:
 
 1. AUTH-08 is registered with owner, dependencies, paths, criteria, and
    validation commands.

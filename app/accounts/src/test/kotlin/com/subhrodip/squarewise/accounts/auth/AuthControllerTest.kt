@@ -64,7 +64,8 @@ class AuthControllerTest @Autowired constructor(
     private val tokenSessionService = TokenSessionService(
         sessionRepository = sessionRepository,
         identityProviderPort = tokenProvider,
-        credentialDigest = digest
+        credentialDigest = digest,
+        accountIdentityStore = profileStore
     )
     private val verificationService = LoginVerificationService(
         credentialService = credentialService,
@@ -224,17 +225,31 @@ class AuthControllerTest @Autowired constructor(
 
     @Test
     fun `logout returns 204 No Content for authenticated user`() {
+        val issued = credentialService.issue(
+            email = "alice@example.com",
+            kind = LoginCredentialService.CredentialKind.CODE,
+            now = Instant.now()
+        )
+        val session = verificationService.verify(issued.plaintext, "BROWSER", null, Instant.now())
+
         mvc.perform(
             post(ApiEndpoints.Accounts.V1.PATH_LOGOUT)
                 .with(alice)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"refreshToken\":\"${session.refreshToken}\"}")
         )
             .andExpect(status().isNoContent)
+
+        val stored = sessionRepository.findByRefreshTokenDigest(digest.digest(session.refreshToken))
+        org.junit.jupiter.api.Assertions.assertNotNull(stored?.revokedAt)
     }
 
     @Test
     fun `logout returns 401 Unauthorized when unauthenticated`() {
         mvc.perform(
             post(ApiEndpoints.Accounts.V1.PATH_LOGOUT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"refreshToken\":\"unknown\"}")
         )
             .andExpect(status().isUnauthorized)
     }

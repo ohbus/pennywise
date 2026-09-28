@@ -9,6 +9,7 @@ import com.subhrodip.squarewise.accounts.auth.login.LoginVerificationService
 import com.subhrodip.squarewise.accounts.auth.abuse.RateLimitStoreUnavailableException
 import com.subhrodip.squarewise.accounts.auth.abuse.RefreshRateLimitService
 import com.subhrodip.squarewise.accounts.auth.session.RefreshTokenRequest
+import com.subhrodip.squarewise.accounts.auth.session.LogoutRequest
 import com.subhrodip.squarewise.accounts.auth.session.TokenResponse
 import com.subhrodip.squarewise.accounts.auth.session.TokenSessionService
 import com.subhrodip.squarewise.errors.domain.ApplicationException
@@ -125,11 +126,8 @@ class AuthController(
         }
         val tokenResponse = tokenSessionService.rotateSession(
             rawRefreshToken = request.refreshToken,
-            clientKind = "BROWSER",
             deviceLabel = userAgent,
-            now = Instant.now(),
-            subject = "internal:refresh",
-            email = "internal@squarewise.local"
+            now = Instant.now()
         )
         return ResponseEntity.ok(tokenResponse)
     }
@@ -141,10 +139,18 @@ class AuthController(
      */
     @PostMapping(ApiEndpoints.Accounts.V1.LOGOUT)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun logout(principal: Principal?) {
+    fun logout(
+        principal: Principal?,
+        @Valid @RequestBody request: LogoutRequest
+    ) {
         if (principal == null || principal.name.isBlank()) {
             throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
         }
+        tokenSessionService.revokeSessionByRefreshToken(
+            rawRefreshToken = request.refreshToken,
+            expectedSubject = principal.name,
+            now = Instant.now()
+        )
     }
 
     private fun deriveNetworkPartition(request: HttpServletRequest): String {

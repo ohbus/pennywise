@@ -3,6 +3,8 @@ package com.subhrodip.squarewise.accounts.profile.persistence
 import com.subhrodip.squarewise.accounts.profile.api.ProfilePatchRequest
 import com.subhrodip.squarewise.accounts.profile.api.ProfileResponse
 import com.subhrodip.squarewise.accounts.profile.service.ProfileRules
+import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentity
+import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentityStore
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
@@ -16,7 +18,10 @@ import java.util.UUID
  */
 @Primary
 @Service
-class JpaProfileStore(private val repository: ProfileRepository) : ProfileStore {
+class JpaProfileStore(private val repository: ProfileRepository) : ProfileStore, AccountIdentityStore {
+    /** Resolves trusted subject and account state for refresh-token issuance. */
+    override fun findByAccountId(accountId: UUID): AccountIdentity? =
+        repository.findById(accountId).orElse(null)?.toIdentity()
     /**
      * Retrieves the profile associated with the given subject, provisioning a default profile if none exists.
      *
@@ -84,3 +89,11 @@ class JpaProfileStore(private val repository: ProfileRepository) : ProfileStore 
  * Maps [ProfileEntity] to its public [ProfileResponse] representation.
  */
 private fun ProfileEntity.toResponse() = ProfileResponse(accountId, displayName, timezone, defaultCurrency)
+
+/** Maps durable profile identity state to the authentication issuance port. */
+private fun ProfileEntity.toIdentity() = AccountIdentity(
+    accountId = accountId,
+    subject = subject,
+    email = subject.removePrefix("internal:"),
+    deletionRequested = deletionRequested
+)

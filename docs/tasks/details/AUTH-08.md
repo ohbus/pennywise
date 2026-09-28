@@ -2,10 +2,19 @@
 
 ## Status
 
-Planned and documented. This increment establishes the implementation boundary,
-security policy, endpoint inventory, cache/database rules, acceptance criteria,
-and evidence plan. It does not change runtime code, database migrations, public
-contracts, or tests.
+In progress. The first runtime increment implements bounded idle/absolute refresh
+sessions and the second increment restores trusted account identity on refresh,
+adds authenticated refresh-token logout, and removes caller-controlled client
+identity from refresh rotation. Remaining endpoint, browser, cache, GraphQL,
+WebSocket, and full live-evidence work is still tracked below.
+
+## Implemented increments
+
+- `9c1e95c`: session timing policy, absolute-expiry migration, configuration,
+  and policy tests.
+- Current increment: writer-backed account identity restoration, deletion fail
+  closed behavior, authenticated family logout, OpenAPI logout request contract,
+  and controller/service tests.
 
 ## Objective
 

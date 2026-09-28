@@ -230,7 +230,6 @@
       "owned_paths": [
         "app/",
         "libs/",
-        "build-logic/",
         "gradle/",
         "settings.gradle.kts",
         "build.gradle.kts"
@@ -6748,7 +6747,7 @@
       "parent_id": "AUTH-01",
       "title": "RFC-aligned authentication and session hardening",
       "phase": "security",
-      "status": "planned",
+        "status": "in_progress",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [

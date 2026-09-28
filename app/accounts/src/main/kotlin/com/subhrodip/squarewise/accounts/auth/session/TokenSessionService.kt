@@ -1,6 +1,7 @@
 package com.subhrodip.squarewise.accounts.auth.session
 
 import com.subhrodip.squarewise.accounts.auth.credential.CredentialDigest
+import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentityStore
 import com.subhrodip.squarewise.accounts.auth.provider.IdentityProviderPort
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional
  * @param credentialDigest HMAC digest generator for hashing refresh tokens at rest.
  * @param random Cryptographically secure random source for opaque refresh tokens.
  * @param sessionPolicy Validated access-token and refresh-session timing policy.
+ * @param accountIdentityStore Writer-authoritative account identity lookup.
  */
 open class TokenSessionService(
     private val sessionRepository: AuthSessionRepository,
@@ -36,7 +38,8 @@ open class TokenSessionService(
         refreshIdleLifetime = java.time.Duration.ofDays(30),
         absoluteSessionLifetime = java.time.Duration.ofDays(90),
         clockSkew = java.time.Duration.ZERO
-    )
+    ),
+    private val accountIdentityStore: AccountIdentityStore
 ) {
     private val log = LoggerFactory.getLogger(TokenSessionService::class.java)
 
@@ -46,7 +49,6 @@ open class TokenSessionService(
      * @param accountId Stable account identifier UUID.
      * @param subject Canonical identity subject string.
      * @param email Canonical normalized user email.
-     * @param clientKind Client type ("BROWSER" or "NATIVE").
      * @param deviceLabel Optional user-agent or client label.
      * @param now Current timestamp.
      * @return [TokenResponse] containing signed access token and new opaque refresh token.
@@ -95,22 +97,16 @@ open class TokenSessionService(
      * Rotates a refresh token atomically within its family or detects token reuse.
      *
      * @param rawRefreshToken Presented opaque refresh token.
-     * @param clientKind Client type ("BROWSER" or "NATIVE").
      * @param deviceLabel Optional user-agent or client label.
      * @param now Current timestamp.
-     * @param subject Canonical identity subject for minting the new access token.
-     * @param email Canonical user email.
      * @return [TokenResponse] with fresh access token and child refresh token.
      * @throws ApplicationException with [ErrorCode.ERR_03] when invalid, expired, revoked, or reused.
      */
     @Transactional
     open fun rotateSession(
         rawRefreshToken: String,
-        clientKind: String,
         deviceLabel: String?,
-        now: Instant,
-        subject: String,
-        email: String
+        now: Instant
     ): TokenResponse {
         if (rawRefreshToken.isBlank()) {
             throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
@@ -143,6 +139,12 @@ open class TokenSessionService(
 
         val accountId = existingSession.accountId
             ?: throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
+        val identity = accountIdentityStore.findByAccountId(accountId)
+            ?: throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
+        if (identity.deletionRequested) {
+            sessionRepository.revokeFamily(existingSession.familyId, now)
+            throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
+        }
 
         val newSession = AuthSessionEntity(
             sessionId = newSessionId,
@@ -156,7 +158,7 @@ open class TokenSessionService(
             revokedAt = null,
             replacedBySessionId = null,
             deviceLabel = deviceLabel?.take(MAX_DEVICE_LABEL_LENGTH) ?: existingSession.deviceLabel,
-            clientKind = clientKind
+            clientKind = existingSession.clientKind
         )
         sessionRepository.save(newSession)
 
@@ -167,7 +169,7 @@ open class TokenSessionService(
             throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
         }
 
-        val issuedToken = identityProviderPort.issueAccessToken(accountId, subject, email)
+        val issuedToken = identityProviderPort.issueAccessToken(accountId, identity.subject, identity.email)
         return TokenResponse(
             accessToken = issuedToken.accessToken,
             tokenType = issuedToken.tokenType,
@@ -180,13 +182,24 @@ open class TokenSessionService(
      * Revokes all active sessions in the family associated with the given refresh token.
      *
      * @param rawRefreshToken Refresh token to revoke.
+     * @param expectedSubject Authenticated subject that must own the token, or null for
+     *        provider-independent internal revocation flows.
      * @param now Revocation timestamp.
      */
     @Transactional
-    open fun revokeSessionByRefreshToken(rawRefreshToken: String, now: Instant) {
+    open fun revokeSessionByRefreshToken(
+        rawRefreshToken: String,
+        expectedSubject: String? = null,
+        now: Instant
+    ) {
         if (rawRefreshToken.isBlank()) return
         val digest = credentialDigest.digest(rawRefreshToken)
         val session = sessionRepository.findByRefreshTokenDigest(digest) ?: return
+        if (expectedSubject != null) {
+            val accountId = session.accountId ?: return
+            val identity = accountIdentityStore.findByAccountId(accountId) ?: return
+            if (identity.subject != expectedSubject) return
+        }
         sessionRepository.revokeFamily(session.familyId, now)
     }
 

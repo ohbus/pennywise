@@ -1,5 +1,7 @@
 package com.subhrodip.squarewise.accounts.auth.session
 
+import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentity
+import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentityStore
 import com.subhrodip.squarewise.accounts.auth.credential.HmacCredentialDigest
 import com.subhrodip.squarewise.accounts.auth.provider.InternalJwtTokenProvider
 import com.subhrodip.squarewise.errors.domain.ApplicationException
@@ -36,7 +38,10 @@ class TokenSessionServiceTest @Autowired constructor(
             refreshIdleLifetime = java.time.Duration.ofDays(30),
             absoluteSessionLifetime = java.time.Duration.ofDays(90),
             clockSkew = java.time.Duration.ZERO
-        )
+        ),
+        accountIdentityStore = AccountIdentityStore { id ->
+            AccountIdentity(id, "internal:test@example.com", "test@example.com", false)
+        }
     )
 
     @Test
@@ -78,11 +83,8 @@ class TokenSessionServiceTest @Autowired constructor(
 
         val rotated = service.rotateSession(
             rawRefreshToken = initial.refreshToken,
-            clientKind = "BROWSER",
             deviceLabel = "test-2",
-            now = now.plusSeconds(10),
-            subject = "internal:rotate@example.com",
-            email = "rotate@example.com"
+            now = now.plusSeconds(10)
         )
 
         assertNotNull(rotated.accessToken)
@@ -116,22 +118,16 @@ class TokenSessionServiceTest @Autowired constructor(
         // Rotate once (valid)
         val rotated = service.rotateSession(
             rawRefreshToken = initial.refreshToken,
-            clientKind = "BROWSER",
             deviceLabel = "test-2",
-            now = now.plusSeconds(10),
-            subject = "internal:reuse@example.com",
-            email = "reuse@example.com"
+            now = now.plusSeconds(10)
         )
 
         // Presenting old token again (reuse attack)
         val ex = assertThrows(ApplicationException::class.java) {
             service.rotateSession(
                 rawRefreshToken = initial.refreshToken,
-                clientKind = "BROWSER",
                 deviceLabel = "attacker",
-                now = now.plusSeconds(20),
-                subject = "internal:reuse@example.com",
-                email = "reuse@example.com"
+                now = now.plusSeconds(20)
             )
         }
         assertEquals(ErrorCode.ERR_03, ex.errorCode)

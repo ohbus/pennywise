@@ -38,7 +38,8 @@ class LoginVerificationServiceTest @Autowired constructor(
     private val tokenSessionService = TokenSessionService(
         sessionRepository = sessionRepository,
         identityProviderPort = tokenProvider,
-        credentialDigest = digest
+        credentialDigest = digest,
+        accountIdentityStore = profileStore
     )
     private val service = LoginVerificationService(
         credentialService = credentialService,

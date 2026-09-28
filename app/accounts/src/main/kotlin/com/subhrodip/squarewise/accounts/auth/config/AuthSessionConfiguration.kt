@@ -4,6 +4,7 @@ package com.subhrodip.squarewise.accounts.auth.config
 
 import com.subhrodip.squarewise.accounts.auth.credential.CredentialDigest
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialService
+import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentityStore
 import com.subhrodip.squarewise.accounts.auth.login.LoginVerificationService
 import com.subhrodip.squarewise.accounts.auth.provider.ExternalOidcTokenProvider
 import com.subhrodip.squarewise.accounts.auth.provider.IdentityProviderPort
@@ -59,13 +60,15 @@ class AuthSessionConfiguration(
         sessionRepository: AuthSessionRepository,
         identityProviderPort: IdentityProviderPort,
         credentialDigest: CredentialDigest,
-        sessionPolicy: SessionPolicy
+        sessionPolicy: SessionPolicy,
+        accountIdentityStore: AccountIdentityStore
     ): TokenSessionService =
         TokenSessionService(
             sessionRepository = sessionRepository,
             identityProviderPort = identityProviderPort,
             credentialDigest = credentialDigest,
-            sessionPolicy = sessionPolicy
+            sessionPolicy = sessionPolicy,
+            accountIdentityStore = accountIdentityStore
         )
 
     /**

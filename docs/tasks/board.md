@@ -86,7 +86,7 @@ query classification, and evidence gates are complete.
 | PR-39 | coordinator | done | Production application topology controls |
 | PR-40 | coordinator | done | Idempotency retention and cleanup |
 | AUTH-07 | coordinator | done | Squarewise-owned passwordless login, token lifecycle, provider portability, and authorization evidence |
-| AUTH-08 | coordinator | planned | RFC-aligned authentication/session hardening, endpoint protection, cache consistency, and full security evidence |
+| AUTH-08 | coordinator | in_progress | RFC-aligned authentication/session hardening, endpoint protection, cache consistency, and full security evidence |
 | OPS-24 | coordinator | done | Remove undeclared Ruby dependency and E2E Compose host-port collisions from CI |
 | OPS-17 | coordinator | done | Stable error taxonomy and service/source attribution |
 | OPS-18 | coordinator | done | Micrometer and Prometheus metrics for all services |

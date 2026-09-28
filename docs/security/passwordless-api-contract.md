@@ -47,8 +47,10 @@ Request:
 ```
 
 Refresh tokens are opaque, hashed at rest, rotated on every successful use,
-short-lived relative to the account session, and bound to a token family. Any
-reuse of an old token revokes the complete family and returns `401`.
+short-lived relative to the account session, and bound to a token family. A
+network-partition refresh limit is checked before rotation; exhaustion returns
+`429 RATE_LIMITED` with `Retry-After: 60`. Any reuse of an old token remains a
+generic `401` response and revokes the complete family.
 
 ## `POST /accounts/v1/auth/logout`
 

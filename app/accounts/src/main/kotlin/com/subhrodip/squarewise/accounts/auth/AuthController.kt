@@ -6,6 +6,8 @@ import com.subhrodip.squarewise.accounts.auth.login.LoginStartResponse
 import com.subhrodip.squarewise.accounts.auth.login.LoginStartService
 import com.subhrodip.squarewise.accounts.auth.login.LoginVerifyRequest
 import com.subhrodip.squarewise.accounts.auth.login.LoginVerificationService
+import com.subhrodip.squarewise.accounts.auth.abuse.RateLimitStoreUnavailableException
+import com.subhrodip.squarewise.accounts.auth.abuse.RefreshRateLimitService
 import com.subhrodip.squarewise.accounts.auth.session.RefreshTokenRequest
 import com.subhrodip.squarewise.accounts.auth.session.TokenResponse
 import com.subhrodip.squarewise.accounts.auth.session.TokenSessionService
@@ -42,7 +44,8 @@ import org.springframework.web.bind.annotation.RestController
 class AuthController(
     private val loginStartService: LoginStartService,
     private val loginVerificationService: LoginVerificationService,
-    private val tokenSessionService: TokenSessionService
+    private val tokenSessionService: TokenSessionService,
+    private val refreshRateLimitService: RefreshRateLimitService
 ) {
 
     /**
@@ -81,6 +84,8 @@ class AuthController(
      * @param request Validated [LoginVerifyRequest].
      * @param servletRequest Incoming HTTP servlet request for client metadata.
      * @return 200 OK with [TokenResponse].
+     * @throws ApplicationException with ERR-11 when the refresh admission limit
+     * is exhausted or its fail-closed store cannot decide.
      */
     @PostMapping(ApiEndpoints.Accounts.V1.LOGIN_VERIFY)
     fun verifyLogin(
@@ -110,6 +115,14 @@ class AuthController(
         servletRequest: HttpServletRequest
     ): ResponseEntity<TokenResponse> {
         val userAgent = servletRequest.getHeader(ApiEndpoints.Headers.USER_AGENT)
+        val networkPartition = deriveNetworkPartition(servletRequest)
+        try {
+            if (!refreshRateLimitService.tryAcquire(networkPartition, Instant.now())) {
+                throw ApplicationException(ErrorCode.ERR_11, "Refresh rate limit exceeded")
+            }
+        } catch (exception: RateLimitStoreUnavailableException) {
+            throw ApplicationException(ErrorCode.ERR_11, "Rate-limit service unavailable", exception)
+        }
         val tokenResponse = tokenSessionService.rotateSession(
             rawRefreshToken = request.refreshToken,
             clientKind = "BROWSER",

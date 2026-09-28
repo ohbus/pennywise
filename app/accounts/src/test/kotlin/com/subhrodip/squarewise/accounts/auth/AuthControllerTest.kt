@@ -8,6 +8,7 @@ import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailMessage
 import com.subhrodip.squarewise.accounts.auth.delivery.service.AuthEmailSender
 import com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitKeyDeriver
 import com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitService
+import com.subhrodip.squarewise.accounts.auth.abuse.RefreshRateLimitService
 import com.subhrodip.squarewise.accounts.auth.abuse.TestRateLimitBucketStore
 import com.subhrodip.squarewise.accounts.auth.login.LoginStartService
 import com.subhrodip.squarewise.accounts.auth.login.LoginVerificationService
@@ -46,6 +47,7 @@ class AuthControllerTest @Autowired constructor(
     private val credentialService = LoginCredentialService(credentialRepository, issuer)
     private val keyDeriver = LoginRateLimitKeyDeriver(digest)
     private val rateLimitService = LoginRateLimitService(keyDeriver, bucketStore)
+    private val refreshRateLimitService = RefreshRateLimitService(digest, bucketStore, maximumRequests = 1)
     private val sentEmails = mutableListOf<AuthEmailMessage>()
     private val emailSender = AuthEmailSender {
         sentEmails.add(it)
@@ -73,7 +75,8 @@ class AuthControllerTest @Autowired constructor(
     private val controller = AuthController(
         loginStartService = startService,
         loginVerificationService = verificationService,
-        tokenSessionService = tokenSessionService
+        tokenSessionService = tokenSessionService,
+        refreshRateLimitService = refreshRateLimitService
     )
 
     private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(controller)
@@ -174,9 +177,45 @@ class AuthControllerTest @Autowired constructor(
     }
 
     @Test
+    fun `refreshToken returns structured 429 when refresh rate limit is reached`() {
+        val issued = credentialService.issue(
+            email = "refresh-limited@example.com",
+            kind = LoginCredentialService.CredentialKind.CODE,
+            now = Instant.now()
+        )
+        val initialSession = verificationService.verify(issued.plaintext, "BROWSER", null, Instant.now())
+        val request = post(ApiEndpoints.Accounts.V1.PATH_TOKEN_REFRESH)
+            .with(RequestPostProcessor { servletRequest ->
+                servletRequest.remoteAddr = "10.44.0.1"
+                servletRequest
+            })
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"refreshToken\":\"${initialSession.refreshToken}\"}")
+
+        mvc.perform(request).andExpect(status().isOk)
+
+        mvc.perform(
+            post(ApiEndpoints.Accounts.V1.PATH_TOKEN_REFRESH)
+                .with(RequestPostProcessor { servletRequest ->
+                    servletRequest.remoteAddr = "10.44.0.1"
+                    servletRequest
+                })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"refreshToken\":\"${initialSession.refreshToken}\"}")
+        )
+            .andExpect(status().isTooManyRequests)
+            .andExpect(header().string("Retry-After", "60"))
+            .andExpect(jsonPath("$.code").value("RATE_LIMITED"))
+    }
+
+    @Test
     fun `refreshToken returns 401 Unauthorized on invalid or replayed refresh token`() {
         mvc.perform(
             post(ApiEndpoints.Accounts.V1.PATH_TOKEN_REFRESH)
+                .with(RequestPostProcessor { servletRequest ->
+                    servletRequest.remoteAddr = "10.55.0.1"
+                    servletRequest
+                })
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"refreshToken\":\"unknown-refresh-token\"}")
         )

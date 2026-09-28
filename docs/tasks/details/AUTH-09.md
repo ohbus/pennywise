@@ -388,6 +388,11 @@ and raises `ERR-11` when the cap is reached. Its GraphQL error resolver maps
 catalogued application and upstream 4xx failures into `extensions.code`; query
 depth/complexity rejection and upstream 429 responses use `RATE_LIMITED`.
 
+Refresh-token rotation now performs one atomic Redis-backed network-partition
+admission before session rotation. Denials and fail-closed store errors use the
+same structured HTTP 429/`RATE_LIMITED` response and bounded retry header as
+login-start; invalid or replayed tokens remain generic HTTP 401 responses.
+
 This increment does not claim completion of AUTH-09: the task is still absent
 from the authoritative registry, and distributed cross-surface Redis E2E,
 failure, query-count, and capacity evidence remain outstanding.

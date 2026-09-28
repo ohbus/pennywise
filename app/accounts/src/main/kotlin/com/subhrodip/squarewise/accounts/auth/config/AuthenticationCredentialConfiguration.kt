@@ -56,6 +56,14 @@ class AuthenticationCredentialConfiguration(
     ): com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitService =
         com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitService(keyDeriver, repository)
 
+    /** Creates the fail-closed refresh-token rotation limiter. */
+    @Bean
+    fun refreshRateLimitService(
+        digest: CredentialDigest,
+        repository: com.subhrodip.squarewise.accounts.auth.abuse.RateLimitBucketStore
+    ): com.subhrodip.squarewise.accounts.auth.abuse.RefreshRateLimitService =
+        com.subhrodip.squarewise.accounts.auth.abuse.RefreshRateLimitService(digest, repository)
+
     /** Creates the login start application service. */
     @Bean
     fun loginStartService(

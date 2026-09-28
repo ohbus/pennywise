@@ -143,6 +143,8 @@ class AuthControllerTest @Autowired constructor(
                 .content("{\"credential\":\"${issued.plaintext}\",\"clientKind\":\"BROWSER\"}")
         )
             .andExpect(status().isOk)
+            .andExpect(header().string("Cache-Control", "no-store"))
+            .andExpect(header().string("Pragma", "no-cache"))
             .andExpect(jsonPath("$.accessToken").isString)
             .andExpect(jsonPath("$.tokenType").value("Bearer"))
             .andExpect(jsonPath("$.expiresIn").isNumber)
@@ -174,6 +176,8 @@ class AuthControllerTest @Autowired constructor(
                 .content("{\"refreshToken\":\"${initialSession.refreshToken}\"}")
         )
             .andExpect(status().isOk)
+            .andExpect(header().string("Cache-Control", "no-store"))
+            .andExpect(header().string("Pragma", "no-cache"))
             .andExpect(jsonPath("$.accessToken").isString)
             .andExpect(jsonPath("$.refreshToken").isString)
     }

@@ -20,6 +20,8 @@ import jakarta.validation.Valid
 import java.security.Principal
 import java.time.Instant
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpHeaders
+import org.springframework.http.CacheControl
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -100,7 +102,7 @@ class AuthController(
             deviceLabel = userAgent,
             now = Instant.now()
         )
-        return ResponseEntity.ok(tokenResponse)
+        return tokenResponse(tokenResponse)
     }
 
     /**
@@ -129,7 +131,7 @@ class AuthController(
             deviceLabel = userAgent,
             now = Instant.now()
         )
-        return ResponseEntity.ok(tokenResponse)
+        return tokenResponse(tokenResponse)
     }
 
     /**
@@ -158,4 +160,11 @@ class AuthController(
         val ipPart = remoteAddr.split(".").take(2).joinToString(".")
         return if (ipPart.isBlank()) "default-partition" else ipPart
     }
+
+    /** Returns token material with cache directives that prevent intermediary persistence. */
+    private fun tokenResponse(response: TokenResponse): ResponseEntity<TokenResponse> =
+        ResponseEntity.ok()
+            .cacheControl(CacheControl.noStore())
+            .header(HttpHeaders.PRAGMA, "no-cache")
+            .body(response)
 }

@@ -26,6 +26,14 @@ Clients branch on `code`, never free-text `detail`. The stable vocabulary is
 retain details only in correlated server logs. GraphQL maps the same code into
 `errors[].extensions.code` and preserves the request ID.
 
+Rate-limit denials and fail-closed limiter-store decisions use HTTP 429 with the
+catalogued `RATE_LIMITED` code. The REST boundary includes a bounded
+`Retry-After` value of 60 seconds for this code; limiter failures must not be
+translated into an application 5xx or an unstructured gateway error. The BFF
+uses the same catalog in GraphQL `errors[].extensions.code`: resolver/upstream
+429 responses and query depth/complexity rejections use `RATE_LIMITED`, while
+other upstream 4xx responses retain their corresponding 4xx code.
+
 Request validation is mandatory on every command/query DTO. Domain invariants
 remain mandatory after transport validation; a valid JSON shape can still be an
 invalid expense or unauthorized operation.

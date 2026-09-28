@@ -3,6 +3,7 @@ package com.subhrodip.squarewise.bff.config
 import graphql.analysis.MaxQueryComplexityInstrumentation
 import graphql.analysis.MaxQueryDepthInstrumentation
 import graphql.execution.instrumentation.Instrumentation
+import com.subhrodip.squarewise.bff.graphql.GraphQlLimitErrorInstrumentation
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -20,4 +21,8 @@ class GraphQlAbuseConfiguration {
     @Bean
     fun graphQlComplexityInstrumentation(properties: GraphQlAbuseProperties): Instrumentation =
         MaxQueryComplexityInstrumentation(properties.maxComplexity)
+
+    /** Adds the stable application code to query-bound rejection envelopes. */
+    @Bean
+    fun graphQlLimitErrorInstrumentation(): Instrumentation = GraphQlLimitErrorInstrumentation()
 }

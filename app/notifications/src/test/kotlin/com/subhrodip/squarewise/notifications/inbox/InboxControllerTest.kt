@@ -13,6 +13,8 @@ import com.subhrodip.squarewise.db.routing.DbContextHolder
 import com.subhrodip.squarewise.db.routing.DbOperationKind
 import com.subhrodip.squarewise.db.routing.ReadConsistency
 import com.subhrodip.squarewise.errors.http.GlobalErrorHandler
+import com.subhrodip.squarewise.errors.domain.ApplicationException
+import com.subhrodip.squarewise.errors.domain.ErrorCode
 import com.subhrodip.squarewise.ids.contracts.ApiEndpoints
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -117,10 +119,19 @@ class InboxControllerTest {
     }
 
     @Test
-    fun `rejects invalid inbox page limits as validation errors`() {
+    fun `rejects invalid inbox page limits with the validation application code`() {
         mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_INBOX).with(user).param("limit", "0"))
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+    }
+
+    @Test
+    fun `page limit violation is represented by the validation application exception`() {
+        val error = org.junit.jupiter.api.Assertions.assertThrows(ApplicationException::class.java) {
+            controller.list(Principal { "alice" }, null, 101)
+        }
+
+        assertEquals(ErrorCode.ERR_02, error.errorCode)
     }
 
     @Test

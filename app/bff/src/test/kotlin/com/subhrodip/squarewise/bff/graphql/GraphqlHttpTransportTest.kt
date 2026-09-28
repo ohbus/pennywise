@@ -197,6 +197,7 @@ class GraphqlHttpTransportTest {
             .expectStatus().isOk
             .expectBody()
             .jsonPath("$.errors").isArray
+            .jsonPath("$.errors[0].extensions.code").isEqualTo("VALIDATION_FAILED")
             .jsonPath("$.data").doesNotExist()
     }
 
@@ -227,6 +228,22 @@ class GraphqlHttpTransportTest {
             .jsonPath("$.errors[0].message").value<String> { message ->
                 assert(!message.contains("private authorization detail"))
             }
+    }
+
+    @Test
+    fun `upstream rate limiting is exposed as the GraphQL rate limited code`() {
+        `when`(expenseCoreGateway.getGroup("group-rate-limited", null))
+            .thenReturn(Mono.error(UpstreamServiceException(429, "private rate limit detail")))
+
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
+            .bodyValue(mapOf("query" to "{ group(id: \"group-rate-limited\") { id } }"))
+            .exchange()
+            .expectStatus().isOk
+            .expectBody()
+            .jsonPath("$.errors[0].extensions.code").isEqualTo("RATE_LIMITED")
+            .jsonPath("$.errors[0].extensions.retryAfterSeconds").isEqualTo(60)
+            .jsonPath("$.errors[0].extensions.requestId").isNotEmpty
+            .jsonPath("$.errors[0].message").isEqualTo("Rate limit exceeded")
     }
 
     @Test
@@ -378,6 +395,7 @@ class GraphqlHttpTransportTest {
             .expectStatus().isOk
             .expectBody()
             .jsonPath("$.errors").isArray
+            .jsonPath("$.errors[0].extensions.code").isEqualTo("RATE_LIMITED")
             .jsonPath("$.data").doesNotExist()
 
         org.mockito.Mockito.verifyNoInteractions(accountsGateway, expenseCoreGateway)

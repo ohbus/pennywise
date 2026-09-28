@@ -29,6 +29,15 @@ class GlobalErrorHandlerTest {
     }
 
     @Test
+    fun `rate limit application error maps to 429 with bounded retry header`() {
+        val response = handler.applicationException(ApplicationException(ErrorCode.ERR_11))
+
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, response.statusCode)
+        assertEquals("RATE_LIMITED", response.body?.code)
+        assertEquals("60", response.headers.getFirst("Retry-After"))
+    }
+
+    @Test
     fun `all ErrorCode values map to RFC problem schema codes`() {
         val allowedCodes = setOf(
             "VALIDATION_FAILED",

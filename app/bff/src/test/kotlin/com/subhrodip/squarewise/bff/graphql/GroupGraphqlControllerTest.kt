@@ -29,6 +29,8 @@ import com.subhrodip.squarewise.bff.transport.model.input.PayerInput
 import com.subhrodip.squarewise.bff.transport.model.input.RepaymentInput
 
 import com.subhrodip.squarewise.bff.transport.UpstreamServiceException
+import com.subhrodip.squarewise.errors.domain.ApplicationException
+import com.subhrodip.squarewise.errors.domain.ErrorCode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -227,8 +229,28 @@ class GroupGraphqlControllerTest {
         )
 
         val mono = controller.recordRepayment(input, principal)
-        assertThrows(IllegalArgumentException::class.java) {
+        assertThrows(ApplicationException::class.java) {
             mono.block()
+        }
+    }
+
+    @Test
+    fun `groupChanged rejects a user at the subscription limit with rate limit code`() {
+        val boundedFanout = LiveUpdateFanout(maxSubscriptionsPerUser = 1)
+        val boundedController = GroupGraphqlController(gateway, boundedFanout)
+        val groupId = UUID.randomUUID().toString()
+        `when`(gateway.getGroup(groupId, "alice")).thenReturn(
+            Mono.just(BffGroup(groupId, "Trip", "TRIP", "1"))
+        )
+
+        val first = boundedController.groupChanged(groupId, principal).subscribe()
+        try {
+            val error = assertThrows(ApplicationException::class.java) {
+                boundedController.groupChanged(groupId, principal).blockFirst(java.time.Duration.ofMillis(100))
+            }
+            assertEquals(ErrorCode.ERR_11, error.errorCode)
+        } finally {
+            first.dispose()
         }
     }
 

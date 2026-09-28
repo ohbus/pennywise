@@ -21,3 +21,13 @@ internal fun bearerToken(principal: Any?): String? =
         ?: (principal as? Jwt)?.tokenValue
         ?: (principal as? AbstractOAuth2TokenAuthenticationToken<*>)?.token?.tokenValue
         ?: (principal as? Principal)?.name
+
+/** Returns the stable authenticated subject used to count per-user subscriptions. */
+internal fun authenticatedSubject(principal: Any?): String? =
+    when (principal) {
+        is Jwt -> principal.subject
+        is AbstractOAuth2TokenAuthenticationToken<*> -> principal.name
+        is Principal -> principal.name
+        is String -> principal
+        else -> null
+    }?.trim()?.takeIf { it.isNotEmpty() }

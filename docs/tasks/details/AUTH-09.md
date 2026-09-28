@@ -367,6 +367,43 @@ No production launch approval is implied by local Redis tests.
 
 ## Current implementation evidence
 
+### Current increment (2026-09-28)
+
+The login-start request path now throws the catalogued `ERR-11` application
+exception when its atomic policy denies a request, instead of converting the
+denial into a misleading `202 ACCEPTED`. `GlobalErrorHandler` maps `ERR-11` to
+HTTP 429/`RATE_LIMITED` and emits a bounded `Retry-After: 60` header. A rate-limit
+store-unavailable decision follows the same structured 429 boundary. Focused
+Accounts and shared-error tests verify the public status, code, content type, and
+retry header.
+
+The notifications inbox page-size guard now raises `ERR-02` explicitly at the
+controller boundary instead of relying on a generic `require` exception. Its
+HTTP representation remains the structured 400/`VALIDATION_FAILED` contract,
+while the application layer now preserves the catalogued 4xx decision.
+
+The BFF now applies the configured per-subject subscription cap in the actual
+`groupChanged` resolver, releases the admission slot on stream cancellation,
+and raises `ERR-11` when the cap is reached. Its GraphQL error resolver maps
+catalogued application and upstream 4xx failures into `extensions.code`; query
+depth/complexity rejection and upstream 429 responses use `RATE_LIMITED`.
+
+Refresh-token rotation now performs one atomic Redis-backed network-partition
+admission before session rotation. Denials and fail-closed store errors use the
+same structured HTTP 429/`RATE_LIMITED` response and bounded retry header as
+login-start; invalid or replayed tokens remain generic HTTP 401 responses.
+
+The public REST boundary audit found no remaining request-limit path that falls
+through to the unexpected 5xx handler: Expense Core pagination, search/export,
+sync, expense, and settlement bounds are either explicit `ERR-02` decisions or
+translated by the shared validation handler. Notification delivery limits remain
+asynchronous and fail closed by suppressing dispatch when the limit/store path
+does not admit delivery.
+
+This increment does not claim completion of AUTH-09: the task is still absent
+from the authoritative registry, and distributed cross-surface Redis E2E,
+failure, query-count, and capacity evidence remain outstanding.
+
 - Accounts rate limiting uses the Redis bucket port and a mandatory Redis adapter;
   PostgreSQL rate-limit entities/repositories were removed and the table is retired
   by Flyway migration `V7__remove_postgresql_rate_limit_buckets.sql`.

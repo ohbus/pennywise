@@ -9,6 +9,8 @@ import com.subhrodip.squarewise.bff.transport.model.input.CreateGroupInput
 import com.subhrodip.squarewise.bff.transport.model.input.RepaymentInput
 
 import com.subhrodip.squarewise.bff.transport.ExpenseCoreGateway
+import com.subhrodip.squarewise.errors.domain.ApplicationException
+import com.subhrodip.squarewise.errors.domain.ErrorCode
 import com.subhrodip.squarewise.bff.realtime.GroupInvalidation
 import com.subhrodip.squarewise.bff.realtime.LiveUpdateFanout
 import org.springframework.graphql.data.method.annotation.Argument
@@ -31,10 +33,29 @@ class GroupGraphqlController(
     fun emitInvalidation(groupId: String, revision: Long, changeId: String): GroupInvalidation =
         liveFanout.emitInvalidation(groupId, revision, changeId)
 
+    /**
+     * Authorizes and admits a bounded group subscription, releasing its slot when
+     * the reactive stream is cancelled or terminates.
+     */
     @SubscriptionMapping
-    fun groupChanged(@Argument groupId: String, @AuthenticationPrincipal(expression = "tokenValue") principal: Any?): Flux<GroupInvalidation> =
-        gateway.getGroup(groupId, bearerToken(principal))
-            .flatMapMany { liveFanout.invalidations().filter { it.groupId == groupId } }
+    fun groupChanged(@Argument groupId: String, @AuthenticationPrincipal principal: Any?): Flux<GroupInvalidation> =
+        Flux.using(
+            {
+                if (groupId.isBlank()) {
+                    throw ApplicationException(ErrorCode.ERR_02, "groupId must not be blank")
+                }
+                liveFanout.subscribe(
+                    authenticatedSubject(principal)
+                        ?: throw ApplicationException(ErrorCode.ERR_03, "authenticated subject is required"),
+                    groupId
+                )
+            },
+            { subscription ->
+                gateway.getGroup(groupId, bearerToken(principal))
+                    .flatMapMany { liveFanout.invalidations().filter { it.groupId == groupId } }
+            },
+            { subscription -> liveFanout.unsubscribe(subscription.id) }
+        )
 
     @QueryMapping
     fun groups(@AuthenticationPrincipal(expression = "tokenValue") principal: Any?): Mono<List<BffGroup>> = gateway.listGroups(bearerToken(principal))
@@ -84,7 +105,7 @@ class GroupGraphqlController(
         @AuthenticationPrincipal(expression = "tokenValue") principal: Any?
     ): Mono<BffSettlement> {
         val groupId = input.groupId
-            ?: return Mono.error(IllegalArgumentException("groupId is required for recording a repayment"))
+            ?: return Mono.error(ApplicationException(ErrorCode.ERR_02, "groupId is required for recording a repayment"))
         return gateway.recordRepayment(groupId, input, bearerToken(principal))
             .doOnSuccess { settlement ->
                 if (settlement != null) {

@@ -16,14 +16,17 @@ class LoginStartService(
     private val emailSender: AuthEmailSender
 ) {
     /**
-     * Starts login without exposing account existence, validation, throttling,
-     * or delivery details to the caller.
+     * Starts login without exposing account existence or delivery details to the
+     * caller. A caller that has exhausted the login policy receives the shared
+     * structured rate-limit error so clients can apply bounded backoff.
      *
      * @param email raw user input; normalization occurs in the credential/key boundary.
      * @param networkPartition trusted server-derived abuse partition.
      * @param kind link or code delivery mode.
      * @param now request timestamp.
-     * @return generic accepted response for every externally visible outcome.
+     * @return accepted when the request is admitted by the login policy.
+     * @throws ApplicationException with ERR-11 when the login policy denies the request.
+     * @throws ApplicationException with ERR-11 when the rate-limit store cannot make a safe decision.
      */
     fun start(
         email: String,
@@ -36,7 +39,9 @@ class LoginStartService(
         } catch (exception: RateLimitStoreUnavailableException) {
             throw ApplicationException(ErrorCode.ERR_11, "Rate-limit service unavailable", exception)
         }
-        if (!allowed) return LoginStartResult.ACCEPTED
+        if (!allowed) {
+            throw ApplicationException(ErrorCode.ERR_11, "Login rate limit exceeded")
+        }
 
         val credential = runCatching {
             credentialService.issue(email, kind, now)

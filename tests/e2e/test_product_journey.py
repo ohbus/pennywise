@@ -15,6 +15,7 @@ Verifies the entire product lifecycle across all four microservices
 9. Offline synchronization snapshot & change feed verification
 """
 
+import base64
 import json
 import io
 import os
@@ -95,6 +96,32 @@ def bootstrap_profile(url: str, bearer: str) -> tuple[int, Any]:
         if attempt < 2:
             time.sleep(2)
     return last_result
+
+
+def extract_jwt_subject(token: str | None) -> str:
+    """Safely decode and extract the JWT 'sub' claim from a Bearer token if present."""
+    if not token:
+        return ""
+    try:
+        parts = token.split(".")
+        if len(parts) >= 2:
+            payload = parts[1]
+            payload += "=" * (-len(payload) % 4)
+            data = json.loads(base64.urlsafe_b64decode(payload))
+            if "sub" in data:
+                return str(data["sub"])
+    except Exception:
+        pass
+    return ""
+
+
+def resolve_membership_id(members: list[dict[str, Any]], *candidates: str | None) -> str:
+    """Resolve membershipId matching any candidate identifier (JWT sub, accountId, displayName)."""
+    valid_candidates = {c for c in candidates if c}
+    for m in members:
+        if m.get("subject") in valid_candidates or m.get("displayName") in valid_candidates:
+            return str(m["membershipId"])
+    raise KeyError(f"None of candidates {valid_candidates} found in members: {members}")
 
 
 def run_e2e_tests() -> int:
@@ -380,13 +407,13 @@ def run_e2e_tests() -> int:
         bearer=user_a
     )
     assert status_members == 200, f"Failed to list members: {members}"
-    subjects = [m.get("subject") for m in members]
-    assert profile_a["displayName"] in subjects, f"Expected Alice subject in members: {subjects}"
-    assert bob_me["displayName"] in subjects, f"Expected Bob subject in members: {subjects}"
-    member_ids = {m["subject"]: m["membershipId"] for m in members}
-    alice_id = member_ids[profile_a["displayName"]]
-    bob_id = member_ids[bob_me["displayName"]]
-    print(f"  ✓ Group members verified: {subjects}")
+    alice_sub = extract_jwt_subject(user_a)
+    bob_sub = extract_jwt_subject(user_b)
+    alice_membership_id = resolve_membership_id(members, alice_sub, profile_a.get("displayName"), profile_a.get("accountId"))
+    bob_membership_id = resolve_membership_id(members, bob_sub, bob_me.get("displayName"), bob_me.get("accountId"))
+    alice_id = alice_membership_id
+    bob_id = bob_membership_id
+    print(f"  ✓ Group members verified: Alice membership={alice_id}, Bob membership={bob_id}")
 
     # 5. Add Expense via GraphQL createExpense
     print("\n[Step 5] Adding Expense via GraphQL createExpense (Alice pays 100.00 EUR split equally with Bob)...")

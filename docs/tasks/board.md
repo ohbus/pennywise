@@ -38,7 +38,7 @@ query classification, and evidence gates are complete.
 | ID | Owner | Status | Deliverable |
 | --- | --- | --- | --- |
 | QA-07 | coordinator | done | Contract-driven REST, GraphQL, WebSocket, negative-path, concurrency, recovery, and evidence matrix |
-| QA-08 | coordinator | in_progress | Production-scale, deployment-resilience, security, and unresolved WebSocket protocol evidence |
+| QA-08 | coordinator | done | Production-scale, deployment-resilience, security, and unresolved WebSocket protocol evidence |
 
 ## Production hardening milestone
 

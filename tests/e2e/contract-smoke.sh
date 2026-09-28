@@ -5,6 +5,8 @@ repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 cd "$repo_root"
 python3 tools/contracts/validate.py
 docker compose -f infra/local/docker-compose.yml config --quiet
+PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET="${PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET:-AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=}" \
+PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY="${PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY:-ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=}" \
 docker compose -f infra/local/docker-compose.dev.yml config --quiet
 PENNYWISE_ACCOUNTS_IMAGE=example/accounts:local \
 PENNYWISE_EXPENSE_CORE_IMAGE=example/expense-core:local \

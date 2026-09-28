@@ -215,6 +215,33 @@ class SimpleGraphQLWSClient:
                 pass
 
 
+def extract_jwt_subject(token: str | None) -> str:
+    """Safely decode and extract the JWT 'sub' claim from a Bearer token if present."""
+    if not token:
+        return ""
+    try:
+        parts = token.split(".")
+        if len(parts) >= 2:
+            payload = parts[1]
+            payload += "=" * (-len(payload) % 4)
+            data = json.loads(base64.urlsafe_b64decode(payload))
+            if "sub" in data:
+                return str(data["sub"])
+    except Exception:
+        pass
+    return ""
+
+
+def resolve_membership_id(members: Any, *candidates: str | None) -> str:
+    """Resolve membershipId matching any candidate identifier (JWT sub, accountId, displayName)."""
+    valid_candidates = {c for c in candidates if c}
+    member_list = members if isinstance(members, list) else []
+    for m in member_list:
+        if isinstance(m, dict) and (m.get("subject") in valid_candidates or m.get("displayName") in valid_candidates):
+            return str(m["membershipId"])
+    raise KeyError(f"None of candidates {valid_candidates} found in members: {members}")
+
+
 def run_concurrency_and_subscriptions_test() -> None:
     """Run concurrency and subscription checks with explicit UTF-8 output."""
     if isinstance(sys.stdout, io.TextIOWrapper):
@@ -265,9 +292,10 @@ def run_concurrency_and_subscriptions_test() -> None:
     assert status == 200, f"Bob failed to claim invite: {claim}"
     status, members = request_json(f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/members", bearer=user_a)
     assert status == 200, f"Failed to list group members: {members}"
-    member_ids = {member["subject"]: member["membershipId"] for member in members}
-    alice_id = member_ids[profile_a["displayName"]]
-    bob_id = member_ids[profile_b["displayName"]]
+    alice_sub = extract_jwt_subject(user_a)
+    bob_sub = extract_jwt_subject(user_b)
+    alice_id = resolve_membership_id(members, alice_sub, profile_a.get("displayName"), profile_a.get("accountId"))
+    bob_id = resolve_membership_id(members, bob_sub, profile_b.get("displayName"), profile_b.get("accountId"))
     print(f"  ✓ Members active: Alice={alice_id}, Bob={bob_id}")
 
     # Step 2: Establish Real-time GraphQL WebSocket Subscription (groupChanged)

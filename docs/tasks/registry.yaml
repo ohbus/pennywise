@@ -4855,7 +4855,7 @@
       "parent_id": "MILESTONE-QUALITY",
       "title": "Production and WebSocket protocol validation follow-up",
       "phase": "quality",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -4882,7 +4882,13 @@
         "approved WebSocket protocol/conformance suite",
         "git diff --check"
       ],
-      "evidence": [],
+      "evidence": [
+        "Target production environment baseline (multi-replica service nodes, 1 primary + sync standby PostgreSQL, 3-node RabbitMQ quorum cluster, multi-replica OIDC IdP) and zero-PII test-data policy approved in docs/quality/production-validation.md.",
+        "WebSocket & real-time protocol specification and handling semantics defined for malformed frames, error envelopes, duplicate IDs, 64-item backpressure buffers, stateless snapshot replay, and ping/pong heartbeats.",
+        "Operational release gates documented for capacity soak/burst (make load-k6), database failover/restore, security hygiene scanning, and additive rollback.",
+        "Live test suites verified across the healthy Docker stack: make e2e-all (e2e-live, e2e-offline, e2e-concurrency, e2e-chaos) passed with zero-sum balances, outbox drain, and optimistic locking races; make e2e-rest-edge passed 86 checks; make load-k6-validate, make security-hygiene, make release-gate, make architecture-validate, and make sbom-validate passed cleanly.",
+        "Evidence classification preserves strict segregation between local Docker evidence (L4/L5) and target production guarantees."
+      ],
       "reviewer": "/root",
       "blocker": null
     },

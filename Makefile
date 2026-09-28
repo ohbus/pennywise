@@ -9,7 +9,8 @@ NOTIFICATIONS_COMPOSE := infra/local/docker-compose.notifications.yml
 BFF_COMPOSE := infra/local/docker-compose.bff.yml
 DEV_COMPOSE := infra/local/docker-compose.dev.yml
 PROD_COMPOSE := infra/deploy/docker-compose.prod.yml
-SERVICES := accounts expense-core notifications bff
+export PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET ?= AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=
+export PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY ?= ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=
 
 .DEFAULT_GOAL := help
 .PHONY: help doctor bootstrap validate contracts lint python-typecheck test test-unit test-integration coverage build package check ci ci-e2e acceptance acceptance-live bruno-run workflow-validate observability-validate release-gate security-hygiene architecture-validate sbom-validate load-probe load-k6-validate load-k6 e2e e2e-rest-edge smoke docs-diagrams docs-diagrams-config compose-config deps-config deps-up deps-status deps-logs deps-down accounts-deps-config accounts-deps-up accounts-deps-status accounts-deps-logs accounts-deps-down expense-core-deps-config expense-core-deps-up expense-core-deps-status expense-core-deps-logs expense-core-deps-down notifications-deps-config notifications-deps-up notifications-deps-status notifications-deps-logs notifications-deps-down bff-deps-config bff-deps-up bff-deps-status bff-deps-logs bff-deps-down full-config full-up full-status full-logs full-down compose-dev-up compose-dev-down compose-dev-logs compose-up compose-down docker-build-all docker-build-% prod-config clean clean-gradle status
@@ -134,19 +135,19 @@ e2e: ## Run the contract and deployment E2E smoke checks
 	@tests/e2e/contract-smoke.sh
 
 e2e-rest-edge: ## Run live REST validation, authorization, boundary, and idempotency checks
-	@python3 tests/e2e/test_rest_edge_cases.py
+	@PYTHONPATH=. python3 tests/e2e/test_rest_edge_cases.py
 
 e2e-live: ## Run the comprehensive multi-service product journey E2E test against live stack
-	@python3 tests/e2e/test_product_journey.py
+	@PYTHONPATH=. python3 tests/e2e/test_product_journey.py
 
 e2e-offline: ## Run offline client simulation, sync cursor, and replay resilience tests
-	@python3 tests/e2e/test_offline_resilience.py
+	@PYTHONPATH=. python3 tests/e2e/test_offline_resilience.py
 
 e2e-concurrency: ## Run concurrent member edit conflict resolution and GraphQL subscription invalidation tests
-	@python3 tests/e2e/test_concurrency_subscriptions.py
+	@PYTHONPATH=. python3 tests/e2e/test_concurrency_subscriptions.py
 
 e2e-chaos: ## Run message broker outage chaos and transactional outbox recovery tests
-	@python3 tests/e2e/test_chaos_recovery.py
+	@PYTHONPATH=. python3 tests/e2e/test_chaos_recovery.py
 
 e2e-all: e2e-live e2e-offline e2e-concurrency e2e-chaos ## Run the entire comprehensive E2E test suite against the live stack
 	@echo "All E2E test suites passed successfully!"

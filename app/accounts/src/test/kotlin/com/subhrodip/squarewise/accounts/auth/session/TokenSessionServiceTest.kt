@@ -27,7 +27,8 @@ class TokenSessionServiceTest @Autowired constructor(
     private val tokenProvider = InternalJwtTokenProvider(
         secretSigningKey = secret,
         issuerUri = "https://issuer.example.squarewise",
-        audience = "squarewise-api"
+        audience = "squarewise-api",
+        tokenLifetime = java.time.Duration.ofMinutes(10)
     )
     private val service = TokenSessionService(
         sessionRepository = sessionRepository,

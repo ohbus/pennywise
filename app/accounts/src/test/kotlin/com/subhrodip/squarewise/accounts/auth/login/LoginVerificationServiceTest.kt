@@ -33,7 +33,8 @@ class LoginVerificationServiceTest @Autowired constructor(
     private val tokenProvider = InternalJwtTokenProvider(
         secretSigningKey = secret,
         issuerUri = "https://issuer.example.squarewise",
-        audience = "squarewise-api"
+        audience = "squarewise-api",
+        tokenLifetime = java.time.Duration.ofMinutes(10)
     )
     private val tokenSessionService = TokenSessionService(
         sessionRepository = sessionRepository,

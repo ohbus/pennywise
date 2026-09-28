@@ -1,6 +1,8 @@
 name: Pennywise PR CI
 on: { pull_request: {} }
-permissions: { contents: read }
+permissions:
+  contents: read
+  pull-requests: read
 concurrency:
   group: pennywise-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true

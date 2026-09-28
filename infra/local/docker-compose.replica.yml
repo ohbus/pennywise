@@ -1,0 +1,84 @@
+services:
+  postgres:
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=2
+      - -c
+      - wal_keep_size=64MB
+      - -c
+      - hba_file=/etc/postgresql/pg_hba.conf
+    volumes:
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgres/replication-init.sql:/docker-entrypoint-initdb.d/replication-init.sql:ro
+
+  postgres-replica:
+    image: ${POSTGRES_IMAGE:-postgres:17}
+    hostname: ${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}
+    networks:
+      default:
+        aliases: ["${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}"]
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-pennywise_replica}
+      POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-pennywise-replica-local-only}
+      POSTGRES_PRIMARY_HOST: ${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}
+      POSTGRES_PRIMARY_PORT: "5432"
+    entrypoint: ["/usr/local/bin/replica-entrypoint.sh"]
+    volumes:
+      - postgres-replica-data:/var/lib/postgresql/data
+      - ./postgres/replica-entrypoint.sh:/usr/local/bin/replica-entrypoint.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-pennywise} -d pennywise_accounts"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  expense-core:
+    environment:
+      PENNYWISE_DB_ENABLED: "true"
+      PENNYWISE_DB_WRITER_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_expense_core
+      PENNYWISE_DB_WRITER_USERNAME: ${POSTGRES_USER:-pennywise}
+      PENNYWISE_DB_WRITER_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+      PENNYWISE_DB_READER_SEARCH_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}:5432/pennywise_expense_core
+      PENNYWISE_DB_READER_SEARCH_USERNAME: ${POSTGRES_USER:-pennywise}
+      PENNYWISE_DB_READER_SEARCH_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+    depends_on:
+      postgres-replica:
+        condition: service_healthy
+
+  accounts:
+    environment:
+      PENNYWISE_DB_ENABLED: "true"
+      PENNYWISE_DB_WRITER_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_accounts
+      PENNYWISE_DB_WRITER_USERNAME: ${POSTGRES_USER:-pennywise}
+      PENNYWISE_DB_WRITER_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+      PENNYWISE_DB_READER_PROFILE_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}:5432/pennywise_accounts
+      PENNYWISE_DB_READER_PROFILE_USERNAME: ${POSTGRES_USER:-pennywise}
+      PENNYWISE_DB_READER_PROFILE_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+    depends_on:
+      postgres-replica:
+        condition: service_healthy
+
+  notifications:
+    environment:
+      PENNYWISE_DB_ENABLED: "true"
+      PENNYWISE_DB_WRITER_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_HOSTNAME:-postgres-db}:5432/pennywise_notifications
+      PENNYWISE_DB_WRITER_USERNAME: ${POSTGRES_USER:-pennywise}
+      PENNYWISE_DB_WRITER_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+      PENNYWISE_DB_READER_INBOX_URL: jdbc:postgresql://${PENNYWISE_POSTGRES_REPLICA_HOSTNAME:-postgres-replica-db}:5432/pennywise_notifications
+      PENNYWISE_DB_READER_INBOX_USERNAME: ${POSTGRES_USER:-pennywise}
+      PENNYWISE_DB_READER_INBOX_PASSWORD: ${POSTGRES_PASSWORD:-pennywise-local-only}
+    depends_on:
+      postgres-replica:
+        condition: service_healthy
+
+volumes:
+  postgres-replica-data:

@@ -9,7 +9,7 @@ import kotlinx.coroutines.sync.Semaphore
 
 /**
  * Executes a collection of suspend tasks in parallel while limiting concurrency.
- * Uses a configurable [maxParallelism] to avoid overwhelming the system.
+ * Uses a configurable max-parallelism value to avoid overwhelming the system.
  * Errors in individual tasks are collected and rethrown as a combined exception.
  */
 object ParallelExecutor {

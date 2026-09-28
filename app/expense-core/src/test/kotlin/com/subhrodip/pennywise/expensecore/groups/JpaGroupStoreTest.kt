@@ -1,5 +1,12 @@
 package com.subhrodip.pennywise.expensecore.groups
-
+import com.subhrodip.pennywise.expensecore.groups.api.CreateGroupRequest
+import com.subhrodip.pennywise.expensecore.groups.api.CreateInviteRequest
+import com.subhrodip.pennywise.expensecore.groups.api.CreatePlaceholderRequest
+import com.subhrodip.pennywise.expensecore.groups.api.UpdateGroupRequest
+import com.subhrodip.pennywise.expensecore.groups.persistence.repository.GroupAuditRepository
+import com.subhrodip.pennywise.expensecore.groups.persistence.repository.GroupRepository
+import com.subhrodip.pennywise.expensecore.groups.persistence.store.JpaGroupStore
+import com.subhrodip.pennywise.expensecore.messaging.outbox.persistence.OutboxRepository
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -11,8 +18,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import com.subhrodip.pennywise.errors.ApplicationException
-import com.subhrodip.pennywise.errors.ErrorCode
+import com.subhrodip.pennywise.errors.domain.ApplicationException
+import com.subhrodip.pennywise.errors.domain.ErrorCode
 import tools.jackson.databind.ObjectMapper
 
 /**
@@ -23,8 +30,8 @@ import tools.jackson.databind.ObjectMapper
 class JpaGroupStoreTest @Autowired constructor(
     private val store: JpaGroupStore,
     private val auditRepository: GroupAuditRepository,
-    private val syncRepository: com.subhrodip.pennywise.expensecore.sync.SyncChangeRepository,
-    private val outboxRepository: com.subhrodip.pennywise.expensecore.messaging.OutboxRepository,
+    private val syncRepository: com.subhrodip.pennywise.expensecore.sync.persistence.SyncChangeRepository,
+    private val outboxRepository: com.subhrodip.pennywise.expensecore.messaging.outbox.persistence.OutboxRepository,
     private val groupRepository: GroupRepository,
     private val objectMapper: ObjectMapper
 ) {

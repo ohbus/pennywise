@@ -13,6 +13,7 @@ from typing import Final
 from urllib.error import HTTPError
 from http.client import RemoteDisconnected
 from urllib.request import Request, urlopen
+from tests.http_constants import APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE
 
 
 TOKEN: Final[str] = os.environ.get("BEARER_TOKEN", "")
@@ -65,9 +66,9 @@ def tamper_algorithm(token: str) -> str:
 
 def status_for(probe: Probe, token: str) -> int:
     """Execute one protected request and return its HTTP status."""
-    headers = {"Authorization": f"Bearer {token}"}
+    headers = {AUTHORIZATION: f"{BEARER_PREFIX}{token}"}
     if probe.body is not None:
-        headers["Content-Type"] = "application/json"
+        headers[CONTENT_TYPE] = APPLICATION_JSON
     request = Request(probe.url, data=probe.body, headers=headers, method=probe.method)
     try:
         with urlopen(request, timeout=10) as response:

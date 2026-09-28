@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.ids
+package com.subhrodip.pennywise.ids.contracts
 
 /**
  * Authoritative central constants for REST API paths, parameters, and headers
@@ -6,10 +6,35 @@ package com.subhrodip.pennywise.ids
  */
 object ApiEndpoints {
 
+    /** GraphQL BFF transport paths and acceptance-only fault values. */
+    object Bff {
+        const val GRAPHQL: String = "/graphql"
+        const val ACCEPTANCE_FAULT_FANOUT: String = "fanout"
+    }
+
+    /** Shared operational endpoint paths. */
+    object Operations {
+        const val HEALTH: String = "/actuator/health/**"
+    }
+
     /** Common HTTP Headers */
     object Headers {
+        const val ACCEPT: String = "Accept"
+        const val AUTHORIZATION: String = "Authorization"
+        const val CONTENT_DISPOSITION: String = "Content-Disposition"
+        const val CONTENT_TYPE: String = "Content-Type"
         const val REQUEST_ID: String = "X-Request-Id"
         const val IDEMPOTENCY_KEY: String = "Idempotency-Key"
+        const val USER_AGENT: String = "User-Agent"
+        const val ACCEPTANCE_FAULT: String = "X-Acceptance-Fault"
+        const val ACCEPTANCE_FAULT_ROLLBACK: String = "rollback"
+        const val WRITER_WATERMARK: String = "X-Pennywise-Writer-Watermark"
+        const val REQUIRED_WATERMARK: String = "X-Pennywise-Required-Watermark"
+        const val APPLICATION_JSON: String = "application/json"
+        const val TEXT_CSV: String = "text/csv"
+        const val TEXT_CSV_UTF8: String = "text/csv; charset=UTF-8"
+        const val TEXT_PLAIN_UTF8: String = "text/plain; charset=UTF-8"
+        const val BEARER_SCHEME: String = "Bearer"
     }
 
     /** Accounts service API endpoints */

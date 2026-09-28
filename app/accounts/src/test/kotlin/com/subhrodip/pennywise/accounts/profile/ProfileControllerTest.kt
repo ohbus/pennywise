@@ -1,15 +1,27 @@
 package com.subhrodip.pennywise.accounts.profile
 
-import com.subhrodip.pennywise.accounts.requests.deletion.DeletionRequestService
-import com.subhrodip.pennywise.accounts.requests.export.ExportRequestService
+import com.subhrodip.pennywise.accounts.profile.api.ProfileController
+import com.subhrodip.pennywise.accounts.profile.api.ProfilePatchRequest
+import com.subhrodip.pennywise.accounts.profile.api.ProfileResponse
+import com.subhrodip.pennywise.accounts.profile.persistence.InMemoryProfileStore
+import com.subhrodip.pennywise.accounts.profile.persistence.ProfileStore
+
+import com.subhrodip.pennywise.accounts.requests.deletion.service.DeletionRequestService
+import com.subhrodip.pennywise.accounts.requests.deletion.persistence.InMemoryDeletionRequestStore
+import com.subhrodip.pennywise.accounts.requests.export.service.ExportRequestService
+import com.subhrodip.pennywise.accounts.requests.export.persistence.InMemoryExportRequestStore
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
+import com.subhrodip.pennywise.db.routing.DbContextHolder
+import com.subhrodip.pennywise.db.routing.DbOperationKind
+import com.subhrodip.pennywise.db.routing.ReadConsistency
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 import java.nio.charset.StandardCharsets
 import java.security.Principal
+import java.time.Instant
 import java.util.UUID
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.RequestPostProcessor
@@ -21,11 +33,12 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 
 class ProfileControllerTest {
+    private val recordingProfiles = RecordingProfileStore(InMemoryProfileStore())
     private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(
         ProfileController(
-            profiles = InMemoryProfileStore(),
-            deletionService = DeletionRequestService(),
-            exportService = ExportRequestService()
+            profiles = recordingProfiles,
+            deletionService = DeletionRequestService(InMemoryDeletionRequestStore { Instant.parse("2026-01-01T00:00:00Z") }),
+            exportService = ExportRequestService(InMemoryExportRequestStore { Instant.parse("2026-01-01T00:00:00Z") })
         )
     )
         .setControllerAdvice(GlobalErrorHandler())
@@ -33,6 +46,19 @@ class ProfileControllerTest {
     private val alice = RequestPostProcessor { request ->
         request.userPrincipal = Principal { "oidc|alice" }
         request
+    }
+
+    @Test
+    fun `profile lookup by account id uses the approved eventual reader policy`() {
+        val accountId = recordingProfiles.get("oidc|policy").accountId
+
+        mvc.perform(get(ApiEndpoints.Accounts.V1.profileById(accountId)))
+            .andExpect(status().isOk)
+
+        assertEquals("profile.lookup", recordingProfiles.lastContext?.operationName)
+        assertEquals(DbOperationKind.QUERY, recordingProfiles.lastContext?.kind)
+        assertEquals(ReadConsistency.EVENTUAL, recordingProfiles.lastContext?.consistency)
+        assertTrue(recordingProfiles.lastContext?.readerEligible == true)
     }
 
     @Test
@@ -243,4 +269,24 @@ class ProfileControllerTest {
         assertTrue(resultIds.contains(p1.accountId))
         assertTrue(resultIds.contains(p3.accountId))
     }
+}
+
+private class RecordingProfileStore(private val delegate: ProfileStore) : ProfileStore {
+    var lastContext: com.subhrodip.pennywise.db.routing.DbExecutionContext? = null
+
+    override fun get(subject: String): ProfileResponse = delegate.get(subject)
+
+    override fun findById(accountId: UUID): ProfileResponse? {
+        lastContext = DbContextHolder.current()
+        return delegate.findById(accountId)
+    }
+
+    override fun findByIds(accountIds: List<UUID>): List<ProfileResponse> {
+        lastContext = DbContextHolder.current()
+        return delegate.findByIds(accountIds)
+    }
+
+    override fun update(subject: String, patch: ProfilePatchRequest): ProfileResponse = delegate.update(subject, patch)
+
+    override fun requestDeletion(subject: String) = delegate.requestDeletion(subject)
 }

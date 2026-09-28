@@ -1,7 +1,13 @@
 package com.subhrodip.pennywise.notifications.preferences
 
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.notifications.preferences.api.PreferenceController
+import com.subhrodip.pennywise.notifications.preferences.model.NotificationPreferences
+import com.subhrodip.pennywise.notifications.preferences.persistence.InMemoryPreferenceStore
+import com.subhrodip.pennywise.notifications.preferences.persistence.JpaPreferenceStore
+import com.subhrodip.pennywise.notifications.preferences.persistence.NotificationPreferenceRepository
+
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType

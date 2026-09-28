@@ -4,25 +4,87 @@ The coordinator owns this board and `registry.yaml`. The registry is the source
 of truth. Its JSON formatting is valid YAML 1.2 and permits dependency-free
 validation with Python's standard library.
 
+## CQRS data-access and PostgreSQL reader-scaling milestone
+
+The implementation-ready code inventory is maintained in
+`docs/implementation/cqrs-code-inventory.md`. These tasks are intentionally
+writer-safe: no reader routing is enabled until the shared kernel, route guards,
+query classification, and evidence gates are complete.
+
+| ID | Owner | Status | Deliverable |
+| --- | --- | --- | --- |
+| DB-01 | coordinator | done | Catalog every persistence operation and register the workstream |
+| DB-02 | architecture | done | Define command/query, consistency, watermark, fallback, and retry contracts |
+| DB-03 | coordinator | done | Implement `libs/db` route context, policies, and transaction guards |
+| DB-04 | platform | done | Add separate writer/named-reader pools and writer-only migration wiring |
+| DB-05 | platform | done | Add reader lag health, circuit breaking, and bounded fallback |
+| DB-06 | core | done | Split Expense Core command/query ports while preserving financial transactions |
+| DB-07 | core | done | Pilot bounded Expense Core search projection and measured query optimization |
+| DB-08 | accounts | done | Split Accounts command/query ports with writer-only auth state |
+| DB-09 | notifications | done | Split Notifications command/query ports with writer-only delivery state |
+| DB-10 | coordinator | done | Propagate causal writer watermarks through services and BFF |
+| DB-11 | observability | done | Add query operation telemetry and slow-query governance |
+| DB-12 | quality | done | Add contention, replica failure, lag, and capacity evidence |
+| DB-13 | platform | done | Add optional local/production-like PostgreSQL replica topology |
+| DB-14 | coordinator | done | Run one reviewed historical-read replica pilot |
+| DB-15 | coordinator | done | Promote only individually approved query capabilities |
+| DB-16 | operations | done | Complete failover, restore, rollback, alert, and release gates |
+| DB-17 | coordinator | done | Reconcile implementation and evidence against every plan requirement |
+
 ## Current milestone: documentation and contracts
 
 ## Exhaustive public-interface coverage
 
 | ID | Owner | Status | Deliverable |
 | --- | --- | --- | --- |
-| QA-07 | coordinator | in_progress | Contract-driven REST, GraphQL, WebSocket, negative-path, concurrency, recovery, and evidence matrix |
-| QA-08 | coordinator | planned | Production-scale, deployment-resilience, security, and unresolved WebSocket protocol evidence |
+| QA-07 | coordinator | done | Contract-driven REST, GraphQL, WebSocket, negative-path, concurrency, recovery, and evidence matrix |
+| QA-08 | coordinator | done | Production-scale, deployment-resilience, security, and unresolved WebSocket protocol evidence |
+| QA-09 | coordinator | done | Optimized and parallelized E2E pipeline with artifact reuse |
+| OPS-25 | coordinator | done | Migrate Python tooling to pyproject.toml + uv sync + uv run |
 
 ## Production hardening milestone
 
 | ID | Owner | Status | Deliverable |
 | --- | --- | --- | --- |
+| PR-41 | coordinator | done | Make BFF financial fanout fail closed |
+| PR-42 | coordinator | done | Bound RabbitMQ transient redelivery |
+| PR-43 | coordinator | done | Wire configurable GraphQL subscription bounds |
+| PR-44 | coordinator | done | Serialize GraphQL subscription admission |
+| PR-45 | coordinator | done | Lock recurring schedules during worker claims |
+| PR-46 | coordinator | done | Add durable settlement recording idempotency |
+| PR-47 | coordinator | done | Add PostgreSQL populated-settlement reconciliation evidence |
+| PR-48 | coordinator | done | Add CI dependency vulnerability review gate |
+| PR-49 | coordinator | done | Bound GraphQL transport request sizes |
 | AUTH-01 | coordinator | done | Provider-neutral OIDC authentication hardening baseline and implementation tracker |
 | AUTH-02 | coordinator | done | Remove implicit authentication identities with full boundary evidence |
 | AUTH-03 | coordinator | done | Fail-closed provider-neutral OIDC resource-server validation |
 | AUTH-04 | coordinator | done | Validate OIDC JWT claims, signatures, expiry, and subjects |
 | AUTH-05 | coordinator | done | Remove weaker local authentication modes and require local OIDC parity |
 | AUTH-06 | coordinator | done | Keycloak environment, real OIDC journeys, and meaningful Compose hostnames |
+| PR-17 | coordinator | done | Financial ledger reconciliation and durable mutation idempotency |
+| PR-18 | coordinator | done | Bounded persistence reads and mutation-time authorization |
+| PR-19 | coordinator | done | Messaging retry, dead-letter, and poison-message handling |
+| PR-20 | coordinator | done | GraphQL abuse controls |
+| PR-21 | coordinator | done | CI, security, SBOM, and architecture gates |
+| PR-22 | coordinator | done | Remove production in-memory persistence fallbacks |
+| PR-23 | coordinator | done | Profile and financial adapter production wiring |
+| PR-24 | coordinator | done | Remove Accounts request-service in-memory defaults |
+| PR-25 | coordinator | done | Fail closed on production identity-provider wiring |
+| PR-26 | coordinator | done | Expense participant and request-bound validation |
+| PR-27 | coordinator | done | Notification fail-closed delivery policy |
+| PR-28 | coordinator | done | BFF fail-closed upstream configuration |
+| PR-29 | coordinator | done | Checked financial arithmetic |
+| PR-30 | coordinator | done | Subscription revocation on membership removal |
+| PR-31 | coordinator | done | Required production messaging capabilities |
+| PR-32 | coordinator | done | Deployment overlay configuration alignment |
+| PR-33 | coordinator | done | Security hygiene fixture classification |
+| PR-34 | coordinator | done | Notification log redaction |
+| PR-35 | coordinator | done | Actuator exposure hardening |
+| PR-36 | coordinator | done | Versioned notification queue topology |
+| PR-37 | coordinator | done | GraphQL abuse-control transport evidence |
+| PR-38 | coordinator | done | CI workflow and release-gate parity |
+| PR-39 | coordinator | done | Production application topology controls |
+| PR-40 | coordinator | done | Idempotency retention and cleanup |
 | AUTH-07 | coordinator | done | Pennywise-owned passwordless login, token lifecycle, provider portability, and authorization evidence |
 | OPS-24 | coordinator | done | Remove undeclared Ruby dependency and E2E Compose host-port collisions from CI |
 | OPS-17 | coordinator | done | Stable error taxonomy and service/source attribution |

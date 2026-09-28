@@ -16,20 +16,36 @@ export function setup() {
   });
   check(response, { 'fixture group created': (value) => value.status === 201 });
   if (response.status !== 201) throw new Error(`fixture setup failed: ${response.status} ${response.body}`);
-  return { groupId: response.json('groupId') };
+  const groupId = response.json('groupId');
+
+  let resolvedParticipantId = participantId;
+  const membersResponse = http.get(`${expenseCoreUrl}/expense-core/v1/groups/${groupId}/members`, {
+    headers, tags: { surface: 'fixture-members' },
+  });
+  if (membersResponse.status === 200) {
+    const members = membersResponse.json();
+    if (Array.isArray(members) && members.length > 0 && members[0].membershipId) {
+      resolvedParticipantId = members[0].membershipId;
+    }
+  }
+
+  return { groupId, participantId: resolvedParticipantId };
 }
 
 export function teardown(fixture) {
   if (!fixture?.groupId) return;
-  const response = http.post(`${expenseCoreUrl}/expense-core/v1/groups/${fixture.groupId}/archive`, null, { headers, tags: { surface: 'fixture-cleanup' } });
-  check(response, { 'fixture group archived': (value) => value.status === 200 });
+  if (__ENV.ARCHIVE_ON_TEARDOWN === 'true') {
+    const response = http.post(`${expenseCoreUrl}/expense-core/v1/groups/${fixture.groupId}/archive`, null, { headers, tags: { surface: 'fixture-cleanup' } });
+    check(response, { 'fixture group archived': (value) => value.status === 200 });
+  }
 }
 
 export default function (fixture) {
   const expenseId = uuid();
+  const pid = fixture.participantId || participantId;
   const payload = { expenseId, description: 'k6 capacity fixture', category: 'other', amount: { currency: 'EUR', minor: '100' },
-    payers: [{ participantId, amount: { currency: 'EUR', minor: '100' } }],
-    allocation: { mode: 'EQUAL', items: [{ participantId, value: '1' }] } };
+    payers: [{ participantId: pid, amount: { currency: 'EUR', minor: '100' } }],
+    allocation: { mode: 'EQUAL', items: [{ participantId: pid, value: '1' }] } };
   const response = http.post(`${expenseCoreUrl}/expense-core/v1/groups/${fixture.groupId}/expenses`, JSON.stringify(payload), {
     headers: { ...headers, 'Content-Type': 'application/json', 'Idempotency-Key': expenseId }, tags: { surface: 'expense-write' },
   });

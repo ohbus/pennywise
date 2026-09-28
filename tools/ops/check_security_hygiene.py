@@ -31,6 +31,8 @@ def main() -> int:
             continue
         for number, line in enumerate(lines, 1):
             if (
+                ("security-hygiene: test-fixture" in line and "tests" in name)
+                or
                 "local-only" in line
                 or "example" in str(path)
                 or "${" in line

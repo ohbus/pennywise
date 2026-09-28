@@ -1,15 +1,14 @@
 package com.subhrodip.pennywise.accounts
 
-import com.subhrodip.pennywise.accounts.requests.deletion.DeletionRequestRepository
-import com.subhrodip.pennywise.accounts.requests.deletion.JpaDeletionRequestStore
-import com.subhrodip.pennywise.accounts.requests.deletion.DeletionStatus
-import com.subhrodip.pennywise.accounts.requests.export.ExportRequestRepository
-import com.subhrodip.pennywise.accounts.requests.export.ExportStatus
-import com.subhrodip.pennywise.accounts.requests.export.JpaExportRequestStore
-import com.subhrodip.pennywise.accounts.profile.JpaProfileStore
-import com.subhrodip.pennywise.accounts.profile.ProfileRepository
+import com.subhrodip.pennywise.accounts.requests.deletion.persistence.DeletionRequestRepository
+import com.subhrodip.pennywise.accounts.requests.deletion.persistence.JpaDeletionRequestStore
+import com.subhrodip.pennywise.accounts.requests.deletion.model.DeletionStatus
+import com.subhrodip.pennywise.accounts.requests.export.persistence.ExportRequestRepository
+import com.subhrodip.pennywise.accounts.requests.export.model.ExportStatus
+import com.subhrodip.pennywise.accounts.requests.export.persistence.JpaExportRequestStore
+import com.subhrodip.pennywise.accounts.profile.persistence.JpaProfileStore
+import com.subhrodip.pennywise.accounts.profile.persistence.ProfileRepository
 
-import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull

@@ -11,6 +11,7 @@ import sys
 import urllib.error
 import urllib.request
 import uuid
+from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, CONTENT_TYPE, IDEMPOTENCY_KEY, TEXT_CSV
 
 
 ACCOUNTS_URL = os.environ.get("ACCOUNTS_URL", "http://localhost:8081")
@@ -63,9 +64,9 @@ def request_json(url: str, method: str = "GET", body: object | None = None, toke
         token = SECONDARY_TOKEN
     elif token == "non-member":
         token = NON_MEMBER_TOKEN
-    request_headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    request_headers = {ACCEPT: APPLICATION_JSON, CONTENT_TYPE: APPLICATION_JSON}
     if token is not None:
-        request_headers["Authorization"] = f"Bearer {token}"
+        request_headers[AUTHORIZATION] = f"Bearer {token}"
     if headers:
         request_headers.update(headers)
     data = json.dumps(body).encode() if body is not None else None
@@ -400,6 +401,7 @@ def main() -> None:
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SETTLEMENTS.format(group_id=group_id)}",
         method="POST", body=settlement_payload, token="non-member",
+        headers={IDEMPOTENCY_KEY: str(uuid.uuid4())},
     )
     expect("non-member settlement recording is hidden", status, 404)
 
@@ -484,23 +486,27 @@ def main() -> None:
 
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPORT.format(group_id=group_id)}?maxRows=0",
-        headers={"Accept": "text/csv"},
+        headers={ACCEPT: TEXT_CSV},
     )
     expect("CSV export rejects zero row limit", status, 400)
 
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPORT.format(group_id=group_id)}",
-        headers={"Accept": "application/json"},
+        headers={ACCEPT: APPLICATION_JSON},
     )
     expect("CSV export rejects incompatible media type", status, 406)
 
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPORT.format(group_id=group_id)}",
-        token="non-member", headers={"Accept": "text/csv"},
+        token="non-member", headers={ACCEPT: TEXT_CSV},
     )
     expect("non-member CSV export is hidden", status, 404)
 
-    participant = str(uuid.uuid4())
+    status, members = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_MEMBERS.format(group_id=group_id)}"
+    )
+    expect("member lookup for financial edge case", status, 200)
+    participant = members[0]["membershipId"]
     expense_id = str(uuid.uuid4())
     key = f"rest-edge-{uuid.uuid4()}"
     payload = {
@@ -513,18 +519,18 @@ def main() -> None:
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
         method="POST", body=payload, token="non-member",
-        headers={"Idempotency-Key": f"non-member-{uuid.uuid4()}"},
+        headers={IDEMPOTENCY_KEY: f"non-member-{uuid.uuid4()}"},
     )
     expect("non-member expense creation is hidden", status, 404)
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
         method="POST", body=payload, token=None,
-        headers={"Idempotency-Key": f"missing-auth-{uuid.uuid4()}"},
+        headers={IDEMPOTENCY_KEY: f"missing-auth-{uuid.uuid4()}"},
     )
     expect("unauthenticated expense creation is rejected", status, 401)
     status, first = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
-        method="POST", body=payload, headers={"Idempotency-Key": key},
+        method="POST", body=payload, headers={IDEMPOTENCY_KEY: key},
     )
     expect("create idempotent expense", status, 201)
 
@@ -568,7 +574,7 @@ def main() -> None:
 
     status, replay = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
-        method="POST", body=payload, headers={"Idempotency-Key": key},
+        method="POST", body=payload, headers={IDEMPOTENCY_KEY: key},
     )
     expect("duplicate expense replay is idempotent", status, 200, 201)
     if isinstance(first, dict) and isinstance(replay, dict) and first.get("expenseId") != replay.get("expenseId"):
@@ -578,7 +584,7 @@ def main() -> None:
     altered["description"] = "tampered replay"
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
-        method="POST", body=altered, headers={"Idempotency-Key": key},
+        method="POST", body=altered, headers={IDEMPOTENCY_KEY: key},
     )
     expect("tampered idempotency replay conflicts", status, 409)
 
@@ -621,7 +627,7 @@ def main() -> None:
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
         method="POST", body=payload,
-        headers={"Idempotency-Key": f"archived-{uuid.uuid4()}"},
+        headers={IDEMPOTENCY_KEY: f"archived-{uuid.uuid4()}"},
     )
     expect("archived group rejects new expense", status, 404, 409)
 

@@ -1,9 +1,14 @@
 package com.subhrodip.pennywise.expensecore.expenses
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpenseAllocation
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpensePayer
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpenseRecord
+import com.subhrodip.pennywise.expensecore.expenses.persistence.repository.BalancePostingRepository
+import com.subhrodip.pennywise.expensecore.expenses.persistence.store.JpaExpenseStore
+import com.subhrodip.pennywise.expensecore.groups.api.CreateGroupRequest
+import com.subhrodip.pennywise.expensecore.groups.persistence.store.JpaGroupStore
+import com.subhrodip.pennywise.expensecore.messaging.outbox.persistence.OutboxStore
 
-import com.subhrodip.pennywise.expensecore.groups.CreateGroupRequest
-import com.subhrodip.pennywise.expensecore.groups.JpaGroupStore
-import com.subhrodip.pennywise.expensecore.messaging.OutboxStore
-import com.subhrodip.pennywise.expensecore.sync.SynchronizationStore
+import com.subhrodip.pennywise.expensecore.sync.persistence.SynchronizationStore
 import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -15,8 +20,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
-import com.subhrodip.pennywise.errors.ApplicationException
-import com.subhrodip.pennywise.errors.ErrorCode
+import com.subhrodip.pennywise.errors.domain.ApplicationException
+import com.subhrodip.pennywise.errors.domain.ErrorCode
 
 @SpringBootTest
 @Transactional

@@ -29,7 +29,7 @@ Implement GraphQL resolvers in `app/bff` connecting GraphQL queries and mutation
 - **Expense Core Endpoint**:
   - Added `GET /expense-core/v1/groups/{groupId}` endpoint in `GroupController.kt` and updated OpenAPI schema.
 - **Contract & Schema Updates**:
-  - Added optional `groupId: ID` to `input RepaymentInput` in `contracts/graphql/schema.graphqls` to allow client specification of group context for repayments.
+  - Added optional `groupId: ID` to `input RepaymentInput` in `contracts/graphql/30-inputs.graphqls` to allow client specification of group context for repayments.
   - Added `GET /groups/{groupId}` to `contracts/rest/expense-core.openapi.json`.
 - **Unit & Integration Tests**:
   - Added `ProfileGraphqlControllerTest` verifying `me` query resolver.
@@ -44,7 +44,7 @@ Implement GraphQL resolvers in `app/bff` connecting GraphQL queries and mutation
   python3 tools/contracts/validate.py
   # valid JSON: contracts/rest/accounts.openapi.json
   # valid JSON: contracts/rest/expense-core.openapi.json
-  # valid GraphQL declaration set: contracts/graphql/schema.graphqls
+  # valid GraphQL declaration set: 4 files in contracts/graphql/
   # valid task registry: 59 tasks
   ```
 - Module tests:

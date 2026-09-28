@@ -9,9 +9,9 @@ import com.subhrodip.pennywise.accounts.auth.login.LoginVerificationService
 import com.subhrodip.pennywise.accounts.auth.session.RefreshTokenRequest
 import com.subhrodip.pennywise.accounts.auth.session.TokenResponse
 import com.subhrodip.pennywise.accounts.auth.session.TokenSessionService
-import com.subhrodip.pennywise.errors.ApplicationException
-import com.subhrodip.pennywise.errors.ErrorCode
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.errors.domain.ApplicationException
+import com.subhrodip.pennywise.errors.domain.ErrorCode
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import java.security.Principal
@@ -85,7 +85,7 @@ class AuthController(
         @Valid @RequestBody request: LoginVerifyRequest,
         servletRequest: HttpServletRequest
     ): ResponseEntity<TokenResponse> {
-        val userAgent = servletRequest.getHeader("User-Agent")
+        val userAgent = servletRequest.getHeader(ApiEndpoints.Headers.USER_AGENT)
         val tokenResponse = loginVerificationService.verify(
             credential = request.credential,
             clientKind = request.clientKind,
@@ -107,7 +107,7 @@ class AuthController(
         @Valid @RequestBody request: RefreshTokenRequest,
         servletRequest: HttpServletRequest
     ): ResponseEntity<TokenResponse> {
-        val userAgent = servletRequest.getHeader("User-Agent")
+        val userAgent = servletRequest.getHeader(ApiEndpoints.Headers.USER_AGENT)
         val tokenResponse = tokenSessionService.rotateSession(
             rawRefreshToken = request.refreshToken,
             clientKind = "BROWSER",

@@ -1,23 +1,30 @@
 package com.subhrodip.pennywise.bff.graphql
+import com.subhrodip.pennywise.bff.transport.model.output.BffCreateGroup
+import com.subhrodip.pennywise.bff.transport.model.output.BffExpense
+import com.subhrodip.pennywise.bff.transport.model.output.BffGroup
+import com.subhrodip.pennywise.bff.transport.model.output.BffSettlement
+import com.subhrodip.pennywise.bff.transport.model.output.BffSuggestedSettlement
+import com.subhrodip.pennywise.bff.transport.model.input.CreateExpenseInput
+import com.subhrodip.pennywise.bff.transport.model.input.CreateGroupInput
+import com.subhrodip.pennywise.bff.transport.model.input.RepaymentInput
 
-import com.subhrodip.pennywise.bff.*
+import com.subhrodip.pennywise.bff.transport.ExpenseCoreGateway
+import com.subhrodip.pennywise.bff.realtime.GroupInvalidation
+import com.subhrodip.pennywise.bff.realtime.LiveUpdateFanout
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.graphql.data.method.annotation.SubscriptionMapping
 import org.springframework.stereotype.Controller
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import java.security.Principal
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @Controller
 class GroupGraphqlController(
     private val gateway: ExpenseCoreGateway,
-    fanout: LiveUpdateFanout? = null
+    private val liveFanout: LiveUpdateFanout
 ) {
-    private val liveFanout = fanout ?: LiveUpdateFanout()
-
     fun emitInvalidation(groupId: String, revision: Long): GroupInvalidation =
         liveFanout.emitInvalidation(groupId, revision)
 

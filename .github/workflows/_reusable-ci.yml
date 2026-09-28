@@ -26,11 +26,31 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - name: Set up isolated Python tooling
+        uses: astral-sh/setup-uv@v6
+      - name: Install dependencies from lockfile
+        run: uv sync --frozen
       - run: |
-          python3 tools/contracts/validate.py
-          python3 tools/contracts/validate_public_surface.py
+          uv run python3 tools/contracts/validate.py
+          uv run python3 tools/contracts/validate_public_surface.py
           docker compose -f infra/local/docker-compose.yml config --quiet
           docker compose -f infra/local/docker-compose.dev.yml config --quiet
+
+  dependency-review:
+    name: Dependency vulnerability review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Review introduced dependencies
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
 
   lint:
     name: Lightweight lint and repository checks
@@ -40,15 +60,41 @@ jobs:
         with: { persist-credentials: false }
       - name: Set up isolated Python tooling
         uses: astral-sh/setup-uv@v6
+      - name: Install dependencies from lockfile
+        run: uv sync --frozen
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: microsoft
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: gradle
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Cache Gradle wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-wrapper-${{ runner.os }}-
       - name: Check formatting and contracts
         run: |
           git diff --check
-          python3 tools/contracts/validate.py
-          python3 tools/contracts/validate_public_surface.py
-          python3 -m unittest discover -s tests/acceptance
+          uv run python3 tools/contracts/validate.py
+          uv run python3 tools/contracts/validate_public_surface.py
+          uv run python3 tools/ops/check_security_hygiene.py
+          uv run python3 tools/ops/check_architecture.py
+          uv run python3 tools/ops/validate_sbom_baseline.py
+          ./gradlew cyclonedxBom --no-daemon
+          uv run python3 -m unittest discover -s tests/acceptance
           make workflow-validate
+      - name: Upload CycloneDX SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: pennywise-sbom
+          path: '**/build/reports/cyclonedx/*.json'
+          if-no-files-found: error
+          retention-days: 14
       - name: Run Python type checker
-        run: uvx --from mypy==1.17.1 mypy --config-file mypy.ini tests tools
+        run: uv run mypy tests tools
 
   verify:
     name: Verify ${{ matrix.kind }} / ${{ matrix.name }}
@@ -95,6 +141,12 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: gradle
       - uses: gradle/actions/setup-gradle@v4
+      - name: Cache Gradle wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-wrapper-${{ runner.os }}-
       - name: Restore shared Gradle build cache
         uses: actions/cache@v4
         with:
@@ -131,48 +183,34 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  e2e:
+  e2e-edge-and-security:
+    name: E2E edge cases, negative OIDC, and contract smoke
     if: inputs.run_e2e
-    needs: preflight
+    needs: [preflight, verify]
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/setup-java@v6
+      - name: Set up isolated Python tooling
+        uses: astral-sh/setup-uv@v6
+      - name: Install dependencies from lockfile
+        run: uv sync --frozen
+      - name: Download application JAR artifacts
+        uses: actions/download-artifact@v4
         with:
-          distribution: microsoft
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: gradle
-      - uses: gradle/actions/setup-gradle@v4
-      - name: Restore shared Gradle build cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle/caches/build-cache-*
-          key: pennywise-gradle-e2e-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', '**/gradle.properties', 'gradle/libs.versions.toml') }}
-          restore-keys: pennywise-gradle-e2e-${{ runner.os }}-
-      - run: ./gradlew test --no-daemon
-      - name: Package application jars for the local stack
-        run: ./gradlew bootJar --no-daemon
-      - name: Publish E2E test summary
-        uses: test-summary/action@v2
-        if: always()
-        with:
-          paths: "**/build/test-results/test/TEST-*.xml"
-          show: "fail, skip"
-      - name: Upload E2E test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-e2e
-          path: |
-            **/build/test-results/test/TEST-*.xml
-            **/build/reports/tests/test/
-          if-no-files-found: ignore
-          retention-days: 14
+          pattern: app-jar-*
+          path: app/
+          merge-multiple: false
+      - name: Organize application JAR artifacts
+        run: |
+          for svc in accounts expense-core notifications bff; do
+            mkdir -p "app/${svc}/build/libs"
+            mv "app/app-jar-${svc}/pennywise-${svc}-0.1.0-SNAPSHOT.jar" "app/${svc}/build/libs/" || true
+          done
       - name: Run contract and deployment smoke checks
         run: bash tests/e2e/contract-smoke.sh
       - name: Start the complete local application stack
@@ -183,61 +221,94 @@ jobs:
           docker compose -f infra/local/docker-compose.dev.yml ps -a
           docker compose -f infra/local/docker-compose.dev.yml logs --no-color --tail=300 \
             accounts expense-core notifications bff postgres rabbitmq mailpit idp-keycloak
-      - name: Acquire ephemeral signed local OIDC token
+      - name: Acquire ephemeral signed local OIDC tokens
         id: oidc-token
         run: |
-          token_response="$(curl --fail-with-body --silent --show-error \
-            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
-            --data 'grant_type=client_credentials&client_id=pennywise-ci&client_secret=pennywise-ci-local-only' \
-            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
-          token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$token_response")"
-          test -n "$token" || { echo "Keycloak returned no access token"; exit 2; }
-          echo "token=$token" >> "$GITHUB_OUTPUT"
-          e2e_bob_response="$(curl --fail-with-body --silent --show-error \
-            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
-            --data 'grant_type=client_credentials&client_id=pennywise-ci-e2e-bob&client_secret=pennywise-ci-e2e-bob-local-only' \
-            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
-          e2e_bob_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$e2e_bob_response")"
-          test -n "$e2e_bob_token" || { echo "Keycloak returned no E2E second-persona token"; exit 2; }
-          echo "e2e_bob_token=$e2e_bob_token" >> "$GITHUB_OUTPUT"
-          e2e_nonmember_response="$(curl --fail-with-body --silent --show-error \
-            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
-            --data 'grant_type=client_credentials&client_id=pennywise-ci-e2e-nonmember&client_secret=pennywise-ci-e2e-nonmember-local-only' \
-            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
-          e2e_nonmember_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$e2e_nonmember_response")"
-          test -n "$e2e_nonmember_token" || { echo "Keycloak returned no E2E non-member token"; exit 2; }
-          echo "e2e_nonmember_token=$e2e_nonmember_token" >> "$GITHUB_OUTPUT"
-          wrong_audience_response="$(curl --fail-with-body --silent --show-error \
-            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
-            --data 'grant_type=client_credentials&client_id=pennywise-ci-wrong-audience&client_secret=pennywise-ci-wrong-audience-local-only' \
-            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
-          wrong_audience_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$wrong_audience_response")"
-          test -n "$wrong_audience_token" || { echo "Keycloak returned no negative-audience token"; exit 2; }
-          echo "wrong_audience_token=$wrong_audience_token" >> "$GITHUB_OUTPUT"
-          wrong_issuer_response="$(curl --fail-with-body --silent --show-error \
-            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
-            --data 'grant_type=client_credentials&client_id=pennywise-ci-wrong-issuer&client_secret=pennywise-ci-wrong-issuer-local-only' \
-            http://idp-keycloak:8080/realms/pennywise-other/protocol/openid-connect/token)"
-          wrong_issuer_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$wrong_issuer_response")"
-          test -n "$wrong_issuer_token" || { echo "Keycloak returned no negative-issuer token"; exit 2; }
-          echo "wrong_issuer_token=$wrong_issuer_token" >> "$GITHUB_OUTPUT"
-          docker compose -f infra/local/docker-compose.dev.yml exec -T idp-keycloak \
-            /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 \
-            --realm master --user local-admin --password local-admin-only
-          docker compose -f infra/local/docker-compose.dev.yml exec -T idp-keycloak \
-            /opt/keycloak/bin/kcadm.sh update realms/pennywise -s accessTokenLifespan=1
-          expiring_response="$(curl --fail-with-body --silent --show-error \
-            --connect-to idp-keycloak:8080:127.0.0.1:8090 \
-            --data 'grant_type=client_credentials&client_id=pennywise-ci&client_secret=pennywise-ci-local-only' \
-            http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token)"
-          expiring_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])' <<< "$expiring_response")"
-          test -n "$expiring_token" || { echo "Keycloak returned no short-lived token"; exit 2; }
-          docker compose -f infra/local/docker-compose.dev.yml exec -T idp-keycloak \
-            /opt/keycloak/bin/kcadm.sh update realms/pennywise -s accessTokenLifespan=300
-          # Spring's default bounded clock skew is 60 seconds; wait beyond it.
-          sleep 65
-          echo "expired_token=$expiring_token" >> "$GITHUB_OUTPUT"
-      - name: Run public-interface acceptance and E2E suites
+          INCLUDE_EXPIRED=true tests/e2e/acquire_local_tokens.sh
+      - name: Run negative OIDC security paths and live REST edge checks
+        env:
+          BEARER_TOKEN: ${{ steps.oidc-token.outputs.token }}
+          PENNYWISE_E2E_TOKEN_A: ${{ steps.oidc-token.outputs.token }}
+          PENNYWISE_E2E_TOKEN_B: ${{ steps.oidc-token.outputs.e2e_bob_token }}
+          PENNYWISE_E2E_TOKEN_NONMEMBER: ${{ steps.oidc-token.outputs.e2e_nonmember_token }}
+          WRONG_ISSUER_TOKEN: ${{ steps.oidc-token.outputs.wrong_issuer_token }}
+          EXPIRED_TOKEN: ${{ steps.oidc-token.outputs.expired_token }}
+        run: |
+          uv run python3 tests/e2e/test_oidc_negative.py --variant forged-signature &
+          forged_pid=$!
+          uv run python3 tests/e2e/test_oidc_negative.py --variant unsupported-algorithm &
+          algorithm_pid=$!
+          wait "$forged_pid"
+          wait "$algorithm_pid"
+          uv run python3 tests/e2e/test_oidc_negative.py --variant provider
+          uv run python3 tests/e2e/test_oidc_websocket_negative.py
+          docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml up -d --build --wait
+          invalid_subject_token="$(curl --fail-with-body --silent --show-error -X POST http://localhost:8091/token | uv run python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')"
+          test -n "$invalid_subject_token"
+          INVALID_SUBJECT_TOKEN="$invalid_subject_token" uv run python3 tests/e2e/test_oidc_negative.py --variant provider
+          INVALID_SUBJECT_TOKEN="$invalid_subject_token" BEARER_TOKEN="$BEARER_TOKEN" uv run python3 tests/e2e/test_oidc_websocket_negative.py
+          for request in tools/bruno/quality/invalid-subject-accounts.bru tools/bruno/quality/invalid-subject-expense-core.bru tools/bruno/quality/invalid-subject-notifications.bru tools/bruno/quality/invalid-subject-bff.bru; do
+            (cd tools/bruno && npx --yes @usebruno/cli@4.1.0 run "../../$request" -r --env local-oidc --env-var "invalidSubjectToken=$invalid_subject_token")
+          done
+          docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml down
+          docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
+          tests/e2e/acquire_local_tokens.sh
+          # The stack was restarted above; Keycloak generated new signing keys, so the
+          # tokens from the step-level env: block are now invalid.  acquire_local_tokens.sh
+          # writes fresh tokens to $GITHUB_ENV (visible to later steps only), so we read
+          # them back into the current shell before running the REST edge-case suite.
+          fresh_token="$(grep '^BEARER_TOKEN=' "$GITHUB_ENV" | tail -1 | cut -d= -f2-)"
+          fresh_bob="$(grep '^PENNYWISE_E2E_TOKEN_B=' "$GITHUB_ENV" | tail -1 | cut -d= -f2-)"
+          fresh_nonmember="$(grep '^PENNYWISE_E2E_TOKEN_NONMEMBER=' "$GITHUB_ENV" | tail -1 | cut -d= -f2-)"
+          BEARER_TOKEN="$fresh_token" \
+            PENNYWISE_E2E_TOKEN_B="$fresh_bob" \
+            PENNYWISE_E2E_TOKEN_NONMEMBER="$fresh_nonmember" \
+            make e2e-rest-edge
+      - name: Tear down the complete local application stack
+        if: always()
+        run: docker compose -f infra/local/docker-compose.dev.yml down -v
+
+  e2e-product-and-offline:
+    name: E2E acceptance, Bruno, product journey, and offline sync
+    if: inputs.run_e2e
+    needs: [preflight, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Set up isolated Python tooling
+        uses: astral-sh/setup-uv@v6
+      - name: Install dependencies from lockfile
+        run: uv sync --frozen
+      - name: Download application JAR artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: app-jar-*
+          path: app/
+          merge-multiple: false
+      - name: Organize application JAR artifacts
+        run: |
+          for svc in accounts expense-core notifications bff; do
+            mkdir -p "app/${svc}/build/libs"
+            mv "app/app-jar-${svc}/pennywise-${svc}-0.1.0-SNAPSHOT.jar" "app/${svc}/build/libs/" || true
+          done
+      - name: Start the complete local application stack
+        run: docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
+      - name: Diagnose local stack startup failure
+        if: failure()
+        run: |
+          docker compose -f infra/local/docker-compose.dev.yml ps -a
+          docker compose -f infra/local/docker-compose.dev.yml logs --no-color --tail=300 \
+            accounts expense-core notifications bff postgres rabbitmq mailpit idp-keycloak
+      - name: Acquire ephemeral signed local OIDC tokens
+        id: oidc-token
+        run: |
+          INCLUDE_EXPIRED=true tests/e2e/acquire_local_tokens.sh
+      - name: Run acceptance, Bruno, product lifecycle, and offline replay suites
         env:
           BRUNO_ENV: local-oidc
           BRUNO_TOKEN: ${{ steps.oidc-token.outputs.token }}
@@ -249,52 +320,89 @@ jobs:
           PENNYWISE_E2E_TOKEN_A: ${{ steps.oidc-token.outputs.token }}
           PENNYWISE_E2E_TOKEN_B: ${{ steps.oidc-token.outputs.e2e_bob_token }}
           PENNYWISE_E2E_TOKEN_NONMEMBER: ${{ steps.oidc-token.outputs.e2e_nonmember_token }}
-          WRONG_ISSUER_TOKEN: ${{ steps.oidc-token.outputs.wrong_issuer_token }}
-          EXPIRED_TOKEN: ${{ steps.oidc-token.outputs.expired_token }}
         run: |
           make acceptance-live
           make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"
-          python3 tests/e2e/test_oidc_negative.py --variant forged-signature &
-          forged_pid=$!
-          python3 tests/e2e/test_oidc_negative.py --variant unsupported-algorithm &
-          algorithm_pid=$!
-          wait "$forged_pid"
-          wait "$algorithm_pid"
-          python3 tests/e2e/test_oidc_negative.py --variant provider
-          python3 tests/e2e/test_oidc_websocket_negative.py
-          docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml up -d --build --wait
-          invalid_subject_token="$(curl --fail-with-body --silent --show-error -X POST http://localhost:8091/token | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')"
-          test -n "$invalid_subject_token"
-          INVALID_SUBJECT_TOKEN="$invalid_subject_token" python3 tests/e2e/test_oidc_negative.py --variant provider
-          INVALID_SUBJECT_TOKEN="$invalid_subject_token" BEARER_TOKEN="$BEARER_TOKEN" python3 tests/e2e/test_oidc_websocket_negative.py
-          for request in tools/bruno/quality/invalid-subject-accounts.bru tools/bruno/quality/invalid-subject-expense-core.bru tools/bruno/quality/invalid-subject-notifications.bru tools/bruno/quality/invalid-subject-bff.bru; do
-            (cd tools/bruno && npx --yes @usebruno/cli@4.1.0 run "../../$request" -r --env local-oidc --env-var "invalidSubjectToken=$invalid_subject_token")
-          done
-          # Preserve the Keycloak/PostgreSQL volumes so tokens minted before the
-          # isolated invalid-subject phase remain valid for the following E2E run.
-          docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml down
-          docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
-          fresh_token() {
-            curl --fail-with-body --silent --show-error \
-              --connect-to idp-keycloak:8080:127.0.0.1:8090 \
-              --data "grant_type=client_credentials&client_id=$1&client_secret=$2" \
-              http://idp-keycloak:8080/realms/pennywise/protocol/openid-connect/token \
-              | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])'
-          }
-          export PENNYWISE_E2E_TOKEN_A="$(fresh_token pennywise-ci pennywise-ci-local-only)"
-          export PENNYWISE_E2E_TOKEN_B="$(fresh_token pennywise-ci-e2e-bob pennywise-ci-e2e-bob-local-only)"
-          export PENNYWISE_E2E_TOKEN_NONMEMBER="$(fresh_token pennywise-ci-e2e-nonmember pennywise-ci-e2e-nonmember-local-only)"
-          test -n "$PENNYWISE_E2E_TOKEN_A" -a -n "$PENNYWISE_E2E_TOKEN_B" -a -n "$PENNYWISE_E2E_TOKEN_NONMEMBER"
+          tests/e2e/acquire_local_tokens.sh
           make e2e-live
           make e2e-offline
-          make e2e-concurrency
-          make e2e-chaos
-          export BEARER_TOKEN="$(fresh_token pennywise-ci pennywise-ci-local-only)"
-          export PENNYWISE_E2E_TOKEN_A="$BEARER_TOKEN"
-          export PENNYWISE_E2E_TOKEN_B="$(fresh_token pennywise-ci-e2e-bob pennywise-ci-e2e-bob-local-only)"
-          export PENNYWISE_E2E_TOKEN_NONMEMBER="$(fresh_token pennywise-ci-e2e-nonmember pennywise-ci-e2e-nonmember-local-only)"
-          test -n "$BEARER_TOKEN" -a -n "$PENNYWISE_E2E_TOKEN_B" -a -n "$PENNYWISE_E2E_TOKEN_NONMEMBER"
-          make e2e-rest-edge
       - name: Tear down the complete local application stack
         if: always()
         run: docker compose -f infra/local/docker-compose.dev.yml down -v
+
+  e2e-concurrency-and-chaos:
+    name: E2E concurrency, WebSocket subscriptions, and broker chaos
+    if: inputs.run_e2e
+    needs: [preflight, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Set up isolated Python tooling
+        uses: astral-sh/setup-uv@v6
+      - name: Install dependencies from lockfile
+        run: uv sync --frozen
+      - name: Download application JAR artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: app-jar-*
+          path: app/
+          merge-multiple: false
+      - name: Organize application JAR artifacts
+        run: |
+          for svc in accounts expense-core notifications bff; do
+            mkdir -p "app/${svc}/build/libs"
+            mv "app/app-jar-${svc}/pennywise-${svc}-0.1.0-SNAPSHOT.jar" "app/${svc}/build/libs/" || true
+          done
+      - name: Start the complete local application stack
+        run: docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
+      - name: Diagnose local stack startup failure
+        if: failure()
+        run: |
+          docker compose -f infra/local/docker-compose.dev.yml ps -a
+          docker compose -f infra/local/docker-compose.dev.yml logs --no-color --tail=300 \
+            accounts expense-core notifications bff postgres rabbitmq mailpit idp-keycloak
+      - name: Acquire ephemeral signed local OIDC tokens
+        id: oidc-token
+        run: |
+          tests/e2e/acquire_local_tokens.sh
+      - name: Run concurrency, WebSocket subscriptions, and chaos recovery suites
+        env:
+          BEARER_TOKEN: ${{ steps.oidc-token.outputs.token }}
+          PENNYWISE_E2E_TOKEN_A: ${{ steps.oidc-token.outputs.token }}
+          PENNYWISE_E2E_TOKEN_B: ${{ steps.oidc-token.outputs.e2e_bob_token }}
+          PENNYWISE_E2E_TOKEN_NONMEMBER: ${{ steps.oidc-token.outputs.e2e_nonmember_token }}
+        run: |
+          make e2e-concurrency
+          make e2e-chaos
+      - name: Tear down the complete local application stack
+        if: always()
+        run: docker compose -f infra/local/docker-compose.dev.yml down -v
+
+  e2e-gate:
+    name: E2E verification gate
+    if: always() && inputs.run_e2e
+    needs: [e2e-edge-and-security, e2e-product-and-offline, e2e-concurrency-and-chaos]
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+    steps:
+      - name: Aggregate parallel E2E results
+        run: |
+          edge_result="${{ needs.e2e-edge-and-security.result }}"
+          product_result="${{ needs.e2e-product-and-offline.result }}"
+          chaos_result="${{ needs.e2e-concurrency-and-chaos.result }}"
+          echo "e2e-edge-and-security: ${edge_result}"
+          echo "e2e-product-and-offline: ${product_result}"
+          echo "e2e-concurrency-and-chaos: ${chaos_result}"
+          if [ "${edge_result}" = "success" ] && [ "${product_result}" = "success" ] && [ "${chaos_result}" = "success" ]; then
+            echo "All parallelized E2E test suites passed successfully."
+            exit 0
+          else
+            echo "One or more parallelized E2E test suites failed or were cancelled."
+            exit 1
+          fi

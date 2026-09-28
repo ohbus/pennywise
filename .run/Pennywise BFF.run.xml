@@ -5,11 +5,18 @@
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="VM_PARAMETERS" value="-Dspring.profiles.active=local" />
     <envs>
-      <env name="SPRING_PROFILES_ACTIVE" value="local" />
+      <env name="SPRING_PROFILES_ACTIVE" value="local-oidc" />
       <env name="SERVER_PORT" value="8080" />
       <env name="PENNYWISE_ACCOUNTS_URL" value="http://localhost:8081" />
       <env name="PENNYWISE_EXPENSE_CORE_URL" value="http://localhost:8082" />
+      <env name="PENNYWISE_BFF_MESSAGING_ENABLED" value="true" />
+      <env name="SPRING_RABBITMQ_HOST" value="localhost" />
+      <env name="SPRING_RABBITMQ_PORT" value="5672" />
+      <env name="SPRING_RABBITMQ_USERNAME" value="pennywise" />
+      <env name="SPRING_RABBITMQ_PASSWORD" value="pennywise-local-only" />
       <env name="PENNYWISE_NOTIFICATIONS_URL" value="http://localhost:8083" />
+      <env name="PENNYWISE_SECURITY_OIDC_ISSUER_URI" value="http://localhost:8090/realms/pennywise" />
+      <env name="PENNYWISE_SECURITY_OIDC_AUDIENCE" value="pennywise-api" />
     </envs>
     <method v="2"><option name="Make" enabled="true" /></method>
   </configuration>

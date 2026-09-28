@@ -1,19 +1,42 @@
 package com.subhrodip.pennywise.expensecore.messaging
-
+import com.subhrodip.pennywise.expensecore.messaging.config.OutboxMessagingConfiguration
+import com.subhrodip.pennywise.expensecore.messaging.config.OutboxRelayDaemon
+import com.subhrodip.pennywise.expensecore.messaging.config.OutboxRelayProperties
+import com.subhrodip.pennywise.expensecore.messaging.config.RequiredOutboxConfiguration
+import com.subhrodip.pennywise.expensecore.messaging.broker.BrokerPublisher
+import com.subhrodip.pennywise.expensecore.messaging.broker.InMemoryBroker
+import com.subhrodip.pennywise.expensecore.messaging.outbox.model.OutboxMessage
+import com.subhrodip.pennywise.expensecore.messaging.outbox.service.OutboxRelay
+import com.subhrodip.pennywise.expensecore.messaging.outbox.model.OutboxStatus
+import com.subhrodip.pennywise.expensecore.messaging.outbox.persistence.OutboxStore
 import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
+import tools.jackson.databind.ObjectMapper
 
 class OutboxRelayDaemonTest {
 
     private val contextRunner = ApplicationContextRunner()
         .withUserConfiguration(OutboxMessagingConfiguration::class.java)
         .withBean(OutboxStore::class.java, { OutboxRelay() })
+        .withBean(BrokerPublisher::class.java, { InMemoryBroker() })
+        .withBean(ObjectMapper::class.java, { ObjectMapper() })
+
+    @Test
+    fun `deployed outbox configuration requires durable publishing`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            RequiredOutboxConfiguration(OutboxRelayProperties())
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            RequiredOutboxConfiguration(OutboxRelayProperties(enabled = true))
+        }
+        RequiredOutboxConfiguration(OutboxRelayProperties(enabled = true, rabbitEnabled = true))
+    }
 
     @Test
     fun `daemon is active and publishes available messages when enabled`() {

@@ -1,5 +1,9 @@
 package com.subhrodip.pennywise.expensecore.sync
 
+import com.subhrodip.pennywise.expensecore.sync.domain.InvalidSyncCursorException
+import com.subhrodip.pennywise.expensecore.sync.domain.SyncCursor
+import com.subhrodip.pennywise.expensecore.sync.persistence.InMemorySynchronizationStore
+
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -15,7 +19,7 @@ class SynchronizationTest {
 
     @Test
     fun `pages changes in revision order and propagates deletion`() {
-        val store = SynchronizationStore(clock)
+        val store = InMemorySynchronizationStore(clock)
         store.append("a", "one")
         store.append("b", "two")
         store.delete("a")
@@ -29,18 +33,18 @@ class SynchronizationTest {
 
     @Test
     fun `cursor round trips and expires`() {
-        val store = SynchronizationStore(clock, Duration.ofMinutes(5))
+        val store = InMemorySynchronizationStore(clock, Duration.ofMinutes(5))
         store.append("a", "one")
         val cursor = store.snapshot(null, 1).nextCursor!!
         assertEquals(1L, SyncCursor.decode(cursor).revision)
         assertEquals("default", SyncCursor.decode(cursor).groupId)
         val expiredClock = Clock.fixed(now.plusSeconds(301), ZoneOffset.UTC)
-        assertThrows(InvalidSyncCursorException::class.java) { SynchronizationStore(expiredClock).snapshot(cursor, 1) }
+        assertThrows(InvalidSyncCursorException::class.java) { InMemorySynchronizationStore(expiredClock).snapshot(cursor, 1) }
     }
 
     @Test
     fun `invalid cursor and invalid limits are rejected`() {
-        val store = SynchronizationStore(clock)
+        val store = InMemorySynchronizationStore(clock)
         assertThrows(InvalidSyncCursorException::class.java) { store.snapshot("bad", 1) }
         assertThrows(IllegalArgumentException::class.java) { store.snapshot(null, 0) }
         assertThrows(IllegalArgumentException::class.java) { store.snapshot(null, 101) }
@@ -48,7 +52,7 @@ class SynchronizationTest {
 
     @Test
     fun `retrying after a lost response returns changes after the cursor`() {
-        val store = SynchronizationStore(clock)
+        val store = InMemorySynchronizationStore(clock)
         store.append("group", "a", "one")
         val first = store.snapshot("group", null, 1)
         store.append("group", "b", "two")
@@ -57,7 +61,7 @@ class SynchronizationTest {
 
     @Test
     fun `cursor cannot be replayed for another group`() {
-        val store = SynchronizationStore(clock)
+        val store = InMemorySynchronizationStore(clock)
         store.append("one", "a", "one")
         val cursor = store.snapshot("one", null, 1).nextCursor
         assertThrows(InvalidSyncCursorException::class.java) { store.snapshot("two", cursor, 1) }

@@ -1,0 +1,41 @@
+input CreateGroupInput {
+  name: String!
+  kind: GroupKind!
+  currency: String!
+}
+
+input CreateExpenseInput {
+  expenseId: ID!
+  description: String!
+  amount: MoneyInput!
+  payers: [PayerInput!]!
+  allocation: AllocationInput!
+}
+
+input MoneyInput {
+  currency: String!
+  minor: MoneyMinor!
+}
+
+input PayerInput {
+  participantId: ID!
+  amount: MoneyInput!
+}
+
+input AllocationInput {
+  mode: String!
+  items: [AllocationItemInput!]!
+}
+
+input AllocationItemInput {
+  participantId: ID!
+  value: String!
+}
+
+input RepaymentInput {
+  groupId: ID
+  fromParticipantId: ID!
+  toParticipantId: ID!
+  amount: MoneyInput!
+  reason: String
+}

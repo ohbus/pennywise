@@ -12,6 +12,9 @@ dependency-only stack, each native application's prerequisites, the complete
 containerized stack, ports, credentials, health checks, and matching Make
 commands. [Clone and run](quickstart.md) is the shortest path for a new checkout;
 the repository-wide command catalogue is always available through `make help`.
+The [fallback mechanism audit](../architecture/fallback-mechanisms.md) documents
+outage behavior, startup requirements, retries, defaults, and known silent
+suppression risks.
 
 ## Production readiness
 

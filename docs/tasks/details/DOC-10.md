@@ -39,3 +39,6 @@ documented Docker Compose development workflow.
   with the imported Gradle module and Kotlin-generated `*ApplicationKt` main
   class. This directly invokes the verified `main(String[])` entry point without
   Spring Boot plugin start-point inference.
+- Each bootstrap remains the sole class in its service root package so default
+  Spring component scanning covers the complete application. The IntelliJ
+  configuration and Spring Boot `mainClass` setting target that root launcher.

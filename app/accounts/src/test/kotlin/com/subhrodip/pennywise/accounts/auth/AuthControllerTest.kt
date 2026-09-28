@@ -4,19 +4,19 @@ import com.subhrodip.pennywise.accounts.auth.credential.HmacCredentialDigest
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialRepository
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialService
 import com.subhrodip.pennywise.accounts.auth.credential.OneTimeCredentialIssuer
-import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailMessage
-import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailSender
+import com.subhrodip.pennywise.accounts.auth.delivery.model.AuthEmailMessage
+import com.subhrodip.pennywise.accounts.auth.delivery.service.AuthEmailSender
 import com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitKeyDeriver
 import com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitService
-import com.subhrodip.pennywise.accounts.auth.abuse.RateLimitBucketRepository
+import com.subhrodip.pennywise.accounts.auth.abuse.TestRateLimitBucketStore
 import com.subhrodip.pennywise.accounts.auth.login.LoginStartService
 import com.subhrodip.pennywise.accounts.auth.login.LoginVerificationService
 import com.subhrodip.pennywise.accounts.auth.provider.InternalJwtTokenProvider
 import com.subhrodip.pennywise.accounts.auth.session.AuthSessionRepository
 import com.subhrodip.pennywise.accounts.auth.session.TokenSessionService
-import com.subhrodip.pennywise.accounts.profile.InMemoryProfileStore
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.accounts.profile.persistence.InMemoryProfileStore
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 import java.security.Principal
 import java.time.Instant
 import org.junit.jupiter.api.Test
@@ -36,18 +36,18 @@ import org.springframework.transaction.annotation.Transactional
 class AuthControllerTest @Autowired constructor(
     private val credentialRepository: LoginCredentialRepository,
     private val sessionRepository: AuthSessionRepository,
-    private val bucketRepository: RateLimitBucketRepository
+    private val bucketStore: TestRateLimitBucketStore
 ) {
     private val secret = ByteArray(32) { it.toByte() }
     private val digest = HmacCredentialDigest(secret)
     private val issuer = OneTimeCredentialIssuer(digest)
     private val credentialService = LoginCredentialService(credentialRepository, issuer)
     private val keyDeriver = LoginRateLimitKeyDeriver(digest)
-    private val rateLimitService = LoginRateLimitService(keyDeriver, bucketRepository)
+    private val rateLimitService = LoginRateLimitService(keyDeriver, bucketStore)
     private val sentEmails = mutableListOf<AuthEmailMessage>()
     private val emailSender = AuthEmailSender {
         sentEmails.add(it)
-        com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailDeliveryResult.QUEUED
+        com.subhrodip.pennywise.accounts.auth.delivery.model.AuthEmailDeliveryResult.QUEUED
     }
     private val startService = LoginStartService(rateLimitService, credentialService, emailSender)
 

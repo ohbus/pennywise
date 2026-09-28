@@ -6,13 +6,14 @@ import os
 import socket
 import base64
 from typing import Final
+from tests.http_constants import GRAPHQL_PATH
 
 
 TOKEN: Final[str] = os.environ.get("BEARER_TOKEN", "")
 INVALID_SUBJECT_TOKEN: Final[str] = os.environ.get("INVALID_SUBJECT_TOKEN", "")
 HOST: Final[str] = "localhost"
 PORT: Final[int] = 8080
-PATH: Final[str] = "/graphql"
+PATH: Final[str] = GRAPHQL_PATH
 
 
 def tamper_signature(token: str) -> str:

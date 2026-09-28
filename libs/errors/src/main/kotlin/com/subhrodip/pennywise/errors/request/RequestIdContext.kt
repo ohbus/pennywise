@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.errors
+package com.subhrodip.pennywise.errors.request
 
 import org.slf4j.MDC
 

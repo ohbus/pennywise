@@ -1,4 +1,8 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.bff.config
+
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 
 import com.subhrodip.pennywise.security.ReactiveOidcJwtDecoderFactory
 import com.subhrodip.pennywise.security.OidcSecurityConstants
@@ -27,7 +31,7 @@ class ProductionSecurityConfig(
     @Bean
     fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain = http
         .csrf { it.disable() }
-        .authorizeExchange { it.pathMatchers("/actuator/**").permitAll().anyExchange().authenticated() }
+        .authorizeExchange { it.pathMatchers(ApiEndpoints.Operations.HEALTH).permitAll().anyExchange().authenticated() }
         .oauth2ResourceServer { it.jwt {} }
         .build()
 }

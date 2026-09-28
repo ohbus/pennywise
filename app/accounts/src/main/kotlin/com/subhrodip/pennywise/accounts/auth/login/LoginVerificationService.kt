@@ -3,9 +3,9 @@ package com.subhrodip.pennywise.accounts.auth.login
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialService
 import com.subhrodip.pennywise.accounts.auth.session.TokenResponse
 import com.subhrodip.pennywise.accounts.auth.session.TokenSessionService
-import com.subhrodip.pennywise.accounts.profile.ProfileStore
-import com.subhrodip.pennywise.errors.ApplicationException
-import com.subhrodip.pennywise.errors.ErrorCode
+import com.subhrodip.pennywise.accounts.profile.persistence.ProfileStore
+import com.subhrodip.pennywise.errors.domain.ApplicationException
+import com.subhrodip.pennywise.errors.domain.ErrorCode
 import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.transaction.annotation.Transactional

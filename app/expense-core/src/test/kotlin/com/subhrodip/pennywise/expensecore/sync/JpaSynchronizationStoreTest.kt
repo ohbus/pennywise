@@ -1,5 +1,8 @@
 package com.subhrodip.pennywise.expensecore.sync
 
+import com.subhrodip.pennywise.expensecore.sync.domain.InvalidSyncCursorException
+import com.subhrodip.pennywise.expensecore.sync.persistence.JpaSynchronizationStore
+
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull

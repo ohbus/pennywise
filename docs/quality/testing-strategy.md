@@ -14,6 +14,9 @@ For the practical test layout, commands, environment prerequisites, CI gates,
 coverage dimensions, and contribution workflow, see the
 [`test-operations-guide.md`](test-operations-guide.md).
 
+The reviewed local Qodana findings and false-positive decisions are recorded in
+[`qodana-audit.md`](qodana-audit.md).
+
 | Layer | Tooling and purpose |
 | --- | --- |
 | Domain | JUnit Jupiter and AssertJ; deterministic allocation, balances, schedule policy and authorization decisions |

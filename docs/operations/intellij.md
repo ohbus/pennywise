@@ -34,7 +34,9 @@ environment variables, and validate the repository contracts before committing.
 
 To allow IntelliJ IDEA and the GraphQL plugin to recognize the GraphQL schema for
 Spring GraphQL annotations (`@QueryMapping`, `@MutationMapping`, `@SubscriptionMapping`),
-the repository provides root-level `graphql.config.yml` referencing
-`contracts/graphql/schema.graphqls`. Additionally, `:app:bff` includes the `contracts/`
-directory in `sourceSets.main.resources`, allowing seamless IDE schema resolution
-and code completion across GraphQL resolvers without manual configuration.
+the repository provides root-level `graphql.config.yml` referencing all
+`contracts/graphql/**/*.graphqls` files. The schema is organized into scalar,
+root-operation, domain-type, and input files so code navigation stays focused.
+Additionally, `:app:bff` includes the `contracts/` directory in
+`sourceSets.main.resources`, allowing Spring GraphQL and the IDE to resolve the
+complete schema from the same source without manual configuration.

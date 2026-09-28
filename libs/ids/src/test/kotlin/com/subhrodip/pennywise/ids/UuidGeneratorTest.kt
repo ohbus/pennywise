@@ -1,5 +1,6 @@
 package com.subhrodip.pennywise.ids
 
+import com.subhrodip.pennywise.ids.generation.UuidGenerator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test

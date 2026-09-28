@@ -1,10 +1,13 @@
 package com.subhrodip.pennywise.accounts.auth.login
 
 import com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitService
+import com.subhrodip.pennywise.accounts.auth.abuse.RateLimitStoreUnavailableException
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialService
-import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailMessage
-import com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailSender
+import com.subhrodip.pennywise.accounts.auth.delivery.model.AuthEmailMessage
+import com.subhrodip.pennywise.accounts.auth.delivery.service.AuthEmailSender
 import java.time.Instant
+import com.subhrodip.pennywise.errors.domain.ApplicationException
+import com.subhrodip.pennywise.errors.domain.ErrorCode
 
 /** Coordinates the low-friction passwordless login-start use case. */
 class LoginStartService(
@@ -28,9 +31,11 @@ class LoginStartService(
         kind: LoginCredentialService.CredentialKind,
         now: Instant
     ): LoginStartResult {
-        val allowed = runCatching {
+        val allowed = try {
             rateLimitService.tryAcquire(email, networkPartition, now)
-        }.getOrDefault(false)
+        } catch (exception: RateLimitStoreUnavailableException) {
+            throw ApplicationException(ErrorCode.ERR_11, "Rate-limit service unavailable", exception)
+        }
         if (!allowed) return LoginStartResult.ACCEPTED
 
         val credential = runCatching {
@@ -52,7 +57,7 @@ class LoginStartService(
 
     private fun LoginCredentialService.CredentialKind.toTemplate() =
         when (this) {
-            LoginCredentialService.CredentialKind.LINK -> com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailTemplate.LOGIN_LINK
-            LoginCredentialService.CredentialKind.CODE -> com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailTemplate.LOGIN_CODE
+            LoginCredentialService.CredentialKind.LINK -> com.subhrodip.pennywise.accounts.auth.delivery.model.AuthEmailTemplate.LOGIN_LINK
+            LoginCredentialService.CredentialKind.CODE -> com.subhrodip.pennywise.accounts.auth.delivery.model.AuthEmailTemplate.LOGIN_CODE
         }
 }

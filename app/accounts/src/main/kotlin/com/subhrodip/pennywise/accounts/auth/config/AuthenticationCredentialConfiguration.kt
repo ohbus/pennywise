@@ -1,3 +1,5 @@
+@file:Suppress("CanConvertToMultiDollarString")
+
 package com.subhrodip.pennywise.accounts.auth.config
 
 import com.subhrodip.pennywise.accounts.auth.credential.CredentialDigest
@@ -5,13 +7,12 @@ import com.subhrodip.pennywise.accounts.auth.credential.HmacCredentialDigest
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialRepository
 import com.subhrodip.pennywise.accounts.auth.credential.LoginCredentialService
 import com.subhrodip.pennywise.accounts.auth.credential.OneTimeCredentialIssuer
-import com.subhrodip.pennywise.accounts.auth.delivery.AesGcmCredentialEnvelopeProtector
-import com.subhrodip.pennywise.accounts.auth.delivery.CredentialEnvelopeProtector
+import com.subhrodip.pennywise.accounts.auth.delivery.security.AesGcmCredentialEnvelopeProtector
+import com.subhrodip.pennywise.accounts.auth.delivery.security.CredentialEnvelopeProtector
 import java.util.Base64
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
 
 /** Fail-closed deployment wiring for passwordless credential cryptography. */
 @Configuration
@@ -51,7 +52,7 @@ class AuthenticationCredentialConfiguration(
     @Bean
     fun loginRateLimitService(
         keyDeriver: com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitKeyDeriver,
-        repository: com.subhrodip.pennywise.accounts.auth.abuse.RateLimitBucketRepository
+        repository: com.subhrodip.pennywise.accounts.auth.abuse.RateLimitBucketStore
     ): com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitService =
         com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitService(keyDeriver, repository)
 
@@ -60,7 +61,7 @@ class AuthenticationCredentialConfiguration(
     fun loginStartService(
         rateLimitService: com.subhrodip.pennywise.accounts.auth.abuse.LoginRateLimitService,
         credentialService: LoginCredentialService,
-        emailSender: com.subhrodip.pennywise.accounts.auth.delivery.AuthEmailSender
+        emailSender: com.subhrodip.pennywise.accounts.auth.delivery.service.AuthEmailSender
     ): com.subhrodip.pennywise.accounts.auth.login.LoginStartService =
         com.subhrodip.pennywise.accounts.auth.login.LoginStartService(rateLimitService, credentialService, emailSender)
 

@@ -1,4 +1,13 @@
 package com.subhrodip.pennywise.expensecore.settlements
+import com.subhrodip.pennywise.expensecore.settlements.api.SettlementController
+import com.subhrodip.pennywise.expensecore.settlements.persistence.InMemorySettlementStore
+import com.subhrodip.pennywise.expensecore.settlements.service.SettlementService
+import com.subhrodip.pennywise.expensecore.settlements.service.SettlementSuggestionEngine
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpenseAllocation
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpensePayer
+import com.subhrodip.pennywise.expensecore.expenses.domain.ExpenseRecord
+import com.subhrodip.pennywise.expensecore.expenses.persistence.store.InMemoryExpenseStore
+import com.subhrodip.pennywise.expensecore.groups.persistence.repository.GroupMembershipRepository
 
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -8,18 +17,12 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.util.UUID
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
-import com.subhrodip.pennywise.expensecore.expenses.ExpenseAllocation
-import com.subhrodip.pennywise.expensecore.expenses.ExpensePayer
-import com.subhrodip.pennywise.expensecore.expenses.ExpenseRecord
-import com.subhrodip.pennywise.expensecore.expenses.InMemoryExpenseStore
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
 import java.time.Instant
 import java.security.Principal
 import java.lang.reflect.Proxy
 import org.springframework.test.web.servlet.request.RequestPostProcessor
-import com.subhrodip.pennywise.expensecore.groups.GroupMembershipRepository
-
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 
 class SettlementControllerTest {
     private val expenseStore = InMemoryExpenseStore()
@@ -96,7 +99,7 @@ class SettlementControllerTest {
         val from = UUID.randomUUID()
         val to = UUID.randomUUID()
         val recorded = mvc.perform(
-            post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user)
+            post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user).header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "settlement-key-0001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1250\"}")
         )
@@ -122,17 +125,45 @@ class SettlementControllerTest {
             .andExpect(jsonPath("$.reason").value("paid externally"))
     }
 
+    /** Verifies settlement recording replay and altered-payload conflict at HTTP boundary. */
+    @Test
+    fun `replays same settlement key and rejects altered payload`() {
+        val groupId = UUID.randomUUID()
+        val from = UUID.randomUUID()
+        val to = UUID.randomUUID()
+        val path = ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)
+        val payload = "{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1250\"}"
+
+        val first = mvc.perform(post(path).with(user)
+            .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "public-settlement-key-0001")
+            .contentType(MediaType.APPLICATION_JSON).content(payload))
+            .andExpect(status().isCreated)
+            .andReturn().response.contentAsString
+
+        mvc.perform(post(path).with(user)
+            .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "public-settlement-key-0001")
+            .contentType(MediaType.APPLICATION_JSON).content(payload))
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.id").value(Regex("\\\"id\\\":\\\"([^\\\"]+)\\\"").find(first)!!.groupValues[1]))
+
+        mvc.perform(post(path).with(user)
+            .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "public-settlement-key-0001")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1300\"}"))
+            .andExpect(status().isConflict)
+    }
+
     /** Verifies invalid settlement invariants and unknown reversals use public client errors. */
     @Test
     fun `rejects invalid settlements and returns not found for unknown reversal`() {
         val groupId = UUID.randomUUID()
         val participant = UUID.randomUUID()
-        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user)
+        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user).header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "invalid-key-0001")
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"fromParticipantId\":\"$participant\",\"toParticipantId\":\"$participant\",\"amountMinor\":\"100\"}"))
             .andExpect(status().isBadRequest)
 
-        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user)
+        mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user).header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "invalid-key-0002")
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"fromParticipantId\":\"${UUID.randomUUID()}\",\"toParticipantId\":\"${UUID.randomUUID()}\",\"amountMinor\":\"0\"}"))
             .andExpect(status().isBadRequest)

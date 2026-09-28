@@ -1,8 +1,13 @@
 package com.subhrodip.pennywise.expensecore.settlements
+import com.subhrodip.pennywise.expensecore.settlements.domain.SettlementStatus
+import com.subhrodip.pennywise.expensecore.settlements.persistence.InMemorySettlementStore
+import com.subhrodip.pennywise.expensecore.settlements.service.SettlementService
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.UUID
+import org.junit.jupiter.api.Assertions.assertThrows
+import com.subhrodip.pennywise.errors.domain.ApplicationException
 
 class SettlementServiceTest {
     @Test
@@ -14,5 +19,18 @@ class SettlementServiceTest {
         assertEquals(SettlementStatus.RECORDED, settlement.status)
         assertEquals(SettlementStatus.REVERSED, service.reverse(groupId, id, "duplicate").status)
         assertEquals(SettlementStatus.REVERSED, service.reverse(groupId, id, "duplicate retry").status)
+    }
+
+    @Test
+    fun `same durable settlement identity rejects a different payload`() {
+        val service = SettlementService(InMemorySettlementStore())
+        val groupId = UUID.randomUUID()
+        val from = UUID.randomUUID()
+        val to = UUID.randomUUID()
+        service.record(groupId, UUID.randomUUID(), from, to, 1250, "actor-1", "settlement-key-0001")
+
+        assertThrows(ApplicationException::class.java) {
+            service.record(groupId, UUID.randomUUID(), from, to, 1300, "actor-1", "settlement-key-0001")
+        }
     }
 }

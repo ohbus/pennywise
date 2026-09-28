@@ -6,7 +6,7 @@ Expose settlement suggestions through the GraphQL BFF to allow clients to query 
 
 ## Acceptance criteria
 
-- `contracts/graphql/schema.graphqls` includes:
+- `contracts/graphql/10-roots.graphqls` and `contracts/graphql/20-domain-types.graphqls` include:
   - `Query.settlementSuggestions(groupId: ID!): [SuggestedSettlement!]!`
   - `type SuggestedSettlement { fromParticipantId: ID!, toParticipantId: ID!, amount: Money! }`
 - `ExpenseCoreGateway` fetches suggestions from Expense Core `GET /expense-core/v1/groups/{groupId}/settlements/suggestions`.
@@ -17,12 +17,12 @@ Expose settlement suggestions through the GraphQL BFF to allow clients to query 
 
 - `app/bff/src/main/kotlin/com/subhrodip/pennywise/bff/`
 - `app/bff/src/test/kotlin/com/subhrodip/pennywise/bff/`
-- `contracts/graphql/schema.graphqls`
+- `contracts/graphql/10-roots.graphqls`, `contracts/graphql/20-domain-types.graphqls`
 
 ## Implementation details
 
 - **GraphQL Contract**:
-  - In `contracts/graphql/schema.graphqls`:
+  - In `contracts/graphql/10-roots.graphqls` and `contracts/graphql/20-domain-types.graphqls`:
     - Added `settlementSuggestions(groupId: ID!): [SuggestedSettlement!]!` to `type Query`.
     - Added `type SuggestedSettlement { fromParticipantId: ID!, toParticipantId: ID!, amount: Money! }`.
 - **REST Gateway**:
@@ -49,7 +49,7 @@ Expose settlement suggestions through the GraphQL BFF to allow clients to query 
   # valid JSON: contracts/rest/accounts.openapi.json
   # valid JSON: contracts/rest/expense-core.openapi.json
   # valid JSON: contracts/rest/notifications.openapi.json
-  # valid GraphQL declaration set: contracts/graphql/schema.graphqls
+  # valid GraphQL declaration set: 4 files in contracts/graphql/
   # valid task registry: 67 tasks
   ```
 - BFF unit test suite:

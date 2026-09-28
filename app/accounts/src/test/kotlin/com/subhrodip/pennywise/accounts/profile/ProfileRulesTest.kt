@@ -1,10 +1,12 @@
 package com.subhrodip.pennywise.accounts.profile
 
+import com.subhrodip.pennywise.accounts.profile.service.ProfileRules
+
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import com.subhrodip.pennywise.errors.ApplicationException
-import com.subhrodip.pennywise.errors.ErrorCode
+import com.subhrodip.pennywise.errors.domain.ApplicationException
+import com.subhrodip.pennywise.errors.domain.ErrorCode
 
 class ProfileRulesTest {
     @Test

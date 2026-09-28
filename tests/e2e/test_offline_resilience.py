@@ -14,6 +14,7 @@ Verifies offline simulation, idempotency guarantees, and sync recovery (OFF-01 t
    - Invariant: Full chronological change delta and tombstones received.
 """
 
+import base64
 import json
 import os
 import io
@@ -23,6 +24,7 @@ import urllib.error
 import urllib.request
 import uuid
 from typing import Any, Tuple
+from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE, IDEMPOTENCY_KEY
 
 BASE_URL = os.environ.get("PENNYWISE_BFF_URL", "http://localhost:8080")
 EXPENSE_CORE_URL = os.environ.get("PENNYWISE_EXPENSE_CORE_URL", "http://localhost:8082")
@@ -38,11 +40,11 @@ def request_json(
     timeout: float = 10.0,
 ) -> Tuple[int, Any]:
     headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
+        ACCEPT: APPLICATION_JSON,
+        CONTENT_TYPE: APPLICATION_JSON,
     }
     if bearer:
-        headers["Authorization"] = f"Bearer {bearer}"
+        headers[AUTHORIZATION] = f"{BEARER_PREFIX}{bearer}"
     if extra_headers:
         headers.update(extra_headers)
 
@@ -73,6 +75,32 @@ def graphql_query(query: str, variables: dict[str, Any] | None = None, bearer: s
         payload["variables"] = variables
     status, res = request_json(f"{BASE_URL}/graphql", method="POST", body=payload, bearer=bearer)
     return status, res
+
+
+def extract_jwt_subject(token: str | None) -> str:
+    """Safely decode and extract the JWT 'sub' claim from a Bearer token if present."""
+    if not token:
+        return ""
+    try:
+        parts = token.split(".")
+        if len(parts) >= 2:
+            payload = parts[1]
+            payload += "=" * (-len(payload) % 4)
+            data = json.loads(base64.urlsafe_b64decode(payload))
+            if "sub" in data:
+                return str(data["sub"])
+    except Exception:
+        pass
+    return ""
+
+
+def resolve_membership_id(members: list[dict[str, Any]], *candidates: str | None) -> str:
+    """Resolve membershipId matching any candidate identifier (JWT sub, accountId, displayName)."""
+    valid_candidates = {c for c in candidates if c}
+    for m in members:
+        if m.get("subject") in valid_candidates or m.get("displayName") in valid_candidates:
+            return str(m["membershipId"])
+    raise KeyError(f"None of candidates {valid_candidates} found in members: {members}")
 
 
 def run_offline_resilience_tests() -> int:
@@ -115,7 +143,13 @@ def run_offline_resilience_tests() -> int:
     assert status == 201, f"Failed to create invite: {invite}"
     status, claim = request_json(f"{EXPENSE_CORE_URL}/expense-core/v1/invites/{invite['token']}/claim", method="POST", bearer=user_b)
     assert status == 200, f"Bob failed to claim invite: {claim}"
-    print(f"  ✓ Bob joined group: members configured [Alice, Bob]")
+    status, members = request_json(f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/members", bearer=user_a)
+    assert status == 200, f"Failed to list group members: {members}"
+    alice_sub = extract_jwt_subject(user_a)
+    bob_sub = extract_jwt_subject(user_b)
+    alice_id = resolve_membership_id(members, alice_sub, profile_a.get("displayName"), profile_a.get("accountId"))
+    bob_id = resolve_membership_id(members, bob_sub, profile_b.get("displayName"), profile_b.get("accountId"))
+    print(f"  ✓ Bob joined group: members configured [Alice={alice_id}, Bob={bob_id}]")
 
     # Step 2: Simulate Offline Queueing of Multiple Mutations
     print("\n[Step 2] Simulating client offline state: queueing 3 expense mutations locally...")
@@ -235,7 +269,7 @@ def run_offline_resilience_tests() -> int:
             "allocation": conflicting_payload["allocation"],
         },
         bearer=user_a,
-        extra_headers={"Idempotency-Key": conflicting_key}
+        extra_headers={IDEMPOTENCY_KEY: conflicting_key}
     )
     assert status_conflict == 409, f"Expected HTTP 409 Conflict, got {status_conflict}: {conflict_data}"
     assert conflict_data.get("code") in ("CONFLICT", "IDEMPOTENCY_CONFLICT", "ERR-06", "ERR_06"), f"Expected conflict error code, got: {conflict_data}"
@@ -270,7 +304,7 @@ def run_offline_resilience_tests() -> int:
             }
         },
         bearer=user_b,
-        extra_headers={"Idempotency-Key": f"idemp-bob-{uuid.uuid4()}"}
+        extra_headers={IDEMPOTENCY_KEY: f"idemp-bob-{uuid.uuid4()}"}
     )
     assert status_bob == 201, f"Failed to post Bob's expense: {bob_res}"
     print(f"  ✓ Bob recorded 'Campfire Firewood' (12.00 EUR) during offline gap")

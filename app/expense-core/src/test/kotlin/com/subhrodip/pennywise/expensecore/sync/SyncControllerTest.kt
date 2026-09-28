@@ -1,7 +1,9 @@
 package com.subhrodip.pennywise.expensecore.sync
+import com.subhrodip.pennywise.expensecore.sync.api.SyncController
+import com.subhrodip.pennywise.expensecore.sync.persistence.InMemorySynchronizationStore
+import com.subhrodip.pennywise.expensecore.groups.persistence.repository.GroupMembershipRepository
 
-import com.subhrodip.pennywise.errors.GlobalErrorHandler
-import com.subhrodip.pennywise.expensecore.groups.GroupMembershipRepository
+import com.subhrodip.pennywise.errors.http.GlobalErrorHandler
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.security.Principal
@@ -14,10 +16,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.ids.contracts.ApiEndpoints
 
 class SyncControllerTest {
-    private val store = SynchronizationStore(java.time.Clock.systemUTC())
+    private val store = InMemorySynchronizationStore(java.time.Clock.systemUTC())
     private val memberships: GroupMembershipRepository = mock(GroupMembershipRepository::class.java)
     private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(SyncController(store, memberships)).setControllerAdvice(GlobalErrorHandler()).build()
     private val user = RequestPostProcessor { request -> request.userPrincipal = Principal { "alice" }; request }
@@ -63,10 +65,10 @@ class SyncControllerTest {
 
     @Test
     fun `rejects an expired cursor through both public sync routes`() {
-        val otherStore = SynchronizationStore(java.time.Clock.fixed(java.time.Instant.parse("2026-01-01T00:00:00Z"), java.time.ZoneOffset.UTC))
+        val otherStore = InMemorySynchronizationStore(java.time.Clock.fixed(java.time.Instant.parse("2026-01-01T00:00:00Z"), java.time.ZoneOffset.UTC))
         otherStore.append(groupId.toString(), "expense-1", "{}")
         val cursor = otherStore.snapshot(groupId.toString(), null, 1).nextCursor!!
-        val expiredStore = SynchronizationStore(java.time.Clock.fixed(java.time.Instant.parse("2026-01-02T00:00:00Z"), java.time.ZoneOffset.UTC))
+        val expiredStore = InMemorySynchronizationStore(java.time.Clock.fixed(java.time.Instant.parse("2026-01-02T00:00:00Z"), java.time.ZoneOffset.UTC))
         val expiredMvc = MockMvcBuilders.standaloneSetup(SyncController(expiredStore, memberships)).setControllerAdvice(GlobalErrorHandler()).build()
 
         expiredMvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSyncSnapshot(groupId)).with(user).param("cursor", cursor))

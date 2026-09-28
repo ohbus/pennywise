@@ -43,6 +43,8 @@ Initially these databases may share a cluster to limit operating cost. Cross-ser
 SQL, database foreign keys and shared persistent domain models are prohibited.
 The BFF accesses only REST and event infrastructure. Shared libraries contain
 technical configuration rather than business rules or service-to-service DTOs.
+Fallback, retry, defaulting, and degradation behavior is catalogued in the
+[fallback mechanism audit](fallback-mechanisms.md).
 
 Clients authenticate with OIDC. Resource services validate signed access tokens
 and enforce their own authorization; the BFF is not the security boundary. Internal
@@ -57,9 +59,11 @@ receive independent fan-out queues, not one load-balanced notification queue.
 ## Scale without premature decomposition
 
 Start with stateless replicas, bounded connection pools, indexed PostgreSQL reads
-and worker concurrency controls. Observe hot-group write contention, outbox lag,
-subscription connections and memory, database time and email cost. Export or receipt
-processing can become independently scaled modules/services when measured needs
-justify it. Reporting projections/read replicas, Redis, Kafka, sharding and
-multi-region writes are deliberately deferred. A million monthly users is not a
-workload specification: capacity claims require measured operation mix and peaks.
+and worker concurrency controls. The CQRS-oriented data-access plan in
+`docs/implementation/cqrs-data-access-plan.md` defines the staged path to one
+writer plus optional read replicas: writer-only commands and consistency-critical
+reads, explicit query ports, causal read-after-write handling, and measured
+replica promotion per capability. Reporting projections remain opt-in and
+disposable; Redis, Kafka, sharding and multi-region writes remain deferred. A
+million monthly users is not a workload specification: capacity claims require
+measured operation mix and peaks.

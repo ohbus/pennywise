@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+from tests.http_constants import ACCEPT, ACCEPTANCE_FAULT, APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE, GRAPHQL_PATH
 
 
 @dataclass(frozen=True)
@@ -22,9 +23,9 @@ class JourneyResult:
 def request_json(base_url: str, path: str, method: str = "GET", body: dict[str, Any] | None = None,
                  token: str | None = "test-user", extra_headers: dict[str, str] | None = None) -> tuple[int, Any]:
     """Call a JSON endpoint and preserve error response bodies."""
-    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    headers = {ACCEPT: APPLICATION_JSON, CONTENT_TYPE: APPLICATION_JSON}
     if token is not None:
-        headers["Authorization"] = f"Bearer {token}"
+        headers[AUTHORIZATION] = f"{BEARER_PREFIX}{token}"
     if extra_headers:
         headers.update(extra_headers)
     request = Request(f"{base_url}{path}", method=method, headers=headers)
@@ -59,7 +60,7 @@ def run_qa05_journeys(
     group = f"/expense-core/v1/groups/{group_id}"
     status, _ = request_json(expense_core_url, group, "PATCH", {"name": "QA rollback"},
                              token=bearer_token,
-                             extra_headers={"X-Acceptance-Fault": "rollback"})
+                             extra_headers={ACCEPTANCE_FAULT: "rollback"})
     results = [JourneyResult("QA05-ROLLBACK", "blocked" if status == 503 else ("passed" if status == 409 else "failed"),
                              f"PATCH rollback probe returned HTTP {status}")]
 
@@ -74,13 +75,13 @@ def run_qa05_journeys(
     status, _ = request_json(expense_core_url, f"{group}/members", token=None)
     results.append(JourneyResult("QA05-AUTHORIZATION", "blocked" if status == 503 else ("passed" if status in (401, 403) else "failed"),
                                 f"Unauthenticated members response: HTTP {status}"))
-    status, body = request_json(base_url, "/graphql", "POST", {"query": "query fanoutFailure { groups { id members { subject } } }"},
+    status, body = request_json(base_url, GRAPHQL_PATH, "POST", {"query": "query fanoutFailure { groups { id members { subject } } }"},
                                 token=bearer_token,
-                                extra_headers={"X-Acceptance-Fault": "fanout"})
+                                extra_headers={ACCEPTANCE_FAULT: "fanout"})
     results.append(JourneyResult("QA05-BFF-FANOUT", "blocked" if status in (501, 503) else
                                 ("passed" if status == 200 and body.get("errors") else "failed"),
                                 f"BFF fanout failure response: HTTP {status}"))
-    status, body = request_json(base_url, "/graphql", "POST", {"query": "query recovery { groups { id name } }"}, token=bearer_token)
+    status, body = request_json(base_url, GRAPHQL_PATH, "POST", {"query": "query recovery { groups { id name } }"}, token=bearer_token)
     results.append(JourneyResult("QA05-RECOVERY", "blocked" if status == 503 else ("passed" if status == 200 and body.get("data") else "failed"),
                                 "BFF query recovered with a data payload" if status == 200 and body.get("data") else f"BFF recovery returned HTTP {status}"))
     return results

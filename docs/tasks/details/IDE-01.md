@@ -8,12 +8,11 @@
 ## Root Cause & Architecture Decisions
 
 ### 1. IntelliJ "Cannot find GraphQL schema"
-- In `app/bff/build.gradle.kts`, `tasks.processResources` copies `contracts/graphql/schema.graphqls` into `graphql/schema.graphqls` only during build execution (`build/resources/main/graphql/schema.graphqls`).
+- In `app/bff/build.gradle.kts`, the BFF includes the `contracts/` directory as a resource root, copying all `contracts/graphql/*.graphqls` files into `graphql/` during the build.
 - The source directory `app/bff/src/main/resources` only contains `application.yml` and does not contain `graphql/schema.graphqls`.
 - IntelliJ IDEA inspects project source roots (`src/main/resources/graphql/**`) and project configuration to resolve schema definitions for `@QueryMapping` and `@MutationMapping`. Because `schema.graphqls` only lives in `contracts/graphql/`, the IDE's GraphQL plugin cannot locate it statically in source roots.
 - Solution:
-  - Add a symlink or configure `sourceSets.main.resources.srcDir("contracts/graphql")` (or place/link the schema into `app/bff/src/main/resources/graphql/schema.graphqls`) or configure `.graphqlconfig` / `graphql.config.yml` at the project root so IntelliJ and its GraphQL plugin immediately recognize `contracts/graphql/schema.graphqls`.
-  - Alternatively, include `contracts` as an additional resource directory for `app/bff` or define `graphql.config.yml` pointing to `contracts/graphql/schema.graphqls`.
+  - Configure `graphql.config.yml` at the project root to point to `contracts/graphql/**/*.graphqls` so IntelliJ and its GraphQL plugin recognize the complete schema.
 
 ### 2. Constructor Field / `@Autowired` Clean-up
 - In Spring Framework 4.3+, if a class has a single constructor, `@Autowired` is completely redundant and unnecessary.
@@ -48,7 +47,7 @@
 
 ## Acceptance criteria
 
-- IntelliJ and GraphQL tools recognize `contracts/graphql/schema.graphqls` via standard GraphQL config or resources directory.
+- IntelliJ and GraphQL tools recognize all `contracts/graphql/**/*.graphqls` files via standard GraphQL config or the BFF resources directory.
 - Redundant `@Autowired` on primary constructors removed from `GroupGraphqlController`, `DeletionRequestService`, `ExportRequestService`, etc.
 - All application and BFF tests pass cleanly.
 - `make workflow-validate`, `python3 tools/contracts/validate.py`, and `git diff --check` pass.

@@ -9,22 +9,25 @@ NOTIFICATIONS_COMPOSE := infra/local/docker-compose.notifications.yml
 BFF_COMPOSE := infra/local/docker-compose.bff.yml
 DEV_COMPOSE := infra/local/docker-compose.dev.yml
 PROD_COMPOSE := infra/deploy/docker-compose.prod.yml
-SERVICES := accounts expense-core notifications bff
+export PENNYWISE_SECURITY_CREDENTIAL_DIGEST_SECRET ?= AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=
+export PENNYWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY ?= ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=
 
 .DEFAULT_GOAL := help
-.PHONY: help doctor bootstrap validate contracts lint python-typecheck test test-unit test-integration coverage build package check ci ci-e2e acceptance acceptance-live bruno-run workflow-validate observability-validate release-gate security-hygiene load-probe load-k6-validate load-k6 e2e e2e-rest-edge smoke docs-diagrams docs-diagrams-config compose-config deps-config deps-up deps-status deps-logs deps-down accounts-deps-config accounts-deps-up accounts-deps-status accounts-deps-logs accounts-deps-down expense-core-deps-config expense-core-deps-up expense-core-deps-status expense-core-deps-logs expense-core-deps-down notifications-deps-config notifications-deps-up notifications-deps-status notifications-deps-logs notifications-deps-down bff-deps-config bff-deps-up bff-deps-status bff-deps-logs bff-deps-down full-config full-up full-status full-logs full-down compose-dev-up compose-dev-down compose-dev-logs compose-up compose-down docker-build-all docker-build-% prod-config clean clean-gradle status
+.PHONY: help doctor bootstrap sync validate contracts lint python-typecheck test test-unit test-integration coverage build package check ci ci-e2e acceptance acceptance-live bruno-run workflow-validate observability-validate release-gate security-hygiene architecture-validate sbom-validate load-probe load-k6-validate load-k6 e2e e2e-rest-edge smoke docs-diagrams docs-diagrams-config compose-config deps-config deps-up deps-status deps-logs deps-down accounts-deps-config accounts-deps-up accounts-deps-status accounts-deps-logs accounts-deps-down expense-core-deps-config expense-core-deps-up expense-core-deps-status expense-core-deps-logs expense-core-deps-down notifications-deps-config notifications-deps-up notifications-deps-status notifications-deps-logs notifications-deps-down bff-deps-config bff-deps-up bff-deps-status bff-deps-logs bff-deps-down full-config full-up full-status full-logs full-down compose-dev-up compose-dev-down compose-dev-logs compose-up compose-down docker-build-all docker-build-% prod-config clean clean-gradle status
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Pennywise commands\n\n"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 doctor: ## Check required local tools and versions
 	@command -v docker >/dev/null || (echo "Docker is required"; exit 1)
-	@command -v python3 >/dev/null || (echo "Python 3 is required"; exit 1)
 	@command -v uv >/dev/null || (echo "uv is required for isolated Python tooling"; exit 1)
 	@command -v java >/dev/null || (echo "Java 25+ is required"; exit 1)
 	@docker compose version
 	@java -version
 	@$(GRADLE) --version
+
+sync: ## Install and update the Python virtual environment from uv.lock
+	@uv sync
 
 bootstrap: doctor ## Resolve the Gradle wrapper and verify the scaffold
 	@$(GRADLE) help
@@ -33,11 +36,11 @@ validate: contracts compose-config ## Run dependency-light repository checks
 	@$(GRADLE) test
 
 contracts: ## Validate contract JSON, GraphQL declarations, and task links
-	@python3 tools/contracts/validate.py
-	@python3 tools/contracts/validate_public_surface.py
+	@uv run python3 tools/contracts/validate.py
+	@uv run python3 tools/contracts/validate_public_surface.py
 
 python-typecheck: ## Run the strict repository Python type checker
-	@uvx --from mypy==1.17.1 mypy --config-file mypy.ini tests tools
+	@uv run mypy tests tools
 
 docs-diagrams-config: ## Validate the Mermaid renderer Compose file
 	@$(COMPOSE) -f infra/docs/docker-compose.yml config --quiet
@@ -78,7 +81,7 @@ acceptance: ## Run the public-interface acceptance harness and write a JSON repo
 	@bash tests/acceptance/run.sh
 
 acceptance-live: ## Run the acceptance test harness requiring live running services
-	@python3 tests/acceptance/runner.py --require-services
+	@uv run python3 tests/acceptance/runner.py --require-services
 
 bruno-run: ## Run the ordered Bruno collection; override BRUNO_ENV, BRUNO_TOKEN, negative tokens, and BRUNO_REPORT
 	@command -v npx >/dev/null || (echo "Node.js/npm is required for Bruno CLI"; exit 1)
@@ -87,25 +90,31 @@ bruno-run: ## Run the ordered Bruno collection; override BRUNO_ENV, BRUNO_TOKEN,
 		echo "Bruno report: $$report"
 
 workflow-validate: ## Parse all GitHub Actions workflow YAML files
-	@uvx --from yamllint==1.37.1 yamllint -d '{extends: relaxed, rules: {truthy: disable, line-length: disable}}' .github/workflows
+	@uv run yamllint -d '{extends: relaxed, rules: {truthy: disable, line-length: disable}}' .github/workflows
 
 observability-validate: ## Validate Prometheus rules and Grafana dashboard assets
 	@ruby -e 'require "yaml"; %w[infra/observability/prometheus.yml infra/observability/rules/pennywise.yml].each { |file| YAML.load_file(file); puts "valid observability YAML: #{file}" }'
-	@python3 -m json.tool infra/observability/grafana/dashboards/pennywise-overview.json >/dev/null
-	@python3 -c 'import json; d=json.load(open("infra/observability/grafana/dashboards/pennywise-overview.json")); assert d["panels"] and all(p["targets"] for p in d["panels"]); print("valid Grafana dashboard")'
+	@uv run python3 -m json.tool infra/observability/grafana/dashboards/pennywise-overview.json >/dev/null
+	@uv run python3 -c 'import json; d=json.load(open("infra/observability/grafana/dashboards/pennywise-overview.json")); assert d["panels"] and all(p["targets"] for p in d["panels"]); print("valid Grafana dashboard")'
 
 release-gate: observability-validate ## Validate repository-owned production release prerequisites
-	@python3 tools/ops/validate_release_gate.py
+	@uv run python3 tools/ops/validate_release_gate.py
 
 security-hygiene: ## Scan tracked configuration and source for obvious secret material
-	@python3 tools/ops/check_security_hygiene.py
+	@uv run python3 tools/ops/check_security_hygiene.py
+
+architecture-validate: ## Enforce application service dependency boundaries
+	@uv run python3 tools/ops/check_architecture.py
+
+sbom-validate: ## Validate centralized dependency-version baseline for SBOM generation
+	@uv run python3 tools/ops/validate_sbom_baseline.py
 
 load-probe: ## Run an HTTP load probe; set URL, CONCURRENCY, and DURATION
 	@test -n "$(URL)" || (echo "Set URL, e.g. make load-probe URL=http://localhost:8080/actuator/health"; exit 2)
-	@python3 tools/ops/http_load_probe.py "$(URL)" --concurrency "$${CONCURRENCY:-4}" --duration "$${DURATION:-10}"
+	@uv run python3 tools/ops/http_load_probe.py "$(URL)" --concurrency "$${CONCURRENCY:-4}" --duration "$${DURATION:-10}"
 
 load-k6-validate: ## Validate modular k6 scripts and endpoint tags
-	@python3 -c 'import pathlib; files=list(pathlib.Path("tests/load/k6").glob("*.js")); assert len(files) >= 6; assert all("options" in f.read_text() and "thresholds" in f.read_text() for f in files); print(f"valid k6 scripts: {len(files)}")'
+	@uv run python3 -c 'import pathlib; files=list(pathlib.Path("tests/load/k6").glob("*.js")); assert len(files) >= 6; assert all("options" in f.read_text() and "thresholds" in f.read_text() for f in files); print(f"valid k6 scripts: {len(files)}")'
 
 load-k6: load-k6-validate ## Run one k6 script in Docker; set SCRIPT=tests/load/k6/accounts.js
 	@test -n "$(SCRIPT)" || (echo "Set SCRIPT, e.g. make load-k6 SCRIPT=tests/load/k6/accounts.js"; exit 2)
@@ -113,25 +122,34 @@ load-k6: load-k6-validate ## Run one k6 script in Docker; set SCRIPT=tests/load/
 
 load-mutation-check: load-k6-validate ## Run fixture-backed mutation load and verify financial reconciliation
 	@DURATION="$${DURATION:-5s}" k6 run tests/load/k6/mutation-expense.js
-	@python3 tools/ops/reconcile_mutation_fixture.py
+	@uv run python3 tools/ops/reconcile_mutation_fixture.py --token "$${BEARER_TOKEN:-test-user}"
+
+cqrs-replica-smoke: ## Verify local PostgreSQL streaming replica and route telemetry
+	@sh tests/performance/cqrs-replica-smoke.sh
+
+expense-search-plan: ## Capture the bounded Expense Core search plan on the local replica
+	@sh tests/performance/expense-search-plan.sh
+
+replica-disconnect-recovery: ## Drill safe local reader disconnect and recovery
+	@sh tests/performance/replica-disconnect-recovery.sh
 
 e2e: ## Run the contract and deployment E2E smoke checks
 	@tests/e2e/contract-smoke.sh
 
 e2e-rest-edge: ## Run live REST validation, authorization, boundary, and idempotency checks
-	@python3 tests/e2e/test_rest_edge_cases.py
+	@uv run python3 tests/e2e/test_rest_edge_cases.py
 
 e2e-live: ## Run the comprehensive multi-service product journey E2E test against live stack
-	@python3 tests/e2e/test_product_journey.py
+	@uv run python3 tests/e2e/test_product_journey.py
 
 e2e-offline: ## Run offline client simulation, sync cursor, and replay resilience tests
-	@python3 tests/e2e/test_offline_resilience.py
+	@uv run python3 tests/e2e/test_offline_resilience.py
 
 e2e-concurrency: ## Run concurrent member edit conflict resolution and GraphQL subscription invalidation tests
-	@python3 tests/e2e/test_concurrency_subscriptions.py
+	@uv run python3 tests/e2e/test_concurrency_subscriptions.py
 
 e2e-chaos: ## Run message broker outage chaos and transactional outbox recovery tests
-	@python3 tests/e2e/test_chaos_recovery.py
+	@uv run python3 tests/e2e/test_chaos_recovery.py
 
 e2e-all: e2e-live e2e-offline e2e-concurrency e2e-chaos ## Run the entire comprehensive E2E test suite against the live stack
 	@echo "All E2E test suites passed successfully!"

@@ -1,8 +1,11 @@
 package com.subhrodip.pennywise.expensecore.recurring
-
-import com.subhrodip.pennywise.expensecore.groups.CreateGroupRequest
-import com.subhrodip.pennywise.expensecore.groups.JpaGroupStore
-import com.subhrodip.pennywise.ids.ApiEndpoints
+import com.subhrodip.pennywise.expensecore.expenses.api.request.MoneyDto
+import com.subhrodip.pennywise.expensecore.groups.api.CreateGroupRequest
+import com.subhrodip.pennywise.expensecore.groups.persistence.store.JpaGroupStore
+import com.subhrodip.pennywise.expensecore.recurring.api.CreateRecurringScheduleRequestDto
+import com.subhrodip.pennywise.expensecore.recurring.api.RecurringExpenseController
+import com.subhrodip.pennywise.expensecore.recurring.api.UpdateRecurringScheduleRequestDto
+import com.subhrodip.pennywise.expensecore.recurring.domain.RecurrenceFrequency
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -10,9 +13,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.http.HttpStatus
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDate
 import java.util.UUID
 import java.security.Principal
@@ -31,7 +32,7 @@ class RecurringExpenseControllerTest @Autowired constructor(
 
         val createRequest = CreateRecurringScheduleRequestDto(
             description = "Monthly Rent",
-            amount = com.subhrodip.pennywise.expensecore.expenses.MoneyDto("USD", "250000"),
+            amount = com.subhrodip.pennywise.expensecore.expenses.api.request.MoneyDto("USD", "250000"),
             frequency = RecurrenceFrequency.MONTHLY,
             dayOfMonth = 1,
             startDate = LocalDate.of(2026, 10, 1)
@@ -61,7 +62,7 @@ class RecurringExpenseControllerTest @Autowired constructor(
         // 4. Update schedule
         val updateRequest = UpdateRecurringScheduleRequestDto(
             description = "Monthly Rent & Water",
-            amount = com.subhrodip.pennywise.expensecore.expenses.MoneyDto("USD", "270000"),
+            amount = com.subhrodip.pennywise.expensecore.expenses.api.request.MoneyDto("USD", "270000"),
             frequency = RecurrenceFrequency.MONTHLY,
             dayOfMonth = 1,
             startDate = LocalDate.of(2026, 10, 1)
@@ -90,20 +91,20 @@ class RecurringExpenseControllerTest @Autowired constructor(
 
         val createRequest = CreateRecurringScheduleRequestDto(
             description = "Internet",
-            amount = com.subhrodip.pennywise.expensecore.expenses.MoneyDto("EUR", "5000"),
+            amount = com.subhrodip.pennywise.expensecore.expenses.api.request.MoneyDto("EUR", "5000"),
             frequency = RecurrenceFrequency.WEEKLY,
             startDate = LocalDate.now()
         )
 
-        val createErr = org.junit.jupiter.api.assertThrows<com.subhrodip.pennywise.errors.ApplicationException> {
+        val createErr = org.junit.jupiter.api.assertThrows<com.subhrodip.pennywise.errors.domain.ApplicationException> {
             controller.createSchedule(randomGroup, createRequest, alice)
         }
-        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_05, createErr.errorCode)
+        assertEquals(com.subhrodip.pennywise.errors.domain.ErrorCode.ERR_05, createErr.errorCode)
 
-        val getErr = org.junit.jupiter.api.assertThrows<com.subhrodip.pennywise.errors.ApplicationException> {
+        val getErr = org.junit.jupiter.api.assertThrows<com.subhrodip.pennywise.errors.domain.ApplicationException> {
             controller.getSchedule(randomGroup, randomSchedule, alice)
         }
-        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_05, getErr.errorCode)
+        assertEquals(com.subhrodip.pennywise.errors.domain.ErrorCode.ERR_05, getErr.errorCode)
     }
 
     @Test
@@ -111,14 +112,14 @@ class RecurringExpenseControllerTest @Autowired constructor(
         val group = groupStore.create("alice", CreateGroupRequest("No Anonymous Schedules", "TRIP", "EUR"))
         val request = CreateRecurringScheduleRequestDto(
             description = "Unauthorized",
-            amount = com.subhrodip.pennywise.expensecore.expenses.MoneyDto("EUR", "100"),
+            amount = com.subhrodip.pennywise.expensecore.expenses.api.request.MoneyDto("EUR", "100"),
             frequency = RecurrenceFrequency.WEEKLY,
             startDate = LocalDate.of(2026, 10, 1)
         )
 
-        val error = org.junit.jupiter.api.assertThrows<com.subhrodip.pennywise.errors.ApplicationException> {
+        val error = org.junit.jupiter.api.assertThrows<com.subhrodip.pennywise.errors.domain.ApplicationException> {
             controller.createSchedule(group.groupId, request, null)
         }
-        assertEquals(com.subhrodip.pennywise.errors.ErrorCode.ERR_03, error.errorCode)
+        assertEquals(com.subhrodip.pennywise.errors.domain.ErrorCode.ERR_03, error.errorCode)
     }
 }

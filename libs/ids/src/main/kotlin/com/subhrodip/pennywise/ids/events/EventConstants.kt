@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.ids
+package com.subhrodip.pennywise.ids.events
 
 /**
  * Authoritative central constants for RabbitMQ exchange names, routing keys,

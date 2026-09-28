@@ -11,8 +11,13 @@ from typing import Final
 
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.hashes import SHA256
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+
+# Inlined so this module is self-contained when running inside Docker
+# (the tests/ package root is not available in the container image).
+APPLICATION_JSON: Final[str] = "application/json"
+CONTENT_TYPE: Final[str] = "Content-Type"
+CONTENT_LENGTH: Final[str] = "Content-Length"
 
 
 ISSUER: Final[str] = os.environ.get("INVALID_SUBJECT_OIDC_ISSUER", "http://invalid-subject-oidc:8080")
@@ -80,8 +85,8 @@ class Handler(BaseHTTPRequestHandler):
         """Write a JSON response with an explicit content length."""
         body = json.dumps(value, separators=(",", ":")).encode()
         self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
+        self.send_header(CONTENT_TYPE, APPLICATION_JSON)
+        self.send_header(CONTENT_LENGTH, str(len(body)))
         self.end_headers()
         self.wfile.write(body)
 

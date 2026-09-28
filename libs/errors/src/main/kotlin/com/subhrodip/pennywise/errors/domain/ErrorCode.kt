@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.errors
+package com.subhrodip.pennywise.errors.domain
 
 /**
  * Enum representing error codes defined in the error catalog.

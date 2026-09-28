@@ -1,4 +1,4 @@
-package com.subhrodip.pennywise.ids
+package com.subhrodip.pennywise.ids.generation
 
 import com.github.f4b6a3.uuid.UuidCreator
 import java.util.UUID

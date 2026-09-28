@@ -33,11 +33,11 @@ class GroupGraphqlController(
     fun emitInvalidation(groupId: String, revision: Long, changeId: String): GroupInvalidation =
         liveFanout.emitInvalidation(groupId, revision, changeId)
 
-    @SubscriptionMapping
     /**
      * Authorizes and admits a bounded group subscription, releasing its slot when
      * the reactive stream is cancelled or terminates.
      */
+    @SubscriptionMapping
     fun groupChanged(@Argument groupId: String, @AuthenticationPrincipal principal: Any?): Flux<GroupInvalidation> =
         Flux.using(
             {

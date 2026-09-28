@@ -10,7 +10,7 @@ data class Settlement(
     val fromParticipantId: UUID,
     val toParticipantId: UUID,
     val amountMinor: Long,
-    val currency: String = "EUR",
+    val currency: String,
     val reason: String? = null,
     val status: SettlementStatus = SettlementStatus.RECORDED
 )

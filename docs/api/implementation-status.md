@@ -18,6 +18,11 @@ level.
 
 Current authorization and lifecycle invariants include:
 
+- every expense and settlement money value carries an explicit ISO 4217 currency
+  in the REST and GraphQL request contract; the server never substitutes a
+  currency. A future client may retain the last selected currency locally only
+  as an input prefill and must still serialize it on every request.
+
 - all group-scoped expense, settlement, recurring-schedule, and group-lifecycle
   writes/read operations require an authenticated active member;
 - archived groups reject new expense writes with a conflict response, and

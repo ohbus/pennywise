@@ -97,7 +97,7 @@ class ExpenseCoreGateway(
             .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, UUID.randomUUID().toString())
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }.bodyValue(payload).retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
-            .bodyToMono(UpstreamSettlement::class.java).map { it.toBffSettlement(input.amount.currency) }.timeout(timeout)
+            .bodyToMono(UpstreamSettlement::class.java).map { it.toBffSettlement() }.timeout(timeout)
     }
 
     fun getSettlementSuggestions(groupId: String, bearer: String?): Mono<List<BffSuggestedSettlement>> =

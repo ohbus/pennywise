@@ -42,7 +42,7 @@ class SettlementControllerTest {
     @Test
     fun `rejects non numeric amount`() {
         mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(UUID.randomUUID())).contentType(MediaType.APPLICATION_JSON)
-            .content("{\"fromParticipantId\":\"${UUID.randomUUID()}\",\"toParticipantId\":\"${UUID.randomUUID()}\",\"amountMinor\":\"x\"}"))
+            .content("{\"fromParticipantId\":\"${UUID.randomUUID()}\",\"toParticipantId\":\"${UUID.randomUUID()}\",\"amountMinor\":\"x\",\"currency\":\"EUR\"}"))
             .andExpect(status().isBadRequest)
     }
 
@@ -101,7 +101,7 @@ class SettlementControllerTest {
         val recorded = mvc.perform(
             post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user).header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "settlement-key-0001")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1250\"}")
+            .content("{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1250\",\"currency\":\"EUR\"}")
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.fromParticipantId").value(from.toString()))
@@ -132,7 +132,7 @@ class SettlementControllerTest {
         val from = UUID.randomUUID()
         val to = UUID.randomUUID()
         val path = ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)
-        val payload = "{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1250\"}"
+        val payload = "{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1250\",\"currency\":\"EUR\"}"
 
         val first = mvc.perform(post(path).with(user)
             .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "public-settlement-key-0001")
@@ -149,7 +149,7 @@ class SettlementControllerTest {
         mvc.perform(post(path).with(user)
             .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "public-settlement-key-0001")
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1300\"}"))
+            .content("{\"fromParticipantId\":\"$from\",\"toParticipantId\":\"$to\",\"amountMinor\":\"1300\",\"currency\":\"EUR\"}"))
             .andExpect(status().isConflict)
     }
 
@@ -160,12 +160,12 @@ class SettlementControllerTest {
         val participant = UUID.randomUUID()
         mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user).header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "invalid-key-0001")
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"fromParticipantId\":\"$participant\",\"toParticipantId\":\"$participant\",\"amountMinor\":\"100\"}"))
+            .content("{\"fromParticipantId\":\"$participant\",\"toParticipantId\":\"$participant\",\"amountMinor\":\"100\",\"currency\":\"EUR\"}"))
             .andExpect(status().isBadRequest)
 
         mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlements(groupId)).with(user).header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, "invalid-key-0002")
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"fromParticipantId\":\"${UUID.randomUUID()}\",\"toParticipantId\":\"${UUID.randomUUID()}\",\"amountMinor\":\"0\"}"))
+            .content("{\"fromParticipantId\":\"${UUID.randomUUID()}\",\"toParticipantId\":\"${UUID.randomUUID()}\",\"amountMinor\":\"0\",\"currency\":\"EUR\"}"))
             .andExpect(status().isBadRequest)
 
         mvc.perform(post(ApiEndpoints.ExpenseCore.V1.groupSettlementReversal(groupId, UUID.randomUUID())).with(user)

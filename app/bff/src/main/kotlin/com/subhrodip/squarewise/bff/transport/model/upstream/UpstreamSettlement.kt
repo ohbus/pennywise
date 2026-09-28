@@ -7,9 +7,10 @@ internal data class UpstreamSettlement(
     val fromParticipantId: String? = null,
     val toParticipantId: String? = null,
     val amountMinor: Long? = null,
+    val currency: String,
     val status: String = "RECORDED"
 ) {
-    fun toBffSettlement(currency: String): BffSettlement = BffSettlement(
+    fun toBffSettlement(): BffSettlement = BffSettlement(
         id = id,
         from = fromParticipantId,
         to = toParticipantId,

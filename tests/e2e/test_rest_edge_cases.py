@@ -397,6 +397,7 @@ def main() -> None:
         "fromParticipantId": settlement_participant,
         "toParticipantId": str(uuid.uuid4()),
         "amountMinor": "100",
+        "currency": "EUR",
     }
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_SETTLEMENTS.format(group_id=group_id)}",

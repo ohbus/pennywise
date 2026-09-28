@@ -47,7 +47,7 @@ class JpaSettlementStore(
             ) {
                 throw ApplicationException(ErrorCode.ERR_06, "Idempotency key was already used with a different settlement")
             }
-            return existing.toDomain()
+            return existing.toDomain(group.currency)
         }
         val saved = repository.save(settlement.toEntity(groupId))
         balancePostingRepository.saveAll(
@@ -70,7 +70,7 @@ class JpaSettlementStore(
                 )
             )
         )
-        return saved.toDomain()
+        return saved.toDomain(group.currency)
     }
 
     /**
@@ -87,7 +87,7 @@ class JpaSettlementStore(
         checkActiveGroup(groupId)
         val entity = repository.findForUpdate(settlementId, groupId)
             ?: throw ApplicationException(ErrorCode.ERR_05, "Settlement not found")
-        if (entity.status == SettlementStatus.REVERSED) return entity.toDomain()
+        if (entity.status == SettlementStatus.REVERSED) return entity.toDomain(checkActiveGroup(groupId).currency)
         entity.status = SettlementStatus.REVERSED
         entity.reversalReason = reason
         val postings = balancePostingRepository.findBySettlementId(settlementId)
@@ -103,7 +103,7 @@ class JpaSettlementStore(
                 )
             }
         )
-        return repository.save(entity).toDomain()
+        return repository.save(entity).toDomain(checkActiveGroup(groupId).currency)
     }
 
     private fun checkActiveGroup(groupId: UUID) = groupRepository.findById(groupId).orElse(null)?.also { group ->
@@ -123,11 +123,12 @@ private fun Settlement.toEntity(groupId: UUID) = SettlementEntity(
     status = status
 )
 
-private fun SettlementEntity.toDomain() = Settlement(
+private fun SettlementEntity.toDomain(currency: String) = Settlement(
     id = settlementId,
     fromParticipantId = fromParticipantId,
     toParticipantId = toParticipantId,
     amountMinor = amountMinor,
+    currency = currency,
     reason = reversalReason,
     status = status
 )

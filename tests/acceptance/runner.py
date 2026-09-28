@@ -273,6 +273,7 @@ def check_group_expense_settlement(expense_core_url: str, timeout: float) -> tup
             "fromParticipantId": user2,
             "toParticipantId": user1,
             "amountMinor": "500",
+            "currency": "EUR",
         }
         status, data = http_json(
             f"{expense_core_url}/expense-core/v1/groups/{group_id}/settlements",

@@ -7,5 +7,6 @@ import java.util.UUID
 data class RecordSettlementRequest(
     val fromParticipantId: UUID,
     val toParticipantId: UUID,
-    @field:Pattern(regexp = "^[0-9]+$") val amountMinor: String
+    @field:Pattern(regexp = "^[0-9]+$") val amountMinor: String,
+    @field:Pattern(regexp = "^[A-Z]{3}$") val currency: String
 )

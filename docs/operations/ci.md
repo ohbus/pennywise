@@ -42,10 +42,12 @@ The matrix tests every application and library in parallel after a single
 preflight, validates contracts, REST path structure, GraphQL schema/resolver
 parity, and Compose files, runs Gradle `test`, `check`, and JaCoCo, and builds
 application jars. The lightweight checks also run the acceptance unit suite,
-workflow YAML parsing, strict Python typing via `uvx`/mypy, and
-`git diff --check`. Jobs use Microsoft Build of OpenJDK. Local Python tooling
-must use `uv` or `uvx` rather than installing packages into the system
-interpreter.
+workflow YAML parsing, strict Python typing via `uv run mypy`, and
+`git diff --check`. Jobs use Microsoft Build of OpenJDK. Python dependencies
+and tooling are deterministically managed via `pyproject.toml` and `uv.lock`.
+CI workflows install dependencies via `astral-sh/setup-uv@v6` with
+`uv sync --frozen`, running tools and scripts via `uv run`. Local Python tooling
+must use `uv` rather than installing packages into the system interpreter.
 The lightweight lint job also installs the same Microsoft JDK 25 and Gradle
 setup before generating the CycloneDX SBOM; every job that invokes Gradle owns
 its toolchain setup explicitly.

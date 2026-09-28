@@ -1,11 +1,13 @@
 # Clone and run
 
-Prerequisites for native development are Java 25 and Docker with Compose v2.
-The wrapper supplies Gradle. Contract validation needs Python 3.11+; no Node
-runtime is required for the backend services and their dependency topology.
+Prerequisites for native development are Java 25, Docker with Compose v2,
+and `uv` for isolated Python tooling and virtual environment management.
+The wrapper supplies Gradle. No Node runtime is required for the backend
+services and their dependency topology.
 
 ```sh
 make doctor
+uv sync       # or make sync
 make check
 ```
 

@@ -64,3 +64,14 @@ truth for identity, sessions, audit or financial state. Local single-database
 reader mode is diagnostic only and is not replica evidence. Kubernetes, Kafka, JPA
 second-level caching, multi-region writes and sharding are deferred until measured
 requirements justify them.
+
+## Python tooling and environment management
+
+Repository Python scripts, contract verifiers, and operational tools use
+`pyproject.toml` with Hatchling as the build backend, exposing `tests` and `tools`
+as editable packages. Dependencies and tool versions (including mypy and yamllint)
+are pinned in a committed `uv.lock`. `uv` is the authoritative environment and
+package manager across local developer workstations and CI workflows (`uv sync --frozen`
+and `uv run`). No ephemeral `uvx` executions or manual `PYTHONPATH` exports are
+permitted.
+

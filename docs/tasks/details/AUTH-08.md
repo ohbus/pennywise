@@ -37,6 +37,10 @@ tracked below.
   captured at issuance. Migration V9 backfills subjects where the account mapping
   is available; sessions with no subject or a changed subject fail closed and
   revoke their family before any replacement token is issued.
+- Follow-up hardening: refresh admission tests now cover distributed-bucket
+  denial, invalid server-derived partitions, and Redis/store uncertainty. The
+  production path remains fail closed when the rate-limit authority cannot
+  produce a decision.
 
 ## Objective
 

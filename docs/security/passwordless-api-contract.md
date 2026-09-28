@@ -11,16 +11,19 @@ Request:
 {"email":"person@example.com","channel":"LINK"}
 ```
 
-The email is canonicalized by `EmailAddress`. The endpoint always returns
-`202 Accepted` with the same response shape whether the account exists:
+The email is canonicalized by `EmailAddress`. The endpoint returns `202 Accepted`
+with the same response shape when the request is admitted, whether the account
+exists:
 
 ```json
 {"status":"accepted","retryAfterSeconds":60}
 ```
 
-The service queues a short-lived, single-use link or code only when policy
-allows it. It never reports account existence, whether delivery succeeded, or
-whether a request was throttled beyond the generic retry response.
+When the per-email or per-network abuse policy is exhausted, the endpoint
+returns the structured application limit response `429 Too Many Requests` with
+code `RATE_LIMITED` and a bounded `Retry-After: 60` header. The service queues a
+short-lived, single-use link or code only when policy allows it. Neither outcome
+reports account existence or whether delivery succeeded.
 
 ## `POST /accounts/v1/auth/login/verify`
 

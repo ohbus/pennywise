@@ -377,6 +377,11 @@ store-unavailable decision follows the same structured 429 boundary. Focused
 Accounts and shared-error tests verify the public status, code, content type, and
 retry header.
 
+The notifications inbox page-size guard now raises `ERR-02` explicitly at the
+controller boundary instead of relying on a generic `require` exception. Its
+HTTP representation remains the structured 400/`VALIDATION_FAILED` contract,
+while the application layer now preserves the catalogued 4xx decision.
+
 This increment does not claim completion of AUTH-09: the task is still absent
 from the authoritative registry, and distributed cross-surface Redis E2E,
 failure, query-count, and capacity evidence remain outstanding.

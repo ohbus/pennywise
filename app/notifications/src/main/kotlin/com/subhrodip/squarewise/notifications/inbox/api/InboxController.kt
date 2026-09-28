@@ -28,7 +28,9 @@ class InboxController(private val inbox: NotificationInboxService) {
     ): InboxPage {
         val subject = principal?.name?.trim()?.takeIf { it.isNotEmpty() }
             ?: throw ApplicationException(ErrorCode.ERR_03, "authenticated subject is required")
-        require(limit in 1..100) { "limit must be between 1 and 100" }
+        if (limit !in 1..100) {
+            throw ApplicationException(ErrorCode.ERR_02, "limit must be between 1 and 100")
+        }
         return inbox.page(subject, cursor, limit)
     }
 

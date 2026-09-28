@@ -244,7 +244,17 @@ jobs:
           docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml down
           docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
           tests/e2e/acquire_local_tokens.sh
-          make e2e-rest-edge
+          # The stack was restarted above; Keycloak generated new signing keys, so the
+          # tokens from the step-level env: block are now invalid.  acquire_local_tokens.sh
+          # writes fresh tokens to $GITHUB_ENV (visible to later steps only), so we read
+          # them back into the current shell before running the REST edge-case suite.
+          fresh_token="$(grep '^BEARER_TOKEN=' "$GITHUB_ENV" | tail -1 | cut -d= -f2-)"
+          fresh_bob="$(grep '^PENNYWISE_E2E_TOKEN_B=' "$GITHUB_ENV" | tail -1 | cut -d= -f2-)"
+          fresh_nonmember="$(grep '^PENNYWISE_E2E_TOKEN_NONMEMBER=' "$GITHUB_ENV" | tail -1 | cut -d= -f2-)"
+          BEARER_TOKEN="$fresh_token" \
+            PENNYWISE_E2E_TOKEN_B="$fresh_bob" \
+            PENNYWISE_E2E_TOKEN_NONMEMBER="$fresh_nonmember" \
+            make e2e-rest-edge
       - name: Tear down the complete local application stack
         if: always()
         run: docker compose -f infra/local/docker-compose.dev.yml down -v

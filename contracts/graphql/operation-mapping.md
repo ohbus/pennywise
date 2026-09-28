@@ -36,4 +36,8 @@ The BFF wires GraphQL operations to their respective service REST gateways:
 - **Subscriptions**:
   - `groupChanged(groupId)`: Subscribes to per-replica `LiveUpdateFanout` filtered by authorized `groupId`.
 
-Error mapping preserves REST problem codes (e.g. `VALIDATION_FAILED`, `CONFLICT`, `UNAUTHORIZED`) in `extensions.code` along with `extensions.requestId`.
+Error mapping preserves REST problem codes (e.g. `VALIDATION_FAILED`, `CONFLICT`,
+`UNAUTHENTICATED`, and `RATE_LIMITED`) in `extensions.code` along with a
+correlation identifier in `extensions.requestId`. Query depth/complexity and
+subscription admission limits use `RATE_LIMITED`; GraphQL transport continues to
+use its protocol-level HTTP 200 error envelope.

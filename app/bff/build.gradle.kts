@@ -10,6 +10,11 @@ dependencies {
     implementation(project(":libs:db"))
     implementation(project(":libs:security"))
     implementation(project(":libs:ids"))
+    implementation(project(":libs:errors")) {
+        // The BFF uses only the shared error catalog; it has no persistence layer.
+        exclude(group = "org.springframework.boot", module = "spring-boot-starter-data-jpa")
+        exclude(group = "org.springframework.boot", module = "spring-boot-starter-web")
+    }
     implementation(libs.boot.actuator)
     runtimeOnly(libs.micrometer.prometheus)
     implementation(libs.boot.security)

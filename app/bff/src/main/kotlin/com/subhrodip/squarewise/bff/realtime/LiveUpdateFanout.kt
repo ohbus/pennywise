@@ -1,5 +1,7 @@
 package com.subhrodip.squarewise.bff.realtime
 
+import com.subhrodip.squarewise.errors.domain.ApplicationException
+import com.subhrodip.squarewise.errors.domain.ErrorCode
 import com.subhrodip.squarewise.bff.realtime.GroupInvalidation
 import com.subhrodip.squarewise.bff.realtime.LiveSubscription
 import com.subhrodip.squarewise.bff.realtime.LiveUpdate
@@ -45,8 +47,8 @@ class LiveUpdateFanout(
         require(groupId.isNotBlank()) { "groupId must not be blank" }
         return synchronized(admissionLock) {
             removeExpired()
-            require(subscriptions.values.count { it.subscription.userId == userId } < maxSubscriptionsPerUser) {
-                "subscription limit exceeded"
+            if (subscriptions.values.count { it.subscription.userId == userId } >= maxSubscriptionsPerUser) {
+                throw ApplicationException(ErrorCode.ERR_11, "subscription limit exceeded")
             }
             val subscription = LiveSubscription(
                 UuidGenerator.next().toString(), userId, groupId, Instant.now(clock).plus(subscriptionTtl)

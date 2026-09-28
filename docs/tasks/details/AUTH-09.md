@@ -382,6 +382,12 @@ controller boundary instead of relying on a generic `require` exception. Its
 HTTP representation remains the structured 400/`VALIDATION_FAILED` contract,
 while the application layer now preserves the catalogued 4xx decision.
 
+The BFF now applies the configured per-subject subscription cap in the actual
+`groupChanged` resolver, releases the admission slot on stream cancellation,
+and raises `ERR-11` when the cap is reached. Its GraphQL error resolver maps
+catalogued application and upstream 4xx failures into `extensions.code`; query
+depth/complexity rejection and upstream 429 responses use `RATE_LIMITED`.
+
 This increment does not claim completion of AUTH-09: the task is still absent
 from the authoritative registry, and distributed cross-surface Redis E2E,
 failure, query-count, and capacity evidence remain outstanding.

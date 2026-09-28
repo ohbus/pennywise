@@ -27,6 +27,8 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.RequestPostProcessor
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.transaction.annotation.Transactional
@@ -102,6 +104,24 @@ class AuthControllerTest @Autowired constructor(
                 .content("{\"email\":\"not-an-email\"}")
         )
             .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `startLogin returns structured 429 when login rate limit is reached`() {
+        val request = post(ApiEndpoints.Accounts.V1.PATH_LOGIN_START)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"email\":\"limited@example.com\",\"channel\":\"LINK\",\"clientKind\":\"BROWSER\"}")
+
+        mvc.perform(request).andExpect(status().isAccepted)
+
+        mvc.perform(
+            request
+        )
+            .andExpect(status().isTooManyRequests)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(header().string("Retry-After", "60"))
+            .andExpect(jsonPath("$.code").value("RATE_LIMITED"))
+            .andExpect(jsonPath("$.status").value(429))
     }
 
     @Test

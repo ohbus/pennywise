@@ -46,11 +46,13 @@ class AuthController(
 ) {
 
     /**
-     * Initiates passwordless authentication. Always responds with 202 Accepted.
+     * Initiates passwordless authentication. An admitted request responds with
+     * 202 Accepted; an exhausted login policy responds with structured 429.
      *
      * @param request Validated [LoginStartRequest].
      * @param servletRequest Incoming HTTP servlet request for network partitioning.
-     * @return 202 Accepted with [LoginStartResponse].
+     * @return 202 Accepted with [LoginStartResponse] when admitted.
+     * @throws ApplicationException with ERR-11 when the login policy is exhausted.
      */
     @PostMapping(ApiEndpoints.Accounts.V1.LOGIN_START)
     fun startLogin(

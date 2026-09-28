@@ -367,6 +367,20 @@ No production launch approval is implied by local Redis tests.
 
 ## Current implementation evidence
 
+### Current increment (2026-09-28)
+
+The login-start request path now throws the catalogued `ERR-11` application
+exception when its atomic policy denies a request, instead of converting the
+denial into a misleading `202 ACCEPTED`. `GlobalErrorHandler` maps `ERR-11` to
+HTTP 429/`RATE_LIMITED` and emits a bounded `Retry-After: 60` header. A rate-limit
+store-unavailable decision follows the same structured 429 boundary. Focused
+Accounts and shared-error tests verify the public status, code, content type, and
+retry header.
+
+This increment does not claim completion of AUTH-09: the task is still absent
+from the authoritative registry, and distributed cross-surface Redis E2E,
+failure, query-count, and capacity evidence remain outstanding.
+
 - Accounts rate limiting uses the Redis bucket port and a mandatory Redis adapter;
   PostgreSQL rate-limit entities/repositories were removed and the table is retired
   by Flyway migration `V7__remove_postgresql_rate_limit_buckets.sql`.

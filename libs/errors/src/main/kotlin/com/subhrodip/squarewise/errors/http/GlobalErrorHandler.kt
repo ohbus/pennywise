@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
+import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -151,7 +152,8 @@ class GlobalErrorHandler(
             ex.errorCode,
             status,
             title = ex.message ?: ex.errorCode.safeDetail,
-            detail = ex.message ?: ex.errorCode.safeDetail
+            detail = ex.message ?: ex.errorCode.safeDetail,
+            retryAfterSeconds = if (ex.errorCode == ErrorCode.ERR_11) RATE_LIMIT_RETRY_AFTER_SECONDS else null
         )
     }
 
@@ -169,9 +171,13 @@ class GlobalErrorHandler(
         status: HttpStatusCode,
         title: String = "Internal server error",
         detail: String = "An unexpected error occurred",
-        violations: List<FieldViolation> = emptyList()
+        violations: List<FieldViolation> = emptyList(),
+        retryAfterSeconds: Long? = null
     ): ResponseEntity<ApiProblem> =
         ResponseEntity.status(status)
+            .headers(HttpHeaders().apply {
+                retryAfterSeconds?.let { set(HttpHeaders.RETRY_AFTER, it.toString()) }
+            })
             .contentType(MediaType.APPLICATION_PROBLEM_JSON)
             .body(
                 ApiProblem(
@@ -203,6 +209,7 @@ class GlobalErrorHandler(
         }
 
     companion object {
+        private const val RATE_LIMIT_RETRY_AFTER_SECONDS = 60L
         private val log = LoggerFactory.getLogger(GlobalErrorHandler::class.java)
     }
 }

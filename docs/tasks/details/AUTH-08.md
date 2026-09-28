@@ -23,6 +23,11 @@ tracked below.
 - Follow-up hardening: the atomic refresh update enforces both idle and absolute
   expiry predicates, closing the race between the service pre-check and the
   database update at the hard session boundary.
+- Follow-up hardening: the BFF GraphQL transport now applies a highest-precedence
+  exact browser-origin policy. Unlisted origins receive `403 Forbidden`,
+  allow-listed preflight receives `204 No Content` with a specific origin, and
+  no credentialed or wildcard CORS response is emitted. Origin-less requests are
+  retained for native/non-browser bearer clients.
 
 ## Objective
 

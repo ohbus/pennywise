@@ -393,6 +393,13 @@ admission before session rotation. Denials and fail-closed store errors use the
 same structured HTTP 429/`RATE_LIMITED` response and bounded retry header as
 login-start; invalid or replayed tokens remain generic HTTP 401 responses.
 
+The public REST boundary audit found no remaining request-limit path that falls
+through to the unexpected 5xx handler: Expense Core pagination, search/export,
+sync, expense, and settlement bounds are either explicit `ERR-02` decisions or
+translated by the shared validation handler. Notification delivery limits remain
+asynchronous and fail closed by suppressing dispatch when the limit/store path
+does not admit delivery.
+
 This increment does not claim completion of AUTH-09: the task is still absent
 from the authoritative registry, and distributed cross-surface Redis E2E,
 failure, query-count, and capacity evidence remain outstanding.

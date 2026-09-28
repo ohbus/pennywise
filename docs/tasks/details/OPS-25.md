@@ -9,7 +9,7 @@ invocations scattered across the `Makefile` and CI workflow with a single,
 authoritative `pyproject.toml` at the repository root that:
 
 1. Declares `tests` and `tools` as editable namespace packages (PEP 660 / PEP 517).
-2. Pins every Python tool dependency (mypy, yamllint, websockets, cryptography, …)
+2. Pins every Python tool dependency (mypy, yamllint, websockets, …)
    in a locked `uv.lock` file.
 3. Lets `uv sync` produce a reproducible `.venv` in one step.
 4. Replaces every `python3` call in the `Makefile` and CI with `uv run`, which
@@ -86,12 +86,11 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = []          # runtime deps: none (all are dev)
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "mypy==1.17.1",
     "yamllint==1.37.1",
     "websockets>=14.0,<16",
-    "cryptography==45.0.7",
 ]
 
 [tool.hatch.build.targets.wheel]

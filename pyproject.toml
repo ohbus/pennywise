@@ -13,7 +13,6 @@ dev = [
     "mypy==1.17.1",
     "yamllint==1.37.1",
     "websockets>=14.0,<16",
-    "cryptography==45.0.7",
 ]
 
 [tool.hatch.build.targets.wheel]

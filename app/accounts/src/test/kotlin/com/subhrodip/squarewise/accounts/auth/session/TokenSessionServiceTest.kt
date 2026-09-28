@@ -52,7 +52,7 @@ class TokenSessionServiceTest @Autowired constructor(
         val accountId = UUID.randomUUID()
         val response = service.createSession(
             accountId = accountId,
-            subject = "internal:user@example.com",
+            subject = currentSubject,
             email = "user@example.com",
             clientKind = "BROWSER",
             deviceLabel = "Mozilla/5.0",

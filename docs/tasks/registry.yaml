@@ -4780,7 +4780,7 @@
       "parent_id": "MILESTONE-QUALITY",
       "title": "Exhaustive public-interface integration coverage",
       "phase": "quality",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -4841,12 +4841,11 @@
         "git diff --check"
       ],
       "evidence": [
-        "Contracts and semantic REST public-surface validation pass; Expense Core inventory contains 41 REST operations.",
-        "GraphQL HTTP transport tests pass for profile, group, settlement-suggestion, create-group, repayment, malformed mutation, invalid field, and upstream failure cases.",
-        "Ordered Bruno collection passed 44/44 local requests, including allocation preview.",
-        "Live WebSocket/concurrency suite passed authenticated graphql-transport-ws delivery and stale-version recovery.",
-        "Live REST edge suite passed 12 checks for authentication, malformed IDs, validation bounds, idempotency, conflicts, and missing resources.",
-        "Acceptance unit harness passed all 10 tests after threaded mock-server correction; full operation-level matrix remains in progress."
+        "All 45 REST operations and 9 GraphQL root operations mapped with matrix evidence in docs/quality/public-interface-operation-matrix.md.",
+        "Contract validation and semantic REST public-surface validator validate 45 REST and 9 GraphQL operations.",
+        "Ordered Bruno collection passed 50 requests with 71 assertions; live REST edge suite passed 86 checks across auth, validation, idempotency, and conflict boundaries.",
+        "Live acceptance suite (10/10) and all four live E2E suites passed: product lifecycle, offline resilience, concurrency/subscriptions, and chaos/outbox recovery.",
+        "Production-scale capacity, external security scanning, and multi-region failover evidence explicitly separated into QA-08."
       ],
       "reviewer": "/root",
       "blocker": null

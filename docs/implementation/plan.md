@@ -66,6 +66,11 @@ launch prerequisites; they do not block portable contracts and the scaffold.
 
 ## Production-readiness delivery basis
 
+The security remediation execution plan is tracked as
+[`SEC-01`](../tasks/details/SEC-01.md). It preserves the whole-security audit's
+NO-GO decision and requires separately registered implementation workstreams
+before any production security claim is revised.
+
 The backend is targeting 1–10 million DAU. A production-readiness audit has
 identified 5 critical and 24 high-severity findings that must be resolved before
 any public launch decision. The audit, roadmap, tracker, and release checklist

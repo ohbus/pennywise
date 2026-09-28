@@ -6812,6 +6812,47 @@
       "blocker": null
     },
     {
+      "id": "SEC-01",
+      "parent_id": "AUTH-08",
+      "title": "Plan whole-security remediation",
+      "phase": "security",
+      "status": "planned",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [
+        "AUTH-08",
+        "QA-08",
+        "ERR-03",
+        "DB-08",
+        "OPS-24"
+      ],
+      "owned_paths": [
+        "docs/tasks/details/SEC-01.md",
+        "docs/security/whole-security-implementation-audit-2026-09-29.md",
+        "docs/implementation/plan.md",
+        "docs/tasks/registry.yaml",
+        "docs/tasks/board.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/SEC-01.md",
+      "acceptance_criteria": [
+        "Every SEC-001 through SEC-013 finding is mapped to a dependency-ordered workstream with exact target paths, contracts, acceptance criteria, verification, and evidence boundaries.",
+        "The plan records the token-authority decision gate, identity model, authorization, browser/WebSocket, session/cache, operations, supply-chain, and endpoint-evidence sequencing.",
+        "No implementation or production-readiness claim is made by this planning task."
+      ],
+      "validation_commands": [
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/ops/check_security_hygiene.py",
+        "git diff --check"
+      ],
+      "evidence": [
+        "SEC-01 documents SEC-01A through SEC-01F and requires child registration before implementation.",
+        "The plan preserves the audit's NO-GO decision and explicit local-versus-production evidence boundary."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
       "id": "DB-17",
       "parent_id": "MILESTONE-CQRS-DATA-ACCESS",
       "title": "Complete CQRS architecture and acceptance reconciliation",

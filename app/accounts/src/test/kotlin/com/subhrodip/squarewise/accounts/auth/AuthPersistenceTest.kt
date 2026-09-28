@@ -80,6 +80,29 @@ class AuthPersistenceTest @Autowired constructor(
     }
 
     @Test
+    fun `atomic refresh transition rejects a session beyond its absolute boundary`() {
+        val now = Instant.now()
+        val sessionId = UUID.randomUUID()
+        val familyId = UUID.randomUUID()
+        sessionRepository.save(AuthSessionEntity(
+            sessionId = sessionId,
+            familyId = familyId,
+            refreshTokenDigest = byteArrayOf(13, 14),
+            createdAt = now,
+            lastUsedAt = now,
+            expiresAt = now.plusSeconds(1),
+            absoluteExpiresAt = now.plusSeconds(1),
+            clientKind = "BROWSER"
+        ))
+
+        assertEquals(0, sessionRepository.rotateIfActive(
+            sessionId,
+            UUID.randomUUID(),
+            now.plusSeconds(2)
+        ))
+    }
+
+    @Test
     fun `auth email outbox stores only protected delivery material`() {
         val now = Instant.now()
         val eventId = UUID.randomUUID()

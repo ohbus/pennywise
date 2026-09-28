@@ -49,7 +49,8 @@ import java.util.UUID
         "spring.autoconfigure.exclude=" +
             "org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration," +
             "org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration," +
-            "org.springframework.boot.autoconfigure.security.oauth2.resource.reactive.ReactiveOAuth2ResourceServerAutoConfiguration"
+            "org.springframework.boot.autoconfigure.security.oauth2.resource.reactive.ReactiveOAuth2ResourceServerAutoConfiguration",
+        "squarewise.security.browser.allowed-origins=https://app.example.test"
     ]
 )
 class GraphqlHttpTransportTest {
@@ -212,6 +213,26 @@ class GraphqlHttpTransportTest {
             .bodyValue("{\"query\":")
             .exchange()
             .expectStatus().isBadRequest
+    }
+
+    @Test
+    fun `graphql route rejects an untrusted browser origin`() {
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
+            .header("Origin", "https://evil.example.test")
+            .bodyValue(mapOf("query" to "{ __typename }"))
+            .exchange()
+            .expectStatus().isForbidden
+    }
+
+    @Test
+    fun `graphql route answers preflight only for an exact configured origin`() {
+        client.options().uri(ApiEndpoints.Bff.GRAPHQL)
+            .header("Origin", "https://app.example.test")
+            .header("Access-Control-Request-Method", "POST")
+            .header("Access-Control-Request-Headers", "Authorization,Content-Type")
+            .exchange()
+            .expectStatus().isNoContent
+            .expectHeader().valueEquals("Access-Control-Allow-Origin", "https://app.example.test")
     }
 
     @Test

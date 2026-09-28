@@ -22,14 +22,14 @@ query classification, and evidence gates are complete.
 | DB-07 | core | done | Pilot bounded Expense Core search projection and measured query optimization |
 | DB-08 | accounts | done | Split Accounts command/query ports with writer-only auth state |
 | DB-09 | notifications | done | Split Notifications command/query ports with writer-only delivery state |
-| DB-10 | coordinator | in_progress | Propagate causal writer watermarks through services and BFF |
-| DB-11 | observability | in_progress | Add query operation telemetry and slow-query governance |
-| DB-12 | quality | in_progress | Add contention, replica failure, lag, and capacity evidence |
+| DB-10 | coordinator | done | Propagate causal writer watermarks through services and BFF |
+| DB-11 | observability | done | Add query operation telemetry and slow-query governance |
+| DB-12 | quality | done | Add contention, replica failure, lag, and capacity evidence |
 | DB-13 | platform | done | Add optional local/production-like PostgreSQL replica topology |
-| DB-14 | coordinator | in_progress | Run one reviewed historical-read replica pilot |
+| DB-14 | coordinator | done | Run one reviewed historical-read replica pilot |
 | DB-15 | coordinator | done | Promote only individually approved query capabilities |
-| DB-16 | operations | in_progress | Complete failover, restore, rollback, alert, and release gates |
-| DB-17 | coordinator | in_progress | Reconcile implementation and evidence against every plan requirement |
+| DB-16 | operations | done | Complete failover, restore, rollback, alert, and release gates |
+| DB-17 | coordinator | done | Reconcile implementation and evidence against every plan requirement |
 
 ## Current milestone: documentation and contracts
 

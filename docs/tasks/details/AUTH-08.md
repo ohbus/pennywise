@@ -33,6 +33,10 @@ tracked below.
   the same transaction. This prevents an already-issued refresh token from
   restoring access after deletion begins while retaining the profile for audit
   and financial attribution.
+- Follow-up hardening: refresh sessions now retain the provider-qualified subject
+  captured at issuance. Migration V9 backfills subjects where the account mapping
+  is available; sessions with no subject or a changed subject fail closed and
+  revoke their family before any replacement token is issued.
 
 ## Objective
 

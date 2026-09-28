@@ -6800,6 +6800,7 @@
         "Isolated local Compose evidence passed: Flyway/PostgreSQL v8 migration, signed Keycloak OIDC Accounts/BFF access, forged-token REST/GraphQL/WebSocket rejection, complete REST edge authorization suite, and Redis outage returning structured 429 with recovery.",
         "The BFF GraphQL boundary now has focused exact-origin browser protection and preflight coverage; local Compose exposes SQUAREWISE_SECURITY_BROWSER_ALLOWED_ORIGINS for explicit deployment configuration.",
         "Account-deletion requests now bulk-revoke active refresh sessions by the writer-owned account ID in the same transaction; JPA integration coverage verifies the revocation.",
+        "Refresh sessions now persist the provider-qualified subject; V9 backfills mapped legacy sessions and refresh fails closed with family revocation on missing or changed subjects, covered by session and persistence tests.",
         "Remaining before completion: browser cookie/CSRF and native PKCE runtime flows, provider-owned revocation integration, full cache eviction/restart matrix, and hosted/production-scale evidence. These are documented as unimplemented or environment-dependent; no completion claim is made."
       ],
       "reviewer": "/root",

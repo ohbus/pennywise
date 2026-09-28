@@ -50,3 +50,8 @@ squarewise:
   security:
     oidc:
       audience: ${SQUAREWISE_SECURITY_OIDC_AUDIENCE:}
+    session:
+      access-token-lifetime: ${SQUAREWISE_SECURITY_SESSION_ACCESS_TOKEN_LIFETIME:10m}
+      refresh-idle-lifetime: ${SQUAREWISE_SECURITY_SESSION_REFRESH_IDLE_LIFETIME:30d}
+      absolute-session-lifetime: ${SQUAREWISE_SECURITY_SESSION_ABSOLUTE_LIFETIME:90d}
+      clock-skew: ${SQUAREWISE_SECURITY_SESSION_CLOCK_SKEW:30s}

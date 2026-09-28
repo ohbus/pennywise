@@ -4,7 +4,6 @@ import com.subhrodip.squarewise.accounts.auth.credential.HmacCredentialDigest
 import com.subhrodip.squarewise.accounts.auth.provider.InternalJwtTokenProvider
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
-import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -32,7 +31,12 @@ class TokenSessionServiceTest @Autowired constructor(
         sessionRepository = sessionRepository,
         identityProviderPort = tokenProvider,
         credentialDigest = digest,
-        refreshTokenLifetime = Duration.ofDays(30)
+        sessionPolicy = SessionPolicy(
+            accessTokenLifetime = java.time.Duration.ofMinutes(10),
+            refreshIdleLifetime = java.time.Duration.ofDays(30),
+            absoluteSessionLifetime = java.time.Duration.ofDays(90),
+            clockSkew = java.time.Duration.ZERO
+        )
     )
 
     @Test

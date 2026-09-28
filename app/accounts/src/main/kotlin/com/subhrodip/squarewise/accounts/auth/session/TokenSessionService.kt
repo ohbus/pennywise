@@ -5,7 +5,6 @@ import com.subhrodip.squarewise.accounts.auth.provider.IdentityProviderPort
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
 import java.security.SecureRandom
-import java.time.Duration
 import java.time.Instant
 import java.util.Base64
 import java.util.UUID
@@ -25,14 +24,19 @@ import org.springframework.transaction.annotation.Transactional
  * @param identityProviderPort Provider-neutral access token minting port.
  * @param credentialDigest HMAC digest generator for hashing refresh tokens at rest.
  * @param random Cryptographically secure random source for opaque refresh tokens.
- * @param refreshTokenLifetime Validity duration for refresh tokens (defaults to 30 days).
+ * @param sessionPolicy Validated access-token and refresh-session timing policy.
  */
 open class TokenSessionService(
     private val sessionRepository: AuthSessionRepository,
     private val identityProviderPort: IdentityProviderPort,
     private val credentialDigest: CredentialDigest,
     private val random: SecureRandom = SecureRandom(),
-    private val refreshTokenLifetime: Duration = DEFAULT_REFRESH_LIFETIME
+    private val sessionPolicy: SessionPolicy = SessionPolicy(
+        accessTokenLifetime = java.time.Duration.ofMinutes(10),
+        refreshIdleLifetime = java.time.Duration.ofDays(30),
+        absoluteSessionLifetime = java.time.Duration.ofDays(90),
+        clockSkew = java.time.Duration.ZERO
+    )
 ) {
     private val log = LoggerFactory.getLogger(TokenSessionService::class.java)
 
@@ -60,6 +64,7 @@ open class TokenSessionService(
         val sessionId = UUID.randomUUID()
         val rawRefreshToken = generateOpaqueToken()
         val digest = credentialDigest.digest(rawRefreshToken)
+        val expiry = sessionPolicy.initialExpiry(now)
 
         val session = AuthSessionEntity(
             sessionId = sessionId,
@@ -68,7 +73,8 @@ open class TokenSessionService(
             refreshTokenDigest = digest,
             createdAt = now,
             lastUsedAt = now,
-            expiresAt = now.plus(refreshTokenLifetime),
+            expiresAt = expiry.idleExpiresAt,
+            absoluteExpiresAt = expiry.absoluteExpiresAt,
             revokedAt = null,
             replacedBySessionId = null,
             deviceLabel = deviceLabel?.take(MAX_DEVICE_LABEL_LENGTH),
@@ -121,8 +127,11 @@ open class TokenSessionService(
             throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
         }
 
-        // Expiry check
-        if (existingSession.expiresAt.isBefore(now)) {
+        val existingExpiry = SessionExpiry(
+            idleExpiresAt = existingSession.expiresAt,
+            absoluteExpiresAt = existingSession.absoluteExpiresAt
+        )
+        if (sessionPolicy.isExpired(existingExpiry, now)) {
             sessionRepository.revokeFamily(existingSession.familyId, now)
             throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
         }
@@ -130,6 +139,7 @@ open class TokenSessionService(
         val newSessionId = UUID.randomUUID()
         val newRawRefreshToken = generateOpaqueToken()
         val newDigest = credentialDigest.digest(newRawRefreshToken)
+        val expiry = sessionPolicy.refreshedExpiry(now, existingSession.absoluteExpiresAt)
 
         val accountId = existingSession.accountId
             ?: throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
@@ -141,7 +151,8 @@ open class TokenSessionService(
             refreshTokenDigest = newDigest,
             createdAt = now,
             lastUsedAt = now,
-            expiresAt = now.plus(refreshTokenLifetime),
+            expiresAt = expiry.idleExpiresAt,
+            absoluteExpiresAt = expiry.absoluteExpiresAt,
             revokedAt = null,
             replacedBySessionId = null,
             deviceLabel = deviceLabel?.take(MAX_DEVICE_LABEL_LENGTH) ?: existingSession.deviceLabel,
@@ -198,6 +209,5 @@ open class TokenSessionService(
     private companion object {
         const val REFRESH_TOKEN_BYTE_LENGTH = 48
         const val MAX_DEVICE_LABEL_LENGTH = 120
-        val DEFAULT_REFRESH_LIFETIME: Duration = Duration.ofDays(30)
     }
 }

@@ -63,12 +63,14 @@ class AuthPersistenceTest @Autowired constructor(
         sessionRepository.save(AuthSessionEntity(
             sessionId = sessionId, familyId = familyId, refreshTokenDigest = byteArrayOf(9, 10),
             createdAt = now, lastUsedAt = now, expiresAt = now.plus(30, ChronoUnit.DAYS),
+            absoluteExpiresAt = now.plus(90, ChronoUnit.DAYS),
             clientKind = "NATIVE"
         ))
         sessionRepository.save(AuthSessionEntity(
             sessionId = replacementId, familyId = familyId, refreshTokenDigest = byteArrayOf(11, 12),
             createdAt = now.plusSeconds(1), lastUsedAt = now.plusSeconds(1),
-            expiresAt = now.plus(30, ChronoUnit.DAYS), clientKind = "NATIVE"
+            expiresAt = now.plus(30, ChronoUnit.DAYS),
+            absoluteExpiresAt = now.plus(90, ChronoUnit.DAYS), clientKind = "NATIVE"
         ))
 
         assertEquals(1, sessionRepository.rotateIfActive(sessionId, replacementId, now.plusSeconds(1)))

@@ -31,7 +31,8 @@ class JpaSettlementStoreTest @Autowired constructor(
             UUID.randomUUID(),
             UUID.randomUUID(),
             UUID.randomUUID(),
-            1_250
+            1_250,
+            "EUR"
         )
 
         assertEquals(SettlementStatus.RECORDED, store.record(groupId, settlement).status)
@@ -56,7 +57,8 @@ class JpaSettlementStoreTest @Autowired constructor(
             UUID.randomUUID(),
             UUID.randomUUID(),
             UUID.randomUUID(),
-            1_250
+            1_250,
+            "EUR"
         )
         store.record(groupId, settlement)
 

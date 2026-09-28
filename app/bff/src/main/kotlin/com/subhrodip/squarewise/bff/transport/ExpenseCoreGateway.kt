@@ -92,12 +92,12 @@ class ExpenseCoreGateway(
             .bodyToMono(UpstreamExpense::class.java).map { it.toBffExpense(input.description) }.timeout(timeout)
 
     fun recordRepayment(groupId: String, input: RepaymentInput, bearer: String?): Mono<BffSettlement> {
-        val payload = mapOf("fromParticipantId" to input.fromParticipantId, "toParticipantId" to input.toParticipantId, "amountMinor" to input.amount.minor)
+        val payload = mapOf("fromParticipantId" to input.fromParticipantId, "toParticipantId" to input.toParticipantId, "amountMinor" to input.amount.minor, "currency" to input.amount.currency)
         return client.post().uri(ApiEndpoints.ExpenseCore.V1.PATH_GROUP_SETTLEMENTS, groupId)
             .header(ApiEndpoints.Headers.IDEMPOTENCY_KEY, UUID.randomUUID().toString())
             .headers { headers -> bearer?.let { headers.setBearerAuth(it) } }.bodyValue(payload).retrieve()
             .onStatus({ it.isError }) { response -> Mono.error(UpstreamServiceException(response.statusCode().value(), "Expense Core returned HTTP ${response.statusCode().value()}")) }
-            .bodyToMono(UpstreamSettlement::class.java).map { it.toBffSettlement(input.amount.currency) }.timeout(timeout)
+            .bodyToMono(UpstreamSettlement::class.java).map { it.toBffSettlement() }.timeout(timeout)
     }
 
     fun getSettlementSuggestions(groupId: String, bearer: String?): Mono<List<BffSuggestedSettlement>> =

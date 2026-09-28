@@ -15,7 +15,7 @@ class SettlementServiceTest {
         val service = SettlementService(InMemorySettlementStore())
         val groupId = UUID.randomUUID()
         val id = UUID.randomUUID()
-        val settlement = service.record(groupId, id, UUID.randomUUID(), UUID.randomUUID(), 1250)
+        val settlement = service.record(groupId, id, UUID.randomUUID(), UUID.randomUUID(), 1250, "EUR")
         assertEquals(SettlementStatus.RECORDED, settlement.status)
         assertEquals(SettlementStatus.REVERSED, service.reverse(groupId, id, "duplicate").status)
         assertEquals(SettlementStatus.REVERSED, service.reverse(groupId, id, "duplicate retry").status)
@@ -27,10 +27,10 @@ class SettlementServiceTest {
         val groupId = UUID.randomUUID()
         val from = UUID.randomUUID()
         val to = UUID.randomUUID()
-        service.record(groupId, UUID.randomUUID(), from, to, 1250, "actor-1", "settlement-key-0001")
+        service.record(groupId, UUID.randomUUID(), from, to, 1250, "EUR", "actor-1", "settlement-key-0001")
 
         assertThrows(ApplicationException::class.java) {
-            service.record(groupId, UUID.randomUUID(), from, to, 1300, "actor-1", "settlement-key-0001")
+            service.record(groupId, UUID.randomUUID(), from, to, 1300, "EUR", "actor-1", "settlement-key-0001")
         }
     }
 }

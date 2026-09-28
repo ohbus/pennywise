@@ -35,8 +35,8 @@ class PostgresSettlementReconciliationTest @Autowired constructor(
     fun `reconciles recorded and reversed settlement postings`() {
         val groupId = UUID.randomUUID()
         groupRepository.save(GroupEntity(groupId, "Postgres settlement reconciliation", "HOUSEHOLD", "EUR"))
-        val recorded = Settlement(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 1_250)
-        val reversed = Settlement(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 2_500)
+        val recorded = Settlement(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 1_250, "EUR")
+        val reversed = Settlement(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 2_500, "EUR")
 
         store.record(groupId, recorded)
         store.record(groupId, reversed)

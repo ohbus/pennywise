@@ -16,7 +16,7 @@ screens remain incomplete; this is not evidence of a launch-ready product.
 | Account | OIDC sign-in, profile, preferred currency/timezone | Accounts | Minimal sign-up, return to invitation after authentication |
 | Group | Create, rename, archive; household/couple/trip labels | Expense Core | One common workflow with appropriate defaults |
 | Participants | Registered members, named placeholders, invitations and claiming | Expense Core | Record expenses before everyone signs up; show invite state |
-| Expense | Description, date, category, note, currency, multiple payers | Expense Core | Amount first, current user payer default, visible saved/pending state |
+| Expense | Description, date, category, note, currency, multiple payers | Expense Core | Amount first, currency must be explicitly selected for every API request; a client may prefill the last locally saved currency, visible saved/pending state |
 | Splits | Equal, exact, integer percentage basis points, positive weighted shares | Expense Core | Preview every allocation and rounding before saving |
 | Collaboration | Every active member edits online; version conflicts and audit | Expense Core | Identify editor; offer reload on conflict instead of silent overwrite |
 | Balances | Net amounts by group, participant and currency | Expense Core | Explain each amount through supporting transactions |

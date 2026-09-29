@@ -2,6 +2,7 @@
 
 package com.subhrodip.squarewise.accounts.security
 
+import com.subhrodip.squarewise.accounts.auth.jwks.RsaKeyProvider
 import com.subhrodip.squarewise.security.OidcJwtDecoderFactory
 import com.subhrodip.squarewise.security.OidcSecurityConstants
 import com.subhrodip.squarewise.ids.contracts.ApiEndpoints
@@ -22,11 +23,15 @@ import org.springframework.security.web.SecurityFilterChain
 class ProductionSecurityConfig(
     @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}") private val issuerUri: String,
     @Value("\${squarewise.security.oidc.audience}") private val audience: String,
-    @Value("\${squarewise.security.oidc.allowed-algorithms:}") private val allowedAlgorithms: String
+    @Value("\${squarewise.security.oidc.allowed-algorithms:}") private val allowedAlgorithms: String,
+    private val rsaKeyProvider: RsaKeyProvider
 ) {
     @Bean
-    fun jwtDecoder(): JwtDecoder = OidcJwtDecoderFactory.create(
-        issuerUri, audience, OidcSecurityConstants.configuredSigningAlgorithms(allowedAlgorithms)
+    fun jwtDecoder(): JwtDecoder = OidcJwtDecoderFactory.createWithJwkSource(
+        rsaKeyProvider.jwkSource(),
+        issuerUri,
+        audience,
+        OidcSecurityConstants.configuredSigningAlgorithms(allowedAlgorithms)
     )
 
     @Bean
@@ -40,6 +45,12 @@ class ProductionSecurityConfig(
                     ApiEndpoints.Accounts.V1.PATH_LOGIN_VERIFY
                 ).permitAll()
                 .requestMatchers(ApiEndpoints.Accounts.V1.PATH_TOKEN_REFRESH).permitAll()
+                .requestMatchers(
+                    ApiEndpoints.Accounts.V1.PATH_JWKS,
+                    ApiEndpoints.Accounts.V1.WELL_KNOWN_JWKS,
+                    ApiEndpoints.Accounts.V1.WELL_KNOWN_OPENID_CONFIGURATION,
+                    "/.well-known/**"
+                ).permitAll()
                 .anyRequest().authenticated()
         }
         .oauth2ResourceServer { it.jwt {} }

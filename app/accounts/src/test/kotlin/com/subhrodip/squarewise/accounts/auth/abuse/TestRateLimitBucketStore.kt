@@ -6,9 +6,9 @@ import org.springframework.context.annotation.Profile
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Component
 
-/** Test-profile-only limiter; never registered in local, staging, or production. */
+/** Test-profile limiter; never registered in staging or production. */
 @Component
-@Profile("test")
+@Profile("test", "local-oidc")
 @Primary
 class TestRateLimitBucketStore : RateLimitBucketStore {
     private data class Bucket(var started: Instant, var count: Int, var last: Instant)

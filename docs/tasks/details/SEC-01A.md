@@ -2,7 +2,24 @@
 
 ## Status
 
-Planned. Prerequisite for SEC-01B through SEC-01F.
+Done. Implemented Squarewise-owned asymmetric RSA RS256 token authority, RFC 7517 JWKS discovery, and in-memory JWKSource validation. Verified with dedicated unit and deployed-profile integration tests.
+
+## Implemented Increment
+
+- `libs/security`: Added `OidcJwtDecoderFactory.createWithPublicKey` and `OidcJwtDecoderFactory.createWithJwkSource` to enable standards-compliant, in-memory JWK validation with full claim policy (iss, aud, sub, alg).
+- `app/accounts`:
+  - `RsaKeyProperties`: Configuration properties for RSA key ID and optional PEM keys.
+  - `RsaKeyProvider` & `DefaultRsaKeyProvider`: Asymmetric RSA key pair lifecycle manager supporting 2048-bit key generation, PEM loading, RFC 7517 JWKS export, and thread-safe key rotation with overlapping public verification keys.
+  - `AsymmetricJwtTokenProvider`: Production `IdentityProviderPort` implementation signing tokens with RSA RS256, stable key ID (`kid`), and full claims (`iss`, `sub`, `aud`, `exp`, `iat`, `nbf`, `account_id`, `email`, `jti`).
+  - `OidcDiscoveryController`: Public endpoints exposing `/.well-known/jwks.json`, `/accounts/v1/auth/jwks.json`, and `/.well-known/openid-configuration` (RFC 8414 metadata).
+  - `ProductionSecurityConfig`: Configured to permit JWKS and OpenID discovery endpoints, and validates Accounts tokens directly via `JWKSource` without self-loopback network calls.
+  - `AuthSessionConfiguration`: Replaced the throwing `ExternalOidcTokenProvider` stub with `AsymmetricJwtTokenProvider` for `production`, `staging`, and `local-oidc` profiles.
+- Tests:
+  - `OidcJwtDecoderFactoryTest`: Verifies public key and JWK source decoders, negative paths (wrong issuer, wrong audience, expired tokens).
+  - `DefaultRsaKeyProviderTest`: Verifies key generation, public JWKS export, and key rotation retaining retiring keys.
+  - `AsymmetricJwtTokenProviderTest`: Verifies RS256 token minting, claims, and verification against `OidcJwtDecoderFactory`.
+  - `OidcDiscoveryControllerTest`: MockMvc verification of RFC 7517 JWKS and RFC 8414 discovery endpoints.
+  - `DeployedPasswordlessTokenIntegrationTest`: Verifies that deployed profile (`local-oidc`) completes passwordless verification without throwing, returning a valid RS256 token accepted by Spring Security `JwtDecoder`.
 
 ## Objective
 

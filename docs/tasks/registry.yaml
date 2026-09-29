@@ -6857,7 +6857,7 @@
       "parent_id": "SEC-01",
       "title": "Establish operational token authority",
       "phase": "security",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -6884,7 +6884,12 @@
         "uv run python tools/contracts/validate.py",
         "uv run python tools/ops/check_security_hygiene.py"
       ],
-      "evidence": [],
+      "evidence": [
+        "Implemented Squarewise-owned asymmetric RSA RS256 token authority, DefaultRsaKeyProvider with key rotation support, and OidcDiscoveryController exposing standard JWKS and RFC 8414 metadata.",
+        "Replaced throwing ExternalOidcTokenProvider stub in production/staging/local-oidc configurations with AsymmetricJwtTokenProvider, closing SEC-001 and SEC-009.",
+        "Added in-memory OidcJwtDecoderFactory JWKSource and public-key decoder creation in libs/security.",
+        "Verified with unit tests across all libraries and DeployedPasswordlessTokenIntegrationTest under local-oidc profile proving token issuance and validation."
+      ],
       "reviewer": "/root",
       "blocker": null
     },
@@ -6893,7 +6898,7 @@
       "parent_id": "SEC-01",
       "title": "Make durable identity independent of email",
       "phase": "security",
-      "status": "planned",
+      "status": "in_progress",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [

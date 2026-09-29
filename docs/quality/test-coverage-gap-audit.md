@@ -127,6 +127,17 @@ for `AuthEmailOutboxPublisher.publishOne`. This is unit-level adapter evidence;
 QA10-A01 remains open for real RabbitMQ confirmation/redelivery and the
 deployed Notifications auth-email journey.
 
+The `OutboxAuthEmailSenderTest` increment covers protection with the exact
+recipient/template context and append failure propagation using the real
+`AuthEmailOutboxService` against a repository double. The Spring
+`AuthPersistenceTest` now also invokes the production sender and verifies a
+real transactional outbox row contains only a decryptable protected envelope,
+the expected template/expiry, and `PENDING` status. The target sender reports
+0 missed lines and methods. QA10-A02 still requires a failure-in-transaction
+rollback assertion if the broader transaction boundary changes; the current
+integration test proves persistence and cryptographic handoff, not broker
+delivery.
+
 ## Required evidence ladder
 
 Each production behavior is assigned the minimum evidence needed:
@@ -154,7 +165,7 @@ test cannot close a row by merely executing a line.
 | ID | Production target | Missing/weak evidence | Required acceptance criteria |
 | --- | --- | --- | --- |
 | QA10-A01 | `AuthEmailOutboxPublisher.publishOne` | Unit coverage now exercises the complete local claim/serialize/send state machine; real RabbitMQ confirmation, redelivery, and deployed auth-email delivery remain open. | `U+M`: empty claim returns `EMPTY`; valid event has the exact event type, schema version, recipient, encrypted credential, expiry, message ID, exchange, and routing key; successful publish acknowledges exactly once; AMQP and serialization failures reject with retry timing and bounded attempts; no plaintext credential is serialized or logged. The unit increment passes all four cases and reports 0 missed lines, branches, and methods for `publishOne`; a real-broker/deployed test must still prove confirmation, retry/redelivery, and downstream delivery. |
-| QA10-A02 | `OutboxAuthEmailSender.send` | Only partial line evidence; same-transaction append and envelope context need an explicit test. | `U+P`: recipient/template are used as AAD context; credential is encrypted before append; the raw credential never reaches the outbox; append failure leaves no successful result; returned status is `QUEUED` only after the append call. |
+| QA10-A02 | `OutboxAuthEmailSender.send` | Unit and Spring persistence coverage now prove context-bound encryption, protected-only durable storage, `PENDING` state, expiry/template mapping, and append failure propagation. A broader caller transaction rollback test and real broker path remain open. | `U+P`: recipient/template are used as AAD context; credential is encrypted before append; the raw credential never reaches the outbox; append failure leaves no successful result; returned status is `QUEUED` only after the append call. The current increment passes the unit and Spring persistence cases; add a caller transaction rollback test if sender invocation is part of a larger credential transaction. |
 | QA10-A03 | `RedisRateLimitBucketStore.acquireAtomically` | Production Redis adapter is uncovered by local unit reports. | `P+E`: first request, window reset, cooldown denial, maximum denial, atomic concurrent callers, Redis nil result, and Redis exception are covered; keys are HMAC-derived/hex encoded, TTL is bounded, and store failure maps to fail-closed `429 RATE_LIMITED` with `Retry-After`. |
 | QA10-A04 | `ExternalOidcTokenProvider.issueAccessToken`, `AuthSessionConfiguration` | Provider adapter is a throwing stub and must not be treated as completed OIDC integration. | `U+T+E`: either implement and exercise the real exchange/delegation contract, or prove the provider bean is absent/fails startup in every profile that cannot issue tokens; no runtime request may reach the current `UnsupportedOperationException`; production never silently falls back to an internal/test provider. |
 | QA10-A05 | `ProductionSecurityConfig`, `OidcSubjectValidator`, JWT decoder wiring | Configuration classes have missed lines and current focused tests mostly validate policy helpers. | `T+E`: valid issuer/audience/algorithm/signature/subject succeeds; wrong issuer, audience, algorithm, signature, expiry, not-before, blank/oversized subject, missing JWKS, and unavailable issuer fail closed; all four deployed services use the intended decoder and no fallback decoder is active outside an explicitly test-only profile. |

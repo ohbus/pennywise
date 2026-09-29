@@ -4,8 +4,13 @@ import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialEntity
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialRepository
 import com.subhrodip.squarewise.accounts.auth.delivery.outbox.AuthEmailOutboxEntity
 import com.subhrodip.squarewise.accounts.auth.delivery.outbox.AuthEmailOutboxRepository
-import com.subhrodip.squarewise.accounts.auth.delivery.service.AuthEmailOutboxService
+import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailDeliveryResult
+import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailMessage
 import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailTemplate
+import com.subhrodip.squarewise.accounts.auth.delivery.model.CredentialDeliveryContext
+import com.subhrodip.squarewise.accounts.auth.delivery.security.CredentialEnvelopeProtector
+import com.subhrodip.squarewise.accounts.auth.delivery.service.AuthEmailSender
+import com.subhrodip.squarewise.accounts.auth.delivery.service.AuthEmailOutboxService
 import com.subhrodip.squarewise.accounts.auth.session.AuthSessionEntity
 import com.subhrodip.squarewise.accounts.auth.session.AuthSessionRepository
 import java.time.Instant
@@ -25,7 +30,9 @@ class AuthPersistenceTest @Autowired constructor(
     private val credentialRepository: LoginCredentialRepository,
     private val sessionRepository: AuthSessionRepository,
     private val authEmailOutboxRepository: AuthEmailOutboxRepository,
-    private val authEmailOutboxService: AuthEmailOutboxService
+    private val authEmailOutboxService: AuthEmailOutboxService,
+    private val authEmailSender: AuthEmailSender,
+    private val credentialEnvelopeProtector: CredentialEnvelopeProtector
 ) {
     @Test
     fun `only one caller can consume an active credential`() {
@@ -116,6 +123,33 @@ class AuthPersistenceTest @Autowired constructor(
         val loaded = authEmailOutboxRepository.findByEventId(eventId)
         assertEquals(record.encryptedCredential, loaded?.encryptedCredential)
         assertEquals("PENDING", loaded?.status)
+    }
+
+    @Test
+    fun `sender persists decryptable protected material in the real outbox`() {
+        val expiresAt = Instant.now().plusSeconds(600)
+        val message = AuthEmailMessage(
+            recipient = "sender@example.com",
+            template = AuthEmailTemplate.LOGIN_CODE,
+            credential = "raw-sender-credential",
+            expiresAt = expiresAt
+        )
+
+        assertEquals(AuthEmailDeliveryResult.QUEUED, authEmailSender.send(message))
+
+        val record = authEmailOutboxRepository.findAll()
+            .single { it.recipient == message.recipient }
+        assertEquals("PENDING", record.status)
+        assertEquals(message.template.name, record.template)
+        assertEquals(message.expiresAt, record.expiresAt)
+        assertEquals(
+            message.credential,
+            credentialEnvelopeProtector.reveal(
+                record.encryptedCredential,
+                CredentialDeliveryContext(message.recipient, message.template)
+            )
+        )
+        assertEquals(false, record.encryptedCredential == message.credential)
     }
 
     @Test

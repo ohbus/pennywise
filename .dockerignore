@@ -22,6 +22,15 @@
 **/.venv/
 **/target/
 
+# Fast CI/runtime images consume downloaded bootJar artifacts. Keep compiled
+# output excluded by default, but allow only the application JARs required by
+# infra/docker/Dockerfile.fast.
+!app/
+!app/*/
+!app/*/build/
+!app/*/build/libs/
+!app/*/build/libs/*.jar
+
 # Documentation and design assets
 docs/
 *.md

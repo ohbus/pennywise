@@ -30,6 +30,10 @@ To achieve fast feedback and conserve runner CPU, the E2E stages eliminate redun
 Gradle test runs and compilation. Instead, the parallel E2E jobs depend directly on
 `verify` and consume the pre-built application `bootJar` artifacts (`app-jar-*`),
 allowing `Dockerfile.fast` to package lightweight runtime containers in seconds.
+The Docker context explicitly re-includes only these downloaded application JARs
+from the otherwise ignored Gradle `build/` directories. Each E2E job verifies all
+four artifact paths before Compose starts, so a missing artifact fails at the
+handoff instead of later as an opaque Docker `COPY` checksum error.
 The monolithic E2E stage is split into three parallel streams:
 1. `e2e-edge-and-security`: Contract smoke, Redis authentication-cache
    eviction/outage/restart checks (`make e2e-auth-cache`), negative OIDC JWT

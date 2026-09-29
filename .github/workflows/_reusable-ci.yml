@@ -209,7 +209,10 @@ jobs:
         run: |
           for svc in accounts expense-core notifications bff; do
             mkdir -p "app/${svc}/build/libs"
-            mv "app/app-jar-${svc}/squarewise-${svc}-0.1.0-SNAPSHOT.jar" "app/${svc}/build/libs/" || true
+            artifact="app/app-jar-${svc}/squarewise-${svc}-0.1.0-SNAPSHOT.jar"
+            test -f "$artifact"
+            mv "$artifact" "app/${svc}/build/libs/"
+            test -f "app/${svc}/build/libs/squarewise-${svc}-0.1.0-SNAPSHOT.jar"
           done
       - name: Run contract and deployment smoke checks
         run: bash tests/e2e/contract-smoke.sh
@@ -295,7 +298,10 @@ jobs:
         run: |
           for svc in accounts expense-core notifications bff; do
             mkdir -p "app/${svc}/build/libs"
-            mv "app/app-jar-${svc}/squarewise-${svc}-0.1.0-SNAPSHOT.jar" "app/${svc}/build/libs/" || true
+            artifact="app/app-jar-${svc}/squarewise-${svc}-0.1.0-SNAPSHOT.jar"
+            test -f "$artifact"
+            mv "$artifact" "app/${svc}/build/libs/"
+            test -f "app/${svc}/build/libs/squarewise-${svc}-0.1.0-SNAPSHOT.jar"
           done
       - name: Start the complete local application stack
         run: docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait
@@ -357,7 +363,10 @@ jobs:
         run: |
           for svc in accounts expense-core notifications bff; do
             mkdir -p "app/${svc}/build/libs"
-            mv "app/app-jar-${svc}/squarewise-${svc}-0.1.0-SNAPSHOT.jar" "app/${svc}/build/libs/" || true
+            artifact="app/app-jar-${svc}/squarewise-${svc}-0.1.0-SNAPSHOT.jar"
+            test -f "$artifact"
+            mv "$artifact" "app/${svc}/build/libs/"
+            test -f "app/${svc}/build/libs/squarewise-${svc}-0.1.0-SNAPSHOT.jar"
           done
       - name: Start the complete local application stack
         run: docker compose -f infra/local/docker-compose.dev.yml up -d --build --wait

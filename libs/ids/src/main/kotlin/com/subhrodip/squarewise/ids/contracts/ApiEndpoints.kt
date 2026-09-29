@@ -41,6 +41,8 @@ object ApiEndpoints {
         const val BEARER_SCHEME: String = "Bearer"
         const val ORIGIN: String = "Origin"
         const val X_CSRF_TOKEN: String = "X-CSRF-Token"
+        const val WORKLOAD_ROLE: String = "X-Squarewise-Workload-Role"
+        const val WORKLOAD_ROLE_INTERNAL: String = "internal-service"
     }
 
     /** Accounts service API endpoints */

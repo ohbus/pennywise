@@ -18,8 +18,8 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 | Accounts | POST | `/me/deletion-request` | `requestDeletion` | contract + live smoke + unauthenticated edge | service failure/replay matrix |
 | Accounts | POST | `/me/export-request` | `requestExport` | contract + live smoke + unauthenticated edge | service failure/replay matrix |
 | Accounts | GET | `/me/export-requests` | `listExportRequests` | contract + controller/live smoke + unauthenticated and invalid-subject edges | pagination/service failure matrix |
-| Accounts | GET | `/profiles/{accountId}` | `getProfileById` | contract + controller/live smoke + malformed-ID and not-found edges | failure matrix |
-| Accounts | POST | `/profiles/batch` | `getProfilesBatch` | contract + controller + live smoke + empty/malformed/over-limit input + duplicate-ID deduplication | production dependency-failure evidence (QA-08) |
+| Accounts | GET | `/profiles/{accountId}` | `getProfileById` | contract + controller/live smoke + malformed-ID, not-found, self-lookup, cross-account 403, and workload role edges | failure matrix |
+| Accounts | POST | `/profiles/batch` | `getProfilesBatch` | contract + controller + live smoke + empty/malformed/over-limit input + duplicate-ID deduplication + self-lookup and workload role authorization (403 for unauthorized cross-account batch) | production dependency-failure evidence (QA-08) |
 | Expense Core | POST | `/groups` | `createGroup` | contract + controller/GraphQL/E2E live + authentication/invalid-kind edges | production dependency-failure evidence (QA-08) |
 | Expense Core | GET | `/groups` | `listGroups` | contract + controller/live smoke + E2E + authentication/archived-state edges | production dependency-failure evidence (QA-08) |
 | Expense Core | GET | `/groups/{groupId}` | `getGroup` | contract + controller/live smoke + E2E + authentication/non-member/not-found/archived edges | production dependency-failure evidence (QA-08) |

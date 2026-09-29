@@ -108,19 +108,78 @@ class ProfileController(
         }
     }
 
+    /**
+     * Retrieves a profile by account ID.
+     *
+     * Authorized only if the caller possesses internal workload authority or is performing a
+     * self-lookup matching their authenticated profile account ID. Arbitrary cross-user lookups
+     * are rejected with 403 Forbidden.
+     *
+     * @param accountId target account identifier.
+     * @param principal authenticated caller security principal.
+     * @param workloadRole optional internal service trust header.
+     * @return [ProfileResponse] matching the account ID.
+     * @throws ApplicationException ERR_03 if unauthenticated, ERR_04 if unauthorized, or ERR_05 if not found.
+     */
     @GetMapping(ApiEndpoints.Accounts.V1.PROFILES_BY_ID)
-    fun getProfileById(@PathVariable accountId: UUID): ProfileResponse =
-        dbTelemetry.measureQuery("profile.lookup", "approved-query") {
+    fun getProfileById(
+        @PathVariable accountId: UUID,
+        principal: Principal?,
+        @org.springframework.web.bind.annotation.RequestHeader(
+            value = ApiEndpoints.Headers.WORKLOAD_ROLE,
+            required = false
+        ) workloadRole: String? = null
+    ): ProfileResponse {
+        val isWorkload = workloadRole == ApiEndpoints.Headers.WORKLOAD_ROLE_INTERNAL
+        if (!isWorkload) {
+            val callerSubject = principal?.name ?: throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
+            val callerProfile = profiles.get(callerSubject) ?: throw ApplicationException(ErrorCode.ERR_03, "Authenticated profile not found")
+            if (callerProfile.accountId != accountId) {
+                throw ApplicationException(ErrorCode.ERR_04, "Access denied to foreign profile")
+            }
+        }
+        return dbTelemetry.measureQuery("profile.lookup", "approved-query") {
             DbContextHolder.withContext(profileReadContext("profile.lookup")) {
                 profiles.findById(accountId) ?: throw ApplicationException(ErrorCode.ERR_05, "Profile not found")
             }
         }
+    }
 
+    /**
+     * Batch lookups profiles for a collection of account IDs.
+     *
+     * Restricted to callers with internal workload authority or end-user callers limited to
+     * querying their own profile ID. Batch lookups encompassing foreign profiles by non-workload
+     * callers are rejected with 403 Forbidden.
+     *
+     * @param request batch lookup payload with up to 100 account IDs.
+     * @param principal authenticated caller security principal.
+     * @param workloadRole optional internal service trust header.
+     * @return list of resolved [ProfileResponse] records matching existing IDs.
+     * @throws ApplicationException ERR_03 if unauthenticated or ERR_04 if unauthorized.
+     */
     @PostMapping(ApiEndpoints.Accounts.V1.PROFILES_BATCH)
-    fun getProfilesBatch(@Valid @RequestBody request: BatchProfileRequest): List<ProfileResponse> =
-        dbTelemetry.measureQuery("profile.batch_lookup", "approved-query") {
+    fun getProfilesBatch(
+        @Valid @RequestBody request: BatchProfileRequest,
+        principal: Principal?,
+        @org.springframework.web.bind.annotation.RequestHeader(
+            value = ApiEndpoints.Headers.WORKLOAD_ROLE,
+            required = false
+        ) workloadRole: String? = null
+    ): List<ProfileResponse> {
+        val isWorkload = workloadRole == ApiEndpoints.Headers.WORKLOAD_ROLE_INTERNAL
+        if (!isWorkload) {
+            val callerSubject = principal?.name ?: throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
+            val callerProfile = profiles.get(callerSubject) ?: throw ApplicationException(ErrorCode.ERR_03, "Authenticated profile not found")
+            val requestedDistinctIds = request.accountIds.toSet()
+            if (requestedDistinctIds.any { it != callerProfile.accountId }) {
+                throw ApplicationException(ErrorCode.ERR_04, "Batch profile lookup requires internal workload authority")
+            }
+        }
+        return dbTelemetry.measureQuery("profile.batch_lookup", "approved-query") {
             DbContextHolder.withContext(profileReadContext("profile.batch_lookup")) { profiles.findByIds(request.accountIds) }
         }
+    }
 
     private fun profileReadContext(operationName: String) = DbExecutionContext(
         operationName = operationName,

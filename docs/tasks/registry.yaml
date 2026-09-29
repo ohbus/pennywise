@@ -6938,7 +6938,7 @@
       "parent_id": "SEC-01",
       "title": "Enforce object authorization and workload trust",
       "phase": "security",
-      "status": "planned",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -6946,8 +6946,9 @@
         "SEC-01B"
       ],
       "owned_paths": [
-        "app/accounts/src/main/kotlin/com/squarewise/accounts/profile/api/ProfileController.kt",
-        "app/bff/src/main/kotlin/com/squarewise/bff/",
+        "libs/ids/src/main/kotlin/com/subhrodip/squarewise/ids/contracts/ApiEndpoints.kt",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/profile/api/ProfileController.kt",
+        "app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/profile/ProfileControllerTest.kt",
         "contracts/rest/accounts.openapi.json",
         "docs/tasks/details/SEC-01C.md"
       ],
@@ -6959,9 +6960,16 @@
       "validation_commands": [
         "./gradlew :app:accounts:test --rerun-tasks --no-daemon",
         "./gradlew :app:bff:test --rerun-tasks --no-daemon",
-        "uv run python tools/contracts/validate.py"
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/contracts/validate_public_surface.py",
+        "uv run python tools/ops/check_security_hygiene.py"
       ],
-      "evidence": [],
+      "evidence": [
+        "Enforced object authorization on ProfileController.getProfileById (self-lookup or internal workload role; foreign lookups yield 403 Forbidden).",
+        "Restricted ProfileController.getProfilesBatch to internal workload authority or caller self-lookup; foreign IDs without workload authority yield 403 Forbidden.",
+        "Updated contracts/rest/accounts.openapi.json and Bruno suites with security schemes, 401 Unauthorized, and 403 Forbidden responses.",
+        "Verified with accounts and bff test suites, contract validators, and security hygiene scan."
+      ],
       "reviewer": "/root",
       "blocker": null
     },

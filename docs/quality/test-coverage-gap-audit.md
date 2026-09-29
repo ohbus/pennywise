@@ -96,6 +96,17 @@ The 282-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 
+### Closure increment: QA10-E01 error/correlation boundary
+
+`libs/errors/src/test/kotlin/com/subhrodip/squarewise/errors/GlobalErrorHandlerTest.kt`
+now checks all twelve catalog status mappings, problem metadata, the bounded
+rate-limit retry header, and the bodyless 406 response. The new
+`RequestIdContextAndFilterTest` checks valid propagation, invalid-ID replacement,
+generated UUID response headers, cleanup after normal execution, and cleanup
+after exceptions. The focused command passed 11 tests and the regenerated
+module report improved line coverage from 53.6% to 68.5% while leaving the
+remaining handler/framework branches explicitly open.
+
 ## Required evidence ladder
 
 Each production behavior is assigned the minimum evidence needed:
@@ -163,7 +174,7 @@ test cannot close a row by merely executing a line.
 
 | ID | Production target | Missing/weak evidence | Required acceptance criteria |
 | --- | --- | --- | --- |
-| QA10-E01 | `GlobalErrorHandler`, `RequestIdFilter`, `RequestIdContext` | `libs/errors` is 53.6% line-covered; the full exception/status/header/redaction matrix is not proven. | `U+T`: every catalog error, framework validation, malformed body, missing binding, type mismatch, media negotiation, optimistic conflict, unexpected exception, and rate-limit response asserts status, content type, stable code, source, request ID, bounded detail, and `Retry-After`; valid/invalid/oversized request IDs are propagated or replaced and MDC is cleared. |
+| QA10-E01 | `GlobalErrorHandler`, `RequestIdFilter`, `RequestIdContext` | `libs/errors` is now 68.5% line-covered after the first focused increment, but the full exception/status/header/redaction matrix is not proven; `GlobalErrorHandler` still has 29 missed branches. | `U+T`: every catalog error, framework validation, malformed body, missing binding, type mismatch, media negotiation, optimistic conflict, unexpected exception, and rate-limit response asserts status, content type, stable code, source, request ID, bounded detail, and `Retry-After`; valid/invalid/oversized request IDs are propagated or replaced and MDC is cleared. |
 | QA10-E02 | `DbAutoConfiguration`, `DbRoutingDataSource`, `DbOperationPolicy`, reader health/lag | `libs/db` is 57.6% line-covered and includes configuration/scheduler branches that unit tests cannot establish alone. | `U+P+E`: writer/reader route policy, command/strong/eventual query classification, fallback on lag/disconnect, recovery, causal watermark capture/validation, Flyway writer datasource, bounded pool acquisition, scheduler lifecycle, and no reader use for writes/locks/claims are asserted. |
 | QA10-E03 | `OidcJwtDecoderFactory`, reactive decoder, headers | Security helper coverage is partial and does not prove servlet/reactive parity. | `U+T+E`: issuer, audience, algorithm, key source, temporal claims, invalid subject, key rotation overlap, missing metadata/JWKS, and security headers are identical across servlet and reactive services; failures never use a permissive decoder. |
 | QA10-E04 | `ApiEndpoints`, event constants, IDs, error catalog | Low `libs/ids` JaCoCo signal is likely structural but unclassified. | `U`: contract/static tests enumerate every endpoint/event/error code exactly once, detect duplicate or drifted paths/routing keys, validate UUID/ID generation invariants, and document generated/accessor-only classes as excluded only with evidence. |

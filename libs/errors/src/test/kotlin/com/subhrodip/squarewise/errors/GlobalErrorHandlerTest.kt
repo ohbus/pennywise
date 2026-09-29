@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
 import org.springframework.dao.OptimisticLockingFailureException
+import org.springframework.http.MediaType
 
 class GlobalErrorHandlerTest {
 
@@ -81,5 +83,44 @@ class GlobalErrorHandlerTest {
         val response = handler.unexpected(RuntimeException("Database connection dropped"))
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.statusCode)
         assertEquals("INTERNAL_ERROR", response.body?.code)
+    }
+
+    /** Verifies every catalog code keeps its public status and bounded response metadata. */
+    @Test
+    fun `every catalog error maps to its governed status`() {
+        val expectedStatuses = mapOf(
+            ErrorCode.ERR_01 to HttpStatus.INTERNAL_SERVER_ERROR,
+            ErrorCode.ERR_02 to HttpStatus.BAD_REQUEST,
+            ErrorCode.ERR_03 to HttpStatus.UNAUTHORIZED,
+            ErrorCode.ERR_04 to HttpStatus.FORBIDDEN,
+            ErrorCode.ERR_05 to HttpStatus.NOT_FOUND,
+            ErrorCode.ERR_06 to HttpStatus.CONFLICT,
+            ErrorCode.ERR_07 to HttpStatus.INTERNAL_SERVER_ERROR,
+            ErrorCode.ERR_08 to HttpStatus.BAD_GATEWAY,
+            ErrorCode.ERR_09 to HttpStatus.CONFLICT,
+            ErrorCode.ERR_10 to HttpStatusCode.valueOf(422),
+            ErrorCode.ERR_11 to HttpStatus.TOO_MANY_REQUESTS,
+            ErrorCode.ERR_12 to HttpStatus.OK
+        )
+
+        expectedStatuses.forEach { (code, status) ->
+            val response = handler.applicationException(ApplicationException(code, "safe detail"))
+
+            assertEquals(status, response.statusCode, "Unexpected HTTP status for $code")
+            assertEquals(MediaType.APPLICATION_PROBLEM_JSON, response.headers.contentType)
+            assertEquals("test-service", response.body?.source)
+            assertEquals("missing-request-id", response.body?.requestId)
+            assertEquals("safe detail", response.body?.detail)
+            assertEquals(if (code == ErrorCode.ERR_11) "60" else null, response.headers.getFirst("Retry-After"))
+        }
+    }
+
+    /** Verifies the content-negotiation failure intentionally has no RFC 7807 body. */
+    @Test
+    fun `not acceptable response is bodyless`() {
+        val response = handler.notAcceptable()
+
+        assertEquals(HttpStatus.NOT_ACCEPTABLE, response.statusCode)
+        assertEquals(null, response.body)
     }
 }

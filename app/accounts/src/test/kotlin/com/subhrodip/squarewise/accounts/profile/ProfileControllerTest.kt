@@ -48,9 +48,18 @@ class ProfileControllerTest {
         request
     }
 
+    private val aliceId = UUID.nameUUIDFromBytes("oidc|alice".toByteArray(StandardCharsets.UTF_8))
+    private val policyId = UUID.nameUUIDFromBytes("oidc|policy".toByteArray(StandardCharsets.UTF_8))
+
+    @org.junit.jupiter.api.BeforeEach
+    fun setUp() {
+        recordingProfiles.seed("oidc|alice", aliceId)
+        recordingProfiles.seed("oidc|policy", policyId)
+    }
+
     @Test
     fun `profile lookup by account id uses the approved eventual reader policy`() {
-        val accountId = recordingProfiles.get("oidc|policy").accountId
+        val accountId = recordingProfiles.get("oidc|policy")!!.accountId
 
         mvc.perform(get(ApiEndpoints.Accounts.V1.profileById(accountId)))
             .andExpect(status().isOk)
@@ -67,6 +76,17 @@ class ProfileControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.displayName").value("oidc|alice"))
             .andExpect(jsonPath("$.defaultCurrency").value("EUR"))
+    }
+
+    @Test
+    fun `returns 401 unauthorized when authenticated profile does not exist`() {
+        val unmappedUser = RequestPostProcessor { request ->
+            request.userPrincipal = Principal { "oidc|unmapped" }
+            request
+        }
+        mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME).with(unmappedUser))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
     }
 
     @Test
@@ -154,10 +174,9 @@ class ProfileControllerTest {
         mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME).with(alice))
             .andExpect(status().isOk)
 
-        val accountId = UUID.nameUUIDFromBytes("oidc|alice".toByteArray(StandardCharsets.UTF_8))
-        mvc.perform(get(ApiEndpoints.Accounts.V1.profileById(accountId)))
+        mvc.perform(get(ApiEndpoints.Accounts.V1.profileById(aliceId)))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.accountId").value(accountId.toString()))
+            .andExpect(jsonPath("$.accountId").value(aliceId.toString()))
             .andExpect(jsonPath("$.displayName").value("oidc|alice"))
             .andExpect(jsonPath("$.timezone").value("UTC"))
             .andExpect(jsonPath("$.defaultCurrency").value("EUR"))
@@ -174,25 +193,16 @@ class ProfileControllerTest {
     @Test
     fun `store finds profile by account id and returns null when absent`() {
         val store = InMemoryProfileStore()
-        val created = store.get("oidc|bob")
+        val created = store.seed("oidc|bob")
         assertEquals(created, store.findById(created.accountId))
         org.junit.jupiter.api.Assertions.assertNull(store.findById(UUID.randomUUID()))
     }
 
     @Test
     fun `gets profiles in batch for valid account ids`() {
-        mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME).with(alice))
-            .andExpect(status().isOk)
-
-        val bob = RequestPostProcessor { request ->
-            request.userPrincipal = Principal { "oidc|bob" }
-            request
-        }
-        mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME).with(bob))
-            .andExpect(status().isOk)
-
-        val aliceId = UUID.nameUUIDFromBytes("oidc|alice".toByteArray(StandardCharsets.UTF_8))
         val bobId = UUID.nameUUIDFromBytes("oidc|bob".toByteArray(StandardCharsets.UTF_8))
+        recordingProfiles.seed("oidc|bob", bobId)
+
         val nonExistentId = UUID.randomUUID()
 
         val requestBody = "{\"accountIds\": [\"$aliceId\", \"$bobId\", \"$nonExistentId\"]}"
@@ -244,10 +254,6 @@ class ProfileControllerTest {
     /** Verifies duplicate requested IDs produce one profile rather than duplicated response rows. */
     @Test
     fun `deduplicates repeated profile identifiers in batch response`() {
-        mvc.perform(get(ApiEndpoints.Accounts.V1.PATH_ME).with(alice))
-            .andExpect(status().isOk)
-        val aliceId = UUID.nameUUIDFromBytes("oidc|alice".toByteArray(StandardCharsets.UTF_8))
-
         mvc.perform(post(ApiEndpoints.Accounts.V1.PATH_PROFILES_BATCH)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"accountIds\":[\"$aliceId\",\"$aliceId\"]}"))
@@ -259,9 +265,9 @@ class ProfileControllerTest {
     @Test
     fun `store finds profiles in batch and ignores non-existent ids`() {
         val store = InMemoryProfileStore()
-        val p1 = store.get("oidc|user-1")
-        val p2 = store.get("oidc|user-2")
-        val p3 = store.get("oidc|user-3")
+        val p1 = store.seed("oidc|user-1")
+        val p2 = store.seed("oidc|user-2")
+        val p3 = store.seed("oidc|user-3")
 
         val result = store.findByIds(listOf(p1.accountId, p3.accountId, UUID.randomUUID()))
         assertEquals(2, result.size)
@@ -271,10 +277,18 @@ class ProfileControllerTest {
     }
 }
 
-private class RecordingProfileStore(private val delegate: ProfileStore) : ProfileStore {
+private class RecordingProfileStore(private val delegate: InMemoryProfileStore) : ProfileStore {
     var lastContext: com.subhrodip.squarewise.db.routing.DbExecutionContext? = null
 
-    override fun get(subject: String): ProfileResponse = delegate.get(subject)
+    override fun get(subject: String): ProfileResponse? = delegate.get(subject)
+
+    override fun create(
+        accountId: UUID,
+        subject: String,
+        displayName: String,
+        timezone: String,
+        defaultCurrency: String
+    ): ProfileResponse = delegate.create(accountId, subject, displayName, timezone, defaultCurrency)
 
     override fun findById(accountId: UUID): ProfileResponse? {
         lastContext = DbContextHolder.current()
@@ -289,4 +303,6 @@ private class RecordingProfileStore(private val delegate: ProfileStore) : Profil
     override fun update(subject: String, patch: ProfilePatchRequest): ProfileResponse = delegate.update(subject, patch)
 
     override fun requestDeletion(subject: String) = delegate.requestDeletion(subject)
+
+    fun seed(subject: String, accountId: UUID = UUID.randomUUID()) = delegate.seed(subject, accountId)
 }

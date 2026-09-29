@@ -71,7 +71,8 @@ class AuthControllerTest @Autowired constructor(
     private val verificationService = LoginVerificationService(
         credentialService = credentialService,
         profileStore = profileStore,
-        tokenSessionService = tokenSessionService
+        tokenSessionService = tokenSessionService,
+        accountIdentityStore = profileStore
     )
 
     private val controller = AuthController(
@@ -236,10 +237,15 @@ class AuthControllerTest @Autowired constructor(
             now = Instant.now()
         )
         val session = verificationService.verify(issued.plaintext, "BROWSER", null, Instant.now())
+        val userPrincipal = RequestPostProcessor { request ->
+            val identity = profileStore.findByEmail("alice@example.com")!!
+            request.userPrincipal = Principal { identity.subject }
+            request
+        }
 
         mvc.perform(
             post(ApiEndpoints.Accounts.V1.PATH_LOGOUT)
-                .with(alice)
+                .with(userPrincipal)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"refreshToken\":\"${session.refreshToken}\"}")
         )

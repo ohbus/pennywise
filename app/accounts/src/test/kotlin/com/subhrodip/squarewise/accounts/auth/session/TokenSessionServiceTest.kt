@@ -41,8 +41,9 @@ class TokenSessionServiceTest @Autowired constructor(
             absoluteSessionLifetime = java.time.Duration.ofDays(90),
             clockSkew = java.time.Duration.ZERO
         ),
-        accountIdentityStore = AccountIdentityStore { id ->
-            AccountIdentity(id, currentSubject, "test@example.com", false)
+        accountIdentityStore = object : AccountIdentityStore {
+            override fun findByAccountId(accountId: UUID): AccountIdentity? =
+                AccountIdentity(accountId, currentSubject, "test@example.com", false)
         }
     )
 

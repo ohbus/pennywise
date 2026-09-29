@@ -42,7 +42,7 @@ class ProfileController(
 
     @GetMapping(ApiEndpoints.Accounts.V1.ME)
     fun get(principal: Principal): ProfileResponse =
-        profiles.get(principal.name)
+        profiles.get(principal.name) ?: throw ApplicationException(ErrorCode.ERR_03, "Authenticated profile not found")
 
     @PatchMapping(ApiEndpoints.Accounts.V1.ME)
     fun update(

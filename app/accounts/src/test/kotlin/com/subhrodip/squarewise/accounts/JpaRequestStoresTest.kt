@@ -39,8 +39,8 @@ class JpaRequestStoresTest @Autowired constructor(
     fun `persists deletion request idempotently and preserves historical financial profile reference`() {
         val subject = "oidc|user-${UUID.randomUUID()}"
 
-        // Initial profile creation
-        val profile = profileStore.get(subject)
+        // Explicit profile creation
+        val profile = profileStore.create(UUID.randomUUID(), subject, subject)
         assertEquals(subject, profile.displayName)
 
         val now = Instant.now()
@@ -122,7 +122,7 @@ class JpaRequestStoresTest @Autowired constructor(
     @Test
     fun `finds profile by account id`() {
         val subject = "oidc|user-${UUID.randomUUID()}"
-        val profile = profileStore.get(subject)
+        val profile = profileStore.create(UUID.randomUUID(), subject, subject)
 
         val found = profileStore.findById(profile.accountId)
         assertNotNull(found)
@@ -139,8 +139,8 @@ class JpaRequestStoresTest @Autowired constructor(
     fun `finds profiles in batch by account ids`() {
         val subject1 = "oidc|user-${UUID.randomUUID()}"
         val subject2 = "oidc|user-${UUID.randomUUID()}"
-        val p1 = profileStore.get(subject1)
-        val p2 = profileStore.get(subject2)
+        val p1 = profileStore.create(UUID.randomUUID(), subject1, subject1)
+        val p2 = profileStore.create(UUID.randomUUID(), subject2, subject2)
 
         val batch = profileStore.findByIds(listOf(p1.accountId, p2.accountId, UUID.randomUUID()))
         assertEquals(2, batch.size)

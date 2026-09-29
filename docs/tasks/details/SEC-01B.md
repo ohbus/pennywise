@@ -2,7 +2,7 @@
 
 ## Status
 
-Planned. Depends on SEC-01A.
+Complete. Implemented and verified under SEC-01B.
 
 ## Objective
 
@@ -41,8 +41,18 @@ data. In the target model:
    and lifecycle transitions.
 
 ## Verification Commands
-
+ 
 - `./gradlew :app:accounts:test --rerun-tasks --no-daemon`
 - `uv run python tools/contracts/validate.py`
 - `uv run python tools/ops/check_security_hygiene.py`
 - `uv run python tools/ops/check_architecture.py`
+- `make python-typecheck`
+
+## Implementation Notes
+
+- Created `account_identities` table (`V10__create_account_identities.sql`) with unique constraint on `(issuer, provider_subject)` and indexed `account_id` and `email`.
+- Included forward-only portable backfill from `account_profiles` populating initial identity records.
+- Implemented `AccountIdentityEntity`, `AccountIdentityRepository`, and `JpaAccountIdentityStore` adhering to strict SOLID file separation.
+- Decoupled `ProfileStore`: refactored `ProfileQueryStore.get(subject): ProfileResponse?` into a pure query and `ProfileCommandStore.create(...)` into an explicit command, eliminating implicit profile provisioning on `/me` lookups (satisfying CQS).
+- Updated `LoginVerificationService` to explicitly enroll identities via `accountIdentityStore.enrollIdentity(...)` with durable `sqw:$accountId` subjects, decoupled from email.
+- Verified identity lookup, email updates without altering subject, Flyway V10 execution, and profile failure behaviors in `JpaAccountIdentityStoreTest` and `ProfileControllerTest`.

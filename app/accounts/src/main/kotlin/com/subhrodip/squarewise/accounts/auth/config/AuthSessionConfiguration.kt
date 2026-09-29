@@ -106,12 +106,15 @@ class AuthSessionConfiguration(
     fun loginVerificationService(
         credentialService: LoginCredentialService,
         profileStore: ProfileStore,
-        tokenSessionService: TokenSessionService
+        tokenSessionService: TokenSessionService,
+        accountIdentityStore: AccountIdentityStore
     ): LoginVerificationService =
         LoginVerificationService(
             credentialService = credentialService,
             profileStore = profileStore,
-            tokenSessionService = tokenSessionService
+            tokenSessionService = tokenSessionService,
+            accountIdentityStore = accountIdentityStore,
+            issuerUri = issuerUri
         )
 
 }

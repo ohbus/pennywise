@@ -6898,7 +6898,7 @@
       "parent_id": "SEC-01",
       "title": "Make durable identity independent of email",
       "phase": "security",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -6923,7 +6923,13 @@
         "uv run python tools/contracts/validate.py",
         "uv run python tools/ops/check_security_hygiene.py"
       ],
-      "evidence": [],
+      "evidence": [
+        "Created Flyway V10 migration with unique (issuer, provider_subject) and deterministic backfill.",
+        "Created AccountIdentityEntity, AccountIdentityRepository, and JpaAccountIdentityStore under auth/identity/persistence.",
+        "Refactored ProfileStore to pure query (nullable get) and explicit command (create), eliminating implicit provisioning on GET /me.",
+        "Enrolled durable identity in LoginVerificationService with sqw:$accountId subjects independent of email.",
+        "All 100+ accounts unit and integration tests passed, including JpaAccountIdentityStoreTest and ProfileControllerTest."
+      ],
       "reviewer": "/root",
       "blocker": null
     },

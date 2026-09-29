@@ -6,19 +6,35 @@ import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentityStore
 import com.subhrodip.squarewise.accounts.profile.api.ProfileResponse
 import com.subhrodip.squarewise.accounts.profile.service.ProfileRules
 import com.subhrodip.squarewise.accounts.profile.api.ProfilePatchRequest
-import java.nio.charset.StandardCharsets
+import com.subhrodip.squarewise.errors.domain.ApplicationException
+import com.subhrodip.squarewise.errors.domain.ErrorCode
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * In-memory thread-safe implementation of [ProfileStore] used for unit testing.
+ * In-memory thread-safe implementation of [ProfileStore] and [AccountIdentityStore] used for testing.
  */
 class InMemoryProfileStore : ProfileStore, AccountIdentityStore {
     private val profiles = ConcurrentHashMap<String, StoredProfile>()
+    private val identities = ConcurrentHashMap<UUID, AccountIdentity>()
 
-    override fun get(subject: String): ProfileResponse {
+    override fun get(subject: String): ProfileResponse? {
         ProfileRules.requireSubject(subject)
-        return profiles.computeIfAbsent(subject) { default(subject) }.response
+        return profiles[subject]?.response
+    }
+
+    override fun create(
+        accountId: UUID,
+        subject: String,
+        displayName: String,
+        timezone: String,
+        defaultCurrency: String
+    ): ProfileResponse {
+        ProfileRules.requireSubject(subject)
+        ProfileRules.requireTimezone(timezone)
+        val response = ProfileResponse(accountId, displayName, timezone, defaultCurrency)
+        profiles[subject] = StoredProfile(response)
+        return response
     }
 
     override fun findById(accountId: UUID): ProfileResponse? =
@@ -28,7 +44,7 @@ class InMemoryProfileStore : ProfileStore, AccountIdentityStore {
         profiles.values.filter { accountIds.contains(it.response.accountId) }.map { it.response }
 
     override fun findByAccountId(accountId: UUID): AccountIdentity? =
-        profiles.entries.firstOrNull { it.value.response.accountId == accountId }?.let { (subject, profile) ->
+        identities[accountId] ?: profiles.entries.firstOrNull { it.value.response.accountId == accountId }?.let { (subject, profile) ->
             AccountIdentity(
                 accountId = accountId,
                 subject = subject,
@@ -37,8 +53,39 @@ class InMemoryProfileStore : ProfileStore, AccountIdentityStore {
             )
         }
 
+    override fun findByIssuerAndSubject(issuer: String, providerSubject: String): AccountIdentity? =
+        identities.values.firstOrNull { it.issuer == issuer && it.subject == providerSubject }
+
+    override fun findByEmail(email: String): AccountIdentity? =
+        identities.values.firstOrNull { it.email.equals(email, ignoreCase = true) }
+
+    override fun enrollIdentity(
+        accountId: UUID,
+        issuer: String,
+        providerSubject: String,
+        email: String,
+        verified: Boolean
+    ): AccountIdentity {
+        val identity = AccountIdentity(
+            accountId = accountId,
+            subject = providerSubject,
+            email = email,
+            deletionRequested = false,
+            issuer = issuer
+        )
+        identities[accountId] = identity
+        return identity
+    }
+
+    override fun updateEmail(accountId: UUID, email: String, verified: Boolean): AccountIdentity {
+        val current = findByAccountId(accountId) ?: throw IllegalArgumentException("Account not found")
+        val updated = current.copy(email = email)
+        identities[accountId] = updated
+        return updated
+    }
+
     override fun update(subject: String, patch: ProfilePatchRequest): ProfileResponse {
-        val current = get(subject)
+        val current = get(subject) ?: throw ApplicationException(ErrorCode.ERR_03, "Profile not found")
         val updated = current.copy(
             displayName = patch.displayName ?: current.displayName,
             timezone = patch.timezone?.also(ProfileRules::requireTimezone) ?: current.timezone,
@@ -49,16 +96,12 @@ class InMemoryProfileStore : ProfileStore, AccountIdentityStore {
     }
 
     override fun requestDeletion(subject: String) {
-        val current = profiles.computeIfAbsent(subject) { default(subject) }
+        val current = profiles[subject] ?: throw ApplicationException(ErrorCode.ERR_03, "Profile not found")
         profiles[subject] = current.copy(deletionRequested = true)
     }
 
-    private fun default(subject: String) = StoredProfile(
-        ProfileResponse(
-            UUID.nameUUIDFromBytes(subject.toByteArray(StandardCharsets.UTF_8)),
-            subject,
-            "UTC",
-            "EUR"
-        )
-    )
+    /** Helper for tests to pre-seed profiles. */
+    fun seed(subject: String, accountId: UUID = UUID.randomUUID()): ProfileResponse {
+        return create(accountId, subject, subject, "UTC", "EUR")
+    }
 }

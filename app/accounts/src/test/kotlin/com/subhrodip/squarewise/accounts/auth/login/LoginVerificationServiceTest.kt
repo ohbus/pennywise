@@ -45,7 +45,8 @@ class LoginVerificationServiceTest @Autowired constructor(
     private val service = LoginVerificationService(
         credentialService = credentialService,
         profileStore = profileStore,
-        tokenSessionService = tokenSessionService
+        tokenSessionService = tokenSessionService,
+        accountIdentityStore = profileStore
     )
 
     @Test
@@ -67,9 +68,12 @@ class LoginVerificationServiceTest @Autowired constructor(
         assertNotNull(tokens.accessToken)
         assertNotNull(tokens.refreshToken)
 
-        val profile = profileStore.get("internal:login@example.com")
+        val identity = profileStore.findByEmail("login@example.com")
+        assertNotNull(identity)
+        val profile = profileStore.get(identity!!.subject)
         assertNotNull(profile)
-        assertEquals("internal:login@example.com", profile.displayName)
+        assertEquals("login", profile!!.displayName)
+        assertEquals(identity.accountId, profile.accountId)
     }
 
     @Test

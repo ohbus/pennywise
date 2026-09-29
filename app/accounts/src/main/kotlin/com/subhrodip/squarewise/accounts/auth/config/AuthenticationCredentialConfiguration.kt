@@ -2,6 +2,8 @@
 
 package com.subhrodip.squarewise.accounts.auth.config
 
+import com.subhrodip.squarewise.accounts.auth.abuse.ClientAddressResolver
+import com.subhrodip.squarewise.accounts.auth.abuse.TrustedProxyProperties
 import com.subhrodip.squarewise.accounts.auth.credential.CredentialDigest
 import com.subhrodip.squarewise.accounts.auth.credential.HmacCredentialDigest
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialRepository
@@ -11,11 +13,13 @@ import com.subhrodip.squarewise.accounts.auth.delivery.security.AesGcmCredential
 import com.subhrodip.squarewise.accounts.auth.delivery.security.CredentialEnvelopeProtector
 import java.util.Base64
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 /** Fail-closed deployment wiring for passwordless credential cryptography. */
 @Configuration
+@EnableConfigurationProperties(TrustedProxyProperties::class)
 class AuthenticationCredentialConfiguration(
     @Value("\${SQUAREWISE_SECURITY_CREDENTIAL_DIGEST_SECRET}")
     private val encodedDigestSecret: String,
@@ -72,6 +76,16 @@ class AuthenticationCredentialConfiguration(
         emailSender: com.subhrodip.squarewise.accounts.auth.delivery.service.AuthEmailSender
     ): com.subhrodip.squarewise.accounts.auth.login.LoginStartService =
         com.subhrodip.squarewise.accounts.auth.login.LoginStartService(rateLimitService, credentialService, emailSender)
+
+    /**
+     * Creates the [ClientAddressResolver] from deployment-configured trusted-proxy addresses.
+     *
+     * SEC-007: Trusted proxies are resolved from [TrustedProxyProperties]; only forwarded
+     * headers from these addresses are trusted for client IP extraction.
+     */
+    @Bean
+    fun clientAddressResolver(properties: TrustedProxyProperties): ClientAddressResolver =
+        ClientAddressResolver.fromProperties(properties)
 
     private fun decodeSecret(): ByteArray = runCatching {
         Base64.getDecoder().decode(encodedDigestSecret)

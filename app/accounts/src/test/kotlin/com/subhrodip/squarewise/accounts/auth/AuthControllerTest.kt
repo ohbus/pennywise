@@ -1,5 +1,6 @@
 package com.subhrodip.squarewise.accounts.auth
 
+import com.subhrodip.squarewise.accounts.auth.abuse.ClientAddressResolver
 import com.subhrodip.squarewise.accounts.auth.credential.HmacCredentialDigest
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialRepository
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialService
@@ -75,11 +76,15 @@ class AuthControllerTest @Autowired constructor(
         accountIdentityStore = profileStore
     )
 
+    // No trusted proxies in tests — raw socket address is always used.
+    private val clientAddressResolver = ClientAddressResolver()
+
     private val controller = AuthController(
         loginStartService = startService,
         loginVerificationService = verificationService,
         tokenSessionService = tokenSessionService,
-        refreshRateLimitService = refreshRateLimitService
+        refreshRateLimitService = refreshRateLimitService,
+        clientAddressResolver = clientAddressResolver
     )
 
     private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(controller)

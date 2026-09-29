@@ -7023,7 +7023,7 @@
       "parent_id": "SEC-01",
       "title": "Formalize rate-limit and bearer-revocation guarantees",
       "phase": "security",
-      "status": "planned",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -7031,8 +7031,12 @@
         "SEC-01B"
       ],
       "owned_paths": [
-        "app/accounts/src/main/kotlin/com/squarewise/accounts/auth/abuse/",
-        "app/accounts/src/main/kotlin/com/squarewise/accounts/auth/session/",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/auth/AuthController.kt",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/auth/abuse/ClientAddressResolver.kt",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/auth/abuse/TrustedProxyProperties.kt",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/auth/config/AuthenticationCredentialConfiguration.kt",
+        "app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/abuse/ClientAddressResolverTest.kt",
+        "app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/AuthControllerTest.kt",
         "docs/tasks/details/SEC-01E.md"
       ],
       "specification": "docs/tasks/details/SEC-01E.md",
@@ -7043,9 +7047,20 @@
       ],
       "validation_commands": [
         "./gradlew :app:accounts:test --rerun-tasks --no-daemon",
-        "uv run python tools/contracts/validate.py"
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/ops/check_security_hygiene.py"
       ],
-      "evidence": [],
+      "evidence": [
+        "SEC-007: Introduced ClientAddressResolver (new class) and TrustedProxyProperties (new config). Only connections from configured trusted proxies cause forwarded headers to be consulted; all others use raw socket address.",
+        "SEC-007: IPv4 addresses normalized to /24 (three-octet prefix); IPv6 addresses normalized to /48 (three 16-bit groups). Resolves collision between unrelated subnets sharing a two-octet prefix.",
+        "SEC-007: AuthController now injects ClientAddressResolver, removing inline two-octet truncation heuristic. Spring bean wired in AuthenticationCredentialConfiguration.",
+        "SEC-008: Access token lifetime explicitly bounded at 10 minutes (SessionPolicyProperties.accessTokenLifetime). Refresh session revocation via PostgreSQL revokedAt is already implemented and atomic.",
+        "New ClientAddressResolverTest: 14 test cases covering direct connections, trusted proxy XFF/X-Real-IP, spoofing prevention, IPv4/24, IPv6/48, multi-hop chains, fallback, fromProperties factory.",
+        "AuthControllerTest updated to inject ClientAddressResolver (no trusted proxies in tests).",
+        "BUILD SUCCESSFUL: ./gradlew :app:accounts:test --rerun-tasks --no-daemon (19 tasks)",
+        "uv run python tools/contracts/validate.py: valid (207 tasks)",
+        "uv run python tools/ops/check_security_hygiene.py: passed (1032 files)"
+      ],
       "reviewer": "/root",
       "blocker": null
     },

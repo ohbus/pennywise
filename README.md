@@ -171,6 +171,8 @@ Squarewise enforces a contract-first design. All schema definitions reside under
 - **RFC 9457 Problem Details**: [`contracts/errors/problem.schema.json`](contracts/errors/problem.schema.json)
 - **Central Constants**: All endpoints and headers are centralized in `com.subhrodip.squarewise.ids.ApiEndpoints`.
 
+Repository documentation is indexed in [`docs/README.md`](docs/README.md), with [`AGENTS.md`](AGENTS.md) as the working-agreement root.
+
 ---
 
 ## Quality & Verification
@@ -251,4 +253,4 @@ We welcome contributions! Please read our [**Contributing Guide (CONTRIBUTING.md
 
 ## License
 
-Squarewise is open-source software licensed under the [MIT License](LICENSE).
+Squarewise is open-source software licensed under the [MIT License](https://opensource.org/license/mit).

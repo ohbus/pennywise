@@ -1,0 +1,51 @@
+%% Source: contracts/rest/accounts.openapi.json, docs/security/endpoint-authentication-matrix.md
+sequenceDiagram
+    autonumber
+    participant U as Unauthenticated Client
+    participant B as GraphQL BFF / Gateway
+    participant R as Redis (Rate Limit)
+    participant A as Accounts Service
+    participant DB as Accounts PostgreSQL
+    participant M as Outbox / Notification Worker
+
+    Note over U,M: Phase 1: Login Request (Anti-Enumeration)
+    U->>B: POST /auth/login/start {"email": "user@example.com"}
+    B->>A: POST /accounts/v1/auth/login/start
+    A->>R: Atomic Lua check rate-limit (IP + Email buckets)
+    alt Rate Limit Exceeded
+        R-->>A: Limit exhausted
+        A-->>B: 429 Too Many Requests (Retry-After: 60)
+        B-->>U: 429 Too Many Requests
+    else Admitted
+        R-->>A: OK
+        A->>A: Normalize email, generate single-use high-entropy token
+        A->>DB: Store hashed credential (auth_credentials) with expiry (5-10m)
+        A->>DB: Write transactional outbox (auth-email-requested.v1)
+        DB-->>A: Commit
+        A-->>B: 202 Accepted {"status":"accepted","retryAfterSeconds":60}
+        B-->>U: 202 Accepted {"status":"accepted","retryAfterSeconds":60}
+        A->>M: Relay outbox event
+        M-->>U: Send Magic Link / Code via Email
+    end
+
+    Note over U,M: Phase 2: Verification & Session Establishment
+    U->>B: POST /auth/login/verify {"credential": "one-time-value"}
+    B->>A: POST /accounts/v1/auth/login/verify
+    A->>DB: Hash token and select auth_credentials (FOR UPDATE)
+    alt Invalid, Expired, or Already Replayed
+        DB-->>A: Credential not found or expired
+        A-->>B: 401 Unauthorized (Problem Details: INVALID_CREDENTIAL)
+        B-->>U: 401 Unauthorized
+    else Valid Credential
+        A->>DB: Mark consumed = true (atomic single-use)
+        A->>A: Mint short-lived access JWT (5-10m) + opaque refresh token
+        A->>DB: Store hashed refresh token in auth_sessions (bound to family)
+        A->>DB: Insert security audit event (LOGIN_SUCCESS)
+        DB-->>A: Commit
+        A-->>B: 200 OK + JWT access token + refresh token
+        alt Browser Client
+            B-->>U: 200 OK (Set-Cookie: HttpOnly, Secure, SameSite=Lax) + X-CSRF-Token
+        else Native / API Client
+            B-->>U: 200 OK {"accessToken": "...", "refreshToken": "..."}
+        end
+    end

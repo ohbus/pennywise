@@ -12,6 +12,10 @@ The diagrams cover three levels:
   transaction, outbox publication, and notification delivery.
 - `component-boundaries.mmd` shows deployable application boundaries, shared
   libraries, owned persistence, and prohibited direct cross-service access.
+- `auth-lifecycle-unauthenticated.mmd` shows the authentication and session
+  establishment flow for unauthenticated users (login initiation, credential delivery, and verification).
+- `auth-lifecycle-authenticated.mmd` shows the authorization, JWT validation,
+  token family refresh rotation, and logout lifecycle for authenticated users.
 
 Edit the diagram source and the relevant architecture or contract document in
 the same task. Do not edit generated SVG files. Render locally with:

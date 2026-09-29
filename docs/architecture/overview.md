@@ -47,10 +47,12 @@ Fallback, retry, defaulting, and degradation behavior is catalogued in the
 [fallback mechanism audit](fallback-mechanisms.md). Per-request database and cache
 lookup counts and flow diagrams are catalogued in [database and cache access patterns](database-and-cache-access-patterns.md).
 
-Clients authenticate with OIDC. Resource services validate signed access tokens
+Clients authenticate with OIDC or passwordless login. Resource services validate signed access tokens
 and enforce their own authorization; the BFF is not the security boundary. Internal
-workers use scoped identities. Account lifecycle work must preserve attributable
-financial history while applying the eventual launch-market retention policy.
+workers use scoped identities. The complete matrix, sequence flows, and event lifecycles
+are documented in [Authentication and Authorization Lifecycle](../security/auth-and-authz-lifecycle.md).
+Account lifecycle work must preserve attributable financial history while applying the
+eventual launch-market retention policy.
 
 REST owns commands and authoritative reads; RabbitMQ delivers committed effects.
 Events carry versioned envelopes and minimal data. WebSocket notifications are

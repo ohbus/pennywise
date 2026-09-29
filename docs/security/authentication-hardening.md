@@ -73,19 +73,19 @@ provider-qualified subject, and token responses prohibit intermediary caching.
 
 | ID | Deliverable | Priority | Dependency | Status |
 |---|---|---:|---|---|
-| AUTH-01 | Provider-neutral architecture and tracker | P0 | — | Planned |
-| AUTH-02 | Remove implicit `test-user` identity fallback | P0 | AUTH-01 | Planned |
-| AUTH-03 | Fail-closed production JWT resource server | P0 | AUTH-01 | Planned |
-| AUTH-04 | Issuer, audience, algorithm, expiry, and subject validation | P0 | AUTH-03 | Planned |
-| AUTH-05 | Explicit opt-in/localhost safeguards for local demo auth | P0 | AUTH-01 | Planned |
-| AUTH-06 | Optional local Keycloak realm and Mailpit bootstrap | P1 | AUTH-03 | Planned |
-| AUTH-07 | Squarewise-owned login start/callback contracts | P1 | AUTH-01 | Planned |
+| AUTH-01 | Provider-neutral architecture and tracker | P0 | — | Done |
+| AUTH-02 | Remove implicit `test-user` identity fallback | P0 | AUTH-01 | Done |
+| AUTH-03 | Fail-closed production JWT resource server | P0 | AUTH-01 | Done |
+| AUTH-04 | Issuer, audience, algorithm, expiry, and subject validation | P0 | AUTH-03 | Done |
+| AUTH-05 | Explicit opt-in/localhost safeguards for local demo auth | P0 | AUTH-01 | Done |
+| AUTH-06 | Optional local Keycloak realm and Mailpit bootstrap | P1 | AUTH-03 | Done |
+| AUTH-07 | Squarewise-owned login start/callback contracts | P1 | AUTH-01 | Done |
 | AUTH-08 | RFC-aligned session lifecycle, endpoint protection, cache consistency, and full local security evidence | P0 | AUTH-07, DB-08, ERR-03, QA-07 | Done |
 | AUTH-09 | Rate limiting and email-enumeration protection | P0 | AUTH-08 | Planned |
 | AUTH-10 | Identity mapping using provider-qualified subjects | P0 | AUTH-03 | Planned |
 | AUTH-11 | Short-lived access credentials and rotating refresh tokens | P0 | AUTH-10 | Planned |
 | AUTH-12 | Logout, revocation, reuse detection, and session management | P0 | AUTH-11 | Planned |
-| AUTH-13 | Secure browser cookies and CSRF policy | P0 | AUTH-11 | Implemented in AUTH-08 |
+| AUTH-13 | Secure browser cookies and CSRF policy | P0 | AUTH-11 | Done (AUTH-08) |
 | AUTH-14 | GraphQL HTTP/WebSocket authentication parity | P0 | AUTH-03 | Planned |
 | AUTH-15 | Real-provider integration and security regression suites | P0 | AUTH-06, AUTH-12 | Planned |
 | AUTH-16 | Operations, key rotation, incident response, and recovery runbooks | P1 | AUTH-12 | Planned |

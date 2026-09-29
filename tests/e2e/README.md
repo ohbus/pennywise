@@ -5,7 +5,7 @@ The end-to-end test suites run against the live local environment (`infra/local/
 ### Test Suites
 
 1. **Product Journey Lifecycle (`test_product_journey.py`)**:
-   - User profile provisioning via Accounts and GraphQL BFF (`me`).
+   - Explicit local-fixture profile enrollment via Accounts and GraphQL BFF (`me`).
    - Group lifecycle via GraphQL BFF (`createGroup`, `group`).
    - Invitations and membership claiming across users via Expense Core.
    - Multi-participant expense creation with equal allocation splits.
@@ -56,3 +56,7 @@ client uses a ten-second TCP/protocol-setup timeout and switches to blocking
 event reads only after `connection_ack`; this prevents unavailable services
 from hanging a test process indefinitely. These client timeouts do not claim
 that application-level timeout or retry policy is production-proven.
+The local OIDC token helper enrolls the three Keycloak service-account subjects in
+the local Accounts database before the suites run. This is fixture setup only:
+application profile reads remain non-provisioning, and production/staging never
+seed or implicitly create profiles from bearer-token reads.

@@ -29,6 +29,74 @@ test -n "$BOB_TOKEN" || { echo "Keycloak returned no E2E second-persona token" >
 NONMEMBER_TOKEN="$(fetch_token squarewise-ci-e2e-nonmember squarewise-ci-e2e-nonmember-local-only)"
 test -n "$NONMEMBER_TOKEN" || { echo "Keycloak returned no E2E non-member token" >&2; exit 2; }
 
+# The local OIDC personas are provider-authenticated, but Accounts deliberately
+# does not auto-provision profiles on a read. Enroll the three CI fixture
+# subjects explicitly in the local Accounts database so all E2E suites exercise
+# the real authenticated profile path without weakening production behavior.
+provision_local_profile() {
+  local token="$1"
+  local display_name="$2"
+  local email="$3"
+  local subject issuer account_id identity_id
+  readarray -t claims < <(python3 - "$token" <<'PY'
+import base64
+import json
+import sys
+
+payload = sys.argv[1].split('.')[1]
+payload += '=' * (-len(payload) % 4)
+claims = json.loads(base64.urlsafe_b64decode(payload))
+print(claims["sub"])
+print(claims["iss"])
+PY
+  )
+  subject="${claims[0]}"
+  issuer="${claims[1]}"
+  account_id="$(python3 - "$subject" <<'PY'
+import sys
+import uuid
+
+print(uuid.uuid5(uuid.UUID("7e5c0c7f-8e0e-4d8d-9f9d-7e2c6f8d3d4b"), f"squarewise-ci:{sys.argv[1]}"))
+PY
+  )"
+  identity_id="$(python3 - "$issuer" "$subject" <<'PY'
+import sys
+import uuid
+
+print(uuid.uuid5(uuid.UUID("7e5c0c7f-8e0e-4d8d-9f9d-7e2c6f8d3d4b"), f"identity:{sys.argv[1]}:{sys.argv[2]}"))
+PY
+  )"
+
+  docker compose -f infra/local/docker-compose.dev.yml exec -T postgres \
+    psql -v ON_ERROR_STOP=1 -U "${POSTGRES_USER:-squarewise}" -d squarewise_accounts \
+    -v account_id="$account_id" -v identity_id="$identity_id" -v subject="$subject" -v issuer="$issuer" \
+    -v display_name="$display_name" -v email="$email" <<'SQL'
+INSERT INTO account_profiles (account_id, subject, display_name, timezone, default_currency)
+VALUES (:'account_id'::uuid, :'subject', :'display_name', 'UTC', 'EUR')
+ON CONFLICT (subject) DO UPDATE
+SET display_name = EXCLUDED.display_name,
+    timezone = EXCLUDED.timezone,
+    default_currency = EXCLUDED.default_currency;
+
+INSERT INTO account_identities (
+    identity_id, account_id, issuer, provider_subject, email, email_verified, status
+)
+VALUES (
+    :'identity_id'::uuid, :'account_id'::uuid, :'issuer', :'subject', :'email', TRUE, 'ACTIVE'
+)
+ON CONFLICT (issuer, provider_subject) DO UPDATE
+SET account_id = EXCLUDED.account_id,
+    email = EXCLUDED.email,
+    email_verified = TRUE,
+    status = 'ACTIVE',
+    updated_at = CURRENT_TIMESTAMP;
+SQL
+}
+
+provision_local_profile "$TOKEN" "Alice" "alice@squarewise.local"
+provision_local_profile "$BOB_TOKEN" "Bob" "bob@squarewise.local"
+provision_local_profile "$NONMEMBER_TOKEN" "Nonmember" "nonmember@squarewise.local"
+
 WRONG_AUDIENCE_TOKEN="$(fetch_token squarewise-ci-wrong-audience squarewise-ci-wrong-audience-local-only)"
 test -n "$WRONG_AUDIENCE_TOKEN" || { echo "Keycloak returned no negative-audience token" >&2; exit 2; }
 

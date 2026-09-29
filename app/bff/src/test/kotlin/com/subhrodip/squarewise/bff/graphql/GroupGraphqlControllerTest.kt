@@ -32,8 +32,10 @@ import com.subhrodip.squarewise.bff.transport.UpstreamServiceException
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
@@ -356,6 +358,41 @@ class GroupGraphqlControllerTest {
             assertEquals(groupId, events[0].groupId)
             assertEquals(1L, events[0].revision)
             assertNotNull(events[0].changeId)
+        } finally {
+            disposable.dispose()
+        }
+    }
+
+    @Test
+    fun `groupChanged flux terminates when member is revoked mid-stream (SEC-003)`() {
+        val fanout = LiveUpdateFanout()
+        val revokeController = GroupGraphqlController(gateway, fanout)
+        val groupId = UUID.randomUUID().toString()
+        `when`(gateway.getGroup(groupId, "alice"))
+            .thenReturn(Mono.just(BffGroup(groupId, "Trip", "TRIP", "1")))
+
+        val received = mutableListOf<GroupInvalidation>()
+        var completed = false
+
+        val disposable = revokeController.groupChanged(groupId, principal)
+            .doOnComplete { completed = true }
+            .subscribe { received.add(it) }
+
+        try {
+            // Emit an event — should be received while still subscribed.
+            fanout.emitInvalidation(groupId, 1L, "change-1")
+            assertEquals(1, received.size)
+            assertFalse(completed, "stream must still be active before revocation")
+
+            // Simulate a member.removed event via BffEventConsumer.
+            fanout.revokeUserFromGroup("alice", groupId)
+
+            // After revocation the Flux should have completed.
+            assertTrue(completed, "stream must terminate after revokeUserFromGroup")
+
+            // Events emitted after revocation must not reach the subscriber.
+            fanout.emitInvalidation(groupId, 2L, "change-2")
+            assertEquals(1, received.size, "no new events should arrive after revocation")
         } finally {
             disposable.dispose()
         }

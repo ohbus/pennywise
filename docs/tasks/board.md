@@ -91,7 +91,7 @@ query classification, and evidence gates are complete.
 | SEC-01A | coordinator | done | Establish operational token authority and asymmetric signing (SEC-001, SEC-009) |
 | SEC-01B | coordinator | done | Make durable identity independent of email with (issuer, subject) mapping (SEC-002) |
 | SEC-01C | coordinator | done | Enforce object authorization on profiles and workload trust boundary (SEC-004, SEC-005) |
-| SEC-01D | coordinator | planned | Close browser mutation CSRF and WebSocket subscription continuity gaps (SEC-003, SEC-006) |
+| SEC-01D | coordinator | done | Close browser mutation CSRF and WebSocket subscription continuity gaps (SEC-003, SEC-006) |
 | SEC-01E | coordinator | planned | Formalize rate-limit proxy topology and bearer-revocation guarantees (SEC-007, SEC-008) |
 | SEC-01F | coordinator | planned | Make security operations, telemetry, supply chain, and release evidence executable (SEC-010 - SEC-013) |
 | OPS-24 | coordinator | done | Remove undeclared Ruby dependency and E2E Compose host-port collisions from CI |

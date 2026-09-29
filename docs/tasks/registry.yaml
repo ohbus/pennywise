@@ -6978,17 +6978,19 @@
       "parent_id": "SEC-01",
       "title": "Close browser mutation and subscription time-of-check gaps",
       "phase": "security",
-      "status": "planned",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
         "SEC-01B"
       ],
       "owned_paths": [
-        "app/bff/src/main/kotlin/com/squarewise/bff/transport/graphql/GroupGraphqlController.kt",
-        "app/bff/src/main/kotlin/com/squarewise/bff/transport/http/BrowserCsrfWebFilter.kt",
-        "app/bff/src/main/kotlin/com/squarewise/bff/transport/http/BrowserOriginWebFilter.kt",
-        "app/bff/src/main/kotlin/com/squarewise/bff/transport/http/BrowserAccessCookieWebFilter.kt",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/graphql/GroupGraphqlController.kt",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/config/BrowserCsrfWebFilter.kt",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/realtime/LiveUpdateFanout.kt",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/config/BrowserCsrfWebFilterTest.kt",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/LiveUpdateFanoutTest.kt",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/GroupGraphqlControllerTest.kt",
         "docs/tasks/details/SEC-01D.md"
       ],
       "specification": "docs/tasks/details/SEC-01D.md",
@@ -6998,9 +7000,21 @@
       ],
       "validation_commands": [
         "./gradlew :app:bff:test --rerun-tasks --no-daemon",
-        "uv run python tools/contracts/validate.py"
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/ops/check_security_hygiene.py"
       ],
-      "evidence": [],
+      "evidence": [
+        "SEC-003: LiveUpdateFanout now maintains per-subscription Sinks.One<Void> revocation signals. revokeUser, revokeUserFromGroup, unsubscribe, and removeExpired all complete the signal, terminating the downstream Flux immediately.",
+        "SEC-003: GroupGraphqlController.groupChanged uses takeUntilOther(liveFanout.revocationSignal(subscription.id)) so the stream auto-terminates when BffEventConsumer processes a member.removed event.",
+        "SEC-006: BrowserCsrfWebFilter extended to cover POST to /graphql when access cookie is present and no explicit Authorization header — cookie-authenticated GraphQL mutations now require X-CSRF-Token to match SW_CSRF cookie.",
+        "SEC-006: Pure bearer-authenticated requests (no access cookie, or explicit Authorization header) bypass CSRF checks cleanly. GraphQL GET requests are unaffected.",
+        "New BrowserCsrfWebFilterTest covers: valid CSRF pass-through, missing header 403, mismatch 403, bearer bypass, explicit-auth bypass, GET bypass, unrelated path passthrough.",
+        "LiveUpdateFanoutTest: 5 new revocation signal tests covering per-sub revocation, user-wide revocation, unsubscribe, unknown ID, and group-scoped isolation.",
+        "GroupGraphqlControllerTest: midstream revocation integration test verifies Flux terminates after revokeUserFromGroup and no events delivered after revocation.",
+        "BUILD SUCCESSFUL: ./gradlew :app:bff:test --rerun-tasks --no-daemon (18 tasks)",
+        "uv run python tools/contracts/validate.py: valid (207 tasks)",
+        "uv run python tools/ops/check_security_hygiene.py: passed (1031 files)"
+      ],
       "reviewer": "/root",
       "blocker": null
     },

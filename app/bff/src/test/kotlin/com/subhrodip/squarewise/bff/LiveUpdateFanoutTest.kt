@@ -136,4 +136,86 @@ class LiveUpdateFanoutTest {
             disposable.dispose()
         }
     }
+
+    // ---------------------------------------------------------------------------
+    // Revocation signal tests (SEC-003)
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun `revokeUserFromGroup completes per-subscription revocation signal`() {
+        val fanout = LiveUpdateFanout()
+        val subscription = fanout.subscribe("user-1", "group-1")
+
+        var terminated = false
+        fanout.revocationSignal(subscription.id)
+            .doOnTerminate { terminated = true }
+            .subscribe()
+
+        assertThat(terminated).isFalse()
+        fanout.revokeUserFromGroup("user-1", "group-1")
+        assertThat(terminated).isTrue()
+    }
+
+    @Test
+    fun `revokeUser completes revocation signals for all revoked subscriptions`() {
+        val fanout = LiveUpdateFanout()
+        val s1 = fanout.subscribe("user-1", "group-1")
+        val s2 = fanout.subscribe("user-1", "group-2")
+        val s3 = fanout.subscribe("user-2", "group-1")
+
+        var t1 = false; var t2 = false; var t3 = false
+        fanout.revocationSignal(s1.id).doOnTerminate { t1 = true }.subscribe()
+        fanout.revocationSignal(s2.id).doOnTerminate { t2 = true }.subscribe()
+        fanout.revocationSignal(s3.id).doOnTerminate { t3 = true }.subscribe()
+
+        fanout.revokeUser("user-1")
+
+        assertThat(t1).isTrue()
+        assertThat(t2).isTrue()
+        assertThat(t3).isFalse()
+    }
+
+    @Test
+    fun `unsubscribe completes revocation signal`() {
+        val fanout = LiveUpdateFanout()
+        val subscription = fanout.subscribe("user-1", "group-1")
+
+        var terminated = false
+        fanout.revocationSignal(subscription.id)
+            .doOnTerminate { terminated = true }
+            .subscribe()
+
+        fanout.unsubscribe(subscription.id)
+        assertThat(terminated).isTrue()
+    }
+
+    @Test
+    fun `revocationSignal returns empty mono for unknown subscription id`() {
+        val fanout = LiveUpdateFanout()
+        var completed = false
+        fanout.revocationSignal("nonexistent-id")
+            .doOnTerminate { completed = true }
+            .subscribe()
+        // Mono.empty() completes immediately
+        assertThat(completed).isTrue()
+    }
+
+    @Test
+    fun `revokeUserFromGroup only signals subscriptions matching user and group`() {
+        val fanout = LiveUpdateFanout()
+        val target = fanout.subscribe("user-1", "group-1")
+        val otherGroup = fanout.subscribe("user-1", "group-2")
+        val otherUser = fanout.subscribe("user-2", "group-1")
+
+        var tTarget = false; var tOtherGroup = false; var tOtherUser = false
+        fanout.revocationSignal(target.id).doOnTerminate { tTarget = true }.subscribe()
+        fanout.revocationSignal(otherGroup.id).doOnTerminate { tOtherGroup = true }.subscribe()
+        fanout.revocationSignal(otherUser.id).doOnTerminate { tOtherUser = true }.subscribe()
+
+        fanout.revokeUserFromGroup("user-1", "group-1")
+
+        assertThat(tTarget).isTrue()
+        assertThat(tOtherGroup).isFalse()
+        assertThat(tOtherUser).isFalse()
+    }
 }

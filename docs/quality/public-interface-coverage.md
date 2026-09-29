@@ -10,6 +10,12 @@ The literal operation inventory and current gap status are maintained in the
 intentionally honest about partial dimensions; contract inventory completeness
 does not imply edge-case completion.
 
+Implementation-level missing unit, controller, persistence/messaging, and
+deployed E2E tests are tracked in the
+[repository-wide test gap audit](test-coverage-gap-audit.md). A complete row
+in this public matrix does not close a production branch that the audit still
+marks uncovered.
+
 ## Coverage dimensions
 
 Each applicable operation must be checked for:

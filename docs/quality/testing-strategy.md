@@ -8,6 +8,13 @@ QA-07's contract-driven public-interface matrix is maintained in
 required cross-layer checklist for every REST method/path pair, GraphQL field,
 and WebSocket subscription lifecycle. Contract parsing, controller tests, and
 mocked gateway tests are not interchangeable with live integration evidence;
+
+The repository-wide implementation-to-test gap register is
+[`test-coverage-gap-audit.md`](test-coverage-gap-audit.md). It is the source
+for missing branch, unit, persistence/messaging integration, and deployed E2E
+acceptance criteria; this strategy document and the public operation matrix
+must link to it rather than treating line coverage or operation inventory as
+complete behavior coverage.
 reports must identify the highest evidence level actually executed.
 
 For the practical test layout, commands, environment prerequisites, CI gates,

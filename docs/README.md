@@ -46,6 +46,7 @@ This index is the navigation entry point for repository documentation. [`AGENTS.
 - [Public-interface coverage](quality/public-interface-coverage.md)
 - [Public-interface operation matrix](quality/public-interface-operation-matrix.md)
 - [Test operations guide](quality/test-operations-guide.md)
+- [Repository-wide test coverage gap audit](quality/test-coverage-gap-audit.md)
 - [Qodana audit](quality/qodana-audit.md)
 
 ## Operations

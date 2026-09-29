@@ -240,3 +240,5 @@ query classification, and evidence gates are complete.
 | FND-08 | coordinator | done | Refactor domain ports, in-memory stores, and consumer services into dedicated files |
 | OBS-01 | coordinator | done | Implement cross-cutting structured logging, MDC correlation, and observability tools |
 | DOC-26 | coordinator | done | Reconcile local smoke-demo delivery evidence and Bruno API collection |
+| SEC-02 | coordinator | done | Implement and verify whole security audit remediation (H-1, H-2, M-1 to M-5, L-1 to L-6) |
+

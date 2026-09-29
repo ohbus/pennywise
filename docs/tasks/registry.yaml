@@ -7148,6 +7148,60 @@
       ],
       "reviewer": "/root",
       "blocker": null
+    },
+    {
+      "id": "SEC-02",
+      "parent_id": "SEC-01",
+      "title": "Implement software security audit remediation",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [
+        "SEC-01",
+        "SEC-01F"
+      ],
+      "owned_paths": [
+        "libs/security/",
+        "libs/ids/",
+        "app/accounts/",
+        "app/expense-core/",
+        "app/notifications/",
+        "app/bff/",
+        "infra/",
+        ".dockerignore",
+        "docs/tasks/details/SEC-02.md",
+        "docs/tasks/board.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/SEC-02.md",
+      "acceptance_criteria": [
+        "All 13 security audit findings (H-1, H-2, M-1 through M-5, L-1 through L-6) are remediated across shared security library, applications, and infrastructure configurations.",
+        "Shared HttpHeadersConfiguration enforces HSTS, CSP, X-Frame-Options: DENY, and nosniff across all 4 services.",
+        "CryptographicSecretSanityGuard fails startup on predictable CI keys in production/staging.",
+        "PostgreSQL pg_hba.conf local socket enforces SCRAM-SHA-256 and init-databases.sql provisions least-privilege roles.",
+        "Root .dockerignore exists and prevents sensitive material from entering build context.",
+        "CredentialCleanupTask purges expired and consumed login credentials.",
+        "Full test suite, linting, Python typecheck, security hygiene, and SBOM validation pass."
+      ],
+      "validation_commands": [
+        "make lint",
+        "make python-typecheck",
+        "python tools/ops/check_security_hygiene.py",
+        "python tools/ops/validate_sbom_baseline.py",
+        "./gradlew test"
+      ],
+      "evidence": [
+        "Created libs/security HttpHeadersConfiguration and wired into Accounts, Expense Core, Notifications, and BFF.",
+        "Created CryptographicSecretSanityGuard and verified fail-closed behavior with CryptographicSecretSanityGuardTest.",
+        "Added root .dockerignore and calibrated container MaxRAMPercentage=65.",
+        "Secured pg_hba.conf with scram-sha-256 and added dedicated service users in init-databases.sql.",
+        "Added CredentialCleanupTask in Accounts with unit tests.",
+        "Documented zero-trust transport encryption and Keycloak production baseline.",
+        "All 53 Gradle test tasks, make lint, make python-typecheck, check_security_hygiene.py, and validate_sbom_baseline.py passed."
+      ],
+      "reviewer": "/root",
+      "blocker": null
     }
   ]
 }

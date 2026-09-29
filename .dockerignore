@@ -1,0 +1,32 @@
+# Git, IDE and developer metadata
+.git
+.gitignore
+.gitattributes
+.idea
+.vscode
+*.iml
+
+# Local environment and secret material
+.env
+*.env
+!infra/*.env.example
+*.pem
+*.key
+
+# Build outputs, caches and runtime artifacts
+**/build/
+**/.gradle/
+**/bin/
+**/node_modules/
+**/dist/
+**/.venv/
+**/target/
+
+# Documentation and design assets
+docs/
+*.md
+LICENSE
+
+# Test results and temporary reports
+**/test-results/
+**/reports/

@@ -57,6 +57,18 @@ Events carry versioned envelopes and minimal data. WebSocket notifications are
 hints; snapshot/change-feed synchronization is the recoverable source. Replicas
 receive independent fan-out queues, not one load-balanced notification queue.
 
+## Inter-Service Transport & Zero-Trust Security (M-4, M-5)
+
+In local development, internal Docker communication between the BFF and backend services
+operates over internal plaintext HTTP on isolated container networks. For staging and
+production deployments:
+- **In-Transit TLS (M-5)**: Mutual TLS (mTLS) or container network encryption (via service mesh
+  like Linkerd/Istio or sidecar proxies) is required for all traffic carrying user bearer tokens.
+- **Service-to-Service Authorization (M-4)**: Downstream services validate bearer tokens
+  and caller workload roles (`X-Squarewise-Workload-Role`). BFF WebClient connections utilize
+  bounded timeouts, circuit breakers, and connection pools to isolate downstream degradation.
+
+
 ## Scale without premature decomposition
 
 Start with stateless replicas, bounded connection pools, indexed PostgreSQL reads

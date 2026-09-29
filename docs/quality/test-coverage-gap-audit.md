@@ -107,6 +107,12 @@ after exceptions. The focused command passed 11 tests and the regenerated
 module report improved line coverage from 53.6% to 68.5% while leaving the
 remaining handler/framework branches explicitly open.
 
+`AllocationCalculator` is the first branch-complete production slice after the
+increment: its regenerated report has 0 missed lines, 0 missed branches, and 0
+missed methods across `equal`, `exact`, `percentage`, `weightedShares`, and
+`calculate`. The surrounding `ExpenseValidator` and property-based financial
+arithmetic criteria remain open under QA10-C02.
+
 ## Required evidence ladder
 
 Each production behavior is assigned the minimum evidence needed:
@@ -155,7 +161,7 @@ test cannot close a row by merely executing a line.
 | ID | Production target | Missing/weak evidence | Required acceptance criteria |
 | --- | --- | --- | --- |
 | QA10-C01 | `JpaExpenseStore` command/query methods | Report shows missed lines in the largest financial adapter; successful lifecycle E2E does not cover every transaction rollback branch. | `U+P+E`: create/update/delete/idempotent replay/tampered replay, stale version, missing/archived group, unauthorized actor, invalid participant, audit row, sync revision, postings, balance, outbox, and rollback-after-each-write-failure are asserted; ledger remains zero-sum and no orphan records remain. |
-| QA10-C02 | `ExpenseValidator`, `AllocationCalculator`, `FinancialArithmetic` | Missed branches include malformed amounts, overflow/rounding, and allocation boundaries. | `U`: property/table tests cover zero, negative, maximum, overflow, fractional/unknown currency, duplicate participants, missing payer, percentages not summing to 100, exact minor-unit remainder distribution, deterministic ordering, and zero-sum preservation with reproducible seeds. |
+| QA10-C02 | `ExpenseValidator`, `AllocationCalculator`, `FinancialArithmetic` | `AllocationCalculator` is branch-complete after the first domain increment; `ExpenseValidator` and broader property-based arithmetic evidence remain missing. | `U`: property/table tests cover zero, negative, maximum, overflow, fractional/unknown currency, duplicate participants, missing payer, percentages not summing to 100, exact minor-unit remainder distribution, deterministic ordering, and zero-sum preservation with reproducible seeds. |
 | QA10-C03 | `RecurringExpenseService`, `RecurringExpenseController`, worker/claim locking | Coverage exists for basic lifecycle but not all date, catch-up, lock, and generated-expense failure branches. | `U+P+E`: weekly/monthly/month-end clamp/timezone/end-date policy, pause/resume idempotency, missing/cross-group schedule, concurrent worker claims, bounded catch-up, deterministic occurrence IDs, duplicate prevention, failed occurrence rollback, and outbox/sync effects are asserted. |
 | QA10-C04 | `JpaGroupStore`, invite/member lifecycle | Existing journey covers the happy path but not every replay/expiry/revocation and authorization transition. | `U+P+E`: invite expiry boundary, revoked/claimed/unknown token, simultaneous claim, placeholder binding, member removal, removed-member token/session, archived group, revision/audit/outbox effects, and non-member indistinguishable not-found behavior are asserted. |
 | QA10-C05 | `JpaSettlementStore`, balances/suggestions/reconciliation | Settlement success and replay are covered, but independent corruption detection and rollback evidence are required. | `U+P+E`: valid settlement/reversal, same participant, negative/non-numeric/overflow amount, missing/cross-group settlement, duplicate idempotency key, concurrent reversal, balance recomputation from postings, intentional corruption detection, and zero-sum invariant are asserted. |

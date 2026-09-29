@@ -1,6 +1,7 @@
 package com.subhrodip.squarewise.expensecore.expenses
 import com.subhrodip.squarewise.expensecore.expenses.domain.AllocationCalculator
 import com.subhrodip.squarewise.expensecore.expenses.domain.FinancialArithmetic
+import com.subhrodip.squarewise.expensecore.expenses.api.request.AllocationItemDto
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -47,6 +48,101 @@ class AllocationCalculatorTest {
         }
         assertThrows(IllegalArgumentException::class.java) {
             FinancialArithmetic.negate(Long.MIN_VALUE)
+        }
+    }
+
+    /** Negative totals, including the equal-split path, cannot create postings. */
+    @Test
+    fun `rejects negative totals and negative allocation values`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.equal(-1, listOf("a"))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.exact(10, mapOf("a" to -1L, "b" to 11L))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.exact(-1, mapOf("a" to 1L))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.percentage(10, mapOf("a" to -1L, "b" to 10_001L))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.percentage(-1, mapOf("a" to 10_000L))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.weightedShares(10, mapOf("a" to -1L, "b" to 2L))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.weightedShares(-1, mapOf("a" to 1L))
+        }
+    }
+
+    /** Exact allocation requires a non-empty map whose values sum exactly once. */
+    @Test
+    fun `exact allocation rejects empty and mismatched totals`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.exact(0, emptyMap())
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.exact(10, mapOf("a" to 9L))
+        }
+        assertEquals(mapOf("a" to 0L, "b" to 0L), AllocationCalculator.exact(0, mapOf("a" to 0L, "b" to 0L)))
+    }
+
+    /** Percentage allocation accepts zero totals but still requires exactly 10,000 basis points. */
+    @Test
+    fun `percentage allocation handles zero totals and rejects empty input`() {
+        assertEquals(
+            mapOf("a" to 0L, "b" to 0L),
+            AllocationCalculator.percentage(0, mapOf("a" to 5_000L, "b" to 5_000L))
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.percentage(10, emptyMap())
+        }
+    }
+
+    /** Equal remainder fractions are resolved by participant ID for deterministic retries. */
+    @Test
+    fun `percentage tie remainder uses lexicographic participant order`() {
+        val result = AllocationCalculator.percentage(2, mapOf("b" to 5_000L, "a" to 5_000L))
+
+        assertEquals(mapOf("a" to 1L, "b" to 1L), result)
+        assertEquals(2L, result.values.sum())
+        assertEquals(
+            mapOf("a" to 50L, "b" to 50L),
+            AllocationCalculator.percentage(100, mapOf("a" to 5_000L, "b" to 5_000L))
+        )
+    }
+
+    /** Weighted shares reject zero denominators and preserve the total after remainder allocation. */
+    @Test
+    fun `weighted shares preserve total and reject zero denominator`() {
+        val result = AllocationCalculator.weightedShares(100, mapOf("c" to 3L, "a" to 1L, "b" to 2L))
+
+        assertEquals(mapOf("a" to 17L, "b" to 33L, "c" to 50L), result)
+        assertEquals(100L, result.values.sum())
+        assertEquals(
+            mapOf("a" to 1L, "b" to 2L, "c" to 3L),
+            AllocationCalculator.weightedShares(6, mapOf("a" to 1L, "b" to 2L, "c" to 3L))
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.weightedShares(10, mapOf("a" to 0L, "b" to 0L))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AllocationCalculator.weightedShares(10, emptyMap())
+        }
+    }
+
+    /** The public mode dispatcher selects every supported algorithm and rejects unknown modes. */
+    @Test
+    fun `calculate dispatches supported modes and rejects unknown mode`() {
+        val exactItems = listOf(AllocationItemDto("a", "4"), AllocationItemDto("b", "6"))
+        assertEquals(mapOf("a" to 5L, "b" to 5L), AllocationCalculator.calculate("equal", 10, listOf(AllocationItemDto("b", ""), AllocationItemDto("a", ""))))
+        assertEquals(mapOf("a" to 4L, "b" to 6L), AllocationCalculator.calculate("EXACT", 10, exactItems))
+        assertEquals(mapOf("a" to 5L, "b" to 5L), AllocationCalculator.calculate("percent_basis_points", 10, listOf(AllocationItemDto("a", "5000"), AllocationItemDto("b", "5000"))))
+        assertEquals(mapOf("a" to 3L, "b" to 7L), AllocationCalculator.calculate("weighted_shares", 10, listOf(AllocationItemDto("a", "3"), AllocationItemDto("b", "7"))))
+        assertThrows(com.subhrodip.squarewise.errors.domain.ApplicationException::class.java) {
+            AllocationCalculator.calculate("unknown", 10, exactItems)
         }
     }
 }

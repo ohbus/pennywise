@@ -44,7 +44,8 @@ SQL, database foreign keys and shared persistent domain models are prohibited.
 The BFF accesses only REST and event infrastructure. Shared libraries contain
 technical configuration rather than business rules or service-to-service DTOs.
 Fallback, retry, defaulting, and degradation behavior is catalogued in the
-[fallback mechanism audit](fallback-mechanisms.md).
+[fallback mechanism audit](fallback-mechanisms.md). Per-request database and cache
+lookup counts and flow diagrams are catalogued in [database and cache access patterns](database-and-cache-access-patterns.md).
 
 Clients authenticate with OIDC. Resource services validate signed access tokens
 and enforce their own authorization; the BFF is not the security boundary. Internal

@@ -87,7 +87,13 @@ query classification, and evidence gates are complete.
 | PR-40 | coordinator | done | Idempotency retention and cleanup |
 | AUTH-07 | coordinator | done | Squarewise-owned passwordless login, token lifecycle, provider portability, and authorization evidence |
 | AUTH-08 | coordinator | done | RFC-aligned authentication/session hardening, endpoint protection, cache consistency, and full local security evidence |
-| SEC-01 | coordinator | planned | Whole-security remediation plan for SEC-001 through SEC-013; register child workstreams before execution |
+| SEC-01 | coordinator | in_progress | Whole-security remediation plan for SEC-001 through SEC-013 |
+| SEC-01A | coordinator | in_progress | Establish operational token authority and asymmetric signing (SEC-001, SEC-009) |
+| SEC-01B | coordinator | planned | Make durable identity independent of email with (issuer, subject) mapping (SEC-002) |
+| SEC-01C | coordinator | planned | Enforce object authorization on profiles and workload trust boundary (SEC-004, SEC-005) |
+| SEC-01D | coordinator | planned | Close browser mutation CSRF and WebSocket subscription continuity gaps (SEC-003, SEC-006) |
+| SEC-01E | coordinator | planned | Formalize rate-limit proxy topology and bearer-revocation guarantees (SEC-007, SEC-008) |
+| SEC-01F | coordinator | planned | Make security operations, telemetry, supply chain, and release evidence executable (SEC-010 - SEC-013) |
 | OPS-24 | coordinator | done | Remove undeclared Ruby dependency and E2E Compose host-port collisions from CI |
 | OPS-17 | coordinator | done | Stable error taxonomy and service/source attribution |
 | OPS-18 | coordinator | done | Micrometer and Prometheus metrics for all services |

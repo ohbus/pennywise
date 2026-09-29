@@ -16,6 +16,8 @@ class AuthSessionEntity(
     var sessionId: UUID,
     @Column(name = "account_id")
     var accountId: UUID? = null,
+    @Column(name = "subject", length = 200)
+    var subject: String? = null,
     @Column(name = "family_id", nullable = false)
     var familyId: UUID,
     @Column(name = "refresh_token_digest", nullable = false, unique = true)
@@ -26,6 +28,8 @@ class AuthSessionEntity(
     var lastUsedAt: Instant,
     @Column(name = "expires_at", nullable = false)
     var expiresAt: Instant,
+    @Column(name = "absolute_expires_at", nullable = false)
+    var absoluteExpiresAt: Instant,
     @Column(name = "revoked_at")
     var revokedAt: Instant? = null,
     @Column(name = "replaced_by_session_id")

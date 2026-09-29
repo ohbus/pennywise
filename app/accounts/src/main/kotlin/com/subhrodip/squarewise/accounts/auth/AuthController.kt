@@ -9,6 +9,7 @@ import com.subhrodip.squarewise.accounts.auth.login.LoginVerificationService
 import com.subhrodip.squarewise.accounts.auth.abuse.RateLimitStoreUnavailableException
 import com.subhrodip.squarewise.accounts.auth.abuse.RefreshRateLimitService
 import com.subhrodip.squarewise.accounts.auth.session.RefreshTokenRequest
+import com.subhrodip.squarewise.accounts.auth.session.LogoutRequest
 import com.subhrodip.squarewise.accounts.auth.session.TokenResponse
 import com.subhrodip.squarewise.accounts.auth.session.TokenSessionService
 import com.subhrodip.squarewise.errors.domain.ApplicationException
@@ -19,6 +20,8 @@ import jakarta.validation.Valid
 import java.security.Principal
 import java.time.Instant
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpHeaders
+import org.springframework.http.CacheControl
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -99,7 +102,7 @@ class AuthController(
             deviceLabel = userAgent,
             now = Instant.now()
         )
-        return ResponseEntity.ok(tokenResponse)
+        return tokenResponse(tokenResponse)
     }
 
     /**
@@ -125,13 +128,10 @@ class AuthController(
         }
         val tokenResponse = tokenSessionService.rotateSession(
             rawRefreshToken = request.refreshToken,
-            clientKind = "BROWSER",
             deviceLabel = userAgent,
-            now = Instant.now(),
-            subject = "internal:refresh",
-            email = "internal@squarewise.local"
+            now = Instant.now()
         )
-        return ResponseEntity.ok(tokenResponse)
+        return tokenResponse(tokenResponse)
     }
 
     /**
@@ -141,10 +141,18 @@ class AuthController(
      */
     @PostMapping(ApiEndpoints.Accounts.V1.LOGOUT)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun logout(principal: Principal?) {
+    fun logout(
+        principal: Principal?,
+        @Valid @RequestBody request: LogoutRequest
+    ) {
         if (principal == null || principal.name.isBlank()) {
             throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
         }
+        tokenSessionService.revokeSessionByRefreshToken(
+            rawRefreshToken = request.refreshToken,
+            expectedSubject = principal.name,
+            now = Instant.now()
+        )
     }
 
     private fun deriveNetworkPartition(request: HttpServletRequest): String {
@@ -152,4 +160,11 @@ class AuthController(
         val ipPart = remoteAddr.split(".").take(2).joinToString(".")
         return if (ipPart.isBlank()) "default-partition" else ipPart
     }
+
+    /** Returns token material with cache directives that prevent intermediary persistence. */
+    private fun tokenResponse(response: TokenResponse): ResponseEntity<TokenResponse> =
+        ResponseEntity.ok()
+            .cacheControl(CacheControl.noStore())
+            .header(HttpHeaders.PRAGMA, "no-cache")
+            .body(response)
 }

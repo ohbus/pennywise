@@ -3,7 +3,7 @@
 - Phase: scaffold
 - Owner role: coordinator
 - Dependencies: DOC-08
-- Owned paths: `app/`, `libs/`, `build-logic/`, `gradle/`, `settings.gradle.kts`, `build.gradle.kts`
+- Owned paths: `app/`, `libs/`, `gradle/`, `settings.gradle.kts`, `build.gradle.kts`
 
 ## Outcome
 

@@ -11,7 +11,6 @@ squarewise/
 ├── build.gradle.kts
 ├── gradlew / gradlew.bat
 ├── gradle/                 # wrapper and libs.versions.toml
-├── build-logic/            # convention plugins, no business logic
 ├── app/
 │   ├── accounts/
 │   ├── expense-core/

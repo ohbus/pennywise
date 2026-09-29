@@ -8,7 +8,11 @@ import com.subhrodip.squarewise.accounts.requests.export.model.ExportStatus
 import com.subhrodip.squarewise.accounts.requests.export.persistence.JpaExportRequestStore
 import com.subhrodip.squarewise.accounts.profile.persistence.JpaProfileStore
 import com.subhrodip.squarewise.accounts.profile.persistence.ProfileRepository
+import com.subhrodip.squarewise.accounts.auth.session.AuthSessionEntity
+import com.subhrodip.squarewise.accounts.auth.session.AuthSessionRepository
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -26,6 +30,7 @@ class JpaRequestStoresTest @Autowired constructor(
     private val exportStore: JpaExportRequestStore,
     private val profileStore: JpaProfileStore,
     private val profileRepository: ProfileRepository,
+    private val authSessionRepository: AuthSessionRepository,
     private val deletionRepository: DeletionRequestRepository,
     private val exportRepository: ExportRequestRepository
 ) {
@@ -38,10 +43,24 @@ class JpaRequestStoresTest @Autowired constructor(
         val profile = profileStore.get(subject)
         assertEquals(subject, profile.displayName)
 
+        val now = Instant.now()
+        authSessionRepository.save(AuthSessionEntity(
+            sessionId = UUID.randomUUID(),
+            accountId = profile.accountId,
+            familyId = UUID.randomUUID(),
+            refreshTokenDigest = byteArrayOf(21, 22, 23),
+            createdAt = now,
+            lastUsedAt = now,
+            expiresAt = now.plus(30, ChronoUnit.DAYS),
+            absoluteExpiresAt = now.plus(90, ChronoUnit.DAYS),
+            clientKind = "NATIVE"
+        ))
+
         // Request deletion
         val req1 = deletionStore.request(subject)
         assertEquals(subject, req1.subject)
         assertEquals(DeletionStatus.REQUESTED, req1.status)
+        assertNotNull(authSessionRepository.findAll().single().revokedAt)
 
         // Verify entity in database
         val entity = deletionRepository.findById(subject).orElse(null)

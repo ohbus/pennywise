@@ -21,6 +21,9 @@ import com.subhrodip.squarewise.bff.transport.model.output.BffMoney
 import com.subhrodip.squarewise.bff.transport.model.output.BffProfile
 import com.subhrodip.squarewise.bff.transport.model.output.BffSettlement
 import com.subhrodip.squarewise.bff.transport.model.output.BffSuggestedSettlement
+import com.subhrodip.squarewise.bff.transport.model.auth.AccountsTokenResponse
+import com.subhrodip.squarewise.bff.transport.model.auth.BrowserLoginStartRequest
+import com.subhrodip.squarewise.bff.transport.model.auth.BrowserLoginStartResponse
 import com.subhrodip.squarewise.bff.transport.model.input.CreateExpenseInput
 import com.subhrodip.squarewise.bff.transport.model.input.MoneyInput
 import com.subhrodip.squarewise.bff.transport.model.input.PayerInput
@@ -49,7 +52,8 @@ import java.util.UUID
         "spring.autoconfigure.exclude=" +
             "org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration," +
             "org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration," +
-            "org.springframework.boot.autoconfigure.security.oauth2.resource.reactive.ReactiveOAuth2ResourceServerAutoConfiguration"
+            "org.springframework.boot.autoconfigure.security.oauth2.resource.reactive.ReactiveOAuth2ResourceServerAutoConfiguration",
+        "squarewise.security.browser.allowed-origins=https://app.example.test"
     ]
 )
 class GraphqlHttpTransportTest {
@@ -212,6 +216,124 @@ class GraphqlHttpTransportTest {
             .bodyValue("{\"query\":")
             .exchange()
             .expectStatus().isBadRequest
+    }
+
+    @Test
+    fun `graphql route rejects an untrusted browser origin`() {
+        client.post().uri(ApiEndpoints.Bff.GRAPHQL)
+            .header("Origin", "https://evil.example.test")
+            .bodyValue(mapOf("query" to "{ __typename }"))
+            .exchange()
+            .expectStatus().isForbidden
+    }
+
+    @Test
+    fun `graphql route answers preflight only for an exact configured origin`() {
+        client.options().uri(ApiEndpoints.Bff.GRAPHQL)
+            .header("Origin", "https://app.example.test")
+            .header("Access-Control-Request-Method", "POST")
+            .header("Access-Control-Request-Headers", "Authorization,Content-Type")
+            .exchange()
+            .expectStatus().isNoContent
+            .expectHeader().valueEquals("Access-Control-Allow-Origin", "https://app.example.test")
+    }
+
+    @Test
+    fun `browser verification sets secure httpOnly cookies without returning refresh token`() {
+        `when`(accountsGateway.verifyBrowserLogin("one-time-credential")).thenReturn(
+            Mono.just(AccountsTokenResponse("access-jwt", "Bearer", 600, "refresh-secret"))
+        )
+
+        client.post().uri(ApiEndpoints.Bff.BROWSER_LOGIN_VERIFY)
+            .header("Origin", "https://app.example.test")
+            .bodyValue(mapOf("credential" to "one-time-credential"))
+            .exchange()
+            .expectStatus().isOk
+            .expectHeader().valueMatches("Set-Cookie", ".*squarewise_access=access-jwt.*Secure.*HTTPOnly.*")
+            .expectBody()
+            .jsonPath("$.accessToken").doesNotExist()
+            .jsonPath("$.expiresIn").isEqualTo(600)
+            .jsonPath("$.refreshToken").doesNotExist()
+    }
+
+    @Test
+    fun `browser login start forwards the validated request`() {
+        `when`(accountsGateway.startBrowserLogin(BrowserLoginStartRequest("alice@example.test", "EMAIL")))
+            .thenReturn(Mono.just(BrowserLoginStartResponse("ACCEPTED", 60)))
+
+        client.post().uri(ApiEndpoints.Bff.BROWSER_LOGIN_START)
+            .header("Origin", "https://app.example.test")
+            .bodyValue(mapOf("email" to "alice@example.test", "channel" to "EMAIL"))
+            .exchange()
+            .expectStatus().isOk
+            .expectBody()
+            .jsonPath("$.status").isEqualTo("ACCEPTED")
+            .jsonPath("$.retryAfterSeconds").isEqualTo(60)
+    }
+
+    @Test
+    fun `browser refresh requires exact origin and csrf proof`() {
+        client.post().uri(ApiEndpoints.Bff.BROWSER_TOKEN_REFRESH)
+            .header("Origin", "https://app.example.test")
+            .cookie("squarewise_refresh", "refresh-secret")
+            .exchange()
+            .expectStatus().isForbidden
+
+        `when`(accountsGateway.refreshBrowserSession("refresh-secret")).thenReturn(
+            Mono.just(AccountsTokenResponse("new-access", "Bearer", 600, "new-refresh"))
+        )
+        client.post().uri(ApiEndpoints.Bff.BROWSER_TOKEN_REFRESH)
+            .header("Origin", "https://app.example.test")
+            .header("X-CSRF-Token", "nonce")
+            .cookie("squarewise_refresh", "refresh-secret")
+            .cookie("squarewise_csrf", "nonce")
+            .exchange()
+            .expectStatus().isOk
+            .expectBody()
+            .jsonPath("$.accessToken").doesNotExist()
+            .jsonPath("$.expiresIn").isEqualTo(600)
+            .jsonPath("$.refreshToken").doesNotExist()
+    }
+
+    @Test
+    fun `browser refresh without a cookie returns the authentication error`() {
+        client.post().uri(ApiEndpoints.Bff.BROWSER_TOKEN_REFRESH)
+            .header("Origin", "https://app.example.test")
+            .header("X-CSRF-Token", "nonce")
+            .cookie("squarewise_csrf", "nonce")
+            .exchange()
+            .expectStatus().isUnauthorized
+    }
+
+    @Test
+    fun `browser logout revokes the rotated family and clears all cookies`() {
+        `when`(accountsGateway.refreshBrowserSession("refresh-secret")).thenReturn(
+            Mono.just(AccountsTokenResponse("access-jwt", "Bearer", 600, "rotated-refresh"))
+        )
+        `when`(accountsGateway.logoutBrowserSession("access-jwt", "rotated-refresh"))
+            .thenReturn(Mono.empty())
+
+        client.post().uri(ApiEndpoints.Bff.BROWSER_LOGOUT)
+            .header("Origin", "https://app.example.test")
+            .header("X-CSRF-Token", "nonce")
+            .cookie("squarewise_refresh", "refresh-secret")
+            .cookie("squarewise_csrf", "nonce")
+            .exchange()
+            .expectStatus().isNoContent
+            .expectHeader().valueMatches("Set-Cookie", ".*squarewise_access=;.*Max-Age=0.*")
+
+        org.mockito.Mockito.verify(accountsGateway).logoutBrowserSession("access-jwt", "rotated-refresh")
+    }
+
+    @Test
+    fun `browser auth rejects an untrusted origin before upstream execution`() {
+        client.post().uri(ApiEndpoints.Bff.BROWSER_LOGIN_VERIFY)
+            .header("Origin", "https://evil.example.test")
+            .bodyValue(mapOf("credential" to "one-time-credential"))
+            .exchange()
+            .expectStatus().isForbidden
+
+        org.mockito.Mockito.verifyNoInteractions(accountsGateway)
     }
 
     @Test

@@ -9,6 +9,11 @@ import org.springframework.data.repository.query.Param
 
 /** Persistence port for refresh-token rotation and family revocation. */
 interface AuthSessionRepository : JpaRepository<AuthSessionEntity, UUID> {
+    /** Revokes every active refresh session owned by an account in one writer update. */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE AuthSessionEntity s SET s.revokedAt = :revokedAt WHERE s.accountId = :accountId AND s.revokedAt IS NULL")
+    fun revokeAllForAccount(@Param("accountId") accountId: UUID, @Param("revokedAt") revokedAt: Instant): Int
+
     /** Revokes one refresh-token family, including descendants and ancestors. */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE AuthSessionEntity s SET s.revokedAt = :revokedAt WHERE s.familyId = :familyId AND s.revokedAt IS NULL")
@@ -23,6 +28,7 @@ interface AuthSessionRepository : JpaRepository<AuthSessionEntity, UUID> {
          WHERE s.sessionId = :sessionId
            AND s.revokedAt IS NULL
            AND s.expiresAt > :revokedAt
+           AND s.absoluteExpiresAt > :revokedAt
         """
     )
     fun rotateIfActive(

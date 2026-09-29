@@ -63,18 +63,43 @@ class AuthPersistenceTest @Autowired constructor(
         sessionRepository.save(AuthSessionEntity(
             sessionId = sessionId, familyId = familyId, refreshTokenDigest = byteArrayOf(9, 10),
             createdAt = now, lastUsedAt = now, expiresAt = now.plus(30, ChronoUnit.DAYS),
+            absoluteExpiresAt = now.plus(90, ChronoUnit.DAYS),
             clientKind = "NATIVE"
         ))
         sessionRepository.save(AuthSessionEntity(
             sessionId = replacementId, familyId = familyId, refreshTokenDigest = byteArrayOf(11, 12),
             createdAt = now.plusSeconds(1), lastUsedAt = now.plusSeconds(1),
-            expiresAt = now.plus(30, ChronoUnit.DAYS), clientKind = "NATIVE"
+            expiresAt = now.plus(30, ChronoUnit.DAYS),
+            absoluteExpiresAt = now.plus(90, ChronoUnit.DAYS), clientKind = "NATIVE"
         ))
 
         assertEquals(1, sessionRepository.rotateIfActive(sessionId, replacementId, now.plusSeconds(1)))
         assertEquals(0, sessionRepository.rotateIfActive(sessionId, UUID.randomUUID(), now.plusSeconds(2)))
         assertEquals(1, sessionRepository.revokeFamily(familyId, now.plusSeconds(3)))
         assertEquals(0, sessionRepository.revokeFamily(familyId, now.plusSeconds(4)))
+    }
+
+    @Test
+    fun `atomic refresh transition rejects a session beyond its absolute boundary`() {
+        val now = Instant.now()
+        val sessionId = UUID.randomUUID()
+        val familyId = UUID.randomUUID()
+        sessionRepository.save(AuthSessionEntity(
+            sessionId = sessionId,
+            familyId = familyId,
+            refreshTokenDigest = byteArrayOf(13, 14),
+            createdAt = now,
+            lastUsedAt = now,
+            expiresAt = now.plusSeconds(1),
+            absoluteExpiresAt = now.plusSeconds(1),
+            clientKind = "BROWSER"
+        ))
+
+        assertEquals(0, sessionRepository.rotateIfActive(
+            sessionId,
+            UUID.randomUUID(),
+            now.plusSeconds(2)
+        ))
     }
 
     @Test

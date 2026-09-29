@@ -10,7 +10,11 @@ import org.springframework.context.annotation.Configuration
 
 /** Installs GraphQL Java depth and complexity guards before resolver execution. */
 @Configuration
-@EnableConfigurationProperties(GraphQlAbuseProperties::class)
+@EnableConfigurationProperties(
+    GraphQlAbuseProperties::class,
+    BrowserOriginProperties::class,
+    BrowserSessionProperties::class
+)
 class GraphQlAbuseConfiguration {
     /** Rejects deeply nested GraphQL operations. */
     @Bean

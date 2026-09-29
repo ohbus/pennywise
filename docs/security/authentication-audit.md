@@ -68,9 +68,11 @@ must not depend on Keycloak SDKs, realm roles, or vendor claim names.
    observed, but all four applications accepting a real signed token and
    rejecting invalid/expired tokens has not been demonstrated. E2E journeys
    still contain legacy arbitrary identities for non-member fixtures.
-7. **Browser security policy is not designed yet.** CSRF is disabled in the
-   stateless API chains, but browser sessions still need explicit CSRF, CORS,
-   redirect, state, nonce, PKCE, cache-control, and leakage policies.
+7. **Browser security policy is implemented at the BFF boundary.** Browser
+   sessions use exact origins, credentialed auth-route CORS, Secure HttpOnly
+   cookies, double-submit CSRF, and browser-safe responses. Native PKCE
+   application integration and provider-specific redirect/state/nonce wiring
+   remain deployment/client work.
 8. **Security chain shape is duplicated.** The shared library should expose
    reusable policy builders while application adapters remain thin.
 
@@ -138,11 +140,11 @@ validated provider-qualified subject and enforce its own resource policy.
 | P0 | AUTH-05 | Remove weaker local mode | no raw-token runtime path; local OIDC profile tests | done |
 | P0 | AUTH-06 | Prove local Keycloak integration | real REST/GraphQL/WS token journeys | done |
 | P0 | AUTH-07 | Define Squarewise-owned auth contracts | API/session contract and threat model | done |
-| P0 | AUTH-08 | Implement identity and session issuance | persistence and provider adapter tests | planned |
+| P0 | AUTH-08 | Implement identity and session issuance | persistence, provider-boundary, session lifecycle, cache-failure, and endpoint evidence | done for local implementation |
 | P0 | AUTH-09 | Implement passwordless links/codes | replay, brute force, enumeration, Mailpit tests | planned |
 | P0 | AUTH-10 | Implement rotating refresh lifecycle | hashing, rotation, family revocation, reuse detection | planned |
-| P0 | AUTH-11 | Implement logout and session revocation | races, deletion, provider-subject changes | planned |
-| P0 | AUTH-12 | Define browser/native security policy | CSRF/CORS/PKCE/state/nonce/cookie tests | planned |
+| P0 | AUTH-11 | Implement logout and session revocation | races, deletion, provider-subject changes | implemented in AUTH-08 increment |
+| P0 | AUTH-12 | Define browser/native security policy | CSRF/CORS/PKCE/state/nonce/cookie tests | implemented in AUTH-08 increment |
 | P0 | AUTH-13 | Secure GraphQL HTTP/WebSocket parity | handshake, reconnect, expiry, revocation tests | planned |
 | P1 | AUTH-14 | Prove managed-provider compatibility | second OIDC provider contract run | planned |
 | P1 | AUTH-15 | Complete security evidence | unit, integration, Bruno, E2E, hygiene, load | planned |

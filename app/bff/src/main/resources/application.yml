@@ -37,3 +37,9 @@ squarewise:
   security:
     oidc:
       audience: ${SQUAREWISE_SECURITY_OIDC_AUDIENCE:}
+    browser:
+      session:
+        access-cookie-name: ${SQUAREWISE_SECURITY_BROWSER_ACCESS_COOKIE:squarewise_access}
+        refresh-cookie-name: ${SQUAREWISE_SECURITY_BROWSER_REFRESH_COOKIE:squarewise_refresh}
+        csrf-cookie-name: ${SQUAREWISE_SECURITY_BROWSER_CSRF_COOKIE:squarewise_csrf}
+        cookie-max-age: ${SQUAREWISE_SECURITY_BROWSER_COOKIE_MAX_AGE:30d}

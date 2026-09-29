@@ -59,11 +59,17 @@ audience, or client settings are missing.
 
 ## Implementation tracker
 
-The current status for AUTH-01 through AUTH-07 is maintained in
-`docs/tasks/registry.yaml`; those seven slices are complete. The table below is
-the original security-plan baseline and remains useful for scope history. The
-later AUTH-08 through AUTH-16 rows are future hardening work outside this
-completed slice.
+The current status for AUTH-01 through AUTH-08 is maintained in
+`docs/tasks/registry.yaml`. AUTH-08 is complete for local implementation and
+security evidence: session policy, migration,
+trusted refresh identity, logout, exact public-route matching, and local REST,
+GraphQL, WebSocket-negative, Redis-failure, and BFF browser cookie/CSRF evidence
+are implemented. Native application integration, provider-owned revocation where
+a provider owns the grant, and production-scale evidence remain separate
+follow-up gates. Local cache eviction/restart evidence is implemented by the
+AUTH-08 E2E matrix. Account
+deletion now bulk-revokes active sessions, refresh sessions bind the original
+provider-qualified subject, and token responses prohibit intermediary caching.
 
 | ID | Deliverable | Priority | Dependency | Status |
 |---|---|---:|---|---|
@@ -74,12 +80,12 @@ completed slice.
 | AUTH-05 | Explicit opt-in/localhost safeguards for local demo auth | P0 | AUTH-01 | Planned |
 | AUTH-06 | Optional local Keycloak realm and Mailpit bootstrap | P1 | AUTH-03 | Planned |
 | AUTH-07 | Squarewise-owned login start/callback contracts | P1 | AUTH-01 | Planned |
-| AUTH-08 | Magic-link and one-time-code implementation | P1 | AUTH-07 | Planned |
+| AUTH-08 | RFC-aligned session lifecycle, endpoint protection, cache consistency, and full local security evidence | P0 | AUTH-07, DB-08, ERR-03, QA-07 | Done |
 | AUTH-09 | Rate limiting and email-enumeration protection | P0 | AUTH-08 | Planned |
 | AUTH-10 | Identity mapping using provider-qualified subjects | P0 | AUTH-03 | Planned |
 | AUTH-11 | Short-lived access credentials and rotating refresh tokens | P0 | AUTH-10 | Planned |
 | AUTH-12 | Logout, revocation, reuse detection, and session management | P0 | AUTH-11 | Planned |
-| AUTH-13 | Secure browser cookies and CSRF policy | P0 | AUTH-11 | Planned |
+| AUTH-13 | Secure browser cookies and CSRF policy | P0 | AUTH-11 | Implemented in AUTH-08 |
 | AUTH-14 | GraphQL HTTP/WebSocket authentication parity | P0 | AUTH-03 | Planned |
 | AUTH-15 | Real-provider integration and security regression suites | P0 | AUTH-06, AUTH-12 | Planned |
 | AUTH-16 | Operations, key rotation, incident response, and recovery runbooks | P1 | AUTH-12 | Planned |

@@ -21,6 +21,31 @@ Accounts-to-Notifications delivery, and live Mailpit evidence. The complete
 slice is recorded as done in `docs/tasks/registry.yaml`; future browser-policy,
 managed-provider, and incident-response work remains outside this slice.
 
+## AUTH-08 hardening boundary
+
+AUTH-08 is the registered parent task and is complete for implementation and
+local security evidence. The current branch implements and verifies the session-policy, migration, trusted-identity,
+logout, endpoint-matcher, and local negative-path slices. It does not claim
+managed-provider or production-scale completion. Delivered scope is:
+
+- RFC-aligned idle and absolute session expiry.
+- Atomic refresh rotation with trusted identity restoration.
+- Effective logout and family revocation.
+- Existing REST, GraphQL, and WebSocket endpoint protection.
+- Cache use for safe acceleration without bypassing writer-authoritative
+  revocation or authorization.
+- Browser/native client security policy.
+- Full unit, persistence, controller, contract, Bruno, E2E, cache-failure, and
+  endpoint-matrix evidence.
+
+The latest hardening also binds refresh sessions to the provider-qualified
+subject captured at issuance, revokes all active sessions when deletion begins,
+and marks token-bearing verification/refresh responses `no-store`/`no-cache`.
+
+Those implementation checks now pass. This does not expand the claim to
+managed-provider compatibility or production-scale readiness; those remain
+separate QA-08/OPS-22 release gates.
+
 ## Evidence-based status
 
 | Capability | Current evidence | Assessment |
@@ -133,6 +158,6 @@ The following evidence is recorded in the task registry and progress ledger:
 - REST/OpenAPI, GraphQL, Bruno, unit, persistence, concurrency, and E2E
   artifacts are synchronized with the tracker and progress ledger.
 
-Browser-cookie policy, managed-provider runs, and incident-response procedures
-remain separately scoped future hardening work and are not represented as gaps
-in the completed AUTH-03 through AUTH-07 implementation.
+BFF browser-cookie/CSRF policy is implemented in the AUTH-08 increment. Managed-
+provider runs, full cache restart/eviction evidence, native application
+integration, and incident-response procedures remain separately scoped gates.

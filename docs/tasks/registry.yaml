@@ -6816,7 +6816,7 @@
       "parent_id": "AUTH-08",
       "title": "Plan whole-security remediation",
       "phase": "security",
-      "status": "in_progress",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -6847,7 +6847,9 @@
       ],
       "evidence": [
         "SEC-01 documents SEC-01A through SEC-01F and requires child registration before implementation.",
-        "The plan preserves the audit's NO-GO decision and explicit local-versus-production evidence boundary."
+        "The plan preserves the audit's NO-GO decision and explicit local-versus-production evidence boundary.",
+        "All six child workstreams (SEC-01A through SEC-01F) completed with verified implementation, tests, and documentation.",
+        "All 13 SEC-001 through SEC-013 findings are verified closed at code and local test level; production-scale evidence remains release-gated under QA-08/OPS-20."
       ],
       "reviewer": "/root",
       "blocker": null
@@ -7069,7 +7071,7 @@
       "parent_id": "SEC-01",
       "title": "Make security operations and release evidence executable",
       "phase": "security",
-      "status": "planned",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -7085,7 +7087,8 @@
         "docs/quality/",
         ".github/workflows/",
         "tools/ops/",
-        "docs/tasks/details/SEC-01F.md"
+        "docs/tasks/details/SEC-01F.md",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/auth/audit/"
       ],
       "specification": "docs/tasks/details/SEC-01F.md",
       "acceptance_criteria": [
@@ -7095,11 +7098,20 @@
         "Endpoint operation matrix is updated with verified evidence."
       ],
       "validation_commands": [
-        "./gradlew test check --no-daemon",
+        "./gradlew :app:accounts:test --no-daemon",
         "uv run python tools/contracts/validate.py",
-        "uv run python tools/ops/check_security_hygiene.py"
+        "uv run python tools/ops/check_security_hygiene.py",
+        "uv run python tools/ops/check_architecture.py",
+        "uv run python tools/ops/validate_sbom_baseline.py"
       ],
-      "evidence": [],
+      "evidence": [
+        "SEC-012: Created SecurityAuditEvent enum (11 event types) and SecurityAuditLogger writing to 'security.audit' logger. Wired into TokenSessionService (LOGIN_SUCCESS, TOKEN_REUSE_DETECTED, SESSION_DENIED_DELETION_REQUESTED, SESSION_SUBJECT_MISMATCH, TOKEN_REFRESHED, SESSION_REVOKED), LoginVerificationService (LOGIN_FAILURE, IDENTITY_ENROLLED), LoginStartService (LOGIN_RATE_LIMITED), DefaultRsaKeyProvider (KEY_ROTATED). SecurityAuditLoggerTest: 13 cases.",
+        "SEC-010: Extended DefaultRsaKeyProviderTest from 2 to 8 tests covering overlap window, multi-generation accumulation, fail-closed guards, and JWKSource consistency. Created docs/operations/key-rotation-runbook.md.",
+        "SEC-011: Created docs/security/supply-chain-evidence.md documenting implemented controls and explicitly listing release-gated items.",
+        "SEC-013: Rewrote docs/quality/public-interface-operation-matrix.md with SEC-01A through SEC-01F evidence annotations and a full finding closure summary table.",
+        "./gradlew :app:accounts:test BUILD SUCCESSFUL (19 tasks); all Python validation gates passed.",
+        "Commit 2b4b51d"
+      ],
       "reviewer": "/root",
       "blocker": null
     },

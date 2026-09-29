@@ -19,6 +19,9 @@ object ApiEndpoints {
     /** Shared operational endpoint paths. */
     object Operations {
         const val HEALTH: String = "/actuator/health/**"
+        const val ACTUATOR_PROMETHEUS: String = "/actuator/prometheus"
+        const val ACTUATOR_METRICS: String = "/actuator/metrics/**"
+        const val ACTUATOR_INFO: String = "/actuator/info"
     }
 
     /** Common HTTP Headers */

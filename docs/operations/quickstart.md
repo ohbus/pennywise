@@ -98,3 +98,13 @@ For production, build and scan each immutable image with `infra/docker/Dockerfil
 run owner migrations, set the four `SQUAREWISE_*_IMAGE` variables, inject secrets
 through the deployment platform, and use
 `infra/deploy/docker-compose.prod.yml`. Do not commit `.env` files or credentials.
+
+### Production Keycloak Baseline (L-2)
+
+Keycloak in `infra/local/docker-compose.yml` runs in `start-dev` mode strictly for local
+developer and CI fixture convenience. In staging and production environments:
+- Keycloak must run `kc.sh start --optimized` with build-time optimizations.
+- An external hardened PostgreSQL instance must back the Keycloak realm.
+- Strict TLS termination (`KC_HOSTNAME_STRICT_HTTPS=true`) and trusted CA certificates must be configured.
+- Embedded development features and dev caches must remain disabled.
+

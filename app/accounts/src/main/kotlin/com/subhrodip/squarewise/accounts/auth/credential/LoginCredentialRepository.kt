@@ -49,4 +49,24 @@ interface LoginCredentialRepository : JpaRepository<LoginCredentialEntity, UUID>
 
     /** Finds a credential record by its HMAC digest. */
     fun findByCredentialDigest(credentialDigest: ByteArray): LoginCredentialEntity?
+
+    /**
+     * Purges expired or consumed credentials older than the specified cutoff thresholds.
+     *
+     * @param expiredCutoff cutoff timestamp for expired credentials.
+     * @param consumedCutoff cutoff timestamp for consumed credentials.
+     * @return count of deleted records.
+     */
+    @Modifying
+    @Query(
+        """
+        DELETE FROM LoginCredentialEntity c
+         WHERE c.expiresAt < :expiredCutoff
+            OR (c.consumedAt IS NOT NULL AND c.consumedAt < :consumedCutoff)
+        """
+    )
+    fun purgeExpiredOrConsumed(
+        @Param("expiredCutoff") expiredCutoff: Instant,
+        @Param("consumedCutoff") consumedCutoff: Instant
+    ): Int
 }

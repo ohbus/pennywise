@@ -36,6 +36,7 @@ class ProductionSecurityConfig(
 
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain = http
+        .let { com.subhrodip.squarewise.security.HttpHeadersConfiguration.applyServletSecurityHeaders(it) }
         .csrf { it.disable() }
         .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
         .authorizeHttpRequests {

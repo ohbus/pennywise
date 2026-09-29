@@ -23,36 +23,38 @@ This document details the database (PostgreSQL) and cache (Redis) access pattern
 
 ```mermaid
 flowchart TD
-    subgraph ClientLayer["Clients and Gateway"]
+    subgraph ClientGateway["Client and Gateway Layer"]
         Client["Client / Web / Mobile"]
-        BFF["BFF / GraphQL Gateway (Stateless: 0 DB, 0 Cache)"]
+        BFF["BFF (GraphQL Gateway)<br/>Stateless: 0 DB, 0 Cache"]
     end
 
     subgraph AccountsService["Accounts Service"]
-        A_RateLimit["Redis Rate Limiter (Lua Atomic Script)"]
-        A_PG[("Accounts PostgreSQL (auth_sessions, identities, profiles)")]
+        A_API["Accounts REST API"]
+        A_RateLimit["Redis Rate Limiter<br/>Lua Atomic Bucket"]
+        A_PG[("Accounts PostgreSQL<br/>auth_sessions, identities, profiles")]
+        A_API -->|Rate check| A_RateLimit
+        A_API -->|Auth / Session Tx| A_PG
     end
 
     subgraph ExpenseCoreService["Expense Core Service"]
-        E_PG[("Expense PostgreSQL (groups, expenses, ledger, sync, outbox)")]
+        E_API["Expense Core REST API"]
+        E_PG[("Expense PostgreSQL<br/>groups, expenses, ledger, sync, outbox")]
+        E_API -->|Atomic Tx| E_PG
     end
 
     subgraph NotificationsService["Notifications Service"]
-        N_RateLimit["Redis Delivery Limiter (Lua Script)"]
-        N_PG[("Notifications PostgreSQL (inbox, preferences)")]
+        N_API["Notifications REST API / Worker"]
+        N_RateLimit["Redis Delivery Limiter<br/>Lua Rate Script"]
+        N_PG[("Notifications PostgreSQL<br/>inbox, preferences")]
+        N_API -->|Rate check| N_RateLimit
+        N_API -->|Inbox / Delivery Tx| N_PG
     end
 
-    Client -->|Public Auth Req| AccountsService
-    Client -->|GraphQL Query/Mutation| BFF
-    BFF -->|REST Bearer Token| AccountsService
-    BFF -->|REST Bearer Token| ExpenseCoreService
-    BFF -->|REST Bearer Token| NotificationsService
-
-    AccountsService --> A_RateLimit
-    AccountsService --> A_PG
-    ExpenseCoreService --> E_PG
-    NotificationsService --> N_RateLimit
-    NotificationsService --> N_PG
+    Client -->|Public Auth POST| A_API
+    Client -->|GraphQL Queries and Mutations| BFF
+    BFF -->|REST Bearer Token| A_API
+    BFF -->|REST Bearer Token| E_API
+    BFF -->|REST Bearer Token| N_API
 ```
 
 ---

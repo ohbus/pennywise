@@ -30,6 +30,7 @@ class ProductionSecurityConfig(
 
     @Bean
     fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain = http
+        .let { com.subhrodip.squarewise.security.HttpHeadersConfiguration.applyReactiveSecurityHeaders(it) }
         .csrf { it.disable() }
         .authorizeExchange {
             it.pathMatchers(ApiEndpoints.Operations.HEALTH).permitAll()

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.core.env.Environment
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -24,15 +25,28 @@ class ProductionSecurityConfig(
     @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}") private val issuerUri: String,
     @Value("\${squarewise.security.oidc.audience}") private val audience: String,
     @Value("\${squarewise.security.oidc.allowed-algorithms:}") private val allowedAlgorithms: String,
+    @Value("\${squarewise.security.oidc.external-validation-enabled:false}") private val externalValidationEnabled: Boolean,
+    private val environment: Environment,
     private val rsaKeyProvider: RsaKeyProvider
 ) {
     @Bean
-    fun jwtDecoder(): JwtDecoder = OidcJwtDecoderFactory.createWithJwkSource(
-        rsaKeyProvider.jwkSource(),
-        issuerUri,
-        audience,
-        OidcSecurityConstants.configuredSigningAlgorithms(allowedAlgorithms)
-    )
+    fun jwtDecoder(): JwtDecoder {
+        val localDecoder = OidcJwtDecoderFactory.createWithJwkSource(
+            rsaKeyProvider.jwkSource(),
+            issuerUri,
+            audience,
+            OidcSecurityConstants.configuredSigningAlgorithms(allowedAlgorithms)
+        )
+        if (!externalValidationEnabled || !environment.acceptsProfiles("local-oidc")) {
+            return localDecoder
+        }
+        val externalDecoder = OidcJwtDecoderFactory.create(
+            issuerUri,
+            audience,
+            OidcSecurityConstants.configuredSigningAlgorithms(allowedAlgorithms)
+        )
+        return FallbackJwtDecoder(listOf(externalDecoder, localDecoder))
+    }
 
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain = http

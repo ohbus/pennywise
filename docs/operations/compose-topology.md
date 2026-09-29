@@ -116,6 +116,11 @@ development. The dependency services declare these names as explicit network
 aliases, because a Compose `hostname` alone does not guarantee service-DNS
 resolution. The local Keycloak OIDC provider uses `idp-keycloak`; its issuer
 and audience are injected through the `local-oidc` profile under AUTH-06.
+Accounts' local-oidc resource server additionally enables the explicit
+`SQUAREWISE_SECURITY_OIDC_EXTERNAL_VALIDATION_ENABLED` compatibility switch.
+This lets CI Keycloak personas and Accounts-owned passwordless RS256 tokens be
+validated during local testing; production and staging keep the Accounts-owned
+JWKS decoder without this fallback.
 
 The full and BFF prerequisite topologies use
 `infra/docker/Dockerfile.dev` and Gradle `bootRun`. For fast runtime images from

@@ -52,6 +52,7 @@ squarewise:
   security:
     oidc:
       audience: ${SQUAREWISE_SECURITY_OIDC_AUDIENCE:}
+      external-validation-enabled: ${SQUAREWISE_SECURITY_OIDC_EXTERNAL_VALIDATION_ENABLED:false}
     session:
       access-token-lifetime: ${SQUAREWISE_SECURITY_SESSION_ACCESS_TOKEN_LIFETIME:10m}
       refresh-idle-lifetime: ${SQUAREWISE_SECURITY_SESSION_REFRESH_IDLE_LIFETIME:30d}

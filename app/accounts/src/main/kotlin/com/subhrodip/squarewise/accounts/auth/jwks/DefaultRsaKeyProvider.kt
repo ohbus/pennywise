@@ -1,5 +1,7 @@
 package com.subhrodip.squarewise.accounts.auth.jwks
 
+import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditEvent
+import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditLogger
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.JWKSelector
@@ -28,7 +30,8 @@ import org.slf4j.LoggerFactory
  * Supports thread-safe key rotation with overlapping public key verification.
  */
 class DefaultRsaKeyProvider(
-    private val properties: RsaKeyProperties
+    private val properties: RsaKeyProperties,
+    private val auditLogger: SecurityAuditLogger = SecurityAuditLogger()
 ) : RsaKeyProvider {
 
     private val log = LoggerFactory.getLogger(DefaultRsaKeyProvider::class.java)
@@ -63,6 +66,7 @@ class DefaultRsaKeyProvider(
         historicalKeys.add(previous.toPublicJWK())
         historicalKeys.add(newKey.toPublicJWK())
         log.info("Rotated active RSA signing key from kid={} to kid={}", previous.keyID, newKey.keyID)
+        auditLogger.emit(SecurityAuditEvent.KEY_ROTATED, detail = "kid=${newKey.keyID}")
     }
 
     private fun loadOrGenerateKey(): RSAKey {

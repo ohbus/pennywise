@@ -4,22 +4,44 @@ This is the operation-level companion to
 [`public-interface-coverage.md`](public-interface-coverage.md). The operation
 inventory is contract-generated; the current validator reports 45 REST
 operations. A row is not complete merely because its
-request is present in Bruno. “Remaining dimension work” is an explicit gap list
+request is present in Bruno. "Remaining dimension work" is an explicit gap list
 and must be reduced with endpoint-specific tests before QA-07 can close.
+
+> **SEC-01 remediation update (2026-09-29):** The following SEC-01 workstreams
+> have been implemented and verified with focused unit and integration tests:
+> - **SEC-01A (SEC-001, SEC-009):** Squarewise-owned RS256 asymmetric token authority, RFC 8414
+>   JWKS/metadata discovery, and in-memory JWKSource validation deployed in production profile.
+> - **SEC-01B (SEC-002):** Durable `(issuer, providerSubject)` identity mapping; email is
+>   verified contact data; profile no longer provisioned implicitly on bearer reads.
+> - **SEC-01C (SEC-004, SEC-005):** Profile `GET /profiles/{accountId}` and `POST /profiles/batch`
+>   now require self-lookup or `X-Squarewise-Workload-Role: internal-service` header; 403 on
+>   unauthorized cross-account reads.
+> - **SEC-01D (SEC-003, SEC-006):** WebSocket subscriptions auto-terminate on membership removal
+>   via `LiveUpdateFanout` revocation signals; CSRF double-submit extended to cookie-authenticated
+>   `POST /graphql` mutations.
+> - **SEC-01E (SEC-007, SEC-008):** Trusted-proxy-aware `ClientAddressResolver` with IPv4/IPv6
+>   normalization; access-token residual revocation window documented and bounded at 10 minutes.
+> - **SEC-01F (SEC-010, SEC-011, SEC-012, SEC-013):** Structured `SecurityAuditLogger` emitting
+>   redacted events for all key auth lifecycle outcomes; SEC-010 key rotation runbook with
+>   verified overlap tests; SEC-011 supply chain evidence recorded.
+>
+> P0/P1 findings from the whole-security audit are now verified closed at the code and local
+> test level. Production-scale, hosted-environment, and managed-provider evidence remains
+> formally release-gated under QA-08 and OPS-20.
 
 | Service | Method | Path | Operation | Current evidence | Remaining dimension work |
 |---|---|---|---|---|---|
-| Accounts | POST | `/auth/login/start` | `startLogin` | contract + controller + unit tests + rate limit integration | failure/network partition matrix |
-| Accounts | POST | `/auth/login/verify` | `verifyLogin` | contract + controller + unit tests + single-use redemption | failure/replay matrix |
-| Accounts | POST | `/auth/token/refresh` | `refreshToken` | contract + controller + unit tests + rotation + reuse detection | revocation matrix |
-| Accounts | POST | `/auth/logout` | `logout` | contract + controller + unit tests + authentication required | session revocation matrix |
+| Accounts | POST | `/auth/login/start` | `startLogin` | contract + controller + unit tests + rate limit integration + **SEC-01E: trusted-proxy network partition** + **SEC-01F: LOGIN_RATE_LIMITED audit event** | failure/network partition matrix |
+| Accounts | POST | `/auth/login/verify` | `verifyLogin` | contract + controller + unit tests + single-use redemption + **SEC-01A: asymmetric RS256 token issuance** + **SEC-01B: issuer/subject identity** + **SEC-01F: LOGIN_SUCCESS/LOGIN_FAILURE/IDENTITY_ENROLLED audit events** | failure/replay matrix |
+| Accounts | POST | `/auth/token/refresh` | `refreshToken` | contract + controller + unit tests + rotation + reuse detection + **SEC-01F: TOKEN_REFRESHED/TOKEN_REUSE_DETECTED/SESSION_DENIED_DELETION_REQUESTED/SESSION_SUBJECT_MISMATCH audit events** | revocation matrix |
+| Accounts | POST | `/auth/logout` | `logout` | contract + controller + unit tests + authentication required + **SEC-01F: SESSION_REVOKED audit event** | session revocation matrix |
 | Accounts | GET | `/me` | `getMe` | contract + controller + GraphQL/E2E live + authenticated profile shape | unauthenticated/failure matrix |
 | Accounts | PATCH | `/me` | `updateMe` | contract + controller/live smoke + validated fields + empty-patch edge | failure matrix |
 | Accounts | POST | `/me/deletion-request` | `requestDeletion` | contract + live smoke + unauthenticated edge | service failure/replay matrix |
 | Accounts | POST | `/me/export-request` | `requestExport` | contract + live smoke + unauthenticated edge | service failure/replay matrix |
 | Accounts | GET | `/me/export-requests` | `listExportRequests` | contract + controller/live smoke + unauthenticated and invalid-subject edges | pagination/service failure matrix |
-| Accounts | GET | `/profiles/{accountId}` | `getProfileById` | contract + controller/live smoke + malformed-ID, not-found, self-lookup, cross-account 403, and workload role edges | failure matrix |
-| Accounts | POST | `/profiles/batch` | `getProfilesBatch` | contract + controller + live smoke + empty/malformed/over-limit input + duplicate-ID deduplication + self-lookup and workload role authorization (403 for unauthorized cross-account batch) | production dependency-failure evidence (QA-08) |
+| Accounts | GET | `/profiles/{accountId}` | `getProfileById` | contract + controller/live smoke + malformed-ID, not-found, self-lookup, cross-account 403, and workload role edges + **SEC-01C: object authorization enforced** | failure matrix |
+| Accounts | POST | `/profiles/batch` | `getProfilesBatch` | contract + controller + live smoke + empty/malformed/over-limit input + duplicate-ID deduplication + self-lookup and workload role authorization (403 for unauthorized cross-account batch) + **SEC-01C: batch object authorization enforced** | production dependency-failure evidence (QA-08) |
 | Expense Core | POST | `/groups` | `createGroup` | contract + controller/GraphQL/E2E live + authentication/invalid-kind edges | production dependency-failure evidence (QA-08) |
 | Expense Core | GET | `/groups` | `listGroups` | contract + controller/live smoke + E2E + authentication/archived-state edges | production dependency-failure evidence (QA-08) |
 | Expense Core | GET | `/groups/{groupId}` | `getGroup` | contract + controller/live smoke + E2E + authentication/non-member/not-found/archived edges | production dependency-failure evidence (QA-08) |
@@ -71,7 +93,7 @@ through BFF to Expense Core, returning HTTP 200 with an empty groups result.
 | GraphQL mutation | `updateGroup` | schema + resolver/controller + HTTP success + validation/timeout error transport + live non-member authorization | production retry policy evidence (QA-08) |
 | GraphQL mutation | `createExpense` | schema + resolver/controller + HTTP success + malformed-input/dependency-failure transport + live idempotent/tampered-replay edges + REST side-effect E2E | production retry policy evidence (QA-08) |
 | GraphQL mutation | `recordRepayment` | schema + resolver/controller + HTTP success + conflict transport + live malformed-money/non-member authorization/journey | production retry policy evidence (QA-08) |
-| GraphQL subscription | `groupChanged` | schema + resolver authorization + fanout unit tests + malformed-operation, authenticated/non-member, disconnect/reconnect, resubscription, and completed-subscription filtering WebSocket E2E | production replay/backpressure protocol evidence (QA-08) |
+| GraphQL subscription | `groupChanged` | schema + resolver authorization + fanout unit tests + malformed-operation, authenticated/non-member, disconnect/reconnect, resubscription, and completed-subscription filtering WebSocket E2E + **SEC-01D: subscription auto-terminates on membership removal via revocation signals** | production replay/backpressure protocol evidence (QA-08) |
 | WebSocket transport | `graphql-transport-ws` connection lifecycle | protocol handshake, subscribe, malformed-operation error frame, event delivery, authenticated resubscription after disconnect, and concurrent invalidation E2E | malformed frames, duplicate subscribe, timeout, and sustained backpressure evidence (QA-08) |
 
 The local QA-07 package covers success, validation, authorization, upstream
@@ -82,3 +104,21 @@ backpressure, reconnect replay, and heartbeats) and production dependency
 failure/retry policies are formally specified by contract and accepted limitations
 in [`production-validation.md`](production-validation.md) under QA-08; local
 Docker evidence and schema mocks are not presented as target-environment evidence.
+
+## SEC-01 security finding closure summary
+
+| Finding | Severity | Workstream | Code Evidence | Status |
+|---|---|---|---|---|
+| SEC-001: No deployed token issuance | Critical | SEC-01A | `AsymmetricJwtTokenProvider`, `OidcDiscoveryController`, production profile wiring | ✅ Verified closed |
+| SEC-002: Email-derived identity | High | SEC-01B | `AccountIdentityEntity`, `JpaAccountIdentityStore`, `LoginVerificationService` | ✅ Verified closed |
+| SEC-003: WebSocket membership not revoked | High | SEC-01D | `LiveUpdateFanout.revocationSignal`, `BffEventConsumer` member.removed handling | ✅ Verified closed |
+| SEC-004: Profile IDOR | High | SEC-01C | `ProfileController` self/workload authorization, 403 on cross-account reads | ✅ Verified closed |
+| SEC-005: Service-to-service trust | High | SEC-01C | `X-Squarewise-Workload-Role` header validation, workload-only batch route | ✅ Verified closed (code level; network policy remains release-gated) |
+| SEC-006: CSRF incomplete | Medium | SEC-01D | `BrowserCsrfWebFilter` extended to `POST /graphql` cookie-authenticated mutations | ✅ Verified closed |
+| SEC-007: Rate limit proxy sensitivity | Medium | SEC-01E | `ClientAddressResolver`, `TrustedProxyProperties`, IPv4/IPv6 normalization | ✅ Verified closed |
+| SEC-008: Access-token revocation window | Medium | SEC-01E | 10-minute access-token lifetime documented; residual window explicitly accepted | ✅ Documented and accepted |
+| SEC-009: External provider not implemented | Medium | SEC-01A | Squarewise-owned issuer deployed; external adapter remains SPI placeholder | ✅ Closed (own issuer model chosen) |
+| SEC-010: Key/secret rotation incomplete | Medium | SEC-01F | Key rotation runbook, overlap tests, `KEY_ROTATED` audit event | ✅ Runbook and tests complete; production rehearsal release-gated |
+| SEC-011: Supply chain evidence partial | Medium | SEC-01F | Supply chain evidence doc, SBOM validation, hygiene scan, image hardening | ✅ Local CI evidence complete; container scanning release-gated |
+| SEC-012: Security telemetry incomplete | Low/Medium | SEC-01F | `SecurityAuditLogger`, events on login/refresh/revoke/rotation | ✅ Implemented; immutable retention release-gated |
+| SEC-013: Endpoint matrix incomplete | Low/Medium | SEC-01F | This document updated with SEC-01 evidence per operation | ✅ Updated; production dimensions remain QA-08 |

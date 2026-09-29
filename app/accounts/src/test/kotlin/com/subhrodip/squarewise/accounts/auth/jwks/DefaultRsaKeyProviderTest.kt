@@ -1,6 +1,8 @@
 package com.subhrodip.squarewise.accounts.auth.jwks
 
 import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.jwk.JWKMatcher
+import com.nimbusds.jose.jwk.JWKSelector
 import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -8,8 +10,12 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
-/** Unit tests for DefaultRsaKeyProvider verifying generation, JWKS export, and key rotation. */
+/**
+ * Unit tests for [DefaultRsaKeyProvider] verifying generation, JWKS export, key rotation overlap
+ * windows (SEC-010), and guard conditions on rotation inputs.
+ */
 class DefaultRsaKeyProviderTest {
 
     @Test
@@ -54,5 +60,114 @@ class DefaultRsaKeyProviderTest {
         val keyIds = rotatedJwkSet.keys.map { it.keyID }.toSet()
         assertTrue(keyIds.contains("initial-kid"))
         assertTrue(keyIds.contains("rotated-kid-2"))
+    }
+
+    /**
+     * SEC-010: the old public key must remain in the JWKS immediately after rotation
+     * so that tokens signed with the previous key can still be verified during the overlap window.
+     * Resource servers must not see a JWKS gap between rotation and cache refresh.
+     */
+    @Test
+    fun `old public key is available in JWKS immediately after rotation for overlap verification`() {
+        val properties = RsaKeyProperties(keyId = "key-v1")
+        val provider = DefaultRsaKeyProvider(properties)
+
+        val keyV2 = RSAKeyGenerator(2048)
+            .keyID("key-v2")
+            .keyUse(KeyUse.SIGNATURE)
+            .algorithm(JWSAlgorithm.RS256)
+            .generate()
+        provider.rotateKey(keyV2)
+
+        assertEquals("key-v2", provider.activeSigningKey().keyID)
+
+        val jwks = provider.publicJwkSet()
+        val kidToKey = jwks.keys.associateBy { it.keyID }
+        assertTrue(kidToKey.containsKey("key-v1"), "Old key v1 must remain in JWKS after rotation")
+        assertTrue(kidToKey.containsKey("key-v2"), "New key v2 must appear in JWKS after rotation")
+        assertFalse(kidToKey["key-v1"]!!.isPrivate, "Historical keys must only expose public material")
+    }
+
+    /**
+     * SEC-010: multiple successive rotations must accumulate historical keys so that a token
+     * signed with any generation can still be validated until its generation is explicitly retired.
+     */
+    @Test
+    fun `multiple successive rotations accumulate all historical public keys`() {
+        val properties = RsaKeyProperties(keyId = "key-gen-1")
+        val provider = DefaultRsaKeyProvider(properties)
+
+        val keyGen2 = RSAKeyGenerator(2048).keyID("key-gen-2").keyUse(KeyUse.SIGNATURE).algorithm(JWSAlgorithm.RS256).generate()
+        val keyGen3 = RSAKeyGenerator(2048).keyID("key-gen-3").keyUse(KeyUse.SIGNATURE).algorithm(JWSAlgorithm.RS256).generate()
+
+        provider.rotateKey(keyGen2)
+        provider.rotateKey(keyGen3)
+
+        assertEquals("key-gen-3", provider.activeSigningKey().keyID)
+
+        val allKids = provider.publicJwkSet().keys.map { it.keyID }.toSet()
+        assertTrue(allKids.contains("key-gen-1"), "Gen-1 key must be retained in JWKS")
+        assertTrue(allKids.contains("key-gen-2"), "Gen-2 key must be retained in JWKS")
+        assertTrue(allKids.contains("key-gen-3"), "Active gen-3 key must be present in JWKS")
+    }
+
+    /**
+     * SEC-010: rotation must reject a public-only key since signing would fail at token issuance time.
+     * Fail closed: the active key must not change when an invalid key is presented.
+     */
+    @Test
+    fun `rotateKey rejects public-only key without private material`() {
+        val properties = RsaKeyProperties(keyId = "original")
+        val provider = DefaultRsaKeyProvider(properties)
+
+        val publicOnlyKey = RSAKeyGenerator(2048)
+            .keyID("public-only")
+            .keyUse(KeyUse.SIGNATURE)
+            .algorithm(JWSAlgorithm.RS256)
+            .generate()
+            .toPublicJWK()
+
+        assertThrows<IllegalArgumentException> {
+            provider.rotateKey(publicOnlyKey)
+        }
+        // Active key must remain unchanged
+        assertEquals("original", provider.activeSigningKey().keyID)
+    }
+
+    /**
+     * SEC-010: rotation must reject a key with a blank or missing kid to preserve
+     * JWKS disambiguation and historical key deduplication by kid.
+     */
+    @Test
+    fun `rotateKey rejects key with blank kid`() {
+        val properties = RsaKeyProperties(keyId = "original-kid")
+        val provider = DefaultRsaKeyProvider(properties)
+
+        val noKidKey = RSAKeyGenerator(2048)
+            .keyUse(KeyUse.SIGNATURE)
+            .algorithm(JWSAlgorithm.RS256)
+            .generate()
+
+        assertThrows<IllegalArgumentException> {
+            provider.rotateKey(noKidKey)
+        }
+        assertEquals("original-kid", provider.activeSigningKey().keyID)
+    }
+
+    /**
+     * SEC-010: the JWKSource facade backed by the provider must surface the same public keys
+     * as publicJwkSet so that resource-server token verification and JWKS discovery are consistent.
+     */
+    @Test
+    fun `jwkSource returns the same public keys as publicJwkSet`() {
+        val properties = RsaKeyProperties(keyId = "source-test-kid")
+        val provider = DefaultRsaKeyProvider(properties)
+
+        val jwkSetKids = provider.publicJwkSet().keys.map { it.keyID }.toSet()
+        val sourceKids = provider.jwkSource()
+            .get(JWKSelector(JWKMatcher.Builder().build()), null)
+            .map { it.keyID }.toSet()
+
+        assertEquals(jwkSetKids, sourceKids)
     }
 }

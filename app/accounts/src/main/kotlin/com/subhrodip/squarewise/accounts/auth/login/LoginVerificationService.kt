@@ -1,5 +1,7 @@
 package com.subhrodip.squarewise.accounts.auth.login
 
+import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditEvent
+import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditLogger
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialService
 import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentityStore
 import com.subhrodip.squarewise.accounts.auth.session.TokenResponse
@@ -33,7 +35,8 @@ open class LoginVerificationService(
     private val profileStore: ProfileStore,
     private val tokenSessionService: TokenSessionService,
     private val accountIdentityStore: AccountIdentityStore,
-    private val issuerUri: String = "squarewise-internal"
+    private val issuerUri: String = "squarewise-internal",
+    private val auditLogger: SecurityAuditLogger = SecurityAuditLogger()
 ) {
     private val log = LoggerFactory.getLogger(LoginVerificationService::class.java)
 
@@ -55,7 +58,10 @@ open class LoginVerificationService(
         now: Instant
     ): TokenResponse {
         val redeemed = credentialService.redeem(credential, now)
-            ?: throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
+            ?: run {
+                auditLogger.emit(SecurityAuditEvent.LOGIN_FAILURE, detail = "invalid-or-expired-credential")
+                throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
+            }
 
         val canonicalEmail = redeemed.canonicalEmail
         val existingIdentity = accountIdentityStore.findByEmail(canonicalEmail)
@@ -82,6 +88,7 @@ open class LoginVerificationService(
                 email = canonicalEmail,
                 verified = true
             )
+            auditLogger.emit(SecurityAuditEvent.IDENTITY_ENROLLED, accountId = newAccountId)
             newAccountId to newSubject
         }
 

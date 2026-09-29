@@ -1,5 +1,7 @@
 package com.subhrodip.squarewise.accounts.auth.session
 
+import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditEvent
+import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditLogger
 import com.subhrodip.squarewise.accounts.auth.credential.CredentialDigest
 import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentityStore
 import com.subhrodip.squarewise.accounts.auth.provider.IdentityProviderPort
@@ -39,7 +41,8 @@ open class TokenSessionService(
         absoluteSessionLifetime = java.time.Duration.ofDays(90),
         clockSkew = java.time.Duration.ZERO
     ),
-    private val accountIdentityStore: AccountIdentityStore
+    private val accountIdentityStore: AccountIdentityStore,
+    private val auditLogger: SecurityAuditLogger = SecurityAuditLogger()
 ) {
     private val log = LoggerFactory.getLogger(TokenSessionService::class.java)
 
@@ -86,6 +89,7 @@ open class TokenSessionService(
         sessionRepository.save(session)
 
         val issuedToken = identityProviderPort.issueAccessToken(accountId, subject, email)
+        auditLogger.emit(SecurityAuditEvent.LOGIN_SUCCESS, accountId = accountId)
         return TokenResponse(
             accessToken = issuedToken.accessToken,
             tokenType = issuedToken.tokenType,
@@ -120,6 +124,7 @@ open class TokenSessionService(
         // Reuse detection: if this session was already replaced or revoked, revoke entire family
         if (existingSession.revokedAt != null || existingSession.replacedBySessionId != null) {
             log.warn("Refresh token reuse detected for session family {}. Revoking family.", existingSession.familyId)
+            auditLogger.emit(SecurityAuditEvent.TOKEN_REUSE_DETECTED, accountId = existingSession.accountId)
             sessionRepository.revokeFamily(existingSession.familyId, now)
             throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
         }
@@ -143,10 +148,12 @@ open class TokenSessionService(
         val identity = accountIdentityStore.findByAccountId(accountId)
             ?: throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
         if (identity.deletionRequested) {
+            auditLogger.emit(SecurityAuditEvent.SESSION_DENIED_DELETION_REQUESTED, accountId = accountId)
             sessionRepository.revokeFamily(existingSession.familyId, now)
             throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
         }
         if (existingSession.subject == null || existingSession.subject != identity.subject) {
+            auditLogger.emit(SecurityAuditEvent.SESSION_SUBJECT_MISMATCH, accountId = accountId)
             sessionRepository.revokeFamily(existingSession.familyId, now)
             throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
         }
@@ -176,6 +183,7 @@ open class TokenSessionService(
         }
 
         val issuedToken = identityProviderPort.issueAccessToken(accountId, identity.subject, identity.email)
+        auditLogger.emit(SecurityAuditEvent.TOKEN_REFRESHED, accountId = accountId)
         return TokenResponse(
             accessToken = issuedToken.accessToken,
             tokenType = issuedToken.tokenType,
@@ -206,6 +214,7 @@ open class TokenSessionService(
             val identity = accountIdentityStore.findByAccountId(accountId) ?: return
             if (identity.subject != expectedSubject) return
         }
+        auditLogger.emit(SecurityAuditEvent.SESSION_REVOKED, accountId = session.accountId)
         sessionRepository.revokeFamily(session.familyId, now)
     }
 

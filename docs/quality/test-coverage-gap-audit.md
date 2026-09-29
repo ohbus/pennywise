@@ -54,6 +54,48 @@ The operation matrix currently inventories 45 REST operations and 9 GraphQL
 root operations. That proves inventory completeness, not complete validation,
 authorization, failure, replay, concurrency, or side-effect coverage.
 
+### Exhaustive current branch inventory
+
+The regenerated JaCoCo XML contains **282 methods with at least one missed
+branch**. This is the exhaustive discovery set for this revision; the summary
+below prevents a high-level module percentage from hiding a small but important
+method. Every method in this set must be assigned to a backlog row, tested, or
+classified as generated/structural with reviewer approval.
+
+| Module | Classes with missed lines | Classes with missed branches | Methods with missed branches |
+| --- | ---: | ---: | ---: |
+| `app/accounts` | 46 | 33 | 57 |
+| `app/bff` | 28 | 24 | 49 |
+| `app/expense-core` | 50 | 28 | 83 |
+| `app/notifications` | 18 | 20 | 37 |
+| `libs/db` | 12 | 14 | 27 |
+| `libs/errors` | 5 | 4 | 10 |
+| `libs/ids` | 3 | 0 | 0 |
+| `libs/observability` | 2 | 3 | 10 |
+| `libs/security` | 5 | 6 | 9 |
+| **Total** | **169** | **132** | **282** |
+
+The exact class, source file, method, source line, missed-branch count, and
+covered-branch count are in the current files
+`app/*/build/reports/jacoco/test/jacocoTestReport.xml` and
+`libs/*/build/reports/jacoco/test/jacocoTestReport.xml`. Regenerate them with
+`./gradlew.bat test jacocoTestReport --rerun-tasks --no-daemon`, then inspect
+every `<class>/<method>/<counter type="BRANCH">` where `missed > 0`.
+This is intentionally a fail-open discovery report: a missed branch is not
+automatically a defect, but it is never silently treated as covered.
+
+Methods named `<init>`, `equals`, `hashCode`, `toString`, Kotlin `$lambda$`,
+and compiler-generated value/boxing methods require structural classification
+only when the underlying production behavior is covered by an explicit test.
+For example, testing a data class's equality behavior is valid; excluding all
+`equals` methods merely because they are generated is not. Methods with domain,
+transport, persistence, messaging, security, or configuration behavior must
+receive a normal QA10 row even when JaCoCo reports partial coverage.
+
+The 282-method inventory is a discovery baseline, not closure evidence. QA-10
+cannot move to done until the inventory is rerun after each test increment and
+the count is zero or every residual entry has a reviewed structural rationale.
+
 ## Required evidence ladder
 
 Each production behavior is assigned the minimum evidence needed:

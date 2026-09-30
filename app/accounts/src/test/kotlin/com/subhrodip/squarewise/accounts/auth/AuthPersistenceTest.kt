@@ -226,4 +226,17 @@ class AuthPersistenceTest @Autowired constructor(
         assertTrue(availableAt.isAfter(now.plusSeconds(6)))
         assertTrue(availableAt.isBefore(now.plusSeconds(8)))
     }
+
+    @Test
+    fun `reject ignores an event that is not currently claimed`() {
+        assertEquals(
+            false,
+            authEmailOutboxService.reject(
+                UUID.randomUUID(),
+                Instant.now(),
+                Duration.ZERO,
+                3,
+            ),
+        )
+    }
 }

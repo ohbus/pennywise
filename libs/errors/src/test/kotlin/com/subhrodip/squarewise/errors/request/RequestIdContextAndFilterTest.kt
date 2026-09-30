@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import jakarta.servlet.FilterChain
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
+import org.slf4j.MDC
 
 /** Verifies request correlation IDs are propagated and never leak between requests. */
 class RequestIdContextAndFilterTest {
@@ -53,6 +54,56 @@ class RequestIdContextAndFilterTest {
         assertEquals("missing-request-id", RequestIdContext.get())
     }
 
+    /** Missing and oversized client IDs are both replaced instead of reflected. */
+    @Test
+    fun `missing and oversized request ids are replaced`() {
+        val missingRequest = MockHttpServletRequest().apply {
+            method = "GET"
+            requestURI = "/health"
+        }
+        val missingResponse = MockHttpServletResponse()
+        filter.doFilter(missingRequest, missingResponse, FilterChain { _, _ -> })
+
+        val oversizedRequest = MockHttpServletRequest().apply {
+            method = "GET"
+            requestURI = "/health"
+            addHeader(RequestIdFilter.HEADER, "x".repeat(129))
+        }
+        val oversizedResponse = MockHttpServletResponse()
+        filter.doFilter(oversizedRequest, oversizedResponse, FilterChain { _, _ -> })
+
+        val emptyRequest = MockHttpServletRequest().apply {
+            method = "GET"
+            requestURI = "/health"
+            addHeader(RequestIdFilter.HEADER, "")
+        }
+        val emptyResponse = MockHttpServletResponse()
+        filter.doFilter(emptyRequest, emptyResponse, FilterChain { _, _ -> })
+
+        assertTrue(missingResponse.getHeader(RequestIdFilter.HEADER)?.matches(Regex("[0-9a-f-]{36}")) == true)
+        assertTrue(oversizedResponse.getHeader(RequestIdFilter.HEADER)?.matches(Regex("[0-9a-f-]{36}")) == true)
+        assertTrue(emptyResponse.getHeader(RequestIdFilter.HEADER)?.matches(Regex("[0-9a-f-]{36}")) == true)
+    }
+
+    /** Exceptions from downstream handlers propagate while the filter still clears context. */
+    @Test
+    fun `filter clears context when downstream chain fails`() {
+        val request = MockHttpServletRequest().apply {
+            method = "GET"
+            requestURI = "/failure"
+            addHeader(RequestIdFilter.HEADER, "chain-failure")
+        }
+        val response = MockHttpServletResponse()
+
+        val failure = IllegalStateException("downstream failure")
+        val thrown = runCatching {
+            filter.doFilter(request, response, FilterChain { _, _ -> throw failure })
+        }.exceptionOrNull()
+
+        assertEquals(failure, thrown)
+        assertEquals("missing-request-id", RequestIdContext.get())
+    }
+
     /** Nested context scopes restore no stale value after success or failure. */
     @Test
     fun `context cleanup runs when action throws`() {
@@ -68,5 +119,16 @@ class RequestIdContextAndFilterTest {
         }
 
         assertEquals("missing-request-id", RequestIdContext.get())
+    }
+
+    /** MDC remains a supported read path when no local context scope is active. */
+    @Test
+    fun `context reads correlation id from MDC fallback`() {
+        try {
+            MDC.put(RequestIdContext.MDC_KEY, "mdc-request-7")
+            assertEquals("mdc-request-7", RequestIdContext.get())
+        } finally {
+            MDC.remove(RequestIdContext.MDC_KEY)
+        }
     }
 }

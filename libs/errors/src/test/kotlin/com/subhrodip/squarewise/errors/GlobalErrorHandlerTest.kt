@@ -7,10 +7,19 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.springframework.core.MethodParameter
+import org.springframework.http.HttpInputMessage
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.http.MediaType
+import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.validation.BeanPropertyBindingResult
+import org.springframework.validation.FieldError
+import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.ServletRequestBindingException
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import org.mockito.Mockito
 
 class GlobalErrorHandlerTest {
 
@@ -113,6 +122,14 @@ class GlobalErrorHandlerTest {
             assertEquals("safe detail", response.body?.detail)
             assertEquals(if (code == ErrorCode.ERR_11) "60" else null, response.headers.getFirst("Retry-After"))
         }
+
+        val safeFallback = handler.applicationException(ApplicationException(ErrorCode.ERR_01))
+        assertEquals("Internal server error", safeFallback.body?.detail)
+
+        val nullMessage = Mockito.mock(ApplicationException::class.java)
+        Mockito.`when`(nullMessage.errorCode).thenReturn(ErrorCode.ERR_02)
+        Mockito.`when`(nullMessage.message).thenReturn(null)
+        assertEquals("Invalid request parameters", handler.applicationException(nullMessage).body?.detail)
     }
 
     /** Verifies the content-negotiation failure intentionally has no RFC 7807 body. */
@@ -123,4 +140,90 @@ class GlobalErrorHandlerTest {
         assertEquals(HttpStatus.NOT_ACCEPTABLE, response.statusCode)
         assertEquals(null, response.body)
     }
+
+    /** Verifies field-level validation messages and the safe default message branch. */
+    @Test
+    fun `validation maps field violations`() {
+        val binding = BeanPropertyBindingResult(Any(), "request")
+        binding.addError(FieldError("request", "amount", "bad", false, null, null, null))
+        binding.addError(FieldError("request", "currency", "bad", false, null, null, "invalid currency"))
+
+        val response = handler.validation(MethodArgumentNotValidException(sampleParameter(), binding))
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        assertEquals(2, response.body?.violations?.size)
+        assertEquals("amount", response.body?.violations?.first()?.field)
+        assertEquals("invalid currency", response.body?.violations?.last()?.message)
+    }
+
+    /** Verifies malformed-body detail precedence for root causes and empty messages. */
+    @Test
+    fun `malformed body uses root cause or safe fallback`() {
+        val rootCause = IllegalStateException("invalid json")
+        val withRootCause = handler.messageNotReadable(
+            HttpMessageNotReadableException("outer", rootCause, inputMessage())
+        )
+        val withoutDetail = handler.messageNotReadable(
+            HttpMessageNotReadableException("", inputMessage())
+        )
+
+        assertEquals("invalid json", withRootCause.body?.detail)
+        assertEquals("Malformed request payload", withoutDetail.body?.detail)
+
+        val blankRootCause = handler.messageNotReadable(
+            HttpMessageNotReadableException("outer detail", IllegalStateException(""), inputMessage())
+        )
+        assertEquals("outer detail", blankRootCause.body?.detail)
+
+        val nullRootCause = handler.messageNotReadable(
+            HttpMessageNotReadableException("outer fallback", Throwable(null as String?), inputMessage())
+        )
+        assertEquals("outer fallback", nullRootCause.body?.detail)
+
+        val blankEverything = handler.messageNotReadable(
+            HttpMessageNotReadableException("", IllegalStateException(""), inputMessage())
+        )
+        assertEquals("Malformed request payload", blankEverything.body?.detail)
+
+        val mockedException = org.mockito.Mockito.mock(HttpMessageNotReadableException::class.java)
+        org.mockito.Mockito.`when`(mockedException.rootCause).thenReturn(null)
+        org.mockito.Mockito.`when`(mockedException.message).thenReturn("mocked detail")
+        assertEquals("mocked detail", handler.messageNotReadable(mockedException).body?.detail)
+
+        org.mockito.Mockito.`when`(mockedException.message).thenReturn(null)
+        assertEquals("Malformed request payload", handler.messageNotReadable(mockedException).body?.detail)
+    }
+
+    /** Verifies binding and type-mismatch handlers preserve safe fallback text. */
+    @Test
+    fun `binding and type mismatch use stable fallback responses`() {
+        val binding = handler.requestBinding(ServletRequestBindingException("missing header"))
+        val bindingFallback = handler.requestBinding(ServletRequestBindingException(""))
+        val mismatch = handler.argumentTypeMismatch(
+            MethodArgumentTypeMismatchException("x", Int::class.java, "page", sampleParameter(), null)
+        )
+        val unknownType = handler.argumentTypeMismatch(
+            MethodArgumentTypeMismatchException("x", null, "page", sampleParameter(), null)
+        )
+        val lockFallback = handler.optimisticLock(OptimisticLockingFailureException(null))
+        val argumentFallback = handler.illegalArgument(IllegalArgumentException())
+
+        assertEquals("missing header", binding.body?.detail)
+        assertEquals("Invalid request binding", bindingFallback.body?.detail)
+        assertEquals("Type mismatch for parameter page", mismatch.body?.title)
+        assertEquals(HttpStatus.BAD_REQUEST, mismatch.statusCode)
+        assertEquals("Type mismatch for parameter page", unknownType.body?.title)
+        assertEquals("Resource was updated by another transaction", lockFallback.body?.detail)
+        assertEquals("Invalid request", argumentFallback.body?.detail)
+    }
+
+    private fun sampleParameter(): MethodParameter = MethodParameter(
+        GlobalErrorHandlerTest::class.java.getDeclaredMethod("sample", String::class.java),
+        0
+    )
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun sample(value: String) = Unit
+
+    private fun inputMessage(): HttpInputMessage = org.mockito.Mockito.mock(HttpInputMessage::class.java)
 }

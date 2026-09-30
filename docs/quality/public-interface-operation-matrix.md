@@ -11,6 +11,10 @@ request is present in Bruno. "Remaining dimension work" is an explicit gap list
 and is now owned by QA-10 after QA-07's inventory milestone; it must be reduced
 with endpoint-specific tests before QA-10 can close.
 
+QA-10 coverage changes preserve the implementation and public contract. Missing
+behavior is closed with unit, integration, or deployed E2E evidence; a JaCoCo
+decrease caused by deleting working code is not acceptance evidence.
+
 > **SEC-01 remediation update (2026-09-29):** The following SEC-01 workstreams
 > have been implemented and verified with focused unit and integration tests:
 > - **SEC-01A (SEC-001, SEC-009):** Squarewise-owned RS256 asymmetric token authority, RFC 8414

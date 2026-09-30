@@ -27,12 +27,12 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up isolated Python tooling
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
       - name: Install dependencies from lockfile
-        run: uv sync --frozen
+        run: uv sync --frozen --no-build
       - run: |
-          uv run python3 tools/contracts/validate.py
-          uv run python3 tools/contracts/validate_public_surface.py
+          uv run --frozen --no-build python3 tools/contracts/validate.py
+          uv run --frozen --no-build python3 tools/contracts/validate_public_surface.py
           docker compose -f infra/local/docker-compose.yml config --quiet
           docker compose -f infra/local/docker-compose.dev.yml config --quiet
 
@@ -59,9 +59,9 @@ jobs:
       - uses: actions/checkout@v5
         with: { persist-credentials: false }
       - name: Set up isolated Python tooling
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
       - name: Install dependencies from lockfile
-        run: uv sync --frozen
+        run: uv sync --frozen --no-build
       - name: Set up Java
         uses: actions/setup-java@v6
         with:
@@ -78,13 +78,13 @@ jobs:
       - name: Check formatting and contracts
         run: |
           git diff --check
-          uv run python3 tools/contracts/validate.py
-          uv run python3 tools/contracts/validate_public_surface.py
-          uv run python3 tools/ops/check_security_hygiene.py
-          uv run python3 tools/ops/check_architecture.py
-          uv run python3 tools/ops/validate_sbom_baseline.py
+          uv run --frozen --no-build python3 tools/contracts/validate.py
+          uv run --frozen --no-build python3 tools/contracts/validate_public_surface.py
+          uv run --frozen --no-build python3 tools/ops/check_security_hygiene.py
+          uv run --frozen --no-build python3 tools/ops/check_architecture.py
+          uv run --frozen --no-build python3 tools/ops/validate_sbom_baseline.py
           ./gradlew cyclonedxBom --no-daemon
-          uv run python3 -m unittest discover -s tests/acceptance
+          uv run --frozen --no-build python3 -m unittest discover -s tests/acceptance
           make workflow-validate
       - name: Upload CycloneDX SBOM
         uses: actions/upload-artifact@v4
@@ -94,7 +94,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Run Python type checker
-        run: uv run mypy tests tools
+        run: uv run --frozen --no-build mypy tests tools
 
   verify:
     name: Verify ${{ matrix.kind }} / ${{ matrix.name }}
@@ -134,7 +134,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up isolated Python tooling
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
       - uses: actions/setup-java@v6
         with:
           distribution: microsoft
@@ -196,9 +196,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up isolated Python tooling
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
       - name: Install dependencies from lockfile
-        run: uv sync --frozen
+        run: uv sync --frozen --no-build
       - name: Download module test and JaCoCo artifacts
         uses: actions/download-artifact@v4
         with:
@@ -216,7 +216,7 @@ jobs:
             cp "$report" "${module}/build/reports/jacoco/test/jacocoTestReport.xml"
           done
       - name: Generate QA-10 branch inventory
-        run: uv run python tools/coverage/report_branch_gaps.py --format json | tee qa10-branch-gaps.json
+        run: uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format json | tee qa10-branch-gaps.json
       - name: Upload QA-10 branch inventory
         uses: actions/upload-artifact@v4
         with:
@@ -250,7 +250,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Set up isolated Python tooling
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
       - uses: actions/setup-java@v6
         with:
           distribution: microsoft
@@ -294,9 +294,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up isolated Python tooling
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
       - name: Install dependencies from lockfile
-        run: uv sync --frozen
+        run: uv sync --frozen --no-build
       - name: Download application JAR artifacts
         uses: actions/download-artifact@v4
         with:
@@ -335,20 +335,20 @@ jobs:
           WRONG_ISSUER_TOKEN: ${{ steps.oidc-token.outputs.wrong_issuer_token }}
           EXPIRED_TOKEN: ${{ steps.oidc-token.outputs.expired_token }}
         run: |
-          uv run python3 tests/e2e/test_auth_cache_resilience.py
-          uv run python3 tests/e2e/test_oidc_negative.py --variant forged-signature &
+          uv run --frozen --no-build python3 tests/e2e/test_auth_cache_resilience.py
+          uv run --frozen --no-build python3 tests/e2e/test_oidc_negative.py --variant forged-signature &
           forged_pid=$!
-          uv run python3 tests/e2e/test_oidc_negative.py --variant unsupported-algorithm &
+          uv run --frozen --no-build python3 tests/e2e/test_oidc_negative.py --variant unsupported-algorithm &
           algorithm_pid=$!
           wait "$forged_pid"
           wait "$algorithm_pid"
-          uv run python3 tests/e2e/test_oidc_negative.py --variant provider
-          uv run python3 tests/e2e/test_oidc_websocket_negative.py
+          uv run --frozen --no-build python3 tests/e2e/test_oidc_negative.py --variant provider
+          uv run --frozen --no-build python3 tests/e2e/test_oidc_websocket_negative.py
           docker compose -f infra/local/docker-compose.dev.yml -f infra/local/docker-compose.invalid-subject.yml up -d --build --wait
-          invalid_subject_token="$(curl --fail-with-body --silent --show-error -X POST http://localhost:8091/token | uv run python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')"
+          invalid_subject_token="$(curl --fail-with-body --silent --show-error -X POST http://localhost:8091/token | uv run --frozen --no-build python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')"
           test -n "$invalid_subject_token"
-          INVALID_SUBJECT_TOKEN="$invalid_subject_token" uv run python3 tests/e2e/test_oidc_negative.py --variant provider
-          INVALID_SUBJECT_TOKEN="$invalid_subject_token" BEARER_TOKEN="$BEARER_TOKEN" uv run python3 tests/e2e/test_oidc_websocket_negative.py
+          INVALID_SUBJECT_TOKEN="$invalid_subject_token" uv run --frozen --no-build python3 tests/e2e/test_oidc_negative.py --variant provider
+          INVALID_SUBJECT_TOKEN="$invalid_subject_token" BEARER_TOKEN="$BEARER_TOKEN" uv run --frozen --no-build python3 tests/e2e/test_oidc_websocket_negative.py
           for request in tools/bruno/quality/invalid-subject-accounts.bru tools/bruno/quality/invalid-subject-expense-core.bru tools/bruno/quality/invalid-subject-notifications.bru tools/bruno/quality/invalid-subject-bff.bru; do
             (cd tools/bruno && npx --yes @usebruno/cli@4.1.0 run "../../$request" -r --env local-oidc --env-var "invalidSubjectToken=$invalid_subject_token")
           done
@@ -383,9 +383,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up isolated Python tooling
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
       - name: Install dependencies from lockfile
-        run: uv sync --frozen
+        run: uv sync --frozen --no-build
       - name: Download application JAR artifacts
         uses: actions/download-artifact@v4
         with:
@@ -448,9 +448,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up isolated Python tooling
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
       - name: Install dependencies from lockfile
-        run: uv sync --frozen
+        run: uv sync --frozen --no-build
       - name: Download application JAR artifacts
         uses: actions/download-artifact@v4
         with:

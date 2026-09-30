@@ -15,6 +15,14 @@ for missing branch, unit, persistence/messaging integration, and deployed E2E
 acceptance criteria; this strategy document and the public operation matrix
 must link to it rather than treating line coverage or operation inventory as
 complete behavior coverage.
+
+Coverage integrity is part of the quality contract: close gaps by adding
+behavioral tests and evidence against the existing implementation. Do not
+delete implementation logic, remove branches, or weaken public contracts merely
+to improve JaCoCo results. A behavior change requires an observed defect or
+explicit requirement, a focused regression test, and documented justification.
+The corrective history for the current branch is recorded in
+[`test-coverage-change-audit.md`](test-coverage-change-audit.md).
 reports must identify the highest evidence level actually executed.
 
 For the practical test layout, commands, environment prerequisites, CI gates,

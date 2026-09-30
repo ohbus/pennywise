@@ -48,11 +48,15 @@ The matrix tests every application and library in parallel after a single
 preflight, validates contracts, REST path structure, GraphQL schema/resolver
 parity, and Compose files, runs Gradle `test`, `check`, and JaCoCo, and builds
 application jars. The lightweight checks also run the acceptance unit suite,
-workflow YAML parsing, strict Python typing via `uv run mypy`, and
+workflow YAML parsing, strict Python typing via `uv run --frozen --no-build mypy`, and
 `git diff --check`. Jobs use Microsoft Build of OpenJDK. Python dependencies
 and tooling are deterministically managed via `pyproject.toml` and `uv.lock`.
-CI workflows install dependencies via `astral-sh/setup-uv@v6` with
-`uv sync --frozen`, running tools and scripts via `uv run`. Local Python tooling
+CI workflows install dependencies via the immutable commit
+`astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e` (the `v6` tag)
+with `uv sync --frozen --no-build`, running tools and scripts via
+`uv run --frozen --no-build`. `--frozen` prevents lockfile resolution changes;
+`--no-build` prevents dependency/project build hooks from executing during the
+tool-environment setup and invocation. Local Python tooling
 must use `uv` rather than installing packages into the system interpreter.
 The lightweight lint job also installs the same Microsoft JDK 25 and Gradle
 setup before generating the CycloneDX SBOM; every job that invokes Gradle owns
@@ -61,7 +65,10 @@ QA-10 coverage is reported per module in the Gradle matrix and aggregated by
 the follow-up `qa10-coverage-inventory` job, which publishes one JSON inventory
 artifact. A single matrix shard cannot prove repository-wide coverage. The
 eventual blocking gate command is
-`uv run python tools/coverage/report_branch_gaps.py --format json --fail-on-gaps`.
+`uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format json --fail-on-gaps`.
+The current local discovery baseline is 220 missed-branch methods. This is a
+backlog signal, not a target to reduce by deleting implementation; hosted
+closure requires tests or reviewed structural classification for every record.
 Every test run publishes a readable test summary directly to GitHub Actions job
 summaries (`test-summary/action@v2`) and uploads JUnit XML and HTML reports as
 job artifacts with `if: always()` retention.

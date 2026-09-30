@@ -16,7 +16,8 @@ authoritative `pyproject.toml` at the repository root that:
    automatically activates the project virtual environment.
 5. Eliminates all `PYTHONPATH=.` prefixes — package resolution comes from the
    editable install instead.
-6. Makes `astral-sh/setup-uv@v6` the *only* Python environment setup step in CI;
+6. Makes the immutable commit-pinned `astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e` (`v6`)
+   the *only* Python environment setup step in CI;
    no separate `python3` prerequisite for clone-and-run.
 
 ## Background and motivation
@@ -43,7 +44,7 @@ authoritative `pyproject.toml` at the repository root that:
 - **Editable install** (`[tool.uv.sources]` or `packages = [{include = "tests"}, …]`)
   means `import tests.http_constants` works in any `uv run` invocation, in the
   virtual env, and in `uv run pytest`.
-- **`astral-sh/setup-uv@v6`** is already present in CI; `uv sync` replaces
+- **`astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e`** is pinned in CI; `uv sync` replaces
   `setup-java cache: gradle` for Python-side setup.
 
 ## Owned paths
@@ -119,13 +120,14 @@ resolves `from tests.http_constants import …` without `PYTHONPATH`.
 ### 3. Lock file
 
 `uv lock` is run once to produce `uv.lock`. This file is committed and updated
-only when dependencies change. CI runs `uv sync --frozen` to enforce the lock.
+only when dependencies change. CI runs `uv sync --frozen --no-build` to enforce
+the lock without executing package/project build hooks during environment setup.
 
 ### 4. mypy.ini → pyproject.toml
 
 Migrate the existing `mypy.ini` content into `[tool.mypy]` in `pyproject.toml`.
 The `mypy.ini` file is deleted. This eliminates one configuration file and makes
-`uv run mypy tests tools` the canonical invocation.
+`uv run --frozen --no-build mypy tests tools` the canonical CI invocation.
 
 ### 5. Makefile changes
 
@@ -159,14 +161,16 @@ sync: ## Install/update the Python virtual environment from uv.lock
 
 All E2E and lint job steps replace `python3` with `uv run python3` and remove
 `PYTHONPATH: .` env blocks. `uvx` calls for mypy and yamllint are replaced with
-`uv run mypy` and `uv run yamllint`. A new `uv sync --frozen` step is added
-after `astral-sh/setup-uv@v6` in every job that runs Python.
+`uv run --frozen --no-build mypy` and `uv run --frozen --no-build yamllint`. A
+new `uv sync --frozen --no-build` step is added after the pinned setup action in
+every job that runs Python.
 
 The `verify` matrix jobs that don't run Python scripts themselves do not need
 `uv sync` — only the `lint`, `e2e-*`, and `preflight` jobs need it.
 
 `preflight` currently runs raw `python3` without `setup-uv`. After this task it
-adds `astral-sh/setup-uv@v6` + `uv sync --frozen` and uses `uv run python3`.
+adds the pinned setup action + `uv sync --frozen --no-build` and uses
+`uv run --frozen --no-build python3`.
 
 ### 7. `server.py` in the Docker fixture
 
@@ -178,7 +182,7 @@ correct solution for that file. No regression.
 ## Acceptance criteria
 
 - [x] `uv sync` completes successfully from a clean clone (no system packages needed).
-- [x] `uv run mypy tests tools` exits 0 with the same rule set as current `mypy.ini`.
+- [x] `uv run --frozen --no-build mypy tests tools` exits 0 with the same rule set as current `mypy.ini`.
 - [x] `uv run python3 -m unittest discover -s tests/acceptance` exits 0, 10/10.
 - [x] `uv run python3 tests/e2e/test_oidc_negative.py --variant forged-signature` exits 0.
 - [x] `make acceptance-live` exits 0 against live stack without `PYTHONPATH=.` anywhere.
@@ -187,7 +191,7 @@ correct solution for that file. No regression.
 - [x] `make workflow-validate` exits 0.
 - [x] `make python-typecheck` exits 0 using `uv run mypy`.
 - [x] No `PYTHONPATH=.` appears anywhere in `Makefile` or `_reusable-ci.yml`.
-- [x] `uv.lock` is committed and `uv sync --frozen` passes in CI.
+- [x] `uv.lock` is committed and `uv sync --frozen --no-build` passes in CI.
 - [x] `mypy.ini` is deleted; mypy config lives solely in `pyproject.toml`.
 - [x] `docs/operations/quickstart.md` updated: `uv sync` listed as a prerequisite step.
 - [x] `docs/implementation/technology-decisions.md` records `uv` as Python manager.
@@ -197,7 +201,7 @@ correct solution for that file. No regression.
 
 ```bash
 uv sync
-uv run mypy tests tools
+uv run --frozen --no-build mypy tests tools
 PYTHONPATH=. python3 -m unittest discover -s tests/acceptance   # should still work as fallback
 uv run python3 -m unittest discover -s tests/acceptance
 make python-typecheck
@@ -217,7 +221,9 @@ python3 tools/contracts/validate.py   # contracts validator uses only stdlib
 4. Migrate `mypy.ini` content to `[tool.mypy]` in `pyproject.toml`. Delete `mypy.ini`.
 5. Update `Makefile`: replace `python3` → `uv run python3`, remove `PYTHONPATH=.`,
    replace `uvx` → `uv run`, add `sync` target.
-6. Update `_reusable-ci.yml`: add `uv sync --frozen` step to affected jobs; remove
+6. Update `_reusable-ci.yml`: pin `setup-uv` to an immutable commit and add
+   `uv sync --frozen --no-build` steps to affected jobs; use
+   `uv run --frozen --no-build`; remove
    `PYTHONPATH: .` env keys; replace `python3` → `uv run python3`; replace `uvx` → `uv run`.
 7. Update `docs/operations/ci.md`, `docs/operations/quickstart.md`,
    `docs/implementation/technology-decisions.md`.

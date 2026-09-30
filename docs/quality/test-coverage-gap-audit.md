@@ -65,7 +65,7 @@ root operations. That proves inventory completeness, not complete validation,
 authorization, failure, replay, concurrency, or side-effect coverage.
 
 For repeatable operation-level discovery, run
-`uv run python tools/coverage/report_operation_test_gaps.py --format markdown`.
+`uv run --frozen --no-build python tools/coverage/report_operation_test_gaps.py --format markdown`.
 The tool compares contract operation IDs and GraphQL root fields with literal
 operation-name references in `tests/e2e/` and `tools/bruno/`. The current
 inventory contains 54 operations; 41 have no E2E source signal and 49 have no
@@ -110,11 +110,11 @@ automatically a defect, but it is never silently treated as covered.
 For a stable per-method inventory, run:
 
 ```text
-uv run python tools/coverage/report_branch_gaps.py --format markdown
-uv run python tools/coverage/report_branch_gaps.py --format json
+uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format markdown
+uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format json
 # Closure gate: this must exit 0 only after every gap is closed or removed
 # through an explicitly reviewed structural classification.
-uv run python tools/coverage/report_branch_gaps.py --format json --fail-on-gaps
+uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format json --fail-on-gaps
 ```
 
 The JSON array is the machine-readable assignment set. Its count must equal
@@ -132,7 +132,7 @@ Current provisional assignment workload (220 records):
 | --- | ---: | --- |
 | QA10-A01 | 0 | Local publisher slice is complete; broker/deployed delivery remains required. |
 | QA10-A02 | 0 | Auth-email sender, retry, parking, stale-event, and durable handoff branches are locally covered; real broker/deployed delivery remains required. |
-| QA10-A03 | 7 | Shared Redis atomicity, outage, and public rate-limit behavior; local policy boundaries are covered. |
+| QA10-A03 | 4 | Shared Redis atomicity, outage, and public rate-limit behavior; local resolver and policy boundaries are covered. |
 | QA10-A04 | 0 | Explicit external identity-provider path; constructor and unsupported-delegation behavior are locally covered, deployed provider exchange remains required. |
 | QA10-A05 | 1 | Local and non-local OIDC decoder selection, discovery, and algorithm wiring; the original decoder terminal branch is retained and needs explicit test evidence. |
 | QA10-A06 | 1 | Profile controller and JPA persistence authorization boundary; restored private mapper requires classification or direct evidence. |
@@ -411,7 +411,7 @@ The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
 The `qa10-coverage-inventory` job now downloads those module artifacts,
 restores them into their repository paths, and publishes one aggregate JSON
 inventory. It is intentionally discovery-only while the baseline contains
-233 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
+220 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
 single matrix shard is insufficient evidence for a repository-wide
 no-missed-branch claim.
 

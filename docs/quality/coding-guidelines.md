@@ -16,6 +16,8 @@ checks. The incompatible ktlint integration is not used.
 - Keep entities and repositories inside their owning service. Enforce strict SOLID file separation: never combine JPA `@Entity` definitions, Spring Data `@Repository` interfaces, and `@Service` or store adapter implementations in the same file. Each class or interface must have its own dedicated source file.
 - Use minor-unit integers or strings for money.
 - Test observable behavior and never commit generated files or credentials.
+  Coverage work adds tests to prove existing logic; it does not remove working
+  logic or alter contracts merely to improve a metric.
 - Prefer cohesive modules, narrow interfaces, composition, and dependency
   injection. Do not add speculative abstractions or duplicate business rules.
 - Keep commands and queries distinct, make failure behavior explicit, and

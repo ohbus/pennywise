@@ -12,6 +12,12 @@ registered task and its contracts.
 - **YAGNI:** do not implement forecasted features or abstractions without a current consumer or documented contract.
 - **No premature optimization:** measure a real bottleneck before trading clarity for speed.
 
+- **Coverage integrity:** improve coverage by testing existing behavior and its
+  acceptance criteria. Never delete working implementation logic or weaken a
+  public contract solely to reduce a coverage gap. Any behavior change must be
+  justified by an explicit requirement or reproduced defect and protected by a
+  focused regression test.
+
 ## Boundaries and behavior
 
 - **Screaming Architecture and feature ownership:** every application and

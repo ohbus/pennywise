@@ -88,7 +88,7 @@ marked green:
 | Security hygiene scan | `uv run python tools/ops/check_security_hygiene.py` | ✅ 1035 files clean |
 | Architecture boundary check | `uv run python tools/ops/check_architecture.py` | ✅ Passed |
 | SBOM baseline validation | `uv run python tools/ops/validate_sbom_baseline.py` | ✅ Passed |
-| Python type checking | `uv run mypy tests tools` | ✅ Passed |
+| Python type checking | `uv run --frozen --no-build mypy tests tools` | ✅ Passed |
 | Workflow lint | `make workflow-validate` | ✅ Passed |
 | JVM full test suite | `./gradlew test check jacocoTestReport bootJar --parallel` | ✅ Passed (73 tasks) |
 | Git diff check | `git diff --check` | ✅ Clean |

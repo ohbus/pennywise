@@ -4,6 +4,8 @@ dependencies {
     api(libs.boot.security)
     api(libs.boot.resource.server)
     testImplementation(libs.boot.test)
+    testImplementation(libs.boot.web)
+    testImplementation(libs.boot.webflux)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 

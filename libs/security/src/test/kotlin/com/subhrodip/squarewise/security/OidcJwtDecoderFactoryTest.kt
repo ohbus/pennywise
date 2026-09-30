@@ -10,9 +10,12 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import java.security.interfaces.RSAPublicKey
+import java.net.InetSocketAddress
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.util.Date
 import java.util.UUID
+import com.sun.net.httpserver.HttpServer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -86,9 +89,25 @@ class OidcJwtDecoderFactoryTest {
         assertEquals("usr-456", jwt.subject)
     }
 
+    @Test
+    fun `issuer discovery factory builds a decoder from local metadata`() {
+        withDiscoveryServer { issuer ->
+            val decoder = OidcJwtDecoderFactory.create(issuer, audience)
+            val token = mintToken(issuer = issuer, audience = audience, subject = "discovered-user")
+
+            assertEquals("discovered-user", decoder.decode(token).subject)
+        }
+    }
+
     /** Every direct decoder factory rejects incomplete trust-boundary configuration. */
     @Test
     fun `decoder factories reject blank issuer or audience`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            OidcJwtDecoderFactory.create("", audience)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            OidcJwtDecoderFactory.create(issuerUri, "")
+        }
         assertThrows(IllegalArgumentException::class.java) {
             OidcJwtDecoderFactory.createWithPublicKey(publicKey, "", audience)
         }
@@ -126,5 +145,31 @@ class OidcJwtDecoderFactoryTest {
         val signedJwt = SignedJWT(header, claims)
         signedJwt.sign(RSASSASigner(rsaJwk.toRSAPrivateKey()))
         return signedJwt.serialize()
+    }
+
+    private fun <T> withDiscoveryServer(block: (String) -> T): T {
+        val server = HttpServer.create(InetSocketAddress(0), 0)
+        val issuer = "http://127.0.0.1:${server.address.port}"
+        val metadata = """
+            {"issuer":"$issuer","jwks_uri":"$issuer/jwks"}
+        """.trimIndent().toByteArray(StandardCharsets.UTF_8)
+        val jwks = "{\"keys\":[${rsaJwk.toPublicJWK().toJSONString()}]}"
+            .toByteArray(StandardCharsets.UTF_8)
+        server.createContext("/.well-known/openid-configuration") { exchange ->
+            exchange.responseHeaders.set("Content-Type", "application/json")
+            exchange.sendResponseHeaders(200, metadata.size.toLong())
+            exchange.responseBody.use { it.write(metadata) }
+        }
+        server.createContext("/jwks") { exchange ->
+            exchange.responseHeaders.set("Content-Type", "application/json")
+            exchange.sendResponseHeaders(200, jwks.size.toLong())
+            exchange.responseBody.use { it.write(jwks) }
+        }
+        server.start()
+        return try {
+            block(issuer)
+        } finally {
+            server.stop(0)
+        }
     }
 }

@@ -8,7 +8,7 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-01, after fresh Java 25 Gradle-wrapper runs, the audit records **212 production methods with missed
+As of 2026-10-01, after fresh Java 25 Gradle-wrapper runs, the audit records **211 production methods with missed
 JaCoCo branches**, **54 contract operations** (45 REST and 9 GraphQL), and
 **seven environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
@@ -79,7 +79,7 @@ per-operation authorization and side-effect matrix.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **212 methods with at least one missed
+The regenerated JaCoCo XML contains **211 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -96,7 +96,7 @@ classified as generated/structural with reviewer approval.
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 4 | 2 | 2 |
-| **Total** | **149** | **107** | **212** |
+| **Total** | **149** | **107** | **211** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -126,7 +126,7 @@ The provisional row is path-based accountability, not closure evidence;
 reviewers must confirm the classification and then link each object to a
 passing test or an explicitly reviewed generated/structural rationale.
 
-Current provisional assignment workload (212 records):
+Current provisional assignment workload (211 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -141,7 +141,7 @@ Current provisional assignment workload (212 records):
 | QA10-B01 | 14 | BFF upstream transport and gateway failure behavior. |
 | QA10-B02 | 20 | GraphQL resolver, error, scalar, and limit behavior. |
 | QA10-B03 | 10 | Realtime fanout and broker consumer behavior. |
-| QA10-B04 | 4 | Browser origin, CSRF, cookie, and session filters. |
+| QA10-B04 | 3 | Browser origin, CSRF, cookie, and session filters. |
 | QA10-C01 | 44 | Expense persistence, transaction, ledger, and idempotency behavior. |
 | QA10-C02 | 0 | Pure calculator/validator slice is branch-complete; property tests remain required. |
 | QA10-C03 | 8 | Recurring schedules, claims, locking, and occurrence failures. |
@@ -172,7 +172,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 212-method inventory is a discovery baseline, not closure evidence. QA-10
+The 211-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 
@@ -411,7 +411,7 @@ The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
 The `qa10-coverage-inventory` job now downloads those module artifacts,
 restores them into their repository paths, and publishes one aggregate JSON
 inventory. It is intentionally discovery-only while the baseline contains
-212 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
+211 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
 single matrix shard is insufficient evidence for a repository-wide
 no-missed-branch claim.
 

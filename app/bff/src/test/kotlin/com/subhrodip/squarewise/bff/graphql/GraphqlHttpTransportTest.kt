@@ -326,6 +326,19 @@ class GraphqlHttpTransportTest {
     }
 
     @Test
+    fun `browser logout without a refresh cookie is idempotent and clears cookies`() {
+        client.post().uri(ApiEndpoints.Bff.BROWSER_LOGOUT)
+            .header("Origin", "https://app.example.test")
+            .header("X-CSRF-Token", "nonce")
+            .cookie("squarewise_csrf", "nonce")
+            .exchange()
+            .expectStatus().isNoContent
+            .expectHeader().valueMatches("Set-Cookie", ".*squarewise_access=;.*Max-Age=0.*")
+
+        org.mockito.Mockito.verifyNoInteractions(accountsGateway)
+    }
+
+    @Test
     fun `browser auth rejects an untrusted origin before upstream execution`() {
         client.post().uri(ApiEndpoints.Bff.BROWSER_LOGIN_VERIFY)
             .header("Origin", "https://evil.example.test")

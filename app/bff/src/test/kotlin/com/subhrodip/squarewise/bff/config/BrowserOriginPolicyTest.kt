@@ -30,4 +30,30 @@ class BrowserOriginPolicyTest {
             BrowserOriginPolicy(listOf("*"))
         }
     }
+
+    @Test
+    fun `rejects malformed origins and preserves explicit non-default ports`() {
+        assertTrue(BrowserOriginPolicy(listOf("https://app.example.test:8443")).allows("https://app.example.test:8443"))
+        listOf(
+            "not-an-origin",
+            "http://[",
+            "/relative",
+            "ftp://app.example.test",
+            "https://user:password@app.example.test",
+            "https://app.example.test?query=1",
+            "https://app.example.test#fragment",
+            "https://app.example.test/path",
+            "https://",
+        ).forEach { origin ->
+            assertFalse(policy.allows(origin), "Origin must be rejected: $origin")
+        }
+    }
+
+    @Test
+    fun `normalizes the default HTTP port`() {
+        val defaultHttp = BrowserOriginPolicy(listOf("http://localhost"))
+
+        assertTrue(defaultHttp.allows("http://localhost:80"))
+        assertTrue(defaultHttp.configuredOrigins().contains("http://localhost"))
+    }
 }

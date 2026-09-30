@@ -140,9 +140,20 @@ class GlobalErrorHandler(
 
     @ExceptionHandler(ApplicationException::class)
     fun applicationException(ex: ApplicationException): ResponseEntity<ApiProblem> {
-        // ErrorCode is the catalog authority; its status invariant is validated at construction time
-        // by the catalog tests, so a nullable resolve/fallback branch would be unreachable here.
-        val status = HttpStatusCode.valueOf(ex.errorCode.httpStatus)
+        val status = HttpStatus.resolve(ex.errorCode.httpStatus) ?: when (ex.errorCode) {
+            ErrorCode.ERR_02 -> HttpStatus.BAD_REQUEST
+            ErrorCode.ERR_03 -> HttpStatus.UNAUTHORIZED
+            ErrorCode.ERR_04 -> HttpStatus.FORBIDDEN
+            ErrorCode.ERR_05 -> HttpStatus.NOT_FOUND
+            ErrorCode.ERR_06 -> HttpStatus.CONFLICT
+            ErrorCode.ERR_07 -> HttpStatus.INTERNAL_SERVER_ERROR
+            ErrorCode.ERR_08 -> HttpStatus.BAD_GATEWAY
+            ErrorCode.ERR_09 -> HttpStatus.CONFLICT
+            ErrorCode.ERR_10 -> HttpStatusCode.valueOf(422)
+            ErrorCode.ERR_11 -> HttpStatus.TOO_MANY_REQUESTS
+            ErrorCode.ERR_12 -> HttpStatus.OK
+            else -> HttpStatus.INTERNAL_SERVER_ERROR
+        }
         return problem(
             ex.errorCode,
             status,

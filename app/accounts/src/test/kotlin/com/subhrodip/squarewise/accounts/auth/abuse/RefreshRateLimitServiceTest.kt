@@ -2,6 +2,7 @@ package com.subhrodip.squarewise.accounts.auth.abuse
 
 import com.subhrodip.squarewise.accounts.auth.credential.HmacCredentialDigest
 import java.time.Instant
+import java.time.Duration
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -49,6 +50,19 @@ class RefreshRateLimitServiceTest {
         }
         assertThrows(IllegalArgumentException::class.java) {
             service.tryAcquire("x".repeat(129), Instant.now())
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.tryAcquire("x\u0000y", Instant.now())
+        }
+    }
+
+    @Test
+    fun `rejects invalid rate-limit policy at construction`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            RefreshRateLimitService(digest, TestRateLimitBucketStore(), window = Duration.ZERO)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            RefreshRateLimitService(digest, TestRateLimitBucketStore(), maximumRequests = 0)
         }
     }
 }

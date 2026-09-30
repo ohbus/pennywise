@@ -25,5 +25,7 @@ class LoginRateLimitKeyDeriverTest {
     fun `rejects invalid partition`() {
         assertThrows(IllegalArgumentException::class.java) { deriver.derive("alice@example.com", " ") }
         assertThrows(IllegalArgumentException::class.java) { deriver.derive("alice@example.com", "x y") }
+        assertThrows(IllegalArgumentException::class.java) { deriver.derive("alice@example.com", "x\u0000y") }
+        assertThrows(IllegalArgumentException::class.java) { deriver.derive("alice@example.com", "x".repeat(129)) }
     }
 }

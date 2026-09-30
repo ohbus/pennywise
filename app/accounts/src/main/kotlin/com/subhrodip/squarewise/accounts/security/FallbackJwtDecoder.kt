@@ -26,7 +26,7 @@ class FallbackJwtDecoder(
      * @throws JwtException when no configured decoder accepts the token.
      */
     override fun decode(token: String): Jwt {
-        var lastFailure = JwtException("No configured JWT decoder accepted the token")
+        var lastFailure: JwtException? = null
         for (decoder in decoders) {
             try {
                 return decoder.decode(token)
@@ -34,6 +34,6 @@ class FallbackJwtDecoder(
                 lastFailure = failure
             }
         }
-        throw lastFailure
+        throw requireNotNull(lastFailure) { "No configured JWT decoder accepted the token" }
     }
 }

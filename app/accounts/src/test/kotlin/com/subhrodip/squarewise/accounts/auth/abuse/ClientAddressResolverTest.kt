@@ -1,10 +1,13 @@
 package com.subhrodip.squarewise.accounts.auth.abuse
 
 import java.net.InetAddress
+import jakarta.servlet.http.HttpServletRequest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import org.springframework.mock.web.MockHttpServletRequest
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 
 /**
  * Verifies [ClientAddressResolver] client IP extraction and network partition derivation.
@@ -177,6 +180,33 @@ class ClientAddressResolverTest {
         assertEquals("unknown", partition)
     }
 
+    @Test
+    fun `missing remote address falls back without consulting headers`() {
+        val request = mock(HttpServletRequest::class.java)
+        `when`(request.remoteAddr).thenReturn(null)
+
+        assertEquals("unknown", noTrustResolver.resolvePartition(request))
+    }
+
+    @Test
+    fun `trusted proxy ignores invalid forwarded candidates and uses real ip`() {
+        val request = MockHttpServletRequest()
+        request.remoteAddr = "10.0.0.1"
+        request.addHeader("X-Forwarded-For", "not-an-ip, 10.0.0.1")
+        request.addHeader("X-Real-IP", "198.51.100.22")
+
+        assertEquals("198.51.100.22".toIpv4Prefix(), resolver.resolvePartition(request))
+    }
+
+    @Test
+    fun `trusted proxy falls back to proxy when all forwarded addresses are trusted`() {
+        val request = MockHttpServletRequest()
+        request.remoteAddr = "10.0.0.1"
+        request.addHeader("X-Forwarded-For", "10.0.0.1, 127.0.0.1")
+
+        assertEquals("10.0.0.1".toIpv4Prefix(), resolver.resolvePartition(request))
+    }
+
     // ---------------------------------------------------------------------------
     // fromProperties factory
     // ---------------------------------------------------------------------------
@@ -201,6 +231,18 @@ class ClientAddressResolverTest {
         request.addHeader("X-Forwarded-For", "1.2.3.4")
         val partition = r.resolvePartition(request)
         assertEquals("203.0.113.1".toIpv4Prefix(), partition)
+    }
+
+    @Test
+    fun `fromProperties skips invalid proxy addresses`() {
+        val resolver = ClientAddressResolver.fromProperties(
+            TrustedProxyProperties(addresses = listOf("not-an-ip", "10.0.0.1"))
+        )
+        val request = MockHttpServletRequest()
+        request.remoteAddr = "10.0.0.1"
+        request.addHeader("X-Forwarded-For", "203.0.113.33")
+
+        assertEquals("203.0.113.33".toIpv4Prefix(), resolver.resolvePartition(request))
     }
 
     // ---------------------------------------------------------------------------

@@ -14,6 +14,7 @@ import jakarta.servlet.FilterChain
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
+import java.sql.SQLException
 import javax.sql.DataSource
 
 class DbCausalWatermarkFilterTest {
@@ -85,5 +86,17 @@ class DbCausalWatermarkFilterTest {
         val successResponse = MockHttpServletResponse()
         DbCausalWatermarkFilter(dataSource).doFilter(request, successResponse, FilterChain { _, _ -> })
         assertEquals(null, successResponse.getHeader(DbWatermarkHeaders.WRITER_WATERMARK))
+    }
+
+    @Test
+    fun `writer watermark lookup failure is fail safe`() {
+        val dataSource = mock(DataSource::class.java)
+        `when`(dataSource.connection).thenThrow(SQLException("writer unavailable"))
+        val request = MockHttpServletRequest("POST", "/groups")
+        val response = MockHttpServletResponse()
+
+        DbCausalWatermarkFilter(dataSource).doFilter(request, response, FilterChain { _, _ -> })
+
+        assertEquals(null, response.getHeader(DbWatermarkHeaders.WRITER_WATERMARK))
     }
 }

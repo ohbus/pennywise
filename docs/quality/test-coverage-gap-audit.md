@@ -8,7 +8,7 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-01, after fresh Java 25 Gradle-wrapper runs, the audit records **200 production methods with missed
+As of 2026-10-01, after fresh Java 25 Gradle-wrapper runs, the audit records **199 production methods with missed
 JaCoCo branches**, **54 contract operations** (45 REST and 9 GraphQL), and
 **seven environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
@@ -79,7 +79,7 @@ per-operation authorization and side-effect matrix.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **200 methods with at least one missed
+The regenerated JaCoCo XML contains **199 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -96,7 +96,7 @@ classified as generated/structural with reviewer approval.
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 4 | 2 | 2 |
-| **Total** | **149** | **107** | **200** |
+| **Total** | **149** | **107** | **199** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -126,7 +126,7 @@ The provisional row is path-based accountability, not closure evidence;
 reviewers must confirm the classification and then link each object to a
 passing test or an explicitly reviewed generated/structural rationale.
 
-Current provisional assignment workload (200 records):
+Current provisional assignment workload (199 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -153,7 +153,7 @@ Current provisional assignment workload (200 records):
 | QA10-D03 | 10 | SMTP/Mailpit delivery and retry classification. |
 | QA10-D04 | 6 | Inbox/preferences persistence and subject isolation. |
 | QA10-E01 | 1 | Error mapping, framework failures, headers, and correlation cleanup; restored status fallback requires explicit evidence. |
-| QA10-E02 | 5 | Database routing, reader health, fallback, and operational lifecycle. |
+| QA10-E02 | 4 | Database routing, reader health, fallback, and operational lifecycle. |
 | QA10-E03 | 2 | Servlet/reactive OIDC decoder parity and key behavior; issuer-discovery paths remain environment/network evidence. |
 | QA10-E04 | 0 | IDs/constants have no current missed-branch methods; static contract checks remain required. |
 | QA10-E05 | 0 | Bounded observability labels and metric behavior is branch-complete locally; dashboards/alerts and deployed cardinality remain operational evidence. |
@@ -172,7 +172,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 200-method inventory is a discovery baseline, not closure evidence. QA-10
+The 199-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 
@@ -227,13 +227,23 @@ Accounts report shows 0 missed lines, branches, and methods for
 requires a live shared-Redis concurrency/window-reset/outage test and public
 multi-replica 429 evidence.
 
-The pending `DbOperationPolicyTest` increment targets the currently untested
-database route-policy branches: valid writer and reader routes, operation-name
-grammar rejection, reader eligibility for non-query kinds, and the strong
-consistency/reader conflict. Its focused Gradle command could not reach
-compilation in the managed shell because the Gradle distribution download was
-blocked by `Permission denied: getsockopt`; no branch-coverage or closure claim
-is made until the test executes and JaCoCo is regenerated.
+The `DbOperationPolicyTest` increment now executes under the Gradle wrapper and
+covers valid writer/reader routes, operation-name grammar rejection, reader
+eligibility for non-query kinds, and the strong-consistency/reader conflict.
+The remaining constructor record is retained for structural review; it is not
+closed by deleting or simplifying the policy invariants.
+
+### Current QA10-E02 residual acceptance targets
+
+The current regenerated inventory contains four E02 records. They remain
+explicitly open until the following evidence is attached:
+
+| Production target | Current evidence | Required closure evidence |
+| --- | --- | --- |
+| `DbAutoConfiguration.squarewiseDataSource` | Diagnostic reader aliasing is unit-tested; ordinary reader-pool construction is not executable in the `libs/db` test classpath because the PostgreSQL driver is absent. | Add a dependency-safe integration fixture or a deployed Compose test that constructs a normal Hikari reader pool, verifies it is distinct from the writer, and proves reader acquisition/failure behavior without weakening configuration validation. |
+| `DbReaderHealth.state` | Open-circuit timeout and non-expired state are behavior-tested; residual JaCoCo branches require source/bytecode classification. | Preserve tests for before-expiry, exact-expiry, and after-expiry behavior; classify only compiler/nullability-generated paths after reviewing the report mapping, or add a behavior test if a reachable state is identified. |
+| `DbOperationPolicy::<init>` | All policy invariants and valid writer/reader routes are asserted in `DbOperationPolicyTest`. | Review the constructor branch mapping; retain the invariant tests and classify only generated short-circuit/data-class instrumentation, never remove a policy guard to change the count. |
+| `DbContextHolder.withContext` | Nested restoration, request-watermark inheritance, and explicit-watermark precedence are asserted. | Review the remaining JaCoCo branch against the nullable ThreadLocal/causal-context paths; add only a reachable restoration/inheritance case, otherwise record a structural rationale with the exact source branch. |
 
 ## Required evidence ladder
 
@@ -411,7 +421,7 @@ The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
 The `qa10-coverage-inventory` job now downloads those module artifacts,
 restores them into their repository paths, and publishes one aggregate JSON
 inventory. It is intentionally discovery-only while the baseline contains
-200 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
+199 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
 single matrix shard is insufficient evidence for a repository-wide
 no-missed-branch claim.
 

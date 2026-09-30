@@ -37,4 +37,7 @@ reports contain 193 methods with missed branches. The remaining count is an
 honest discovery baseline, not a claim that any implementation was removed to
 improve metrics. The affected wrapper suites pass under Java 25; the full
 repository gate remains open until all modules and environment-owned evidence
-are rerun.
+are rerun. The latest Accounts increment adds a PEM-backed RSA key-loading
+test without changing production code; `DefaultRsaKeyProvider.loadOrGenerateKey`
+now reports 8 covered and 4 missed branches, with the residual method retained
+for further test or structural review.

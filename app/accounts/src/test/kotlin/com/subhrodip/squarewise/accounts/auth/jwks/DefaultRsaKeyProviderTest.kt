@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.Base64
 
 /**
  * Unit tests for [DefaultRsaKeyProvider] verifying generation, JWKS export, key rotation overlap
@@ -35,6 +36,33 @@ class DefaultRsaKeyProviderTest {
         assertFalse(jwkSet.keys[0].isPrivate)
         assertEquals("test-kid-1", jwkSet.keys[0].keyID)
     }
+
+    @Test
+    fun `loads configured PKCS8 private and X509 public PEM keys`() {
+        val source = RSAKeyGenerator(2048)
+            .keyID("source-kid")
+            .keyUse(KeyUse.SIGNATURE)
+            .algorithm(JWSAlgorithm.RS256)
+            .generate()
+        val provider = DefaultRsaKeyProvider(
+            RsaKeyProperties(
+                keyId = "configured-kid",
+                privateKeyPem = pem("PRIVATE KEY", source.toRSAPrivateKey().encoded),
+                publicKeyPem = pem("PUBLIC KEY", source.toRSAPublicKey().encoded),
+            ),
+        )
+
+        val activeKey = provider.activeSigningKey()
+
+        assertTrue(activeKey.isPrivate)
+        assertEquals("configured-kid", activeKey.keyID)
+        assertEquals(source.toRSAPublicKey().modulus, activeKey.toRSAPublicKey().modulus)
+    }
+
+    private fun pem(label: String, bytes: ByteArray): String =
+        "-----BEGIN $label-----\n" +
+            Base64.getMimeEncoder(64, "\n".toByteArray()).encodeToString(bytes) +
+            "\n-----END $label-----"
 
     @Test
     fun `supports key rotation retaining historical public keys in JWKSet`() {

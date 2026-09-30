@@ -11,7 +11,7 @@ services and their dependency topology.
 
 ```sh
 make doctor
-uv sync       # or make sync
+uv sync --frozen --no-build       # or make sync
 make check
 ```
 

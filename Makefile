@@ -28,7 +28,7 @@ doctor: ## Check required local tools and versions
 	@$(GRADLE) --version
 
 sync: ## Install and update the Python virtual environment from uv.lock
-	@uv sync
+	@uv sync --frozen --no-build
 
 bootstrap: doctor ## Resolve the Gradle wrapper and verify the scaffold
 	@$(GRADLE) help

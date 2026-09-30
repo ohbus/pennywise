@@ -16,6 +16,12 @@ Bruno reference. These numbers are backlog signals, not passing-test claims;
 the hard branch gate remains red until the production reports are regenerated
 and every record is covered or explicitly classified.
 
+The latest Accounts wrapper run directly exercises configured PKCS#8 private
+and X.509 public PEM loading in `DefaultRsaKeyProvider.loadOrGenerateKey`.
+JaCoCo now reports 8 covered and 4 missed branches for that method; the method
+remains in the 193-record inventory because residual branches still require
+coverage or an explicit structural classification.
+
 ## Purpose and completion rule
 
 This document is the implementation-backed backlog for missing tests. It is

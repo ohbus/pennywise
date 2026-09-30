@@ -46,4 +46,22 @@ class OidcDiscoveryControllerTest {
             .andExpect(jsonPath("$.jwks_uri").value("$issuerUri${ApiEndpoints.Accounts.V1.WELL_KNOWN_JWKS}"))
             .andExpect(jsonPath("$.id_token_signing_alg_values_supported[0]").value("RS256"))
     }
+
+    @Test
+    fun `uses the local issuer fallback when no issuer is configured`() {
+        val fallbackController = OidcDiscoveryController(rsaKeyProvider, " ")
+        val fallbackMvc = MockMvcBuilders.standaloneSetup(fallbackController).build()
+
+        fallbackMvc.perform(
+            get(ApiEndpoints.Accounts.V1.WELL_KNOWN_OPENID_CONFIGURATION)
+                .accept(MediaType.APPLICATION_JSON)
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.issuer").value("http://localhost:8081"))
+            .andExpect(
+                jsonPath("$.jwks_uri").value(
+                    "http://localhost:8081${ApiEndpoints.Accounts.V1.WELL_KNOWN_JWKS}"
+                )
+            )
+    }
 }

@@ -33,7 +33,7 @@ documentation/tooling-only: `13a441c`, `1d7f028`, `664d504`, `f19d3da`,
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the current
-reports contain 193 methods with missed branches. The remaining count is an
+reports contain 191 methods with missed branches. The remaining count is an
 honest discovery baseline, not a claim that any implementation was removed to
 improve metrics. The affected wrapper suites pass under Java 25; the full
 repository gate remains open until all modules and environment-owned evidence
@@ -48,3 +48,7 @@ The follow-on logout ownership increment preserves the no-op behavior for blank,
 unknown, and missing-identity tokens while proving matching-subject family
 revocation; total missed branches are now 743 and
 `revokeSessionByRefreshToken` reports 11 covered and 1 missed branch.
+The cryptographic configuration increment adds direct valid, malformed, and
+length-boundary tests without changing production code; total missed branches
+are now 737, and both `decodeSecret` and `decodeEnvelopeKey` are absent from
+the branch-gap inventory.

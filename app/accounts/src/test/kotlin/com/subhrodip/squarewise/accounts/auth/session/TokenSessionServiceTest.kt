@@ -23,6 +23,8 @@ class TokenSessionServiceTest @Autowired constructor(
     private val sessionRepository: AuthSessionRepository
 ) {
     private var currentSubject = "internal:test@example.com"
+    private var identityAvailable = true
+    private var identityDeletionRequested = false
     private val secret = ByteArray(32) { it.toByte() }
     private val digest = HmacCredentialDigest(secret)
     private val tokenProvider = InternalJwtTokenProvider(
@@ -43,7 +45,11 @@ class TokenSessionServiceTest @Autowired constructor(
         ),
         accountIdentityStore = object : AccountIdentityStore {
             override fun findByAccountId(accountId: UUID): AccountIdentity? =
-                AccountIdentity(accountId, currentSubject, "test@example.com", false)
+                if (identityAvailable) {
+                    AccountIdentity(accountId, currentSubject, "test@example.com", identityDeletionRequested)
+                } else {
+                    null
+                }
         }
     )
 
@@ -204,6 +210,72 @@ class TokenSessionServiceTest @Autowired constructor(
         assertEquals(ErrorCode.ERR_03, ex.errorCode)
         val stored = sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))
         assertNotNull(stored?.revokedAt)
+    }
+
+    @Test
+    fun `expired refresh token revokes its family and fails closed`() {
+        val now = Instant.now()
+        val initial = service.createSession(
+            accountId = UUID.randomUUID(),
+            subject = currentSubject,
+            email = "expired@example.com",
+            clientKind = "BROWSER",
+            deviceLabel = "test",
+            now = now
+        )
+
+        val ex = assertThrows(ApplicationException::class.java) {
+            service.rotateSession(
+                rawRefreshToken = initial.refreshToken,
+                deviceLabel = "test",
+                now = now.plusSeconds(90 * 24 * 60 * 60L + 1)
+            )
+        }
+
+        assertEquals(ErrorCode.ERR_03, ex.errorCode)
+        assertNotNull(sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))?.revokedAt)
+    }
+
+    @Test
+    fun `refresh is denied and family revoked when identity is missing`() {
+        val now = Instant.now()
+        val initial = service.createSession(
+            accountId = UUID.randomUUID(),
+            subject = currentSubject,
+            email = "missing-identity@example.com",
+            clientKind = "NATIVE",
+            deviceLabel = "test",
+            now = now
+        )
+        identityAvailable = false
+
+        val ex = assertThrows(ApplicationException::class.java) {
+            service.rotateSession(initial.refreshToken, "test", now.plusSeconds(1))
+        }
+
+        assertEquals(ErrorCode.ERR_03, ex.errorCode)
+        assertEquals(null, sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))?.revokedAt)
+    }
+
+    @Test
+    fun `refresh is denied and family revoked when deletion was requested`() {
+        val now = Instant.now()
+        val initial = service.createSession(
+            accountId = UUID.randomUUID(),
+            subject = currentSubject,
+            email = "deletion-requested@example.com",
+            clientKind = "BROWSER",
+            deviceLabel = "test",
+            now = now
+        )
+        identityDeletionRequested = true
+
+        val ex = assertThrows(ApplicationException::class.java) {
+            service.rotateSession(initial.refreshToken, "test", now.plusSeconds(1))
+        }
+
+        assertEquals(ErrorCode.ERR_03, ex.errorCode)
+        assertNotNull(sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))?.revokedAt)
     }
 
     @Test

@@ -40,4 +40,7 @@ repository gate remains open until all modules and environment-owned evidence
 are rerun. The latest Accounts increment adds a PEM-backed RSA key-loading
 test without changing production code; `DefaultRsaKeyProvider.loadOrGenerateKey`
 now reports 8 covered and 4 missed branches, with the residual method retained
-for further test or structural review.
+for further test or structural review. The subsequent session-persistence
+increment adds expiry, missing-identity, and deletion-request outcomes without
+changing production code; total missed branches are now 746, and
+`TokenSessionService.rotateSession` reports 22 covered and 4 missed branches.

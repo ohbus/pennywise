@@ -5,6 +5,7 @@ import com.subhrodip.squarewise.db.routing.DbOperationKind
 import com.subhrodip.squarewise.db.routing.DbRoute
 import com.subhrodip.squarewise.db.routing.ReadConsistency
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import com.subhrodip.squarewise.db.routing.DbContextHolder
@@ -43,5 +44,32 @@ class DbRouteGuardTest {
             assertIs<DbExecutionContext>(DbContextHolder.current())
         }
         kotlin.test.assertEquals(before, DbContextHolder.current())
+    }
+
+    @Test
+    fun `nested context restores the outer execution context`() {
+        val outer = DbExecutionContext("expense.outer", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)
+        val inner = DbExecutionContext("expense.inner", DbOperationKind.COMMAND)
+
+        DbContextHolder.withContext(outer) {
+            DbContextHolder.withContext(inner) {
+                assertEquals(inner, DbContextHolder.current())
+            }
+            assertEquals(outer, DbContextHolder.current())
+        }
+    }
+
+    @Test
+    fun `eventual query without reader eligibility remains writer-only`() {
+        assertEquals(
+            true,
+            DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL)
+                .isWriterOnly()
+        )
+        assertEquals(
+            true,
+            DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.STRONG, readerEligible = true)
+                .isWriterOnly()
+        )
     }
 }

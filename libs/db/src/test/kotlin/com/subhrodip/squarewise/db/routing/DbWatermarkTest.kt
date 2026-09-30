@@ -16,4 +16,9 @@ class DbWatermarkTest {
     fun `rejects malformed lsn`() {
         assertFails { DbWatermark.parse("not-an-lsn") }
     }
+
+    @Test
+    fun `rejects negative watermark positions`() {
+        assertFails { DbWatermark.fromPosition(-1) }
+    }
 }

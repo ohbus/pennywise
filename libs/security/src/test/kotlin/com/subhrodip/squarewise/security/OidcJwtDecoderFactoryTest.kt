@@ -86,6 +86,24 @@ class OidcJwtDecoderFactoryTest {
         assertEquals("usr-456", jwt.subject)
     }
 
+    /** Every direct decoder factory rejects incomplete trust-boundary configuration. */
+    @Test
+    fun `decoder factories reject blank issuer or audience`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            OidcJwtDecoderFactory.createWithPublicKey(publicKey, "", audience)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            OidcJwtDecoderFactory.createWithPublicKey(publicKey, issuerUri, "")
+        }
+        val jwkSource = ImmutableJWKSet<com.nimbusds.jose.proc.SecurityContext>(JWKSet(rsaJwk))
+        assertThrows(IllegalArgumentException::class.java) {
+            OidcJwtDecoderFactory.createWithJwkSource(jwkSource, "", audience)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            OidcJwtDecoderFactory.createWithJwkSource(jwkSource, issuerUri, "")
+        }
+    }
+
     private fun mintToken(
         issuer: String,
         audience: String,

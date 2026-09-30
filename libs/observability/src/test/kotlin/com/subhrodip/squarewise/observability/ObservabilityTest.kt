@@ -19,10 +19,20 @@ class ObservabilityTest {
     }
 
     @Test
+    fun `logging context removes value when no prior value exists`() {
+        MDC.remove("requestId")
+        LoggingContext.with("requestId", "scoped") { assertEquals("scoped", MDC.get("requestId")) }
+        assertEquals(null, MDC.get("requestId"))
+    }
+
+    @Test
     fun `sanitizer masks valid and invalid personal values`() {
         assertEquals("u***@domain.com", SensitiveDataSanitizer.email("user@domain.com"))
         assertEquals("[REDACTED]", SensitiveDataSanitizer.email("not-an-email"))
         assertEquals("Bearer [REDACTED]", SensitiveDataSanitizer.token("Bearer secret"))
         assertEquals("[REDACTED]", SensitiveDataSanitizer.token("secret"))
+        assertEquals("[REDACTED]", SensitiveDataSanitizer.email("@domain.com"))
+        assertEquals("[REDACTED]", SensitiveDataSanitizer.email("user@"))
+        assertEquals("Bearer [REDACTED]", SensitiveDataSanitizer.token("bearer secret"))
     }
 }

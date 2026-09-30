@@ -30,6 +30,19 @@ class OidcJwtClaimPolicyTest {
         assertInvalid("x".repeat(OidcJwtClaimPolicy.MAX_SUBJECT_LENGTH + 1))
     }
 
+    /** Non-string subject claims are rejected instead of being coerced into identities. */
+    @Test
+    fun `rejects non string subject`() {
+        val token = Jwt.withTokenValue("test-token")
+            .header("alg", "RS256")
+            .claim("sub", 123)
+            .issuedAt(Instant.now())
+            .expiresAt(Instant.now().plusSeconds(300))
+            .build()
+
+        assertTrue(OidcJwtClaimPolicy.subjectValidator().validate(token).hasErrors())
+    }
+
     private fun assertValid(subject: String) {
         assertFalse(validate(subject).hasErrors())
     }

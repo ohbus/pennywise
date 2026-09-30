@@ -8,7 +8,7 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-09-30, after fresh Java 25 Gradle-wrapper runs, the audit records **225 production methods with missed
+As of 2026-09-30, after fresh Java 25 Gradle-wrapper runs, the audit records **222 production methods with missed
 JaCoCo branches**, **54 contract operations** (45 REST and 9 GraphQL), and
 **seven environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
@@ -79,7 +79,7 @@ per-operation authorization and side-effect matrix.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **225 methods with at least one missed
+The regenerated JaCoCo XML contains **222 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -87,7 +87,7 @@ classified as generated/structural with reviewer approval.
 
 | Module | Classes with missed lines | Classes with missed branches | Methods with missed branches |
 | --- | ---: | ---: | ---: |
-| `app/accounts` | 41 | 29 | 46 |
+| `app/accounts` | 39 | 27 | 43 |
 | `app/bff` | 28 | 24 | 49 |
 | `app/expense-core` | 48 | 26 | 76 |
 | `app/notifications` | 18 | 20 | 37 |
@@ -96,7 +96,7 @@ classified as generated/structural with reviewer approval.
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 4 | 2 | 2 |
-| **Total** | **153** | **111** | **225** |
+| **Total** | **151** | **109** | **222** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -126,7 +126,7 @@ The provisional row is path-based accountability, not closure evidence;
 reviewers must confirm the classification and then link each object to a
 passing test or an explicitly reviewed generated/structural rationale.
 
-Current provisional assignment workload (225 records):
+Current provisional assignment workload (222 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -135,7 +135,7 @@ Current provisional assignment workload (225 records):
 | QA10-A03 | 7 | Shared Redis atomicity, outage, and public rate-limit behavior; local policy boundaries are covered. |
 | QA10-A04 | 0 | Explicit external identity-provider path; constructor and unsupported-delegation behavior are locally covered, deployed provider exchange remains required. |
 | QA10-A05 | 0 | Local and non-local OIDC decoder selection, discovery, and algorithm wiring are branch-covered; real provider rotation and deployed security evidence remain required. |
-| QA10-A06 | 6 | Profile authorization and persistence boundary. |
+| QA10-A06 | 3 | Profile authorization and persistence boundary; controller branches are covered, persistence-store branches remain. |
 | QA10-A07 | 33 | Session, credential, identity, replay, and cleanup behavior. |
 | QA10-A08 | 0 | Email canonicalization and malformed-input boundaries are branch-complete locally; public authentication integration remains required. |
 | QA10-B01 | 14 | BFF upstream transport and gateway failure behavior. |
@@ -172,7 +172,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 225-method inventory is a discovery baseline, not closure evidence. QA-10
+The 222-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 

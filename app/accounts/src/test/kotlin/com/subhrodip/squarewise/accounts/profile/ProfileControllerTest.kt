@@ -201,6 +201,18 @@ class ProfileControllerTest {
     }
 
     @Test
+    fun `rejects profile lookup when authenticated subject has no profile`() {
+        val unmappedUser = RequestPostProcessor { request ->
+            request.userPrincipal = Principal { "oidc|unmapped" }
+            request
+        }
+
+        mvc.perform(get(ApiEndpoints.Accounts.V1.profileById(aliceId)).with(unmappedUser))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
+    @Test
     fun `allows internal workload to lookup any profile by account id`() {
         val bobId = UUID.nameUUIDFromBytes("oidc|bob".toByteArray(StandardCharsets.UTF_8))
         recordingProfiles.seed("oidc|bob", bobId)
@@ -301,6 +313,23 @@ class ProfileControllerTest {
             post(ApiEndpoints.Accounts.V1.PATH_PROFILES_BATCH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody)
+        )
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
+    @Test
+    fun `rejects batch lookup when authenticated subject has no profile`() {
+        val unmappedUser = RequestPostProcessor { request ->
+            request.userPrincipal = Principal { "oidc|unmapped" }
+            request
+        }
+
+        mvc.perform(
+            post(ApiEndpoints.Accounts.V1.PATH_PROFILES_BATCH)
+                .with(unmappedUser)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"accountIds\": [\"$aliceId\"]}")
         )
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))

@@ -6,12 +6,6 @@ import com.subhrodip.squarewise.ids.contracts.ApiEndpoints
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.http.ResponseEntity
-import com.subhrodip.squarewise.errors.http.ApiProblem
-import org.springframework.http.MediaType
-import org.springframework.http.HttpStatusCode
-import com.subhrodip.squarewise.errors.http.FieldViolation
-import com.subhrodip.squarewise.errors.request.RequestIdContext
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -38,8 +32,6 @@ class ProfileController(
     private val exportService: ExportRequestService,
     private val dbTelemetry: DbTelemetry = DbTelemetry()
 ) {
-    private val serviceName: String = "accounts"
-
     @GetMapping(ApiEndpoints.Accounts.V1.ME)
     fun get(principal: Principal): ProfileResponse =
         profiles.get(principal.name) ?: throw ApplicationException(ErrorCode.ERR_03, "Authenticated profile not found")
@@ -52,39 +44,6 @@ class ProfileController(
         request.validateNotEmpty()
         return profiles.update(principal.name, request)
     }
-
-    private fun problem(
-        code: ErrorCode,
-        status: HttpStatusCode,
-        title: String = "Internal server error",
-        detail: String = "An unexpected error occurred",
-        violations: List<FieldViolation> = emptyList()
-    ): ResponseEntity<ApiProblem> =
-        ResponseEntity.status(status)
-            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-            .body(
-                ApiProblem(
-                    type = "https://squarewise.example/problems/${code.name.lowercase()}",
-                    title = title,
-                    status = status.value(),
-                    code = mapErrorCode(code),
-                    source = serviceName,
-                    requestId = RequestIdContext.get(),
-                    detail = detail,
-                    violations = violations
-                )
-            )
-
-    /**
-     * Map internal ErrorCode enum to external string identifier expected by API clients/tests.
-     */
-    private fun mapErrorCode(errorCode: ErrorCode): String =
-        when (errorCode) {
-            ErrorCode.ERR_02 -> "VALIDATION_FAILED"
-            ErrorCode.ERR_03 -> "UNAUTHENTICATED"
-            ErrorCode.ERR_05 -> "NOT_FOUND"
-            else -> errorCode.name
-        }
 
     @PostMapping(ApiEndpoints.Accounts.V1.ME_DELETION_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)

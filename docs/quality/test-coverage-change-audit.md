@@ -33,7 +33,7 @@ documentation/tooling-only: `13a441c`, `1d7f028`, `664d504`, `f19d3da`,
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the current
-reports contain 205 methods with missed branches. The remaining count is an
+reports contain 203 methods with missed branches. The remaining count is an
 honest discovery baseline, not a claim that any implementation was removed to
 improve metrics. The affected wrapper suites pass under Java 25; the full
 repository gate remains open until all modules and environment-owned evidence

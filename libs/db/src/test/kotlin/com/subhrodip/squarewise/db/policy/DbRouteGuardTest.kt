@@ -4,6 +4,7 @@ import com.subhrodip.squarewise.db.routing.DbExecutionContext
 import com.subhrodip.squarewise.db.routing.DbOperationKind
 import com.subhrodip.squarewise.db.routing.DbRoute
 import com.subhrodip.squarewise.db.routing.ReadConsistency
+import com.subhrodip.squarewise.db.routing.DbCausalContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -56,6 +57,17 @@ class DbRouteGuardTest {
                 assertEquals(inner, DbContextHolder.current())
             }
             assertEquals(outer, DbContextHolder.current())
+        }
+    }
+
+    @Test
+    fun `context inherits the causal watermark when not explicitly set`() {
+        DbCausalContext.withRequiredWatermark("0/10") {
+            DbContextHolder.withContext(
+                DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)
+            ) {
+                assertEquals("0/10", DbContextHolder.current().requiredWatermark)
+            }
         }
     }
 

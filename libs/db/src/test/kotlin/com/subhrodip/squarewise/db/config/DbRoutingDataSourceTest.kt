@@ -45,6 +45,21 @@ class DbRoutingDataSourceTest {
         }
     }
 
+    @Test
+    fun `reader connection defaults to the first configured reader`() {
+        val writer = mock(DataSource::class.java)
+        val reader = mock(DataSource::class.java)
+        val connection = mock(Connection::class.java)
+        `when`(reader.connection).thenReturn(connection)
+        val routing = DbRoutingDataSource(writer, mapOf("replica" to reader))
+
+        DbContextHolder.withContext(
+            DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)
+        ) {
+            assertSame(connection, routing.connection(DbRoute.READER))
+        }
+    }
+
     /** Default connection acquisition routes writer-only work to the writer pool. */
     @Test
     fun `default connection acquisition uses writer for command`() {
@@ -83,6 +98,17 @@ class DbRoutingDataSourceTest {
         val health = com.subhrodip.squarewise.db.health.DbReaderHealth(failureThreshold = 1)
         health.markFailure("replica")
         val routing = DbRoutingDataSource(writer, mapOf("replica" to reader), health)
+
+        DbContextHolder.withContext(
+            DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)
+        ) {
+            assertFailsWith<SQLException> { routing.getConnection() }
+        }
+    }
+
+    @Test
+    fun `implicit eventual query fails closed when no readers are configured`() {
+        val routing = DbRoutingDataSource(mock(DataSource::class.java), emptyMap())
 
         DbContextHolder.withContext(
             DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)

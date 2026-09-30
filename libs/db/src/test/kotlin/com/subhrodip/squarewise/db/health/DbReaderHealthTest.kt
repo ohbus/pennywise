@@ -56,6 +56,7 @@ class DbReaderHealthTest {
     fun `health policy requires positive threshold and open duration`() {
         assertFailsWith<IllegalArgumentException> { DbReaderHealth(failureThreshold = 0) }
         assertFailsWith<IllegalArgumentException> { DbReaderHealth(openDuration = Duration.ZERO) }
+        assertFailsWith<IllegalArgumentException> { DbReaderHealth(openDuration = Duration.ofSeconds(-1)) }
     }
 
     /** Lagging, disconnected, and unknown readers all fail closed for eventual reads. */

@@ -33,6 +33,9 @@ class OneTimeCredentialIssuerTest {
             issuer.issue(now, Duration.ZERO, 5)
         }
         assertThrows(IllegalArgumentException::class.java) {
+            issuer.issue(now, Duration.ofMinutes(-1), 5)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
             issuer.issue(now, Duration.ofMinutes(16), 5)
         }
         assertThrows(IllegalArgumentException::class.java) {

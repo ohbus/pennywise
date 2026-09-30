@@ -77,6 +77,28 @@ QA10-E2E acceptance rows before closure. Every record is assigned to
 `QA10-E2E01`, whose acceptance criterion is the complete signed-persona
 per-operation authorization and side-effect matrix.
 
+### Current operations without a literal E2E source reference
+
+The current scan identifies the following 41 operations for explicit E2E
+implementation or source-reference reconciliation. “No literal reference” is
+not proof that an operation is never exercised; it is a reproducible discovery
+signal that must be resolved with an operation-specific test name, or with a
+reviewed mapping when a shared journey intentionally covers it. Every listed
+operation remains open under `QA10-E2E01` until the signed-persona acceptance
+matrix records success, authorization denial, validation/failure behavior, and
+the required durable or asynchronous side effect.
+
+| Service | Missing E2E operation IDs |
+| --- | --- |
+| Accounts API | `getMe`, `getProfileById`, `getProfilesBatch`, `listExportRequests`, `logout`, `requestDeletion`, `requestExport`, `startLogin`, `updateMe`, `verifyLogin` |
+| Expense Core API | `archiveGroup`, `claimInvite`, `createInvite`, `createPlaceholder`, `createRecurringSchedule`, `deleteExpense`, `exportExpenses`, `getBalances`, `getChanges`, `getGroup`, `getRecurringSchedule`, `getSettlementSuggestions`, `getSnapshot`, `listExpenses`, `listGroupMembers`, `listGroups`, `listRecurringSchedules`, `pauseRecurringSchedule`, `previewAllocation`, `recordSettlement`, `removeGroupMember`, `resumeRecurringSchedule`, `reverseSettlement`, `revokeInvite`, `searchExpenses`, `updateExpense`, `updateRecurringSchedule` |
+| Notifications API | `getPreferences`, `listInbox`, `markAsRead`, `updatePreferences` |
+
+The GraphQL roots currently have literal E2E references, but those references
+still require the dimension checks in the operation matrix; source presence is
+not acceptance evidence by itself. Regenerate this list with
+`uv run --frozen --no-build python tools/coverage/report_operation_test_gaps.py --format markdown`.
+
 ### Exhaustive current branch inventory
 
 The regenerated JaCoCo XML contains **195 methods with at least one missed

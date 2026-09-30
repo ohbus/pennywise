@@ -7,6 +7,13 @@ import kotlin.test.assertTrue
 
 /** Verifies connection-pool configuration rejects unsafe incomplete settings. */
 class DbPropertiesTest {
+    private val validPool = PoolProperties(
+        url = "jdbc:postgresql://writer/db",
+        username = "app",
+        maximumPoolSize = 10,
+        connectionTimeoutMs = 2_000,
+        maxLifetimeMs = 1_800_000,
+    )
     @Test
     fun `diagnostic reader alias is explicit and disabled by default`() {
         assertFalse(DbProperties().readerIsWriterDiagnostic)
@@ -23,6 +30,28 @@ class DbPropertiesTest {
         assertFailsWith<IllegalArgumentException> {
             PoolProperties(url = "jdbc:postgresql://writer/db", username = "app", maximumPoolSize = 201)
                 .validate("writer")
+        }
+        assertFailsWith<IllegalArgumentException> { validPool.copy(maximumPoolSize = 0).validate("writer") }
+    }
+
+    /** Every required pool bound rejects values outside its documented safe range. */
+    @Test
+    fun `pool endpoint and timing bounds are enforced`() {
+        assertFailsWith<IllegalArgumentException> { validPool.copy(username = "").validate("writer") }
+        assertFailsWith<IllegalArgumentException> { validPool.copy(url = " ").validate("writer") }
+        assertFailsWith<IllegalArgumentException> { validPool.copy(username = " ").validate("writer") }
+        assertFailsWith<IllegalArgumentException> {
+            validPool.copy(connectionTimeoutMs = 249).validate("writer")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            validPool.copy(connectionTimeoutMs = 120_001).validate("writer")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            validPool.copy(maxLifetimeMs = 29_999).validate("writer")
+        }
+        validPool.copy(maxLifetimeMs = 30_000).validate("writer")
+        assertFailsWith<IllegalArgumentException> {
+            validPool.copy(maxLifetimeMs = Long.MIN_VALUE).validate("writer")
         }
     }
 }

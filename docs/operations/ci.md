@@ -57,6 +57,11 @@ must use `uv` rather than installing packages into the system interpreter.
 The lightweight lint job also installs the same Microsoft JDK 25 and Gradle
 setup before generating the CycloneDX SBOM; every job that invokes Gradle owns
 its toolchain setup explicitly.
+QA-10 coverage is reported per module in the Gradle matrix and aggregated by
+the follow-up `qa10-coverage-inventory` job, which publishes one JSON inventory
+artifact. A single matrix shard cannot prove repository-wide coverage. The
+eventual blocking gate command is
+`uv run python tools/coverage/report_branch_gaps.py --format json --fail-on-gaps`.
 Every test run publishes a readable test summary directly to GitHub Actions job
 summaries (`test-summary/action@v2`) and uploads JUnit XML and HTML reports as
 job artifacts with `if: always()` retention.

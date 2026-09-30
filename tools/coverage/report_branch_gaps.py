@@ -1,0 +1,227 @@
+"""Enumerate every production method with missed JaCoCo branches.
+
+The report is intentionally a discovery artifact, not a pass/fail coverage
+threshold. A QA-10 row must assign each emitted method to a behavior test,
+environment test, or reviewed structural classification.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+import xml.etree.ElementTree as ET
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Iterable, Literal, Sequence
+
+OutputFormat = Literal["json", "markdown"]
+
+
+@dataclass(frozen=True)
+class BranchGap:
+    """One production method whose JaCoCo branch counter is not complete."""
+
+    module: str
+    class_name: str
+    source_file: str
+    method: str
+    source_line: int | None
+    missed_branches: int
+    covered_branches: int
+    report: str
+    qa_row: str
+    assignment_basis: str
+
+
+def qa_assignment(module: str, class_name: str) -> tuple[str, str]:
+    """Assign a discovered method to the narrowest current QA-10 row.
+
+    The assignment is deliberately provisional: it guarantees that every
+    discovery record has an accountable acceptance row, while the reviewer
+    still verifies the class-level classification before closure.
+    """
+
+    qualified = class_name.lower()
+    patterns: tuple[tuple[str, str, str], ...]
+    if module == "app/accounts":
+        patterns = (
+            ("emailaddress", "QA10-A08", "email canonicalization value object"),
+            ("authemailoutboxpublisher", "QA10-A01", "auth email publication"),
+            ("outboxauthemailsender|authemailoutboxservice", "QA10-A02", "auth email outbox sender"),
+            ("ratelimit|abuse", "QA10-A03", "authentication abuse and rate limiting"),
+            ("externaloidctokenprovider|authsessionconfiguration", "QA10-A04", "external identity-provider path"),
+            ("productionsecurityconfig|oidcsubject|jwtdecoder", "QA10-A05", "resource-server security wiring"),
+            ("profilecontroller|profile.store|jpaprofilestore", "QA10-A06", "profile boundary and authorization"),
+        )
+        default = ("QA10-A07", "authentication session and identity behavior")
+    elif module == "app/bff":
+        patterns = (
+            ("gateway|restgateway", "QA10-B01", "upstream transport gateway"),
+            ("exceptionresolver|limiterror|scalar", "QA10-B02", "GraphQL error and limit boundary"),
+            ("fanout|eventconsumer|rabbit.*listener", "QA10-B03", "realtime fanout and broker consumer"),
+            ("browserorigin|csrf|cookie|session", "QA10-B04", "browser security filter chain"),
+        )
+        default = ("QA10-B02", "GraphQL transport and resolver behavior")
+    elif module == "app/expense-core":
+        patterns = (
+            ("jpaexpensestore|expensecontroller", "QA10-C01", "expense persistence and transport"),
+            ("validator|allocationcalculator|financialarithmetic", "QA10-C02", "financial arithmetic and validation"),
+            ("recurring", "QA10-C03", "recurring expense lifecycle"),
+            ("jpagroupstore|invite|member", "QA10-C04", "group and membership lifecycle"),
+            ("settlement", "QA10-C05", "settlement and balance invariants"),
+            ("synchronization|sync", "QA10-C06", "synchronization and cursor behavior"),
+        )
+        default = ("QA10-C01", "Expense Core persistence and financial behavior")
+    elif module == "app/notifications":
+        patterns = (
+            ("authemail|envelope", "QA10-D01", "authentication email consumer"),
+            ("notificationevent|rabbitnotification|broker", "QA10-D02", "notification event processing"),
+            ("smtp|mail|emaildispatcher", "QA10-D03", "mail delivery adapter"),
+            ("inbox|preference", "QA10-D04", "notification inbox and preferences"),
+        )
+        default = ("QA10-D02", "notification event delivery")
+    elif module == "libs/errors":
+        patterns = ()
+        default = ("QA10-E01", "error and request-correlation boundary")
+    elif module == "libs/db":
+        patterns = ()
+        default = ("QA10-E02", "database routing and operational infrastructure")
+    elif module == "libs/security":
+        patterns = ()
+        default = ("QA10-E03", "OIDC decoder and security infrastructure")
+    elif module == "libs/ids":
+        patterns = ()
+        default = ("QA10-E04", "IDs, constants, and static contract invariants")
+    else:
+        patterns = ()
+        default = ("QA10-E05", "observability and cross-cutting infrastructure")
+
+    for expression, row, basis in patterns:
+        if re.search(expression, qualified):
+            return row, basis
+    return default
+
+
+def report_paths(root: Path) -> list[Path]:
+    """Return application and library JaCoCo XML reports in stable order."""
+
+    candidates = [
+        path
+        for parent in (root / "app", root / "libs")
+        if parent.exists()
+        for path in parent.glob("*/build/reports/jacoco/test/jacocoTestReport.xml")
+    ]
+    return sorted(candidates)
+
+
+def module_name(root: Path, report: Path) -> str:
+    """Derive the repository module name from a report path."""
+
+    relative_parts = report.relative_to(root).parts
+    return "/".join(relative_parts[:2])
+
+
+def counter(method: ET.Element) -> ET.Element | None:
+    """Return a method's branch counter, if JaCoCo emitted one."""
+
+    return next(
+        (item for item in method.findall("counter") if item.get("type") == "BRANCH"),
+        None,
+    )
+
+
+def parse_report(root: Path, report: Path) -> list[BranchGap]:
+    """Parse behavioral branch gaps from one JaCoCo XML report."""
+
+    document = ET.parse(report)
+    gaps: list[BranchGap] = []
+    for package in document.findall("./package"):
+        for clazz in package.findall("./class"):
+            class_name = clazz.get("name", "")
+            source_file = clazz.get("sourcefilename", "")
+            for method in clazz.findall("./method"):
+                branch_counter = counter(method)
+                missed = int(branch_counter.get("missed", "0")) if branch_counter is not None else 0
+                if missed == 0:
+                    continue
+                covered = int(branch_counter.get("covered", "0")) if branch_counter is not None else 0
+                line_text = method.get("line")
+                qa_row, assignment_basis = qa_assignment(module_name(root, report), class_name)
+                gaps.append(
+                    BranchGap(
+                        module=module_name(root, report),
+                        class_name=class_name,
+                        source_file=source_file,
+                        method=method.get("name", ""),
+                        source_line=int(line_text) if line_text is not None else None,
+                        missed_branches=missed,
+                        covered_branches=covered,
+                        report=str(report.relative_to(root)).replace("\\", "/"),
+                        qa_row=qa_row,
+                        assignment_basis=assignment_basis,
+                    )
+                )
+    return gaps
+
+
+def all_gaps(root: Path) -> list[BranchGap]:
+    """Load and stably sort all current module branch gaps."""
+
+    gaps = [gap for report in report_paths(root) for gap in parse_report(root, report)]
+    return sorted(
+        gaps,
+        key=lambda gap: (
+            gap.module,
+            gap.class_name,
+            gap.source_line if gap.source_line is not None else -1,
+            gap.method,
+        ),
+    )
+
+
+def markdown(gaps: Iterable[BranchGap]) -> str:
+    """Render branch gaps as a review-friendly Markdown table."""
+
+    rows = [
+        "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- |",
+    ]
+    for gap in gaps:
+        rows.append(
+            f"| `{gap.module}` | `{gap.qa_row}` | `{gap.class_name}` | `{gap.source_file}` | "
+            f"`{gap.method}` | {gap.source_line or ''} | {gap.missed_branches} | "
+            f"{gap.covered_branches} | {gap.assignment_basis} | `{gap.report}` |"
+        )
+    return "\n".join(rows)
+
+
+def arguments(argv: Sequence[str]) -> argparse.Namespace:
+    """Parse command-line options for the inventory command."""
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=Path.cwd())
+    parser.add_argument("--format", choices=("json", "markdown"), default="markdown")
+    parser.add_argument(
+        "--fail-on-gaps",
+        action="store_true",
+        help="return non-zero when any missed branch remains",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Emit the current branch-gap inventory and return a process status."""
+
+    options = arguments(sys.argv[1:] if argv is None else argv)
+    gaps = all_gaps(options.root.resolve())
+    if options.format == "json":
+        print(json.dumps([asdict(gap) for gap in gaps], indent=2))
+    else:
+        print(markdown(gaps))
+    return 1 if options.fail_on_gaps and gaps else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

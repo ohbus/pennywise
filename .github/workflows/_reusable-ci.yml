@@ -120,15 +120,15 @@ jobs:
       max-parallel: 9
       matrix:
         include:
-          - { kind: app, name: accounts, path: ':app:accounts' }
-          - { kind: app, name: expense-core, path: ':app:expense-core' }
-          - { kind: app, name: notifications, path: ':app:notifications' }
-          - { kind: app, name: bff, path: ':app:bff' }
-          - { kind: library, name: db, path: ':libs:db' }
-          - { kind: library, name: errors, path: ':libs:errors' }
-          - { kind: library, name: observability, path: ':libs:observability' }
-          - { kind: library, name: security, path: ':libs:security' }
-          - { kind: library, name: test-support, path: ':libs:test-support' }
+          - { kind: app, name: accounts, path: ':app:accounts', report: 'app/accounts/build/reports/jacoco/test/jacocoTestReport.xml' }
+          - { kind: app, name: expense-core, path: ':app:expense-core', report: 'app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml' }
+          - { kind: app, name: notifications, path: ':app:notifications', report: 'app/notifications/build/reports/jacoco/test/jacocoTestReport.xml' }
+          - { kind: app, name: bff, path: ':app:bff', report: 'app/bff/build/reports/jacoco/test/jacocoTestReport.xml' }
+          - { kind: library, name: db, path: ':libs:db', report: 'libs/db/build/reports/jacoco/test/jacocoTestReport.xml' }
+          - { kind: library, name: errors, path: ':libs:errors', report: 'libs/errors/build/reports/jacoco/test/jacocoTestReport.xml' }
+          - { kind: library, name: observability, path: ':libs:observability', report: 'libs/observability/build/reports/jacoco/test/jacocoTestReport.xml' }
+          - { kind: library, name: security, path: ':libs:security', report: 'libs/security/build/reports/jacoco/test/jacocoTestReport.xml' }
+          - { kind: library, name: test-support, path: ':libs:test-support', report: '' }
     steps:
       - uses: actions/checkout@v5
         with:
@@ -180,7 +180,49 @@ jobs:
           path: |
             **/build/test-results/test/TEST-*.xml
             **/build/reports/tests/test/
+            ${{ matrix.report }}
           if-no-files-found: ignore
+          retention-days: 14
+
+  qa10-coverage-inventory:
+    name: QA-10 aggregate branch inventory
+    if: always()
+    needs: verify
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Set up isolated Python tooling
+        uses: astral-sh/setup-uv@v6
+      - name: Install dependencies from lockfile
+        run: uv sync --frozen
+      - name: Download module test and JaCoCo artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          path: .qa10-reports
+          merge-multiple: false
+      - name: Restore JaCoCo reports into module paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          for module in app/accounts app/expense-core app/notifications app/bff libs/db libs/errors libs/observability libs/security; do
+            report="$(find .qa10-reports -path "*/${module}/build/reports/jacoco/test/jacocoTestReport.xml" -print -quit)"
+            test -n "$report"
+            mkdir -p "${module}/build/reports/jacoco/test"
+            cp "$report" "${module}/build/reports/jacoco/test/jacocoTestReport.xml"
+          done
+      - name: Generate QA-10 branch inventory
+        run: uv run python tools/coverage/report_branch_gaps.py --format json | tee qa10-branch-gaps.json
+      - name: Upload QA-10 branch inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa10-branch-inventory
+          path: qa10-branch-gaps.json
+          if-no-files-found: error
           retention-days: 14
 
   sonar:

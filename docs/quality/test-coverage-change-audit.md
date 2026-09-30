@@ -33,7 +33,7 @@ documentation/tooling-only: `13a441c`, `1d7f028`, `664d504`, `f19d3da`,
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the current
-reports contain 191 methods with missed branches. The remaining count is an
+reports contain 188 methods with missed branches. The remaining count is an
 honest discovery baseline, not a claim that any implementation was removed to
 improve metrics. The affected wrapper suites pass under Java 25; the full
 repository gate remains open until all modules and environment-owned evidence
@@ -52,3 +52,7 @@ The cryptographic configuration increment adds direct valid, malformed, and
 length-boundary tests without changing production code; total missed branches
 are now 737, and both `decodeSecret` and `decodeEnvelopeKey` are absent from
 the branch-gap inventory.
+The follow-on AuthController transport increment adds explicit CODE selection,
+missing-channel LINK defaulting, and blank-principal rejection without changing
+production code; total missed branches are now 733 and the AuthController
+branch gaps are closed locally.

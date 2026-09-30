@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-01, after fresh Java 25 Gradle-wrapper runs, the audit records **191 production methods with missed
-JaCoCo branches** containing **737 missed branches**, **54 contract operations** (45 REST and 9 GraphQL), and
+As of 2026-10-01, after fresh Java 25 Gradle-wrapper runs, the audit records **188 production methods with missed
+JaCoCo branches** containing **733 missed branches**, **54 contract operations** (45 REST and 9 GraphQL), and
 **seven environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
 Bruno reference. These numbers are backlog signals, not passing-test claims;
@@ -19,7 +19,7 @@ and every record is covered or explicitly classified.
 The latest Accounts wrapper run directly exercises configured PKCS#8 private
 and X.509 public PEM loading in `DefaultRsaKeyProvider.loadOrGenerateKey`.
 JaCoCo now reports 8 covered and 4 missed branches for that method; the method
-remains in the 191-record inventory because residual branches still require
+remains in the 188-record inventory because residual branches still require
 coverage or an explicit structural classification.
 
 ## Purpose and completion rule
@@ -115,7 +115,7 @@ classified as generated/structural with reviewer approval.
 
 | Module | Classes with missed lines | Classes with missed branches | Methods with missed branches |
 | --- | ---: | ---: | ---: |
-| `app/accounts` | 33 | 17 | 27 |
+| `app/accounts` | 33 | 16 | 24 |
 | `app/bff` | 27 | 21 | 46 |
 | `app/expense-core` | 48 | 26 | 76 |
 | `app/notifications` | 18 | 20 | 37 |
@@ -124,7 +124,7 @@ classified as generated/structural with reviewer approval.
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **141** | **89** | **191** |
+| **Total** | **141** | **88** | **188** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -154,7 +154,7 @@ The provisional row is path-based accountability, not closure evidence;
 reviewers must confirm the classification and then link each object to a
 passing test or an explicitly reviewed generated/structural rationale.
 
-Current provisional assignment workload (191 records):
+Current provisional assignment workload (188 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -164,7 +164,7 @@ Current provisional assignment workload (191 records):
 | QA10-A04 | 0 | Explicit external identity-provider path; constructor and unsupported-delegation behavior are locally covered, deployed provider exchange remains required. |
 | QA10-A05 | 1 | Local and non-local OIDC decoder selection, discovery, and algorithm wiring; the original decoder terminal branch is retained and needs explicit test evidence. |
 | QA10-A06 | 1 | Profile controller and JPA persistence authorization boundary; restored private mapper requires classification or direct evidence. |
-| QA10-A07 | 23 | Session, credential, identity, replay, and cleanup behavior. |
+| QA10-A07 | 20 | Session, credential, identity, replay, and cleanup behavior. |
 | QA10-A08 | 1 | Email canonicalization and malformed-input boundaries; restored explicit domain checks require direct boundary evidence. |
 | QA10-B01 | 14 | BFF upstream transport and gateway failure behavior. |
 | QA10-B02 | 20 | GraphQL resolver, error, scalar, and limit behavior. |
@@ -200,7 +200,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 191-method inventory is a discovery baseline, not closure evidence. QA-10
+The 188-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 
@@ -449,7 +449,7 @@ The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
 The `qa10-coverage-inventory` job now downloads those module artifacts,
 restores them into their repository paths, and publishes one aggregate JSON
 inventory. It is intentionally discovery-only while the baseline contains
-191 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
+188 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
 single matrix shard is insufficient evidence for a repository-wide
 no-missed-branch claim.
 

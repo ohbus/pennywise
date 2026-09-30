@@ -44,10 +44,10 @@ decrease caused by deleting working code is not acceptance evidence.
 
 | Service | Method | Path | Operation | Current evidence | Remaining dimension work |
 |---|---|---|---|---|---|
-| Accounts | POST | `/auth/login/start` | `startLogin` | contract + controller + unit tests + rate limit integration + **SEC-01E: trusted-proxy network partition** + **SEC-01F: LOGIN_RATE_LIMITED audit event** | failure/network partition matrix |
+| Accounts | POST | `/auth/login/start` | `startLogin` | contract + controller + unit tests + CODE/LINK selection and missing-channel LINK default + rate limit integration + **SEC-01E: trusted-proxy network partition** + **SEC-01F: LOGIN_RATE_LIMITED audit event** | failure/network partition matrix |
 | Accounts | POST | `/auth/login/verify` | `verifyLogin` | contract + controller + unit tests + single-use redemption + **SEC-01A: asymmetric RS256 token issuance** + **SEC-01B: issuer/subject identity** + **SEC-01F: LOGIN_SUCCESS/LOGIN_FAILURE/IDENTITY_ENROLLED audit events** | failure/replay matrix |
 | Accounts | POST | `/auth/token/refresh` | `refreshToken` | contract + controller + unit tests + rotation + reuse detection + **SEC-01F: TOKEN_REFRESHED/TOKEN_REUSE_DETECTED/SESSION_DENIED_DELETION_REQUESTED/SESSION_SUBJECT_MISMATCH audit events** | revocation matrix |
-| Accounts | POST | `/auth/logout` | `logout` | contract + controller + unit tests + authentication required + **SEC-01F: SESSION_REVOKED audit event** | session revocation matrix |
+| Accounts | POST | `/auth/logout` | `logout` | contract + controller + unit tests + null/blank principal authentication required + **SEC-01F: SESSION_REVOKED audit event** | session revocation matrix |
 | Accounts | GET | `/me` | `getMe` | contract + controller + GraphQL/E2E live + authenticated profile shape | unauthenticated/failure matrix |
 | Accounts | PATCH | `/me` | `updateMe` | contract + controller/live smoke + validated fields + empty-patch edge | failure matrix |
 | Accounts | POST | `/me/deletion-request` | `requestDeletion` | contract + live smoke + unauthenticated edge | service failure/replay matrix |

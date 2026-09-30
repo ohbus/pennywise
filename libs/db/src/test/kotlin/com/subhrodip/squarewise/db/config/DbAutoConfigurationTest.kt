@@ -3,6 +3,7 @@ package com.subhrodip.squarewise.db.config
 import com.subhrodip.squarewise.db.health.DbReaderHealth
 import com.subhrodip.squarewise.observability.db.DbTelemetry
 import com.zaxxer.hikari.HikariDataSource
+import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -64,5 +65,30 @@ class DbAutoConfigurationTest {
         ) as DbRoutingDataSource
 
         assertSame(writer, routing.readerDataSources()["replica"])
+    }
+
+    @Test
+    fun `reader health scheduler accepts routed and ordinary datasources`() {
+        val properties = DbProperties(readerLagBudgetMs = 250)
+        val health = DbReaderHealth()
+        val telemetry = DbTelemetry()
+        val ordinary = mock(DataSource::class.java)
+        val routed = DbRoutingDataSource(ordinary, emptyMap())
+
+        val ordinaryScheduler = configuration.squarewiseReaderHealthScheduler(
+            properties,
+            health,
+            ordinary,
+            telemetry,
+        )
+        val routedScheduler = configuration.squarewiseReaderHealthScheduler(
+            properties,
+            health,
+            routed,
+            telemetry,
+        )
+
+        assertEquals(Unit, ordinaryScheduler.probeReaders())
+        assertEquals(Unit, routedScheduler.probeReaders())
     }
 }

@@ -107,6 +107,21 @@ class DbRoutingDataSourceTest {
     }
 
     @Test
+    fun `implicit healthy eventual query acquires the first reader`() {
+        val writer = mock(DataSource::class.java)
+        val reader = mock(DataSource::class.java)
+        val connection = mock(Connection::class.java)
+        `when`(reader.connection).thenReturn(connection)
+        val routing = DbRoutingDataSource(writer, mapOf("replica" to reader))
+
+        DbContextHolder.withContext(
+            DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)
+        ) {
+            assertSame(connection, routing.getConnection())
+        }
+    }
+
+    @Test
     fun `implicit eventual query fails closed when no readers are configured`() {
         val routing = DbRoutingDataSource(mock(DataSource::class.java), emptyMap())
 

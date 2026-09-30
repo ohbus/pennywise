@@ -67,9 +67,26 @@ class DbRouteGuardTest {
                 DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)
             ) {
                 assertEquals("0/10", DbContextHolder.current().requiredWatermark)
+        }
+    }
+
+    @Test
+    fun `explicit context watermark takes precedence over request watermark`() {
+        DbCausalContext.withRequiredWatermark("0/10") {
+            DbContextHolder.withContext(
+                DbExecutionContext(
+                    "expense.search",
+                    DbOperationKind.QUERY,
+                    ReadConsistency.EVENTUAL,
+                    readerEligible = true,
+                    requiredWatermark = "0/20",
+                )
+            ) {
+                assertEquals("0/20", DbContextHolder.current().requiredWatermark)
             }
         }
     }
+}
 
     @Test
     fun `eventual query without reader eligibility remains writer-only`() {

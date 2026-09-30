@@ -190,6 +190,55 @@ class TokenSessionServiceTest @Autowired constructor(
     }
 
     @Test
+    fun `logout with a matching authenticated subject revokes the token family`() {
+        val now = Instant.now()
+        val initial = service.createSession(
+            accountId = UUID.randomUUID(),
+            subject = currentSubject,
+            email = "owned-logout@example.com",
+            clientKind = "BROWSER",
+            deviceLabel = "test",
+            now = now
+        )
+
+        service.revokeSessionByRefreshToken(
+            rawRefreshToken = initial.refreshToken,
+            expectedSubject = currentSubject,
+            now = now.plusSeconds(1)
+        )
+
+        assertNotNull(sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))?.revokedAt)
+    }
+
+    @Test
+    fun `logout ignores blank and unknown refresh tokens`() {
+        service.revokeSessionByRefreshToken("   ", now = Instant.now())
+        service.revokeSessionByRefreshToken("unknown-refresh-token", now = Instant.now())
+    }
+
+    @Test
+    fun `logout does not revoke a family when its identity is missing`() {
+        val now = Instant.now()
+        val initial = service.createSession(
+            accountId = UUID.randomUUID(),
+            subject = currentSubject,
+            email = "missing-logout-identity@example.com",
+            clientKind = "NATIVE",
+            deviceLabel = "test",
+            now = now
+        )
+        identityAvailable = false
+
+        service.revokeSessionByRefreshToken(
+            rawRefreshToken = initial.refreshToken,
+            expectedSubject = currentSubject,
+            now = now.plusSeconds(1)
+        )
+
+        assertEquals(null, sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))?.revokedAt)
+    }
+
+    @Test
     fun `provider subject change revokes the existing session family`() {
         val now = Instant.now()
         val accountId = UUID.randomUUID()

@@ -44,3 +44,7 @@ for further test or structural review. The subsequent session-persistence
 increment adds expiry, missing-identity, and deletion-request outcomes without
 changing production code; total missed branches are now 746, and
 `TokenSessionService.rotateSession` reports 22 covered and 4 missed branches.
+The follow-on logout ownership increment preserves the no-op behavior for blank,
+unknown, and missing-identity tokens while proving matching-subject family
+revocation; total missed branches are now 743 and
+`revokeSessionByRefreshToken` reports 11 covered and 1 missed branch.

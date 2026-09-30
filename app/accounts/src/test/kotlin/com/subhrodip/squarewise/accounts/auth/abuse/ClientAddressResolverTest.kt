@@ -207,6 +207,25 @@ class ClientAddressResolverTest {
         assertEquals("10.0.0.1".toIpv4Prefix(), resolver.resolvePartition(request))
     }
 
+    @Test
+    fun `trusted proxy with invalid socket address uses the raw address`() {
+        val request = MockHttpServletRequest()
+        request.remoteAddr = "not-an-ip"
+        request.addHeader("X-Forwarded-For", "203.0.113.44")
+
+        assertEquals("unknown", resolver.resolvePartition(request))
+    }
+
+    @Test
+    fun `blank forwarded headers are ignored before proxy fallback`() {
+        val request = MockHttpServletRequest()
+        request.remoteAddr = "10.0.0.1"
+        request.addHeader("X-Forwarded-For", " ")
+        request.addHeader("X-Real-IP", " ")
+
+        assertEquals("10.0.0.1".toIpv4Prefix(), resolver.resolvePartition(request))
+    }
+
     // ---------------------------------------------------------------------------
     // fromProperties factory
     // ---------------------------------------------------------------------------

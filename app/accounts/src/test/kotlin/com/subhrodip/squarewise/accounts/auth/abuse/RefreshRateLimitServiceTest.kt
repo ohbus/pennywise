@@ -54,12 +54,18 @@ class RefreshRateLimitServiceTest {
         assertThrows(IllegalArgumentException::class.java) {
             service.tryAcquire("x\u0000y", Instant.now())
         }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.tryAcquire("x y", Instant.now())
+        }
     }
 
     @Test
     fun `rejects invalid rate-limit policy at construction`() {
         assertThrows(IllegalArgumentException::class.java) {
             RefreshRateLimitService(digest, TestRateLimitBucketStore(), window = Duration.ZERO)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            RefreshRateLimitService(digest, TestRateLimitBucketStore(), window = Duration.ofSeconds(-1))
         }
         assertThrows(IllegalArgumentException::class.java) {
             RefreshRateLimitService(digest, TestRateLimitBucketStore(), maximumRequests = 0)

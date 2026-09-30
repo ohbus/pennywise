@@ -18,6 +18,8 @@ import java.time.temporal.ChronoUnit
 import java.time.Duration
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -189,5 +191,39 @@ class AuthPersistenceTest @Autowired constructor(
 
         assertEquals(true, authEmailOutboxService.reject(eventId, now.plusSeconds(2), Duration.ZERO, 1))
         assertEquals("PARKED", authEmailOutboxRepository.findByEventId(eventId)?.status)
+    }
+
+    @Test
+    fun `outbox rejects invalid lease and retry policies`() {
+        val now = Instant.now()
+        assertThrows(IllegalArgumentException::class.java) {
+            authEmailOutboxService.claim(now, Duration.ZERO)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            authEmailOutboxService.claim(now, Duration.ofSeconds(-1))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            authEmailOutboxService.reject(UUID.randomUUID(), now, Duration.ofSeconds(-1), 1)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            authEmailOutboxService.reject(UUID.randomUUID(), now, Duration.ZERO, 0)
+        }
+    }
+
+    @Test
+    fun `rejected event returns to pending before attempt limit`() {
+        val now = Instant.now()
+        val eventId = UUID.randomUUID()
+        authEmailOutboxService.append(
+            eventId, "retry@example.com", AuthEmailTemplate.LOGIN_CODE, "v1-r", now.plusSeconds(600), now
+        )
+        authEmailOutboxService.claim(now.plusMillis(1), Duration.ofSeconds(30))
+
+        assertEquals(true, authEmailOutboxService.reject(eventId, now.plusSeconds(2), Duration.ofSeconds(5), 3))
+        val record = authEmailOutboxRepository.findByEventId(eventId)
+        assertEquals("PENDING", record?.status)
+        val availableAt = requireNotNull(record?.availableAt)
+        assertTrue(availableAt.isAfter(now.plusSeconds(6)))
+        assertTrue(availableAt.isBefore(now.plusSeconds(8)))
     }
 }

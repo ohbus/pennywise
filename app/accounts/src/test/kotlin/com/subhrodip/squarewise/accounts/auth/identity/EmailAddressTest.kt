@@ -33,4 +33,32 @@ class EmailAddressTest {
         val raw = "a".repeat(240) + "@example.com"
         assertThrows(IllegalArgumentException::class.java) { EmailAddress.parse(raw) }
     }
+
+    @Test
+    fun `rejects invalid domain labels and control characters`() {
+        listOf(
+            "alice@.example.com",
+            "alice@example..com",
+            "alice@${"a".repeat(64)}.com",
+            "alice\u0000@example.com",
+            "alice@example.com\u0000",
+            "alice@exa mple.com",
+        ).forEach { raw ->
+            assertThrows(IllegalArgumentException::class.java) { EmailAddress.parse(raw) }
+        }
+    }
+
+    @Test
+    fun `rejects an invalid internationalized domain sequence`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            EmailAddress.parse("alice@\uD800.example")
+        }
+    }
+
+    @Test
+    fun `rejects an address exceeding the complete length limit`() {
+        val raw = "a@${"d".repeat(250)}.com"
+
+        assertThrows(IllegalArgumentException::class.java) { EmailAddress.parse(raw) }
+    }
 }

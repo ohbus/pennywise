@@ -39,18 +39,13 @@ value class EmailAddress private constructor(val value: String) {
             require(local.none { it.isWhitespace() || it.isISOControl() }) {
                 "Email local part contains invalid whitespace"
             }
-            require(domainInput.isNotEmpty() && domainInput.length <= 253) {
+            require(domainInput.isNotEmpty()) {
                 "Email domain is invalid"
             }
 
+            // USE_STD3_ASCII_RULES rejects empty, malformed, and overlong labels.
             val domain = runCatching { IDN.toASCII(domainInput, IDN.USE_STD3_ASCII_RULES) }
                 .getOrElse { throw IllegalArgumentException("Email domain is invalid", it) }
-            require(domain.isNotEmpty() && domain.none { it == '@' || it.isWhitespace() }) {
-                "Email domain is invalid"
-            }
-            require(domain.split('.').all { label -> label.isNotEmpty() && label.length <= 63 }) {
-                "Email domain labels are invalid"
-            }
 
             return EmailAddress("$local@$domain")
         }

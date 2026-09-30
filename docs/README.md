@@ -1,5 +1,9 @@
 # Documentation index
 
+<p align="left">
+  <img src="visuals/logo.svg" alt="Squarewise Logo" width="300">
+</p>
+
 This index is the navigation entry point for repository documentation. [`AGENTS.md`](../AGENTS.md) is the working-agreement root; the registry and contracts remain authoritative for task state and externally visible behavior.
 
 ## Start here
@@ -18,6 +22,11 @@ This index is the navigation entry point for repository documentation. [`AGENTS.
 - [Architecture overview](architecture/overview.md)
 - [Project structure](architecture/project-structure.md)
 - [Error flow](architecture/error-flow.md)
+- [Six-digit error-code standard](architecture/error-code-standard.md)
+- [Error domain/module registry](architecture/error-domain-registry.md)
+- [Error handling and exception guide](architecture/error-handling-guide.md)
+- [Error-code refactoring plan](architecture/error-code-refactoring.md)
+- [Per-context error ownership guides](architecture/errors/README.md)
 - [Pagination](architecture/pagination.md)
 - [CQRS data access](architecture/cqrs-data-access.md)
 - [Database and cache access patterns](architecture/database-and-cache-access-patterns.md)
@@ -96,6 +105,7 @@ This index is the navigation entry point for repository documentation. [`AGENTS.
 - [DOC-15B build-code drift](reviews/DOC-15B-build-code-drift.md)
 - [Production-readiness audit](reviews/production-readiness-audit.md)
 - [Visuals index](visuals/README.md)
+- [Brand identity and logo assets](visuals/README.md#brand-identity-assets) ([Logo](visuals/logo.svg), [Icon](visuals/icon.svg))
 
 ## Contracts and task detail conventions
 

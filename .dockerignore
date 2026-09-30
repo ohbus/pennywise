@@ -15,6 +15,7 @@
 
 # Build outputs, caches and runtime artifacts
 **/build/
+!app/*/build/libs/*.jar
 **/.gradle/
 **/bin/
 **/node_modules/

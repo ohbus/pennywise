@@ -13,7 +13,7 @@ export SQUAREWISE_SECURITY_CREDENTIAL_DIGEST_SECRET ?= AAECAwQFBgcICQoLDA0ODxARE
 export SQUAREWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY ?= ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=
 
 .DEFAULT_GOAL := help
-.PHONY: help doctor bootstrap sync validate contracts lint python-typecheck test test-unit test-integration coverage build package check ci ci-e2e acceptance acceptance-live bruno-run workflow-validate observability-validate release-gate security-hygiene architecture-validate sbom-validate load-probe load-k6-validate load-k6 e2e e2e-rest-edge e2e-auth-cache smoke docs-diagrams docs-diagrams-config compose-config deps-config deps-up deps-status deps-logs deps-down accounts-deps-config accounts-deps-up accounts-deps-status accounts-deps-logs accounts-deps-down expense-core-deps-config expense-core-deps-up expense-core-deps-status expense-core-deps-logs expense-core-deps-down notifications-deps-config notifications-deps-up notifications-deps-status notifications-deps-logs notifications-deps-down bff-deps-config bff-deps-up bff-deps-status bff-deps-logs bff-deps-down full-config full-up full-status full-logs full-down compose-dev-up compose-dev-down compose-dev-logs compose-up compose-down docker-build-all docker-build-% prod-config clean clean-gradle status
+.PHONY: help doctor bootstrap sync validate contracts lint python-typecheck test test-unit test-integration coverage build package check ci ci-e2e acceptance acceptance-live bruno-run workflow-validate observability-validate release-gate security-hygiene architecture-validate sbom-validate load-probe load-k6-validate load-k6 e2e e2e-rest-edge e2e-auth-cache smoke docs-diagrams docs-diagrams-config compose-config deps-config deps-up deps-status deps-logs deps-down accounts-deps-config accounts-deps-up accounts-deps-status accounts-deps-logs accounts-deps-down expense-core-deps-config expense-core-deps-up expense-core-deps-status expense-core-deps-logs expense-core-deps-down notifications-deps-config notifications-deps-up notifications-deps-status notifications-deps-logs notifications-deps-down bff-deps-config bff-deps-up bff-deps-status bff-deps-logs bff-deps-down full-config full-up full-status full-logs full-down compose-dev-up compose-dev-down compose-dev-logs compose-up compose-down dev-setup seed seed-large seed-reset docker-build-all docker-build-% prod-config clean clean-gradle status
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Squarewise commands\n\n"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -259,6 +259,19 @@ compose-dev-logs: full-logs ## Alias for full-logs
 
 compose-up: compose-dev-up ## Alias for the development stack
 compose-down: compose-dev-down ## Alias for stopping the development stack
+
+dev-setup: ## Prepare local development configuration from .env.example
+	@test -f infra/local/.env || cp infra/local/.env.example infra/local/.env
+	@echo "Local development environment initialized: infra/local/.env ready"
+
+seed: ## Seed realistic development personas, groups, expenses, and schedules
+	@uv run python3 tools/ops/seed_dev_data.py
+
+seed-large: ## Seed extensive high-volume development dataset (50+ groups, hundreds of expenses)
+	@uv run python3 tools/ops/seed_dev_data.py --large
+
+seed-reset: ## Reset groups, expenses, and notifications and re-seed clean development data
+	@uv run python3 tools/ops/seed_dev_data.py --reset
 
 docker-build-all: $(addprefix docker-build-,$(SERVICES)) ## Build all production JVM images
 

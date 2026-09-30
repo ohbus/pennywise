@@ -1,9 +1,16 @@
-# Squarewise
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/visuals/logo.svg">
+    <img src="docs/visuals/logo.svg" alt="Squarewise Logo" width="480">
+  </picture>
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20-purple.svg)](https://kotlinlang.org)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://adoptium.net)
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-2.4.20-purple.svg" alt="Kotlin"></a>
+  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring%20Boot-4.1.1-brightgreen.svg" alt="Spring Boot"></a>
+  <a href="https://adoptium.net"><img src="https://img.shields.io/badge/Java-25-orange.svg" alt="Java"></a>
+</p>
 
 A permanently free, privacy-centric expense-sharing platform for households, couples, roommates, and travel groups. Squarewise is built as a modular Kotlin/Spring Boot ecosystem with REST domain services, an asynchronous event mesh, a GraphQL BFF, and contract-driven API guarantees.
 

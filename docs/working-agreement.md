@@ -1,5 +1,9 @@
 # Working agreement and fresh-session workflow
 
+<p align="left">
+  <img src="visuals/logo.svg" alt="Squarewise Logo" width="300">
+</p>
+
 This repository is documentation-first and tracker-driven. The registry is
 the state machine, the board is the work queue, task details are the scoped
 specification, and the progress ledger is the evidence log. Code, compose

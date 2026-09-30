@@ -11,3 +11,4 @@ jobs:
     name: Pull request verification (reusable)
     uses: ./.github/workflows/_reusable-ci.yml
     with: { run_e2e: true }
+    secrets: inherit

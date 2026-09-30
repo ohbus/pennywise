@@ -93,62 +93,68 @@ These documents are planning artifacts until the coordinator registers the
 workstreams in `docs/tasks/registry.yaml` and `docs/tasks/board.md`. The audit
 decision — **do not approve production launch** — remains in effect until
 evidence is produced in an approved production-like environment.
-# Error reporting hardening plan
+# Error reporting evolution
 
-The existing `ErrorCode` vocabulary is intentionally treated as a compatibility
-baseline, not the final production diagnostic model. The ERR-01 through ERR-12
-workstream introduces specific, governed codes that identify service, feature,
-operation, and scenario without exposing secrets or unbounded identifiers.
+ERR-01 through ERR-12 established the current symbolic v1 vocabulary and supporting
+controls. `ERRC-01` now supplies a documentation-only successor design for immutable
+six-digit domain/module identities. The existing runtime and contracts remain the
+compatibility baseline until follow-on work is separately registered and implemented.
 
 ## Target model
 
-Public codes use `<SERVICE>_<AREA>_<SCENARIO>`, for example
-`EXP_EXPENSE_INVALID_TOTAL`, `ACC_PROFILE_NOT_FOUND`, and
-`BFF_UPSTREAM_EXPENSE_TIMEOUT`. `source`, `component`, and `operation` remain
-separate response fields so code names stay stable while implementation detail
-can evolve. Every occurrence also receives an `errorId`; `requestId` remains the
-request-level correlation key.
+The canonical identity is `DMLCEE`, displayed as `DM-L-C-EE`, and paired with an
+immutable symbolic name. Domain/module identifies stable semantic ownership rather
+than a service process. API v1 retains its existing symbolic `code` and first adds
+optional `numericCode` and `errorName`; replacing `code` requires a future versioned
+contract. `source`, component/operation where approved, request correlation, and any
+occurrence-level error ID remain separate metadata.
 
-The catalog is authoritative for code ownership, default HTTP status,
-retryability, severity, safe detail, and deprecation. Codes are never selected
-from exception text, database messages, or arbitrary controller strings.
-Resource IDs and field names are included only when disclosure is safe; raw
-values, tokens, SQL, stack traces, and exception causes remain server-side.
+The catalog is the build-time authority for identity, explicit transport mapping,
+retry, severity, disclosure, safe text, ownership, lifecycle, and runbooks. Runtime
+mapping uses preconstructed definitions or generated static manifests. Reflection,
+classpath scanning, annotations, `ServiceLoader`, ordinal identity, exception-message
+classification, and runtime YAML parsing are prohibited on operational paths.
 
 ## Delivery sequence
 
-1. ERR-01 defines `contracts/errors/error-catalog.yaml`, naming rules, lifecycle,
-   ownership, and a catalog validator.
-2. ERR-02 extends `libs/errors` with typed definitions, domain exceptions,
-   error IDs, safe metadata, response serialization, and cause-preserving logs.
-3. ERR-03 replaces empty Spring Security 401/403 responses with shared problem
-   handlers while preserving `WWW-Authenticate`.
-4. ERR-04 through ERR-08 migrate Accounts, Expense Core, and Notifications by
-   bounded context. Each feature throws its own cataloged error at the invariant
-   boundary and tests exact response metadata and side-effect behavior.
-5. ERR-09 maps service errors through BFF REST adapters and GraphQL
-   `errors[].extensions`, retaining upstream code/source and adding BFF transport
-   codes only when the failure is introduced by the gateway.
-6. ERR-10 adds negative-path tests across all public interfaces and makes Bruno
-   fail on missing code, source, component, operation, requestId, errorId, or
-   problem content type.
-7. ERR-11 adds bounded Micrometer counters and dashboards. Metric labels may
-   include service, component, operation, code, and status, but never requestId,
-   userId, groupId, resourceId, exception text, or field values.
-8. ERR-12 reconciles contracts, docs, runbooks, release checklists, and local
-   Docker evidence. Production-only controls remain explicitly separate.
+The registration-ready sequence is documented in
+[the refactoring plan](../architecture/error-code-refactoring.md): freeze evidence and
+catalog allocations; update contracts and tolerant consumers; implement the static
+core and policy gates; harden REST/security, GraphQL/reactive, messaging, scheduler,
+and startup boundaries; migrate each bounded context; then execute adversarial,
+performance, observability, mixed-version, regional rollout, and rollback gates.
 
-## Required catalog fields
+Each task owns non-overlapping paths, updates documentation with behavior, validates
+before committing, and records exact evidence. Contracts precede producers; tolerant
+readers precede additive writers.
 
-Each entry must define `code`, `service`, `component`, `operation`, `status`,
-`title`, `safe_detail`, `retryable`, `severity`, `owner`, and lifecycle state.
-The validator must reject duplicate codes, invalid prefixes, missing owners,
-ambiguous status mappings, undeclared public codes, and unsafe metadata.
+## Exception and containment policy
+
+Every predictable escaped failure receives a definition, but an exception class exists
+only where typed catching/recovery, reusable construction, structured diagnostics, or
+a public library boundary warrants it. A useful leaf bakes in its default definition;
+manual override is permitted only through a narrow owner-defined compatible family.
+Owned production code does not deliberately throw generic exceptions.
+
+Public adapters read only catalog-controlled text and approved bounded diagnostics.
+They never expose exception/root-cause text or stack traces, including for 500s.
+Fatal JVM failures propagate for process restart, cancellation is preserved, and
+interrupt status is restored. This is broader boundary safety, not a blanket
+`catch(Throwable)` policy.
 
 ## Completion gate
 
-The workstream is complete only when no REST or GraphQL endpoint emits an empty
-or unstructured failure, every public code has catalog and test evidence, BFF
-mapping preserves origin information, security failures are structured, error
-metrics are bounded, and `make check`, `make acceptance-live`, Bruno, contract,
-and observability validation pass locally.
+Documentation completion does not establish runtime completion. The future workstream
+finishes only when every audited boundary has catalog/contract/test evidence, all
+public paths are redaction-safe, upstream identity is preserved, async terminal states
+are explicit, static/no-reflection gates pass, metrics remain bounded, mixed-version
+rollout and rollback are proven, and measured performance evidence supports—not merely
+asserts—the scale target.
+
+Canonical references:
+
+- [Six-digit standard](../architecture/error-code-standard.md)
+- [Domain/module registry](../architecture/error-domain-registry.md)
+- [Exception and boundary guide](../architecture/error-handling-guide.md)
+- [Per-context inventories](../architecture/errors/README.md)
+- [Ordered implementation plan](../architecture/error-code-refactoring.md)

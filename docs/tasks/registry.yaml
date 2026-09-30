@@ -7253,6 +7253,127 @@
       ],
       "reviewer": "/root",
       "blocker": null
+    },
+    {
+      "id": "ERRC-01",
+      "parent_id": "MILESTONE-PRODUCTION-HARDENING",
+      "title": "Design six-digit domain error-code migration",
+      "phase": "documentation",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["ERR-12", "SEC-02"],
+      "owned_paths": [
+        "contracts/errors/domains.yaml",
+        "docs/architecture/error-code-standard.md",
+        "docs/architecture/error-domain-registry.md",
+        "docs/architecture/error-code-refactoring.md",
+        "docs/architecture/error-handling-guide.md",
+        "docs/architecture/errors/",
+        "docs/architecture/error-flow.md",
+        "docs/implementation/plan.md",
+        "docs/README.md",
+        "docs/tasks/details/ERRC-01.md",
+        "docs/tasks/details/ERRC-01A.md",
+        "docs/tasks/details/ERRC-01B.md",
+        "docs/tasks/details/ERRC-01C.md",
+        "docs/tasks/registry.yaml",
+        "docs/tasks/board.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/ERRC-01.md",
+      "acceptance_criteria": [
+        "Reconcile the six-digit DM-L-C-EE proposal with the completed ERR-01 through ERR-12 contracts, implementation, tests, and operations without changing application code.",
+        "Define immutable domain, module, layer, category, sequence, lifecycle, ownership, reservation, allocation, deprecation, and backward-compatibility rules.",
+        "Inventory predictable REST, GraphQL, messaging, persistence, security, configuration, scheduled-work, and unexpected failure families with explicit transport status and retry semantics.",
+        "Specify typed exceptions with baked-in default definitions and constrained explicit overrides, prohibit deliberate generic throws, and define safe top-level handling for otherwise uncaught throwables.",
+        "Define a reflection-free constant-time runtime path, build-time catalog/code validation, contract migration, full test matrix, observability safeguards, rollout, rollback, and onboarding guidance.",
+        "Define registration-ready ordered implementation tasks with dependencies, owned paths, design hints, validation commands, evidence expectations, and documentation obligations; implementation remains unauthorized until those tasks are registered."
+      ],
+      "validation_commands": [
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/errors/validate_catalog.py",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Commit 33e5cea defines the six-digit standard, namespace registry, exception and boundary guide, per-context inventories, and registration-ready ERRC-02 through ERRC-31 implementation sequence.",
+        "API v1 compatibility keeps symbolic code and plans optional numericCode/errorName; no runtime or public schema was changed.",
+        "make contracts (45 REST operations, 9 GraphQL root operations, 50 Bruno requests/71 assertions), uv run python tools/errors/validate_catalog.py, and git diff --check passed."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "ERRC-01A",
+      "parent_id": "ERRC-01",
+      "title": "Audit Kotlin error throw catch and boundary behavior",
+      "phase": "documentation",
+      "status": "done",
+      "owner_role": "review",
+      "owner_agent": "/root/error_code_audit",
+      "depends_on": ["ERR-12", "SEC-02"],
+      "owned_paths": ["docs/tasks/details/ERRC-01A.md"],
+      "specification": "docs/tasks/details/ERRC-01A.md",
+      "acceptance_criteria": [
+        "Read-only inventory covers production throw sites, custom and generic exception types, catch blocks, HTTP advice, GraphQL resolution, messaging listeners, scheduled work, and configuration startup failures.",
+        "Findings identify concrete migration families, unsafe detail exposure, generic-throw debt, broad-catch risks, and missing predictable scenarios with file references."
+      ],
+      "validation_commands": ["rg -n --glob '*.kt' 'throw |catch \\(|@ExceptionHandler' app libs"],
+      "evidence": [
+        "Read-only audit counted 128 production application-error constructions and identified unsafe response text, four fatal-swallowing catch(Throwable) sites, security/filter, BFF, messaging, scheduler, and semantic mapping gaps.",
+        "Findings are recorded in docs/tasks/details/ERRC-01A.md and incorporated into commit 33e5cea."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "ERRC-01B",
+      "parent_id": "ERRC-01",
+      "title": "Audit error contracts and compatibility surface",
+      "phase": "documentation",
+      "status": "done",
+      "owner_role": "contracts",
+      "owner_agent": "/root/error_contract_audit",
+      "depends_on": ["ERR-12", "SEC-02"],
+      "owned_paths": ["docs/tasks/details/ERRC-01B.md"],
+      "specification": "docs/tasks/details/ERRC-01B.md",
+      "acceptance_criteria": [
+        "Read-only audit covers the error catalog, problem schema, every REST OpenAPI error response, GraphQL error extensions, event failure semantics, tests, Bruno, and compatibility risks.",
+        "Findings define the contract-first migration sequence, HTTP status equivalence, additive rollout, versioning, consumer evidence, and rollback requirements."
+      ],
+      "validation_commands": [
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/errors/validate_catalog.py"
+      ],
+      "evidence": [
+        "Read-only audit established additive v1 numericCode/errorName migration, documented schema/OpenAPI/GraphQL/event/test drift, and defined consumer-first rollout and rollback gates.",
+        "Findings are recorded in docs/tasks/details/ERRC-01B.md and incorporated into commit 33e5cea."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "ERRC-01C",
+      "parent_id": "ERRC-01",
+      "title": "Review exception architecture performance and operations policy",
+      "phase": "documentation",
+      "status": "done",
+      "owner_role": "architecture",
+      "owner_agent": "/root/error_architecture_audit",
+      "depends_on": ["ERR-12", "SEC-02"],
+      "owned_paths": ["docs/tasks/details/ERRC-01C.md"],
+      "specification": "docs/tasks/details/ERRC-01C.md",
+      "acceptance_criteria": [
+        "Read-only review defines a no-reflection hot path, exception-definition compatibility rules, fatal Throwable handling, async and reactive boundaries, metrics cardinality, logging redaction, and 10M-DAU operational constraints.",
+        "Findings challenge unsafe or over-engineered parts of the draft and recommend maintainable KISS/DRY/SOLID patterns with measurable validation."
+      ],
+      "validation_commands": ["git diff --check"],
+      "evidence": [
+        "Read-only review defined minimal governed exceptions, constrained overrides, fatal/cancellation policy, static no-reflection runtime mapping, bounded observability, privacy, and measured performance acceptance.",
+        "Findings are recorded in docs/tasks/details/ERRC-01C.md and incorporated into commit 33e5cea."
+      ],
+      "reviewer": "/root",
+      "blocker": null
     }
   ]
 }

@@ -1,0 +1,23 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Squarewise icon</title>
+  <desc id="desc">Overlapping rounded squares in blue, teal and deep navy.</desc>
+  <defs>
+    <linearGradient id="blueGradient" x1="78" y1="190" x2="340" y2="444" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2F49F5"/>
+      <stop offset="1" stop-color="#4F7CFF"/>
+    </linearGradient>
+    <linearGradient id="tealGradient" x1="190" y1="72" x2="410" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#25C8A1"/>
+      <stop offset="1" stop-color="#55DFB6"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#0B1F55" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#softShadow)">
+    <rect x="72" y="194" width="270" height="270" rx="58" fill="url(#blueGradient)"/>
+    <rect x="178" y="86" width="270" height="270" rx="58" fill="url(#tealGradient)"/>
+    <rect x="181" y="198" width="164" height="164" rx="46" fill="#0B2A68" fill-opacity="0.70"/>
+  </g>
+</svg>

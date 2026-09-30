@@ -121,6 +121,20 @@ query classification, and evidence gates are complete.
 | ERR-11 | operations | done | Bounded error metrics, dashboards, and alerts |
 | ERR-12 | coordinator | done | Governance review, release evidence, and completion gate |
 
+## Six-digit error-code redesign
+
+This documentation-only workstream reconciles the proposed `DM-L-C-EE` identity
+with the already delivered ERR-01 through ERR-12 public contract. No application
+implementation is authorized until the plan and compatibility decisions are
+reviewed and the follow-on tasks are registered.
+
+| ID | Owner | Status | Deliverable |
+| --- | --- | --- | --- |
+| ERRC-01 | coordinator | done | Canonical standard, registry, decisions, exhaustive migration and onboarding plan |
+| ERRC-01A | review | done | Kotlin throw/catch/boundary inventory |
+| ERRC-01B | contracts | done | REST, GraphQL, event, and compatibility audit |
+| ERRC-01C | architecture | done | Exception, performance, fatal-failure, and operations policy review |
+
 | ID | Owner | Status | Deliverable |
 | --- | --- | --- | --- |
 | DOC-01 | coordinator | done | Tracker, working agreement, task details |
@@ -242,4 +256,3 @@ query classification, and evidence gates are complete.
 | OBS-01 | coordinator | done | Implement cross-cutting structured logging, MDC correlation, and observability tools |
 | DOC-26 | coordinator | done | Reconcile local smoke-demo delivery evidence and Bruno API collection |
 | SEC-02 | coordinator | done | Implement and verify whole security audit remediation (H-1, H-2, M-1 to M-5, L-1 to L-6) |
-

@@ -60,6 +60,9 @@ its toolchain setup explicitly.
 Every test run publishes a readable test summary directly to GitHub Actions job
 summaries (`test-summary/action@v2`) and uploads JUnit XML and HTML reports as
 job artifacts with `if: always()` retention.
+A dedicated `sonar` job runs SonarQube / SonarCloud static analysis with cached
+Sonar packages (`~/.sonar/cache`) and Gradle cache, sending coverage and test analysis
+for `master` and pull requests.
 For application projects, `_reusable-ci.yml` uploads the built executable
 `bootJar` artifact (`app-jar-<service>`). Master image publishing in `ci-master.yml`
 downloads this pre-built artifact and packages the runtime image with

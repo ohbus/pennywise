@@ -61,10 +61,9 @@ class PostgresExpenseIdempotencyConcurrencyTest @Autowired constructor(
         val executor = Executors.newFixedThreadPool(2)
         val first = executor.submit {
             transactionTemplate.execute {
-                val result = expenseStore.create(group.groupId, record, "same-key")
+                expenseStore.create(group.groupId, record, "same-key")
                 entered.countDown()
                 check(release.await(10, TimeUnit.SECONDS)) { "lock release was not signalled" }
-                result
             }
         }
         check(entered.await(10, TimeUnit.SECONDS)) { "first transaction did not start" }

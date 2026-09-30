@@ -1,5 +1,11 @@
 # Consistent error flow
 
+Status: current implemented v1 behavior. The accepted documentation-only successor
+design is the [six-digit standard](error-code-standard.md),
+[exception/boundary guide](error-handling-guide.md), and
+[migration plan](error-code-refactoring.md). Those documents do not describe shipped
+runtime behavior.
+
 Every REST request passes through the service's request-ID filter and boundary
 validation. The filter accepts a bounded alphanumeric `X-Request-Id` or creates
 one, returns it on every response, and makes it available to logs and tracing.
@@ -25,6 +31,13 @@ Clients branch on `code`, never free-text `detail`. The stable vocabulary is
 `IDEMPOTENCY_CONFLICT`, `RATE_LIMITED`, and `INTERNAL_ERROR`. Unexpected errors
 retain details only in correlated server logs. GraphQL maps the same code into
 `errors[].extensions.code` and preserves the request ID.
+
+During the planned compatibility migration, `code` remains this symbolic v1 value.
+Producers add optional `numericCode` and `errorName` only after schemas and consumers
+are tolerant. The current implementation has known message-containment, security
+boundary, BFF identity-preservation, and contract-parity gaps recorded in the
+migration plan; this document is not evidence that every existing path already meets
+the target invariants.
 
 Rate-limit denials and fail-closed limiter-store decisions use HTTP 429 with the
 catalogued `RATE_LIMITED` code. The REST boundary includes a bounded

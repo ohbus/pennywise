@@ -2,9 +2,19 @@
 
 **Task:** QA-10  
 **Status:** In progress  
-**Last audited:** 2026-09-29  
+**Last audited:** 2026-09-30
 **Scope:** `app/`, `libs/`, `tests/`, `tools/bruno/`, contracts, and the
 test/quality documentation.
+
+## Current baseline
+
+As of 2026-09-30, after fresh Java 25 Gradle-wrapper runs, the audit records **229 production methods with missed
+JaCoCo branches**, **54 contract operations** (45 REST and 9 GraphQL), and
+**seven environment-owned E2E/operations rows**. Operation source discovery
+finds 41 operations without a literal E2E reference and 49 without a literal
+Bruno reference. These numbers are backlog signals, not passing-test claims;
+the hard branch gate remains red until the production reports are regenerated
+and every record is covered or explicitly classified.
 
 ## Purpose and completion rule
 
@@ -35,15 +45,15 @@ reports currently report these line-coverage signals:
 
 | Module | Missed lines | Covered lines | Signal |
 | --- | ---: | ---: | --- |
-| `app/accounts` | 235 | 1,153 | 83.1% |
+| `app/accounts` | 158 | 1,226 | 88.6% |
 | `app/bff` | 183 | 616 | 77.1% |
-| `app/expense-core` | 239 | 1,999 | 89.3% |
+| `app/expense-core` | 202 | 2,037 | 91.0% |
 | `app/notifications` | 115 | 481 | 80.7% |
-| `libs/db` | 111 | 151 | 57.6% |
-| `libs/errors` | 57 | 124 | 68.5% |
+| `libs/db` | 37 | 225 | 85.9% |
+| `libs/errors` | 1 | 173 | 99.4% |
 | `libs/ids` | 20 | 1 | 4.8% |
-| `libs/observability` | 11 | 62 | 84.9% |
-| `libs/security` | 68 | 84 | 55.3% |
+| `libs/observability` | 5 | 68 | 93.2% |
+| `libs/security` | 58 | 94 | 61.8% |
 
 These reports are discovery evidence and must be regenerated with the source
 revision under review before closure. Kotlin compiler-generated accessors,
@@ -54,9 +64,22 @@ The operation matrix currently inventories 45 REST operations and 9 GraphQL
 root operations. That proves inventory completeness, not complete validation,
 authorization, failure, replay, concurrency, or side-effect coverage.
 
+For repeatable operation-level discovery, run
+`uv run python tools/coverage/report_operation_test_gaps.py --format markdown`.
+The tool compares contract operation IDs and GraphQL root fields with literal
+operation-name references in `tests/e2e/` and `tools/bruno/`. The current
+inventory contains 54 operations; 41 have no E2E source signal and 49 have no
+Bruno source signal. These are discovery signals only: a missing string can be
+a naming mismatch, while a present string does not prove authorization,
+negative behavior, persistence, messaging, replay, or deployed side effects.
+Each signal must therefore be reconciled against the operation matrix and the
+QA10-E2E acceptance rows before closure. Every record is assigned to
+`QA10-E2E01`, whose acceptance criterion is the complete signed-persona
+per-operation authorization and side-effect matrix.
+
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **282 methods with at least one missed
+The regenerated JaCoCo XML contains **229 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -64,16 +87,16 @@ classified as generated/structural with reviewer approval.
 
 | Module | Classes with missed lines | Classes with missed branches | Methods with missed branches |
 | --- | ---: | ---: | ---: |
-| `app/accounts` | 46 | 33 | 57 |
+| `app/accounts` | 41 | 29 | 50 |
 | `app/bff` | 28 | 24 | 49 |
-| `app/expense-core` | 50 | 28 | 83 |
+| `app/expense-core` | 48 | 26 | 76 |
 | `app/notifications` | 18 | 20 | 37 |
-| `libs/db` | 12 | 14 | 27 |
-| `libs/errors` | 5 | 4 | 10 |
+| `libs/db` | 8 | 10 | 15 |
+| `libs/errors` | 1 | 0 | 0 |
 | `libs/ids` | 3 | 0 | 0 |
-| `libs/observability` | 2 | 3 | 10 |
-| `libs/security` | 5 | 6 | 9 |
-| **Total** | **169** | **132** | **282** |
+| `libs/observability` | 2 | 0 | 0 |
+| `libs/security` | 4 | 2 | 2 |
+| **Total** | **153** | **111** | **229** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -84,6 +107,63 @@ every `<class>/<method>/<counter type="BRANCH">` where `missed > 0`.
 This is intentionally a fail-open discovery report: a missed branch is not
 automatically a defect, but it is never silently treated as covered.
 
+For a stable per-method inventory, run:
+
+```text
+uv run python tools/coverage/report_branch_gaps.py --format markdown
+uv run python tools/coverage/report_branch_gaps.py --format json
+# Closure gate: this must exit 0 only after every gap is closed or removed
+# through an explicitly reviewed structural classification.
+uv run python tools/coverage/report_branch_gaps.py --format json --fail-on-gaps
+```
+
+The JSON array is the machine-readable assignment set. Its count must equal
+the `Methods with missed branches` total above; each object carries the module,
+production class, source file, method, source line, missed/covered branch
+counts, originating JaCoCo report, provisional QA-10 row, and assignment basis.
+The tool emits no synthetic exclusions and returns all methods with `missed > 0`.
+The provisional row is path-based accountability, not closure evidence;
+reviewers must confirm the classification and then link each object to a
+passing test or an explicitly reviewed generated/structural rationale.
+
+Current provisional assignment workload (229 records):
+
+| QA row | Branch-gap records | Primary missing evidence |
+| --- | ---: | --- |
+| QA10-A01 | 0 | Local publisher slice is complete; broker/deployed delivery remains required. |
+| QA10-A02 | 1 | Caller transaction and durable auth-email handoff boundaries. |
+| QA10-A03 | 9 | Shared Redis atomicity, outage, and public rate-limit behavior. |
+| QA10-A04 | 0 | Explicit external identity-provider path; constructor and unsupported-delegation behavior are locally covered, deployed provider exchange remains required. |
+| QA10-A05 | 1 | External OIDC selection in production security wiring; provider/network evidence remains required. |
+| QA10-A06 | 6 | Profile authorization and persistence boundary. |
+| QA10-A07 | 33 | Session, credential, identity, replay, and cleanup behavior. |
+| QA10-A08 | 0 | Email canonicalization and malformed-input boundaries are branch-complete locally; public authentication integration remains required. |
+| QA10-B01 | 14 | BFF upstream transport and gateway failure behavior. |
+| QA10-B02 | 20 | GraphQL resolver, error, scalar, and limit behavior. |
+| QA10-B03 | 10 | Realtime fanout and broker consumer behavior. |
+| QA10-B04 | 5 | Browser origin, CSRF, cookie, and session filters. |
+| QA10-C01 | 44 | Expense persistence, transaction, ledger, and idempotency behavior. |
+| QA10-C02 | 0 | Pure calculator/validator slice is branch-complete; property tests remain required. |
+| QA10-C03 | 8 | Recurring schedules, claims, locking, and occurrence failures. |
+| QA10-C04 | 9 | Group, invite, membership, expiry, and revocation behavior. |
+| QA10-C05 | 9 | Settlement, balance, reconciliation, and rollback behavior. |
+| QA10-C06 | 6 | Sync revisions, cursors, ordering, and membership boundaries. |
+| QA10-D01 | 11 | Auth-email broker parsing, retry, deduplication, and delivery. |
+| QA10-D02 | 10 | Notification event transaction and acknowledgement coupling. |
+| QA10-D03 | 10 | SMTP/Mailpit delivery and retry classification. |
+| QA10-D04 | 6 | Inbox/preferences persistence and subject isolation. |
+| QA10-E01 | 0 | Error mapping, framework failures, headers, and correlation cleanup is branch-complete in the fresh local report; deployed framework wiring and redaction evidence remain required. |
+| QA10-E02 | 15 | Database routing, reader health, fallback, and operational lifecycle. |
+| QA10-E03 | 2 | Servlet/reactive OIDC decoder parity and key behavior; issuer-discovery paths remain environment/network evidence. |
+| QA10-E04 | 0 | IDs/constants have no current missed-branch methods; static contract checks remain required. |
+| QA10-E05 | 0 | Bounded observability labels and metric behavior is branch-complete locally; dashboards/alerts and deployed cardinality remain operational evidence. |
+
+This table is regenerated from the JSON assignment output; it is not a
+coverage claim. A row closes only when its acceptance criteria and required
+evidence layers pass, and the next regenerated inventory removes or classifies
+its records. The `--fail-on-gaps` mode is the repository-level no-missed-branch
+gate and must be part of the final QA-10 validation package.
+
 Methods named `<init>`, `equals`, `hashCode`, `toString`, Kotlin `$lambda$`,
 and compiler-generated value/boxing methods require structural classification
 only when the underlying production behavior is covered by an explicit test.
@@ -92,7 +172,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 282-method inventory is a discovery baseline, not closure evidence. QA-10
+The 229-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 
@@ -104,8 +184,9 @@ rate-limit retry header, and the bodyless 406 response. The new
 `RequestIdContextAndFilterTest` checks valid propagation, invalid-ID replacement,
 generated UUID response headers, cleanup after normal execution, and cleanup
 after exceptions. The focused command passed 11 tests and the regenerated
-module report improved line coverage from 53.6% to 68.5% while leaving the
-remaining handler/framework branches explicitly open.
+module report now shows 99.4% line coverage and no missed branch methods in
+the fresh report; deployed framework wiring and redaction branches remain
+environment evidence requirements.
 
 `AllocationCalculator` is the first branch-complete production slice after the
 increment: its regenerated report has 0 missed lines, 0 missed branches, and 0
@@ -146,6 +227,14 @@ Accounts report shows 0 missed lines, branches, and methods for
 requires a live shared-Redis concurrency/window-reset/outage test and public
 multi-replica 429 evidence.
 
+The pending `DbOperationPolicyTest` increment targets the currently untested
+database route-policy branches: valid writer and reader routes, operation-name
+grammar rejection, reader eligibility for non-query kinds, and the strong
+consistency/reader conflict. Its focused Gradle command could not reach
+compilation in the managed shell because the Gradle distribution download was
+blocked by `Permission denied: getsockopt`; no branch-coverage or closure claim
+is made until the test executes and JaCoCo is regenerated.
+
 ## Required evidence ladder
 
 Each production behavior is assigned the minimum evidence needed:
@@ -161,6 +250,54 @@ Each production behavior is assigned the minimum evidence needed:
 
 For a row marked `U+T+P+E`, all four layers are required. A unit test may be
 listed as supporting evidence but cannot replace the higher layer.
+
+## Concrete test destinations
+
+Each backlog row has an owned test destination. Existing files are extended
+only when their responsibility matches; otherwise the named file is the
+planned new test. This prevents a broad suite from absorbing an unrelated gap.
+
+| Row | Unit/transport destination | Integration/E2E destination |
+| --- | --- | --- |
+| QA10-A01 | `app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/delivery/service/AuthEmailOutboxPublisherTest.kt` | Extend `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/email/AuthEmailRabbitListenerTest.kt`; add `tests/e2e/test_auth_email_delivery.py`. |
+| QA10-A02 | `app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/delivery/service/OutboxAuthEmailSenderTest.kt` | `app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/AuthPersistenceTest.kt`; add caller-transaction rollback coverage. |
+| QA10-A03 | `app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/abuse/RedisRateLimitBucketStoreTest.kt` | Add `tests/e2e/test_distributed_rate_limit.py` against shared Redis and replicas. |
+| QA10-A04 | Add `app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/provider/ExternalOidcTokenProviderTest.kt` | Extend `app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/login/DeployedPasswordlessTokenIntegrationTest.kt` with explicitly enabled-provider startup/issuance. |
+| QA10-A05 | `app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/security/OidcSubjectValidatorTest.kt`; add deployed security configuration tests | `tests/e2e/test_oidc_negative.py` and signed multi-service decoder probes. |
+| QA10-A06 | `app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/profile/ProfileControllerTest.kt` | Add signed-persona profile authorization cases to `tests/e2e/test_rest_edge_cases.py`. |
+| QA10-A07 | `app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/session/TokenSessionServiceTest.kt` and `app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/login/LoginVerificationServiceTest.kt` | Extend passwordless journey in `tests/e2e/test_product_journey.py`; assert durable replay/revocation state. |
+| QA10-A08 | `app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/identity/EmailAddressTest.kt` | Not a deployed boundary; retain deterministic unit/property coverage. |
+| QA10-B01 | `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/RestGatewayTest.kt` and `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/BffFanoutTest.kt` | Add upstream timeout/malformed-response cases to `tests/e2e/test_rest_edge_cases.py`. |
+| QA10-B02 | `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/GraphqlHttpTransportTest.kt` and `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/GraphQlScalarConfigurationTest.kt` | Extend GraphQL HTTP and WebSocket suites with every limit/error dimension. |
+| QA10-B03 | `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/LiveUpdateFanoutTest.kt`, `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/messaging/BffEventConsumerTest.kt`, and `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/messaging/RabbitBffEventListenerTest.kt` | Extend `tests/e2e/test_concurrency_subscriptions.py` and add reconnect/replay cases. |
+| QA10-B04 | `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/config/BrowserCsrfWebFilterTest.kt`, `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/config/BrowserOriginPolicyTest.kt`, and cookie filter tests | Add browser-cookie mutation and WebSocket upgrade cases to the public E2E harness. |
+| QA10-C01 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/JpaExpenseStoreTest.kt` and controller tests | Extend `tests/e2e/test_product_journey.py` with write-failure rollback and ledger reconciliation. |
+| QA10-C02 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/AllocationCalculatorTest.kt` and `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/ExpenseValidatorTest.kt` | Add deterministic property/table tests in the same package. |
+| QA10-C03 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/recurring/RecurringExpenseServiceTest.kt`, worker, and controller tests | Add multi-worker and bounded catch-up cases to the Docker E2E suite. |
+| QA10-C04 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/JpaGroupStoreTest.kt` and `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/GroupControllerTest.kt` | Extend signed-persona lifecycle coverage in `tests/e2e/test_product_journey.py`. |
+| QA10-C05 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/settlements/JpaSettlementStoreTest.kt`, `SettlementServiceTest.kt`, and reconciliation test | Extend financial lifecycle E2E with corruption/reconciliation and rollback evidence. |
+| QA10-C06 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/sync/JpaSynchronizationStoreTest.kt` and `SyncControllerTest.kt` | Extend `tests/e2e/test_offline_resilience.py` and causal cursor probes. |
+| QA10-D01 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/email/AuthEmailRabbitListenerTest.kt` and envelope tests | Add broker/Mailpit auth-email delivery to `tests/e2e/test_auth_email_delivery.py`. |
+| QA10-D02 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/consumer/RabbitNotificationListenerTest.kt` and `NotificationEventConsumerTest.kt` | Add real RabbitMQ ack/retry/DLQ cases to the chaos E2E suite. |
+| QA10-D03 | Extend `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/email/EmailDispatcherTest.kt`; add SMTP adapter tests | Add Mailpit failure/retry assertions to deployed notification E2E. |
+| QA10-D04 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/inbox/InboxControllerTest.kt`, `JpaNotificationInboxStoreTest.kt`, and `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/preferences/JpaPreferenceStoreTest.kt` | Extend signed subject-isolation cases in REST-edge E2E. |
+| QA10-E01 | `libs/errors/src/test/kotlin/com/subhrodip/squarewise/errors/GlobalErrorHandlerTest.kt` and `libs/errors/src/test/kotlin/com/subhrodip/squarewise/errors/request/RequestIdContextAndFilterTest.kt` | Assert public error envelopes and correlation behavior in REST/GraphQL E2E. |
+| QA10-E02 | Add focused tests under `libs/db/src/test/kotlin/com/subhrodip/squarewise/db/`, including `libs/db/src/test/kotlin/com/subhrodip/squarewise/db/policy/DbOperationPolicyTest.kt` | Extend `tests/e2e/test_causal_watermark.py` and replica failure/recovery suites. |
+| QA10-E03 | `libs/security/src/test/kotlin/com/subhrodip/squarewise/security/OidcJwtDecoderFactoryTest.kt` and policy tests | Extend signed invalid-token and key-rotation E2E across all services. |
+| QA10-E04 | `libs/ids/src/test/kotlin/com/subhrodip/squarewise/ids/UuidGeneratorTest.kt`; add static contract assertions | Contract validator and public-surface validation remain the integration destination. |
+| QA10-E05 | `libs/observability/src/test/kotlin/com/subhrodip/squarewise/observability/db/DbTelemetryTest.kt` and observability tests | Add bounded-label, alert, and capacity evidence under QA10-E2E06/E2E07. |
+
+### Deployed E2E and environment destinations
+
+| Row | Existing suite to extend | Dedicated destination or artifact still required |
+| --- | --- | --- |
+| QA10-E2E01 | `tests/e2e/test_product_journey.py`, `test_rest_edge_cases.py`, and `test_oidc_negative.py` | Add `tests/e2e/test_operation_authorization_matrix.py` covering every REST/GraphQL operation and signed persona. |
+| QA10-E2E02 | `tests/e2e/test_product_journey.py`, Mailpit/Compose harness | Add `tests/e2e/test_auth_email_delivery.py` for real outbox, broker, Mailpit, replay, expiry, refresh, logout, and redaction. |
+| QA10-E2E03 | `tests/e2e/test_rest_edge_cases.py` and Compose Redis topology | Add `tests/e2e/test_distributed_rate_limit.py` for concurrent replicas, normalized proxy identity, outage, recovery, and bounded `Retry-After`. |
+| QA10-E2E04 | `tests/e2e/test_concurrency_subscriptions.py` and `test_oidc_websocket_negative.py` | Add protocol cases for duplicate IDs, malformed payloads, heartbeat timeout, sustained backpressure, reconnect cursor recovery, and membership revocation. |
+| QA10-E2E05 | `tests/e2e/test_causal_watermark.py`, replica smoke scripts, and `test_concurrency_subscriptions.py` | Preserve artifacts for routing, lag/fallback/recovery, watermark monotonicity, no stale strong reads, and fanout consistency. |
+| QA10-E2E06 | `tests/load/k6/`, `tests/performance/capacity-smoke.sh`, and documented production-validation procedures | Produce approved p50/p95/p99, error-rate, pool, queue, and reconciliation artifacts for the declared workload and thresholds. |
+| QA10-E2E07 | `tests/e2e/test_chaos_recovery.py`, `tests/performance/recovery-drill.sh`, and release-gate tooling | Produce reviewed failover, PITR restore, rotation, scanning, rollback, alert, RPO/RTO, and zero-loss artifacts in a production-like environment. |
 
 ## Missing or insufficient unit/transport/integration coverage
 
@@ -179,6 +316,7 @@ test cannot close a row by merely executing a line.
 | QA10-A05 | `ProductionSecurityConfig`, `OidcSubjectValidator`, JWT decoder wiring | Configuration classes have missed lines and current focused tests mostly validate policy helpers. | `T+E`: valid issuer/audience/algorithm/signature/subject succeeds; wrong issuer, audience, algorithm, signature, expiry, not-before, blank/oversized subject, missing JWKS, and unavailable issuer fail closed; all four deployed services use the intended decoder and no fallback decoder is active outside an explicitly test-only profile. |
 | QA10-A06 | `ProfileController` profile/deletion/export routes | Several branches remain uncovered, especially nullable principals, object authorization, query context, and error mapping. | `T+P+E`: authenticated self-read/update succeeds; missing profile, blank/missing principal, foreign account, missing account, internal workload role, duplicate batch IDs, empty batch, over-limit batch, deletion request, export request, listing, and store failure each assert exact status/code and no unauthorized query or mutation side effect. |
 | QA10-A07 | `TokenSessionService`, `LoginCredentialService`, cleanup and identity stores | Partial line coverage does not demonstrate replay, subject mismatch, deletion, expiry, or transaction behavior together. | `U+P+E`: one-time credential is single-use and expiry-bound; wrong recipient/subject, replay, session mismatch, revoked/deleted account, refresh rotation/reuse, logout, cleanup, and concurrent redemption produce exactly one durable outcome and the required redacted audit event. |
+| QA10-A08 | `EmailAddress.parse` | Existing tests cover canonicalization and common malformed input, but JaCoCo still reports 15 missed branches in the parser for domain-label, control-character, IDN, and total-length boundaries. | `U`: NFC/root-locale canonicalization and IDN conversion are deterministic; empty/overlong local parts, total length, control/whitespace characters, malformed separators, empty or repeated domain labels, invalid IDN input, and labels over 63 characters all reject with `IllegalArgumentException`; accepted output contains exactly one canonical separator and no raw credential material. |
 
 ### BFF, GraphQL, and realtime
 
@@ -213,8 +351,8 @@ test cannot close a row by merely executing a line.
 
 | ID | Production target | Missing/weak evidence | Required acceptance criteria |
 | --- | --- | --- | --- |
-| QA10-E01 | `GlobalErrorHandler`, `RequestIdFilter`, `RequestIdContext` | `libs/errors` is now 68.5% line-covered after the first focused increment, but the full exception/status/header/redaction matrix is not proven; `GlobalErrorHandler` still has 29 missed branches. | `U+T`: every catalog error, framework validation, malformed body, missing binding, type mismatch, media negotiation, optimistic conflict, unexpected exception, and rate-limit response asserts status, content type, stable code, source, request ID, bounded detail, and `Retry-After`; valid/invalid/oversized request IDs are propagated or replaced and MDC is cleared. |
-| QA10-E02 | `DbAutoConfiguration`, `DbRoutingDataSource`, `DbOperationPolicy`, reader health/lag | `libs/db` is 57.6% line-covered and includes configuration/scheduler branches that unit tests cannot establish alone. | `U+P+E`: writer/reader route policy, command/strong/eventual query classification, fallback on lag/disconnect, recovery, causal watermark capture/validation, Flyway writer datasource, bounded pool acquisition, scheduler lifecycle, and no reader use for writes/locks/claims are asserted. |
+| QA10-E01 | `GlobalErrorHandler`, `RequestIdFilter`, `RequestIdContext` | `libs/errors` is now 99.4% line-covered after focused increments, with no missed branch methods in the fresh report; deployed framework wiring, redaction, and transport serialization are not proven by these unit tests. | `U+T`: every catalog error, framework validation, malformed body, missing binding, type mismatch, media negotiation, optimistic conflict, unexpected exception, and rate-limit response asserts status, content type, stable code, source, request ID, bounded detail, and `Retry-After`; valid/invalid/oversized request IDs are propagated or replaced and MDC is cleared. |
+| QA10-E02 | `DbAutoConfiguration`, `DbRoutingDataSource`, `DbOperationPolicy`, reader health/lag | `libs/db` is now 76.7% line-covered after focused policy, pool-bound, reader-health, and scheduler tests; configuration wiring, live datasource failure, and replica behavior still require persistence/deployed evidence. | `U+P+E`: writer/reader route policy, command/strong/eventual query classification, fallback on lag/disconnect, recovery, causal watermark capture/validation, Flyway writer datasource, bounded pool acquisition, scheduler lifecycle, and no reader use for writes/locks/claims are asserted. |
 | QA10-E03 | `OidcJwtDecoderFactory`, reactive decoder, headers | Security helper coverage is partial and does not prove servlet/reactive parity. | `U+T+E`: issuer, audience, algorithm, key source, temporal claims, invalid subject, key rotation overlap, missing metadata/JWKS, and security headers are identical across servlet and reactive services; failures never use a permissive decoder. |
 | QA10-E04 | `ApiEndpoints`, event constants, IDs, error catalog | Low `libs/ids` JaCoCo signal is likely structural but unclassified. | `U`: contract/static tests enumerate every endpoint/event/error code exactly once, detect duplicate or drifted paths/routing keys, validate UUID/ID generation invariants, and document generated/accessor-only classes as excluded only with evidence. |
 | QA10-E05 | `DbTelemetry`, observability adapters | Missed metric branches can hide unbounded labels or incorrect timing. | `U+T+O`: success/failure/slow query, pool acquisition, fallback, lock-wait, deadlock, and subscription metrics use bounded labels only; counters/timers increment exactly once and dashboards/alerts consume the same names. |
@@ -245,6 +383,37 @@ These cannot be closed by adding more in-process tests:
    `QA10-B01`, `QA10-E2E01`–`QA10-E2E05`).
 5. Execute environment-owned release gates only after the lower layers are
    green (`QA10-E2E06`–`QA10-E2E07`).
+
+## QA-10 completion checklist
+
+QA-10 may move to `done` only when every item below has a recorded command,
+artifact, source revision, and reviewer in `docs/tasks/progress.md`:
+
+1. Regenerate all application/library JaCoCo reports from the exact revision
+   under review.
+2. Run `report_branch_gaps.py --format json --fail-on-gaps`; it exits zero and
+   the report contains no unclassified production branch method.
+3. Execute the focused U/T/P/M tests for every non-zero QA10-A01..E05 row,
+   asserting the row's invariant, failure behavior, and durable side effects.
+4. Reconcile all 54 REST/GraphQL operations against the operation matrix and
+   attach signed-persona authorization, negative-path, replay, pagination,
+   concurrency, and side-effect evidence to QA10-E2E01.
+5. Execute QA10-E2E02..E2E05 on the real OIDC/Compose topology, preserving
+   broker, Mailpit, Redis, WebSocket, replica, and causal-read artifacts.
+6. Execute QA10-E2E06 and QA10-E2E07 in the approved production-like
+   environment, preserving threshold, failover, restore, rotation, scanning,
+   rollback, alert, RPO/RTO, and reconciliation artifacts.
+7. Re-run contract, strict Python typing, security/architecture, diff, and
+   repository test gates; record unavailable checks as unavailable rather than
+   inferred passes.
+
+The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
+The `qa10-coverage-inventory` job now downloads those module artifacts,
+restores them into their repository paths, and publishes one aggregate JSON
+inventory. It is intentionally discovery-only while the baseline contains
+233 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
+single matrix shard is insufficient evidence for a repository-wide
+no-missed-branch claim.
 
 ## Closure evidence required per increment
 

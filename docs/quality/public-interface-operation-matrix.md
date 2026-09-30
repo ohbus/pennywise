@@ -3,9 +3,13 @@
 This is the operation-level companion to
 [`public-interface-coverage.md`](public-interface-coverage.md). The operation
 inventory is contract-generated; the current validator reports 45 REST
-operations. A row is not complete merely because its
+operations and 9 GraphQL root operations. QA-10's repeatable source-reference
+discovery is maintained in
+[`test-coverage-gap-audit.md`](test-coverage-gap-audit.md) and
+`tools/coverage/report_operation_test_gaps.py`. A row is not complete merely because its
 request is present in Bruno. "Remaining dimension work" is an explicit gap list
-and must be reduced with endpoint-specific tests before QA-07 can close.
+and is now owned by QA-10 after QA-07's inventory milestone; it must be reduced
+with endpoint-specific tests before QA-10 can close.
 
 > **SEC-01 remediation update (2026-09-29):** The following SEC-01 workstreams
 > have been implemented and verified with focused unit and integration tests:
@@ -28,6 +32,11 @@ and must be reduced with endpoint-specific tests before QA-07 can close.
 > P0/P1 findings from the whole-security audit are now verified closed at the code and local
 > test level. Production-scale, hosted-environment, and managed-provider evidence remains
 > formally release-gated under QA-08 and OPS-20.
+>
+> The verified token-authority path is the Squarewise-owned RS256 issuer. The
+> optional `squarewise.security.oidc.external-provider.enabled=true` path is
+> not included in that closure: it remains a documented QA10-A04 gap until the
+> external exchange is implemented or the property is rejected at startup.
 
 | Service | Method | Path | Operation | Current evidence | Remaining dimension work |
 |---|---|---|---|---|---|
@@ -117,7 +126,7 @@ Docker evidence and schema mocks are not presented as target-environment evidenc
 | SEC-006: CSRF incomplete | Medium | SEC-01D | `BrowserCsrfWebFilter` extended to `POST /graphql` cookie-authenticated mutations | ✅ Verified closed |
 | SEC-007: Rate limit proxy sensitivity | Medium | SEC-01E | `ClientAddressResolver`, `TrustedProxyProperties`, IPv4/IPv6 normalization | ✅ Verified closed |
 | SEC-008: Access-token revocation window | Medium | SEC-01E | 10-minute access-token lifetime documented; residual window explicitly accepted | ✅ Documented and accepted |
-| SEC-009: External provider not implemented | Medium | SEC-01A | Squarewise-owned issuer deployed; external adapter remains SPI placeholder | ✅ Closed (own issuer model chosen) |
+| SEC-009: External provider not implemented | Medium | SEC-01A / QA10-A04 | Squarewise-owned issuer is the verified default deployed authority; the optional external-provider property still selects an SPI placeholder that throws and must remain disabled or fail startup until a real exchange is implemented | ⚠️ Default path closed; explicitly enabled external path remains open |
 | SEC-010: Key/secret rotation incomplete | Medium | SEC-01F | Key rotation runbook, overlap tests, `KEY_ROTATED` audit event | ✅ Runbook and tests complete; production rehearsal release-gated |
 | SEC-011: Supply chain evidence partial | Medium | SEC-01F | Supply chain evidence doc, SBOM validation, hygiene scan, image hardening | ✅ Local CI evidence complete; container scanning release-gated |
 | SEC-012: Security telemetry incomplete | Low/Medium | SEC-01F | `SecurityAuditLogger`, events on login/refresh/revoke/rotation | ✅ Implemented; immutable retention release-gated |

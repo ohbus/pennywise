@@ -21,4 +21,11 @@ class DbWatermarkTest {
     fun `rejects negative watermark positions`() {
         assertFails { DbWatermark.fromPosition(-1) }
     }
+
+    @Test
+    fun `rejects missing and oversized lsn components`() {
+        assertFails { DbWatermark.parse("0/") }
+        assertFails { DbWatermark.parse("100000000/1") }
+        assertFails { DbWatermark.parse("1/100000000") }
+    }
 }

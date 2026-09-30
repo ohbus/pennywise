@@ -21,6 +21,11 @@ class LoginAbusePolicyTest {
     }
 
     @Test
+    fun `allows a resend at the exact cooldown boundary`() {
+        assertEquals(LoginRateLimitDecision.ALLOW, policy.evaluate(now, state(1, now.minusSeconds(60))))
+    }
+
+    @Test
     fun `denies exhausted request window`() {
         assertEquals(LoginRateLimitDecision.DENY, policy.evaluate(now, state(5, now.minusSeconds(120))))
     }
@@ -34,8 +39,19 @@ class LoginAbusePolicyTest {
     }
 
     @Test
+    fun `resets at the exact window boundary`() {
+        assertEquals(
+            LoginRateLimitDecision.ALLOW,
+            policy.evaluate(now, LoginRateLimitState(now.minusSeconds(900), 5, now.minusSeconds(900)))
+        )
+    }
+
+    @Test
     fun `rejects invalid policy configuration`() {
+        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(window = java.time.Duration.ZERO) }
+        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(window = java.time.Duration.ofSeconds(-1)) }
         assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(maximumRequests = 0) }
+        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(resendCooldown = java.time.Duration.ofSeconds(-1)) }
         assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(resendCooldown = java.time.Duration.ofMinutes(16)) }
     }
 

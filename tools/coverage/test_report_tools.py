@@ -21,13 +21,13 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_every_current_branch_gap_has_a_qa_row(self) -> None:
         gaps = all_gaps(ROOT)
 
-        self.assertEqual(228, len(gaps))
+        self.assertEqual(226, len(gaps))
         self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
         self.assertTrue(all(gap.assignment_basis for gap in gaps))
         expected_counts = {
             "QA10-A01": 0,
                 "QA10-A02": 0,
-                "QA10-A03": 9,
+                "QA10-A03": 7,
                 "QA10-A04": 0,
                 "QA10-A05": 1,
                 "QA10-A06": 6,

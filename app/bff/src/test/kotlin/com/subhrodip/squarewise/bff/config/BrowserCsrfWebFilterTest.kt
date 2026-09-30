@@ -89,6 +89,36 @@ class BrowserCsrfWebFilterTest {
         assertEquals(HttpStatus.FORBIDDEN, exchange.response.statusCode)
     }
 
+    @Test
+    fun `logout with a blank CSRF cookie is rejected with 403`() {
+        val reached = AtomicBoolean(false)
+        val exchange = MockServerWebExchange.from(
+            MockServerHttpRequest.post(ApiEndpoints.Bff.BROWSER_LOGOUT)
+                .cookie(HttpCookie(props.csrfCookieName, " "))
+                .header(ApiEndpoints.Headers.X_CSRF_TOKEN, csrfValue)
+                .build()
+        )
+        filter.filter(exchange, chain(reached)).block()
+
+        assertFalse(reached.get())
+        assertEquals(HttpStatus.FORBIDDEN, exchange.response.statusCode)
+    }
+
+    @Test
+    fun `logout with a blank CSRF header is rejected with 403`() {
+        val reached = AtomicBoolean(false)
+        val exchange = MockServerWebExchange.from(
+            MockServerHttpRequest.post(ApiEndpoints.Bff.BROWSER_LOGOUT)
+                .cookie(HttpCookie(props.csrfCookieName, csrfValue))
+                .header(ApiEndpoints.Headers.X_CSRF_TOKEN, " ")
+                .build()
+        )
+        filter.filter(exchange, chain(reached)).block()
+
+        assertFalse(reached.get())
+        assertEquals(HttpStatus.FORBIDDEN, exchange.response.statusCode)
+    }
+
     // ---------------------------------------------------------------------------
     // GraphQL mutation — cookie-authenticated (SEC-006)
     // ---------------------------------------------------------------------------

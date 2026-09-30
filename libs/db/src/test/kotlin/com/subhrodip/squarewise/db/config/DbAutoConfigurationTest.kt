@@ -1,8 +1,13 @@
 package com.subhrodip.squarewise.db.config
 
+import com.subhrodip.squarewise.db.health.DbReaderHealth
+import com.subhrodip.squarewise.observability.db.DbTelemetry
+import com.zaxxer.hikari.HikariDataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertSame
+import org.mockito.Mockito.mock
 
 /** Verifies fail-fast validation for the scheduled reader-health configuration. */
 class DbAutoConfigurationTest {
@@ -36,5 +41,28 @@ class DbAutoConfigurationTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun `diagnostic mode aliases every configured reader to the writer pool`() {
+        val writer = mock(HikariDataSource::class.java)
+        val pool = PoolProperties(
+            url = "jdbc:postgresql://writer/db",
+            username = "app",
+        )
+        val properties = DbProperties(
+            writer = pool,
+            readers = mapOf("replica" to pool),
+            readerIsWriterDiagnostic = true,
+        )
+
+        val routing = configuration.squarewiseDataSource(
+            properties,
+            writer,
+            DbReaderHealth(),
+            DbTelemetry(),
+        ) as DbRoutingDataSource
+
+        assertSame(writer, routing.readerDataSources()["replica"])
     }
 }

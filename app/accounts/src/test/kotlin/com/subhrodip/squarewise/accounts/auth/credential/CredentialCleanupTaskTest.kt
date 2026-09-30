@@ -46,4 +46,28 @@ class CredentialCleanupTaskTest {
         assertTrue(capturedExpiredCutoff != null)
         assertTrue(capturedConsumedCutoff != null)
     }
+
+    @Test
+    fun `executeCleanup returns zero without logging a purge`() {
+        val handler = InvocationHandler { _, method: Method, _ ->
+            when (method.name) {
+                "purgeExpiredOrConsumed" -> 0
+                "toString" -> "EmptyLoginCredentialRepositoryProxy"
+                "hashCode" -> 2
+                "equals" -> false
+                else -> throw UnsupportedOperationException("Unexpected method invocation: ${method.name}")
+            }
+        }
+        val proxyRepo = Proxy.newProxyInstance(
+            LoginCredentialRepository::class.java.classLoader,
+            arrayOf(LoginCredentialRepository::class.java),
+            handler
+        ) as LoginCredentialRepository
+
+        assertEquals(
+            0,
+            CredentialCleanupTask(proxyRepo, expiredRetentionDays = 7, consumedRetentionHours = 24)
+                .executeCleanup()
+        )
+    }
 }

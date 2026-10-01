@@ -93,19 +93,34 @@ class LiveUpdateFanoutTest {
     @Test
     fun `rejects invalid inputs`() {
         assertThrows<IllegalArgumentException> { LiveUpdateFanout(0) }
+        assertThrows<IllegalArgumentException> { LiveUpdateFanout(subscriptionTtl = Duration.ZERO) }
+        assertThrows<IllegalArgumentException> { LiveUpdateFanout(subscriptionTtl = Duration.ofSeconds(-1)) }
+        assertThrows<IllegalArgumentException> { LiveUpdateFanout(maxSubscriptionsPerUser = 0) }
         val fanout = LiveUpdateFanout()
         assertThrows<IllegalArgumentException> { fanout.subscribe("", "group-1") }
+        assertThrows<IllegalArgumentException> { fanout.subscribe("user-1", "") }
         assertThrows<IllegalArgumentException> { fanout.publish(LiveUpdate("group-1", -1)) }
+        assertThrows<IllegalArgumentException> { fanout.publish(LiveUpdate("", 1)) }
+        assertThrows<IllegalArgumentException> { fanout.revokeUserFromGroup("", "group-1") }
+        assertThrows<IllegalArgumentException> { fanout.revokeUserFromGroup("user-1", "") }
     }
 
     @Test
     fun `expires subscriptions before delivery`() {
-        val clock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC)
+        val clock = MutableClock(Instant.parse("2026-01-01T00:00:00Z"))
         val fanout = LiveUpdateFanout(clock = clock, subscriptionTtl = Duration.ofSeconds(1))
         val subscription = fanout.subscribe("user-1", "group-1")
 
         assertThat(subscription.expiresAt).isEqualTo(Instant.parse("2026-01-01T00:00:01Z"))
         assertThat(fanout.publish(update)).isEqualTo(1)
+
+        var terminated = false
+        fanout.revocationSignal(subscription.id).doOnTerminate { terminated = true }.subscribe()
+        clock.now = subscription.expiresAt
+
+        assertThat(fanout.publish(update)).isZero()
+        assertThat(fanout.pendingCount(subscription.id)).isZero()
+        assertThat(terminated).isTrue()
     }
 
     @Test
@@ -118,6 +133,11 @@ class LiveUpdateFanoutTest {
         assertThat(fanout.revokeUser("user-1")).isEqualTo(2)
         assertThat(fanout.publish(update)).isEqualTo(1)
         assertThrows<IllegalArgumentException> { fanout.revokeUser(" ") }
+    }
+
+    @Test
+    fun `unknown subscription has no pending updates`() {
+        assertThat(LiveUpdateFanout().pendingCount("unknown-subscription")).isZero()
     }
 
     @Test
@@ -217,5 +237,13 @@ class LiveUpdateFanoutTest {
         assertThat(tTarget).isTrue()
         assertThat(tOtherGroup).isFalse()
         assertThat(tOtherUser).isFalse()
+    }
+
+    private class MutableClock(var now: Instant) : Clock() {
+        override fun getZone(): ZoneOffset = ZoneOffset.UTC
+
+        override fun withZone(zone: java.time.ZoneId): Clock = this
+
+        override fun instant(): Instant = now
     }
 }

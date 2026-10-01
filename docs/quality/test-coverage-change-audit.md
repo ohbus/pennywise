@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the current branch tip `9b2fa85`, whose subject indicates
+(`master`) through the current branch tip `c4b8852`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -42,7 +42,7 @@ documentation/tooling-only: `13a441c`, `1d7f028`, `664d504`, `f19d3da`,
 
 ## Audit of the post-`dfa25ae` branch increments
 
-The branch was re-audited from `dfa25ae` through `9b2fa85`; the merge-base is
+The branch was re-audited from `dfa25ae` through `c4b8852`; the merge-base is
 still `65b2fb6`. `2110ffd` is the explicit restoration/audit commit: it restored
 the email-domain checks, JWT fallback terminal guard, profile mapper, and error
 status fallback that had been removed in earlier coverage work. It is not a
@@ -57,22 +57,23 @@ documentation/tooling increments:
 `c133f69`, `da69b8f`, `7be34df`, `b73792c`, `9f283ef`, `56a41c5`, `e643cd5`,
 `9598938`, `e3861a9`, `3aa0257`, `83e788a`, `49fe921`, `d907f6c`, `a3e806a`,
 `2be84c5`, `76becf4`, `c55e6b0`, `7acb986`, `0597559`, `cb73ac9`, `880fd3c`,
-`cf4533f`, `af67c75`, `f096886`, `abff7ab`, and `9b2fa85`.
+`cf4533f`, `af67c75`, `f096886`, `abff7ab`, `9b2fa85`, `dbac7e7`,
+`8034208`, `bb35873`, `52f270c`, `6ef0803`, and `c4b8852`.
 
-The current uncommitted QA-10 worktree diff was also checked separately: it
-contains test, tooling, and documentation changes, with no uncommitted
-production implementation or contract-file change. No branch in this audit is
+The current branch tip was checked separately: the committed changes contain
+test, tooling, CI, and documentation changes, with no production implementation
+or contract-file change in the current coverage increment. No branch in this audit is
 closed by deleting implementation logic, weakening a guard, changing a public
 contract, or adding a coverage exclusion.
 
 ## Current evidence
 
-After restoring implementation logic and retaining the added tests, the current
-reports contain 188 methods with missed branches. The remaining count is an
-honest discovery baseline, not a claim that any implementation was removed to
-improve metrics. The affected wrapper suites pass under Java 25; the full
-repository gate remains open until all modules and environment-owned evidence
-are rerun. The latest Accounts increment adds a PEM-backed RSA key-loading
+After restoring implementation logic and retaining the added tests, the freshly
+regenerated reports contain 151 methods with 434 missed branches. The remaining
+count is an honest discovery baseline, not a claim that any implementation was
+removed to improve metrics. The full repository Gradle test and JaCoCo run and
+all four application test suites pass under Java 25; environment-owned E2E
+evidence remains open. The latest Accounts increment adds a PEM-backed RSA key-loading
 test without changing production code; `DefaultRsaKeyProvider.loadOrGenerateKey`
 now reports 8 covered and 4 missed branches, with the residual method retained
 for further test or structural review. The subsequent session-persistence

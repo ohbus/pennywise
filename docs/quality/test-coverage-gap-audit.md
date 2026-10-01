@@ -8,20 +8,18 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-01, the currently available JaCoCo XML baseline records **188
-production methods with missed branches** containing **733 missed branches**,
+As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **151
+production methods with missed branches** containing **434 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
 Bruno reference. These numbers are backlog signals, not passing-test claims;
 the hard branch gate remains red until the production reports are regenerated
 against the current source and every record is covered or explicitly classified.
-The current environment has Java 25, but the Gradle wrapper cannot bootstrap
-or compile tests: network access is denied. The cached Gradle 9.7.1
-distribution reaches version-catalog accessor generation, then fails with
-`AccessDeniedException` while closing Java 25 ZipFS on
-`gradle-logging-9.7.1.jar`; disabling native services and file watching does
-not clear that failure. No fresh Kotlin/JaCoCo result is claimed in this audit.
+The current environment has Java 25 and the Gradle wrapper successfully ran
+the repository-wide test and JaCoCo tasks. This baseline is local evidence;
+hosted CI, deployed E2E, and environment-owned release gates remain separate
+acceptance requirements.
 
 The available Accounts report records 8 covered and 4 missed branches for
 `DefaultRsaKeyProvider.loadOrGenerateKey`; this remains a provisional mapping
@@ -57,15 +55,15 @@ reports currently report these line-coverage signals:
 
 | Module | Missed lines | Covered lines | Signal |
 | --- | ---: | ---: | --- |
-| `app/accounts` | 158 | 1,226 | 88.6% |
-| `app/bff` | 183 | 616 | 77.1% |
-| `app/expense-core` | 202 | 2,037 | 91.0% |
-| `app/notifications` | 115 | 481 | 80.7% |
-| `libs/db` | 37 | 225 | 85.9% |
-| `libs/errors` | 1 | 173 | 99.4% |
+| `app/accounts` | 74 | 1,314 | 94.7% |
+| `app/bff` | 155 | 644 | 80.6% |
+| `app/expense-core` | 169 | 2,070 | 92.5% |
+| `app/notifications` | 37 | 559 | 93.8% |
+| `libs/db` | 9 | 253 | 96.6% |
+| `libs/errors` | 13 | 173 | 93.0% |
 | `libs/ids` | 20 | 1 | 4.8% |
 | `libs/observability` | 5 | 68 | 93.2% |
-| `libs/security` | 58 | 94 | 61.8% |
+| `libs/security` | 36 | 116 | 76.3% |
 
 These reports are discovery evidence and must be regenerated with the source
 revision under review before closure. Kotlin compiler-generated accessors,
@@ -174,7 +172,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **188 methods with at least one missed
+The regenerated JaCoCo XML contains **151 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -182,16 +180,16 @@ classified as generated/structural with reviewer approval.
 
 | Module | Classes with missed lines | Classes with missed branches | Methods with missed branches |
 | --- | ---: | ---: | ---: |
-| `app/accounts` | 33 | 16 | 24 |
-| `app/bff` | 27 | 21 | 46 |
-| `app/expense-core` | 48 | 26 | 76 |
-| `app/notifications` | 18 | 20 | 37 |
-| `libs/db` | 7 | 4 | 4 |
+| `app/accounts` | 28 | 11 | 15 |
+| `app/bff` | 24 | 18 | 39 |
+| `app/expense-core` | 47 | 25 | 69 |
+| `app/notifications` | 10 | 13 | 25 |
+| `libs/db` | 7 | 2 | 2 |
 | `libs/errors` | 1 | 1 | 1 |
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **141** | **88** | **188** |
+| **Total** | **124** | **70** | **151** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -213,9 +211,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**188**), and the sum of
+equal the `Methods with missed branches` total above (**151**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**733**). Each object carries the module, production class, source file,
+(**434**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, and assignment basis. The record count and branch-count
 sum are both regression-tested so a changed JaCoCo baseline cannot silently
@@ -249,16 +247,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 188-record JSON discovery inventory and
+The repository currently has the exact 151-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 188 records. The A07 and E02 residual tables are the first exact method-level
+all 151 records. The A07 and E02 residual tables are the first exact method-level
 ledger slices; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (188 records):
+Current provisional assignment workload (151 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -268,24 +266,24 @@ Current provisional assignment workload (188 records):
 | QA10-A04 | 0 | Explicit external identity-provider path; constructor and unsupported-delegation behavior are locally covered, deployed provider exchange remains required. |
 | QA10-A05 | 1 | Local and non-local OIDC decoder selection, discovery, and algorithm wiring; the original decoder terminal branch is retained and needs explicit test evidence. |
 | QA10-A06 | 1 | Profile controller and JPA persistence authorization boundary; restored private mapper requires classification or direct evidence. |
-| QA10-A07 | 20 | Session, credential, identity, replay, and cleanup behavior. |
+| QA10-A07 | 11 | Session, credential, identity, replay, and cleanup behavior. |
 | QA10-A08 | 1 | Email canonicalization and malformed-input boundaries; restored explicit domain checks require direct boundary evidence. |
-| QA10-B01 | 14 | BFF upstream transport and gateway failure behavior. |
-| QA10-B02 | 20 | GraphQL resolver, error, scalar, and limit behavior. |
+| QA10-B01 | 12 | BFF upstream transport and gateway failure behavior. |
+| QA10-B02 | 15 | GraphQL resolver, error, scalar, and limit behavior. |
 | QA10-B03 | 10 | Realtime fanout and broker consumer behavior. |
 | QA10-B04 | 2 | Browser origin, CSRF, cookie, and session filters. |
-| QA10-C01 | 44 | Expense persistence, transaction, ledger, and idempotency behavior. |
+| QA10-C01 | 40 | Expense persistence, transaction, ledger, and idempotency behavior. |
 | QA10-C02 | 0 | Pure calculator/validator slice is branch-complete; property tests remain required. |
 | QA10-C03 | 8 | Recurring schedules, claims, locking, and occurrence failures. |
 | QA10-C04 | 9 | Group, invite, membership, expiry, and revocation behavior. |
-| QA10-C05 | 9 | Settlement, balance, reconciliation, and rollback behavior. |
-| QA10-C06 | 6 | Sync revisions, cursors, ordering, and membership boundaries. |
-| QA10-D01 | 11 | Auth-email broker parsing, retry, deduplication, and delivery. |
-| QA10-D02 | 10 | Notification event transaction and acknowledgement coupling. |
-| QA10-D03 | 10 | SMTP/Mailpit delivery and retry classification. |
-| QA10-D04 | 6 | Inbox/preferences persistence and subject isolation. |
+| QA10-C05 | 8 | Settlement, balance, reconciliation, and rollback behavior. |
+| QA10-C06 | 4 | Sync revisions, cursors, ordering, and membership boundaries. |
+| QA10-D01 | 10 | Auth-email broker parsing, retry, deduplication, and delivery. |
+| QA10-D02 | 4 | Notification event transaction and acknowledgement coupling. |
+| QA10-D03 | 9 | SMTP/Mailpit delivery and retry classification. |
+| QA10-D04 | 2 | Inbox/preferences persistence and subject isolation. |
 | QA10-E01 | 1 | Error mapping, framework failures, headers, and correlation cleanup; restored status fallback requires explicit evidence. |
-| QA10-E02 | 4 | Database routing, reader health, fallback, and operational lifecycle. |
+| QA10-E02 | 2 | Database routing, reader health, fallback, and operational lifecycle. |
 | QA10-E03 | 0 | Servlet/reactive OIDC decoder construction and key-validation paths are locally covered; deployed issuer/provider behavior remains environment evidence. |
 | QA10-E04 | 0 | IDs/constants have no current missed-branch methods; static contract checks remain required. |
 | QA10-E05 | 0 | Bounded observability labels and metric behavior is branch-complete locally; dashboards/alerts and deployed cardinality remain operational evidence. |
@@ -323,7 +321,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 188-method inventory is a discovery baseline, not closure evidence. QA-10
+The 151-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 
@@ -446,12 +444,11 @@ closed by deleting or simplifying the policy invariants.
 
 ### Current QA10-E02 residual acceptance targets
 
-The current regenerated inventory contains four E02 records. They remain
+The current regenerated inventory contains two E02 records. They remain
 explicitly open until the following evidence is attached:
 
 | Production target | Current evidence | Required closure evidence |
 | --- | --- | --- |
-| `DbAutoConfiguration.squarewiseDataSource` | Diagnostic aliasing and normal Hikari reader-pool construction are now directly asserted; the test does not open a PostgreSQL connection. | Retain the distinct-writer/reader construction test and add a dependency-backed or deployed Compose test that proves reader acquisition/failure behavior without weakening configuration validation. |
 | `DbReaderHealth.state` | Open-circuit before-expiry, exact-deadline, and after-expiry behavior are now directly asserted; residual JaCoCo branches require source/bytecode classification. | Preserve all three timing boundaries and classify only compiler/nullability-generated paths after reviewing the report mapping, or add a behavior test if a reachable state is identified. |
 | `DbOperationPolicy::<init>` | All policy invariants and valid writer/reader routes are asserted in `DbOperationPolicyTest`. | Review the constructor branch mapping; retain the invariant tests and classify only generated short-circuit/data-class instrumentation, never remove a policy guard to change the count. |
 | `DbContextHolder.withContext` | Nested restoration, exception restoration, request-watermark inheritance, and explicit-watermark precedence are asserted. | Review the remaining JaCoCo branch against the nullable ThreadLocal/causal-context paths; add only a reachable restoration/inheritance case, otherwise record a structural rationale with the exact source branch. |
@@ -662,7 +659,7 @@ The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
 The `qa10-coverage-inventory` job now downloads those module artifacts,
 restores them into their repository paths, and publishes one aggregate JSON
 inventory. It is intentionally discovery-only while the baseline contains
-188 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
+151 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
 single matrix shard is insufficient evidence for a repository-wide
 no-missed-branch claim.
 

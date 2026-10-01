@@ -26,7 +26,7 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_every_current_branch_gap_has_a_qa_row(self) -> None:
         gaps = all_gaps(ROOT)
 
-        self.assertEqual(188, len(gaps))
+        self.assertEqual(151, len(gaps))
         self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
         self.assertTrue(all(gap.assignment_basis for gap in gaps))
         expected_counts = {
@@ -36,24 +36,24 @@ class CoverageInventoryTest(unittest.TestCase):
                 "QA10-A04": 0,
                 "QA10-A05": 1,
                 "QA10-A06": 1,
-                "QA10-A07": 20,
+                "QA10-A07": 11,
                 "QA10-A08": 1,
-                "QA10-B01": 14,
-                "QA10-B02": 20,
+                "QA10-B01": 12,
+                "QA10-B02": 15,
                 "QA10-B03": 10,
                 "QA10-B04": 2,
-                "QA10-C01": 44,
+                "QA10-C01": 40,
                 "QA10-C02": 0,
                 "QA10-C03": 8,
                 "QA10-C04": 9,
-                "QA10-C05": 9,
-                "QA10-C06": 6,
-                "QA10-D01": 11,
-                "QA10-D02": 10,
-                "QA10-D03": 10,
-                "QA10-D04": 6,
+                "QA10-C05": 8,
+                "QA10-C06": 4,
+                "QA10-D01": 10,
+                "QA10-D02": 4,
+                "QA10-D03": 9,
+                "QA10-D04": 2,
                 "QA10-E01": 1,
-                "QA10-E02": 4,
+                "QA10-E02": 2,
                 "QA10-E03": 0,
                 "QA10-E04": 0,
                 "QA10-E05": 0,
@@ -63,7 +63,7 @@ class CoverageInventoryTest(unittest.TestCase):
             expected_counts,
             {row: actual_counts.get(row, 0) for row in expected_counts},
         )
-        self.assertEqual(733, sum(gap.missed_branches for gap in gaps))
+        self.assertEqual(434, sum(gap.missed_branches for gap in gaps))
 
     def test_operation_inventory_is_complete_and_assigned(self) -> None:
         operations = inventory(ROOT)
@@ -107,7 +107,7 @@ class CoverageInventoryTest(unittest.TestCase):
         rendered = render_branch_gaps(gaps)
         rows = rendered.splitlines()
 
-        self.assertEqual(190, len(rows))
+        self.assertEqual(153, len(rows))
         self.assertEqual(
             "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report |",
             rows[0],
@@ -249,7 +249,7 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_ci_documentation_uses_current_branch_baseline(self) -> None:
         ci = (ROOT / "docs/operations/ci.md").read_text(encoding="utf-8")
 
-        self.assertIn("188 methods containing 733 missed", ci)
+        self.assertIn("151 methods containing 434 missed", ci)
         self.assertNotIn("220 missed-branch methods", ci)
 
     def test_ci_python_tooling_is_locked_and_build_hooks_are_disabled(self) -> None:
@@ -289,12 +289,18 @@ class CoverageInventoryTest(unittest.TestCase):
         )
 
         for marker in (
-            "through the current branch tip `9b2fa85`",
+            "through the current branch tip `c4b8852`",
             "`2110ffd` is the explicit restoration/audit commit",
             "`3b3a3da` changes only `libs/security/build.gradle.kts`",
             "`cff7f76`\nchanges CI/Makefile Python execution",
             "`9b2fa85`",
-            "with no uncommitted\nproduction implementation or contract-file change",
+            "`6ef0803`",
+            "`52f270c`",
+            "`bb35873`",
+            "`8034208`",
+            "`dbac7e7`",
+            "`c4b8852`",
+            "with no production implementation\nor contract-file change",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, audit)

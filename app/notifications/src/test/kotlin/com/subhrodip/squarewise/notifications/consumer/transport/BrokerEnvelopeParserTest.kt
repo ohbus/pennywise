@@ -57,6 +57,28 @@ class BrokerEnvelopeParserTest {
         }
     }
 
+    /** Verifies required numeric metadata rejects absent, text, and fractional values. */
+    @Test
+    fun `rejects invalid required numeric metadata`() {
+        val valid = envelopeJson(
+            UUID.fromString("00000000-0000-7000-8000-00000000030a"),
+            UUID.fromString("00000000-0000-7000-8000-00000000030b"),
+            UUID.fromString("00000000-0000-7000-8000-00000000030c")
+        )
+
+        listOf(
+            valid.replace("\"schemaVersion\": 1,", "") to "schemaVersion",
+            valid.replace("\"schemaVersion\": 1", "\"schemaVersion\": \"one\"") to "schemaVersion",
+            valid.replace("\"schemaVersion\": 1", "\"schemaVersion\": 1.5") to "schemaVersion",
+            valid.replace("\"groupRevision\": 3,", "") to "groupRevision",
+            valid.replace("\"groupRevision\": 3", "\"groupRevision\": \"three\"") to "groupRevision",
+            valid.replace("\"groupRevision\": 3", "\"groupRevision\": 3.5") to "groupRevision",
+        ).forEach { (json, field) ->
+            val exception = assertThrows(InvalidEnvelopeException::class.java) { parser.parse(json.toByteArray()) }
+            assertTrue(exception.message.orEmpty().contains(field), "Error should identify $field")
+        }
+    }
+
     @Test
     fun `rejects malformed timestamps payloads and message bodies`() {
         val valid = envelopeJson(

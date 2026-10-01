@@ -96,6 +96,58 @@ class RecurringExpenseControllerTest @Autowired constructor(
         assertFalse(resumedReplay.paused)
     }
 
+    /** Verifies update mapping preserves the service contract when either custom side is omitted. */
+    @Test
+    fun `maps one-sided custom payer and allocation updates`() {
+        val group = groupStore.create("alice", CreateGroupRequest("One-sided updates", "HOUSEHOLD", "USD"))
+        val aliceId = UUID.nameUUIDFromBytes("alice".toByteArray()).toString()
+        val created = controller.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequestDto(
+                description = "Shared cost",
+                amount = MoneyDto("USD", "1000"),
+                frequency = RecurrenceFrequency.MONTHLY,
+                dayOfMonth = 1,
+                startDate = LocalDate.of(2026, 10, 1)
+            ),
+            alice
+        )
+
+        val allocationOnly = controller.updateSchedule(
+            group.groupId,
+            created.scheduleId,
+            UpdateRecurringScheduleRequestDto(
+                description = "Allocation only",
+                amount = MoneyDto("USD", "1200"),
+                frequency = RecurrenceFrequency.MONTHLY,
+                dayOfMonth = 1,
+                startDate = LocalDate.of(2026, 10, 1),
+                payers = null,
+                allocations = listOf(ExpenseAllocationItemDto(aliceId, MoneyDto("USD", "1200")))
+            ),
+            alice
+        )
+        assertEquals("Allocation only", allocationOnly.description)
+        assertEquals("1200", allocationOnly.amount.minor)
+
+        val payerOnly = controller.updateSchedule(
+            group.groupId,
+            created.scheduleId,
+            UpdateRecurringScheduleRequestDto(
+                description = "Payer only",
+                amount = MoneyDto("USD", "1300"),
+                frequency = RecurrenceFrequency.MONTHLY,
+                dayOfMonth = 1,
+                startDate = LocalDate.of(2026, 10, 1),
+                payers = listOf(ExpensePayerDto(aliceId, MoneyDto("USD", "1300"))),
+                allocations = null
+            ),
+            alice
+        )
+        assertEquals("Payer only", payerOnly.description)
+        assertEquals("1300", payerOnly.amount.minor)
+    }
+
     @Test
     fun `throws 404 for non-existent group or schedule`() {
         val randomGroup = UUID.randomUUID()

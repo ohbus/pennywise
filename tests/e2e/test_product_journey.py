@@ -251,6 +251,23 @@ def run_e2e_tests() -> int:
     )
     print("  ✓ Accounts requestExport and listExportRequests preserve the durable request")
 
+    update_status, updated_profile = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/me",
+        method="PATCH",
+        body={"timezone": "Europe/Vienna"},
+        bearer=user_a,
+    )
+    assert update_status == 200, (
+        f"Accounts updateMe failed: HTTP {update_status} ({updated_profile})"
+    )
+    assert updated_profile.get("accountId") == alice_id, (
+        "Accounts updateMe must preserve the authenticated account identity"
+    )
+    assert updated_profile.get("timezone") == "Europe/Vienna", (
+        "Accounts updateMe must persist the requested timezone"
+    )
+    print("  ✓ Accounts updateMe persists a validated profile change")
+
     malformed_group_status, malformed_group_response = request_json(
         f"{BASE_URL}/graphql",
         method="POST",

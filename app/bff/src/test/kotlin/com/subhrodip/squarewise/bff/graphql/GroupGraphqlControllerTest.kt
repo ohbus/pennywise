@@ -51,6 +51,24 @@ class GroupGraphqlControllerTest {
     private val principal = Principal { "alice" }
 
     @Test
+    fun `groupChanged rejects blank group identifiers before admission`() {
+        val error = assertThrows(ApplicationException::class.java) {
+            controller.groupChanged(" ", principal).blockFirst()
+        }
+
+        assertEquals(ErrorCode.ERR_02, error.errorCode)
+    }
+
+    @Test
+    fun `groupChanged rejects missing authenticated subjects before admission`() {
+        val error = assertThrows(ApplicationException::class.java) {
+            controller.groupChanged("group-1", null).blockFirst()
+        }
+
+        assertEquals(ErrorCode.ERR_03, error.errorCode)
+    }
+
+    @Test
     fun `resolves groups query`() {
         val groupId = UUID.randomUUID().toString()
         val expected = listOf(BffGroup(groupId = groupId, name = "Trip", kind = "TRIP", revision = 2))

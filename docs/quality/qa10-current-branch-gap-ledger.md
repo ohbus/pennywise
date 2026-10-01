@@ -7,7 +7,7 @@ a reviewed structural/invariant classification with exact source evidence. Regen
 after every test increment; the locked tooling tests assert that the record count and
 missed-branch total stay synchronized with the audit and CI documentation.
 
-Current baseline: **57 production methods with missed branches / 111 missed branches**.
+Current baseline: **56 production methods with missed branches / 110 missed branches**.
 
 ## Exact current records
 
@@ -29,7 +29,6 @@ Current baseline: **57 production methods with missed branches / 111 missed bran
 | `app/bff` | `QA10-B03` | `com/subhrodip/squarewise/bff/realtime/LiveUpdateFanout` | `LiveUpdateFanout.kt` | `revokeUserFromGroup$lambda$2` | 124 | 1 | 7 | realtime fanout and broker consumer | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` | Fanout ordering, deduplication, expiry/revocation, broker ack/retry, reconnect, and WebSocket isolation. |
 | `app/bff` | `QA10-B03` | `com/subhrodip/squarewise/bff/realtime/LiveUpdateFanout` | `LiveUpdateFanout.kt` | `removeExpired$lambda$0` | 161 | 1 | 5 | realtime fanout and broker consumer | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` | Fanout ordering, deduplication, expiry/revocation, broker ack/retry, reconnect, and WebSocket isolation. |
 | `app/bff` | `QA10-B01` | `com/subhrodip/squarewise/bff/transport/BffGatewayFilters` | `BffGatewayFilters.kt` | `bearerPropagation$lambda$0$0$1` | 22 | 2 | 14 | upstream transport gateway | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` | Bearer/watermark propagation, transport failure mapping, redaction, and deployed gateway behavior. |
-| `app/bff` | `QA10-B01` | `com/subhrodip/squarewise/bff/transport/RestGatewayKt` | `RestGateway.kt` | `greatestWriterWatermark` | 7 | 1 | 13 | upstream transport gateway | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` | Bearer/watermark propagation, transport failure mapping, redaction, and deployed gateway behavior. |
 | `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/expenses/api/ExpenseController` | `ExpenseController.kt` | `createExpense` | 61 | 1 | 17 | expense persistence and transport | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
 | `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/expenses/api/ExpenseController` | `ExpenseController.kt` | `updateExpense` | 142 | 1 | 17 | expense persistence and transport | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
 | `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/expenses/api/ExpenseController` | `ExpenseController.kt` | `deleteExpense` | 224 | 1 | 1 | expense persistence and transport | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |

@@ -737,10 +737,11 @@ file, change any contract, or modify production implementation under
 live acceptance fixtures, `1ed9557` changes CI fan-out, and the QA-10 commits
 add tests or synchronize the ledger and evidence documents.
 
-The latest coverage increment, `817a5b2`, adds nullable GraphQL `StringValue`
-literal tests for `MoneyMinor` and `DateTime`; it does not remove or simplify
-scalar implementation logic. The authoritative inventory consequently moves
-from 59 methods / 113 missed branches to 57 methods / 111 missed branches.
-The follow-up documentation commit is `aaa34fd`. The remaining residuals are
-still open evidence work, not permission to delete implementation branches or
-weaken public behavior.
+The latest coverage increments add nullable GraphQL `StringValue` literal tests
+for `MoneyMinor` and `DateTime` and an invalid-existing-watermark test for the
+BFF gateway; they do not remove or simplify implementation logic. The
+authoritative inventory consequently moves from 59 methods / 113 missed
+branches to 56 methods / 110 missed branches. The related commits are
+`817a5b2` and the current watermark test increment; the remaining residuals
+are still open evidence work, not permission to delete implementation branches
+or weaken public behavior.

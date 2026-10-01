@@ -36,6 +36,7 @@ class RestGatewayTest {
         assertEquals("0/30", greatestWriterWatermark(null, "0/30"))
         assertEquals("0/20", greatestWriterWatermark("0/20", null))
         assertEquals(null, greatestWriterWatermark(null, null))
+        assertEquals("0/30", greatestWriterWatermark("not-an-lsn", "0/30"))
     }
 
     @Test

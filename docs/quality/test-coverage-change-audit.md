@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `b5b814c`, whose subject indicates
+(`master`) through the latest audited coverage commit `0886354`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -291,6 +291,12 @@ pause/error behavior was already represented by covered mappings. Remaining
 recurrence date, membership, generated-expense fallback, and deployed worker
 evidence remain open.
 
+`0886354` adds public REST-boundary coverage for the optional settlement suggestion
+engine fallback. It changes no production implementation or contract; the full
+regenerated report reduces the inventory from 115 methods / 215 missed branches to
+113 methods / 211 missed branches. Settlement authorization, rollback, concurrency,
+corruption detection, and deployed financial E2E evidence remain open.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -300,7 +306,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 115 methods with 215 missed branches. The remaining
+regenerated reports contain 113 methods with 211 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E

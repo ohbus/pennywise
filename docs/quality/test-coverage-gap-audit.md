@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **115
-production methods with missed branches** containing **215 missed branches**,
+As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **113
+production methods with missed branches** containing **211 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
@@ -172,7 +172,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **118 methods with at least one missed
+The regenerated JaCoCo XML contains **113 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -180,16 +180,16 @@ classified as generated/structural with reviewer approval.
 
 | Module | Classes with missed lines | Classes with missed branches | Methods with missed branches |
 | --- | ---: | ---: | ---: |
-| `app/accounts` | 28 | 11 | 15 |
-| `app/bff` | 21 | 15 | 30 |
-| `app/expense-core` | 42 | 23 | 51 |
-| `app/notifications` | 9 | 9 | 16 |
-| `libs/db` | 7 | 2 | 2 |
-| `libs/errors` | 1 | 1 | 1 |
+| `app/accounts` | 40 | 11 | 15 |
+| `app/bff` | 40 | 15 | 30 |
+| `app/expense-core` | 52 | 22 | 49 |
+| `app/notifications` | 16 | 9 | 16 |
+| `libs/db` | 11 | 2 | 2 |
+| `libs/errors` | 3 | 1 | 1 |
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **115** | **61** | **115** |
+| **Total** | **170** | **60** | **113** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -211,9 +211,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**115**), and the sum of
+equal the `Methods with missed branches` total above (**113**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**215**). Each object carries the module, production class, source file,
+(**211**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, and assignment basis. The record count and branch-count
 sum are both regression-tested so a changed JaCoCo baseline cannot silently
@@ -247,16 +247,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 115-record JSON discovery inventory and
+The repository currently has the exact 113-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 115 records. The A07 and E02 residual tables are the first exact method-level
+all 113 records. The A07 and E02 residual tables are the first exact method-level
 ledger slices; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (115 records):
+Current provisional assignment workload (113 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -276,7 +276,7 @@ Current provisional assignment workload (115 records):
 | QA10-C02 | 0 | Pure calculator/validator slice is branch-complete; property tests remain required. |
 | QA10-C03 | 8 | Recurring schedules, claims, locking, and occurrence failures; creation now covers explicit IDs and valid day-of-month boundaries, update mapping covers both one-sided custom specifications, and expense-store generation failure now proves schedule pause plus `generation_error` notification. One compiler-generated range branch and remaining date/membership/build fallbacks remain retained for review. |
 | QA10-C04 | 9 | Group, invite, membership, expiry, and revocation behavior; archived claims, removed/bound/ordinary-member placeholder targets, repository-missing claim outcomes, and normal/targeted invitation claim races now have explicit assertions. |
-| QA10-C05 | 5 | Settlement, balance, reconciliation, and rollback behavior; duplicate participant/currency balance aggregation and authenticated/blank-subject suggestion boundaries are covered, while three engine mappings and independent corruption/rollback evidence remain open. |
+| QA10-C05 | 3 | Settlement, balance, reconciliation, and rollback behavior; duplicate participant/currency balance aggregation, authenticated/blank-subject authorization, and the controller's optional suggestion-engine fallback are covered, while three engine mappings and independent corruption/rollback evidence remain open. |
 | QA10-C06 | 4 | Sync revisions, cursors, ordering, and membership boundaries; the durable empty-snapshot contract is now covered, while cursor validation and causal/deployed evidence remain open. |
 | QA10-D01 | 6 | Auth-email broker parsing, retry, deduplication, and delivery; key configuration, envelope framing, numeric metadata validation, and invalid expiry rejection are covered, while listener parsing/acknowledgement, broker retry/redelivery, and deployed Mailpit evidence remain open. |
 | QA10-D02 | 2 | Notification event transaction and acknowledgement coupling; envelope conversion fallbacks are covered, while broker acknowledgement/retry and transaction-coupling evidence remain open. |
@@ -583,7 +583,7 @@ test cannot close a row by merely executing a line.
 | QA10-C02 | `ExpenseValidator`, `AllocationCalculator`, `FinancialArithmetic` | `AllocationCalculatorTest` now exercises permutation invariance, non-negative allocations, and minor-unit conservation across boundary totals for equal, weighted, and percentage modes. Broader property-based arithmetic evidence remains missing. | `U`: property/table tests cover zero, negative, maximum, overflow, fractional/unknown currency, duplicate participants, missing payer, percentages not summing to 100, exact minor-unit remainder distribution, deterministic ordering, and zero-sum preservation with reproducible seeds. |
 | QA10-C03 | `RecurringExpenseService`, `RecurringExpenseController`, worker/claim locking | Coverage exists for basic lifecycle but not all date, catch-up, lock, and generated-expense failure branches. `RecurringExpenseServiceTest` exercises explicit schedule IDs, valid lower/upper day-of-month boundaries, create/update missing or cross-group outcomes, validation guards, both reachable one-sided create/update custom-specification paths, and derived payer/allocation behavior; `RecurringExpenseFailureTest` now proves a downstream expense-store failure pauses the schedule, creates no occurrence, and emits `generation_error`. One generated update mapping branch and remaining date/membership/build fallback mappings remain open. | `U+P+E`: weekly/monthly/month-end clamp/timezone/end-date policy, pause/resume idempotency, missing/cross-group schedule, concurrent worker claims, bounded catch-up, deterministic occurrence IDs, duplicate prevention, failed occurrence rollback, and outbox/sync effects are asserted. |
 | QA10-C04 | `JpaGroupStore`, invite/member lifecycle | Existing journey covers the happy path; persistence/unit coverage now also proves expired invitations, same-subject idempotent claim from a second invite, competing-subject rejection, archived-group rejection, removed/bound placeholder rejection, repository-missing group/placeholder outcomes, and normal/targeted atomic claim races. Three JaCoCo claim branches remain for mapping review; concurrent and deployed lifecycle evidence remain open. | `U+P+E`: invite expiry boundary, revoked/claimed/unknown token, same-subject replay semantics, simultaneous normal and targeted-placeholder claims, placeholder binding, member removal, removed-member token/session, archived group, revision/audit/outbox effects, repository race/missing-row outcomes, and non-member indistinguishable not-found behavior are asserted. |
-| QA10-C05 | `JpaSettlementStore`, `SettlementService`, `SettlementController`, balances/suggestions/reconciliation | Settlement success, replay, and PostgreSQL posting reconciliation are covered; JPA replay comparison now covers both participants and amount, duplicate participant/currency balance rows aggregate before suggestion matching, missing/archived groups fail closed without postings, service-level validation and nullable suggestion delegation are specified, and missing/blank REST subjects fail closed with `UNAUTHENTICATED`; three suggestion-engine mappings plus independent corruption detection and rollback evidence remain required. | `U+P+E`: valid settlement/reversal, same participant, negative/non-numeric/overflow amount, missing/cross-group settlement, authenticated idempotency identity and conflict, blank/invalid idempotency inputs, blank reversal reason, duplicate balance aggregation, nullable suggestion engine, missing/blank/non-member principal authorization, concurrent reversal, balance recomputation from postings, intentional corruption detection, and zero-sum invariant are asserted. |
+| QA10-C05 | `JpaSettlementStore`, `SettlementService`, `SettlementController`, balances/suggestions/reconciliation | Settlement success, replay, and PostgreSQL posting reconciliation are covered; JPA replay comparison now covers both participants and amount, duplicate participant/currency balance rows aggregate before suggestion matching, missing/archived groups fail closed without postings, service-level validation and the controller's nullable suggestion-engine fallback are covered, and missing/blank REST subjects fail closed with `UNAUTHENTICATED`; three suggestion-engine mappings plus independent corruption detection and rollback evidence remain required. | `U+P+E`: valid settlement/reversal, same participant, negative/non-numeric/overflow amount, missing/cross-group settlement, authenticated idempotency identity and conflict, blank/invalid idempotency inputs, blank reversal reason, duplicate balance aggregation, nullable suggestion engine, missing/blank/non-member principal authorization, concurrent reversal, balance recomputation from postings, intentional corruption detection, and zero-sum invariant are asserted. |
 | QA10-C06 | `JpaSynchronizationStore`, sync controllers/cursors | `JpaSynchronizationStoreTest` now asserts an empty durable snapshot has no continuation cursor and no remaining changes; current E2E proves common cursor recovery, not all cursor ownership and transaction boundaries. | `U+P+E`: snapshot/change ordering, empty page, first/last page, limit bounds, malformed/expired/decreasing cursor, cross-group cursor, tombstone, membership loss, concurrent revision allocation, and no revision advance after rejected mutation are asserted. |
 
 ### Notifications and event delivery

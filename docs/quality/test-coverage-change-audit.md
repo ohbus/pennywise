@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `5bb9981`, whose subject indicates
+(`master`) through the latest audited coverage commit `2962edc`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -681,3 +681,11 @@ contracts, or acknowledgement behavior for known events. The focused test and
 full Java 25 Gradle wrapper run passed; the regenerated inventory is now 85
 method records / 156 missed branches. Broker acknowledgement/retry/DLQ and
 deployed messaging evidence remain open.
+
+The current follow-up test increment adds an invalid-catalog-status case to
+`GlobalErrorHandlerTest`. It exercises the handler's fail-safe internal-error
+fallback without changing the error contract or deleting the defensive
+mapping. The full Java 25 Gradle wrapper run passed; the regenerated inventory
+remains 85 method records and falls from 156 to 154 missed branches. The
+individual valid-status fallback arms remain structurally governed by the
+immutable `ErrorCode` status invariant and are documented as such.

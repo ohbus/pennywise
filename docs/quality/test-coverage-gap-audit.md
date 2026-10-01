@@ -9,7 +9,7 @@ test/quality documentation.
 ## Current baseline
 
 As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **85
-production methods with missed branches** containing **156 missed branches**,
+production methods with missed branches** containing **154 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 37 operations without a literal E2E reference and 49 without a literal
@@ -217,7 +217,7 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 The JSON array is the machine-readable assignment set. Its record count must
 equal the `Methods with missed branches` total above (**85**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**156**). Each object carries the module, production class, source file,
+(**154**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, assignment basis, and the row's machine-readable
 `acceptance_criteria`. The record count and branch-count
@@ -287,7 +287,7 @@ Current provisional assignment workload (85 records):
 | QA10-D02 | 2 | Notification event transaction and acknowledgement coupling; envelope conversion fallbacks and channelless auth-email rejection are covered, while broker acknowledgement/retry and transaction-coupling evidence remain open. |
 | QA10-D03 | 6 | SMTP/Mailpit delivery and retry classification. |
 | QA10-D04 | 2 | Inbox/preferences persistence and subject isolation. |
-| QA10-E01 | 1 | Error mapping, framework failures, headers, and correlation cleanup; restored status fallback requires explicit evidence. |
+| QA10-E01 | 1 | Error mapping, framework failures, headers, and correlation cleanup; invalid-status defensive fallback is exercised, while valid catalog status arms remain governed by the enum invariant. |
 | QA10-E02 | 2 | Database routing, reader health, fallback, and operational lifecycle. |
 | QA10-E03 | 0 | Servlet/reactive OIDC decoder construction and key-validation paths are locally covered; deployed issuer/provider behavior remains environment evidence. |
 | QA10-E04 | 0 | IDs/constants have no current missed-branch methods; static contract checks remain required. |
@@ -308,7 +308,7 @@ does not delete code or create a coverage exclusion.
 
 | Production target | Structural rationale | Required proof before classification |
 | --- | --- | --- |
-| `libs/errors/.../GlobalErrorHandler.kt:143`, `applicationException` | Every `ErrorCode.httpStatus` value is one of the valid statuses returned by `HttpStatus.resolve`; the `when` fallback is defensive against an enum value that cannot exist at runtime. Existing tests invoke every catalog code and assert its governed status. | Reconfirm the enum/status mapping from the current source and retain the exhaustive `ErrorCode` status test. |
+| `libs/errors/.../GlobalErrorHandler.kt:143`, `applicationException` | Every production `ErrorCode.httpStatus` value resolves through `HttpStatus.resolve`; the fallback `when` arms are defensive against an enum value that cannot exist at runtime. The test suite now also exercises the invalid-status fail-safe `else` path with a mocked catalog value; the valid catalog mapping test remains the source-of-truth invariant. | Reconfirm the enum/status mapping from the current source, retain both the exhaustive catalog-status test and invalid-status fallback test, and do not simplify the defensive guard without a reviewed contract decision. |
 | `app/accounts/.../FallbackJwtDecoder.kt:29`, `decode` | The decoder list is required non-empty. Each loop iteration either returns a `Jwt` or catches a `JwtException` and assigns `lastFailure`; after the loop, `lastFailure` is therefore non-null. Existing tests cover first success, later success, and final failure. | Retain the constructor invariant and three outcome tests; do not simplify the terminal guard. |
 | `app/accounts/.../ClientAddressResolver.kt:89`, `normalizeToPartition` | `InetAddress.getByName` returns an `Inet4Address` or `Inet6Address` for the supported address families; the final `else` is defensive for a future JDK subtype. Existing tests cover IPv4, IPv6, malformed, and missing addresses. | Reconfirm the JDK address-family invariant and retain the family/malformed boundary tests. |
 | `app/accounts/.../SessionPolicy.kt:82`, `isExpired` | `SessionExpiry` enforces `idleExpiresAt <= absoluteExpiresAt`. If the first short-circuit operand (`now + skew >= idle`) is false, the absolute boundary is necessarily later and the second operand is also false; if the absolute boundary is reached, idle expiry has already made the first operand true. Existing tests cover both observable expiry boundaries and skew. | Retain the `SessionExpiry` ordering invariant and the idle, absolute, and skew tests; confirm the JaCoCo residual is the unreachable short-circuit path after regeneration. |

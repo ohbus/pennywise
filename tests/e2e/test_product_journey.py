@@ -531,6 +531,27 @@ def run_e2e_tests() -> int:
     assert status_claim == 200, f"Expense Core claimInvite failed for Bob: {claim_res}"
     print(f"  ✓ Bob claimed invite successfully: {claim_res.get('name')}")
 
+    placeholder_status, placeholder = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/placeholders",
+        method="POST",
+        body={"name": "Temporary participant"},
+        bearer=user_a,
+    )
+    assert placeholder_status == 201, (
+        f"Expense Core createPlaceholder failed: HTTP {placeholder_status} ({placeholder})"
+    )
+    placeholder_id = placeholder.get("membershipId")
+    assert placeholder_id, "Expense Core createPlaceholder must return a membershipId"
+    remove_status, remove_response = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/members/{placeholder_id}",
+        method="DELETE",
+        bearer=user_a,
+    )
+    assert remove_status == 204, (
+        f"Expense Core removeGroupMember failed: HTTP {remove_status} ({remove_response})"
+    )
+    print("  [ok] Expense Core createPlaceholder and removeGroupMember preserve lifecycle state")
+
     # Verify group members via Expense Core
     status_members, members = request_json(
         f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/members",

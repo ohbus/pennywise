@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `53ad6ed`, whose subject indicates
+(`master`) through the latest audited coverage commit `3a98e20`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -216,6 +216,11 @@ numeric metadata. It changes no production implementation or public contract;
 the regenerated report removes both numeric helper records and reduces missed
 branches from 241 to 235.
 
+`3a98e20` adds auth-email configuration tests for valid exact-length keys and
+malformed or incorrectly sized Base64 values. It changes no production
+implementation or public contract; the regenerated report removes the
+configuration method record and reduces missed branches from 235 to 232.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -225,7 +230,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 119 methods with 235 missed branches. The remaining
+regenerated reports contain 118 methods with 232 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E

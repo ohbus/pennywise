@@ -537,6 +537,21 @@ class ExpenseControllerTest {
         )
         assertEquals("other", created.category)
 
+        val explicitNull = controller.createExpense(
+            groupId,
+            "null-category-create",
+            CreateExpenseRequest(
+                expenseId = UUID.randomUUID(),
+                description = "Created with null category",
+                category = null,
+                amount = MoneyDto("EUR", "100"),
+                payers = payer,
+                allocation = allocation
+            ),
+            principal
+        )
+        assertEquals("other", explicitNull.category)
+
         val updated = controller.updateExpense(
             groupId,
             expenseId,
@@ -685,6 +700,34 @@ class ExpenseControllerTest {
             controller.createExpense(
                 groupId,
                 "bounded-allocation-count",
+                request,
+                Principal { "test-user" }
+            )
+        }
+        assertEquals(ErrorCode.ERR_02, error.errorCode)
+    }
+
+    /** Verifies simultaneous oversized payer and allocation collections fail at the shared bound. */
+    @Test
+    fun `rejects simultaneous oversized payer and allocation collections`() {
+        val participantId = UUID.randomUUID().toString()
+        val request = CreateExpenseRequest(
+            expenseId = UUID.randomUUID(),
+            description = "both collections bounded",
+            amount = MoneyDto("EUR", "101"),
+            payers = (1..101).map {
+                PayerDto(participantId, MoneyDto("EUR", "1"))
+            },
+            allocation = AllocationInputDto(
+                "EQUAL",
+                (1..101).map { AllocationItemDto(UUID.randomUUID().toString(), "1") }
+            )
+        )
+
+        val error = assertThrows<ApplicationException> {
+            controller.createExpense(
+                UUID.randomUUID(),
+                "both-collections-bounded",
                 request,
                 Principal { "test-user" }
             )

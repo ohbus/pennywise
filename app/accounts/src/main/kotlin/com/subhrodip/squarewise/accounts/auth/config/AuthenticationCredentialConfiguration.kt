@@ -1,6 +1,7 @@
 @file:Suppress("CanConvertToMultiDollarString")
 
 package com.subhrodip.squarewise.accounts.auth.config
+import com.subhrodip.squarewise.accounts.auth.abuse.RateLimitBucketStore
 import com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitKeyDeriver
 import com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitService
 import com.subhrodip.squarewise.accounts.auth.abuse.RefreshRateLimitService
@@ -61,7 +62,7 @@ class AuthenticationCredentialConfiguration(
     @Bean
     fun loginRateLimitService(
         keyDeriver: LoginRateLimitKeyDeriver,
-        repository: com.subhrodip.squarewise.accounts.auth.abuse.RateLimitBucketStore
+        repository: RateLimitBucketStore
     ): LoginRateLimitService =
         LoginRateLimitService(keyDeriver, repository)
 
@@ -69,7 +70,7 @@ class AuthenticationCredentialConfiguration(
     @Bean
     fun refreshRateLimitService(
         digest: CredentialDigest,
-        repository: com.subhrodip.squarewise.accounts.auth.abuse.RateLimitBucketStore
+        repository: RateLimitBucketStore
     ): RefreshRateLimitService =
         RefreshRateLimitService(digest, repository)
 

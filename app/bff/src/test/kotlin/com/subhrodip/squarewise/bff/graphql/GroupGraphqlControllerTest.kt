@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.bff.graphql
+import java.time.Duration
 
 import com.subhrodip.squarewise.bff.transport.ExpenseCoreGateway
 import com.subhrodip.squarewise.bff.transport.AccountsGateway
@@ -248,7 +249,7 @@ class GroupGraphqlControllerTest {
         val first = boundedController.groupChanged(groupId, principal).subscribe()
         try {
             val error = assertThrows(ApplicationException::class.java) {
-                boundedController.groupChanged(groupId, principal).blockFirst(java.time.Duration.ofMillis(100))
+                boundedController.groupChanged(groupId, principal).blockFirst(Duration.ofMillis(100))
             }
             assertEquals(ErrorCode.ERR_11, error.errorCode)
         } finally {

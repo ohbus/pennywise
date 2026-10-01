@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.core.codec.DecodingException
 import com.subhrodip.squarewise.ids.contracts.ApiEndpoints
 import reactor.core.Exceptions
 import java.net.InetSocketAddress
@@ -315,7 +316,7 @@ class BffFanoutTest {
             gateway.listGroups("bearer-token").block()
         }
         val cause = Exceptions.unwrap(ex)
-        assertThat(cause).isInstanceOf(org.springframework.core.codec.DecodingException::class.java)
+        assertThat(cause).isInstanceOf(DecodingException::class.java)
     }
 
     /**

@@ -6,6 +6,7 @@ import com.subhrodip.squarewise.ids.contracts.ApiEndpoints
 
 import com.subhrodip.squarewise.security.ReactiveOidcJwtDecoderFactory
 import com.subhrodip.squarewise.security.OidcSecurityConstants
+import com.subhrodip.squarewise.security.HttpHeadersConfiguration
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -30,7 +31,7 @@ class ProductionSecurityConfig(
 
     @Bean
     fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain = http
-        .let { com.subhrodip.squarewise.security.HttpHeadersConfiguration.applyReactiveSecurityHeaders(it) }
+        .let { HttpHeadersConfiguration.applyReactiveSecurityHeaders(it) }
         .csrf { it.disable() }
         .authorizeExchange {
             it.pathMatchers(ApiEndpoints.Operations.HEALTH).permitAll()

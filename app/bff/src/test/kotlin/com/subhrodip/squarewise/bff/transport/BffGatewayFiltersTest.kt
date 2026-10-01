@@ -1,4 +1,6 @@
 package com.subhrodip.squarewise.bff.transport
+import java.net.URI
+import org.springframework.http.HttpMethod
 
 import com.subhrodip.squarewise.db.routing.DbWatermark
 import com.subhrodip.squarewise.db.routing.DbWatermarkHeaders
@@ -30,7 +32,7 @@ class BffGatewayFiltersTest {
         }
 
         BffGatewayFilters.bearerPropagation.filter(
-            ClientRequest.create(org.springframework.http.HttpMethod.GET, java.net.URI.create("http://expense-core/groups")).build(),
+            ClientRequest.create(HttpMethod.GET, URI.create("http://expense-core/groups")).build(),
             next
         ).contextWrite(
             Context.of(
@@ -61,7 +63,7 @@ class BffGatewayFiltersTest {
         }
 
         BffGatewayFilters.bearerPropagation.filter(
-            ClientRequest.create(org.springframework.http.HttpMethod.GET, java.net.URI.create("http://expense-core/groups")).build(),
+            ClientRequest.create(HttpMethod.GET, URI.create("http://expense-core/groups")).build(),
             next
         ).contextWrite(
             Context.of(
@@ -89,7 +91,7 @@ class BffGatewayFiltersTest {
         }
 
         BffGatewayFilters.bearerPropagation.filter(
-            ClientRequest.create(org.springframework.http.HttpMethod.GET, java.net.URI.create("http://expense-core/groups")).build(),
+            ClientRequest.create(HttpMethod.GET, URI.create("http://expense-core/groups")).build(),
             next
         ).contextWrite(Context.of(BearerTokenContext.EXCHANGE_KEY, exchange)).block()
 
@@ -109,7 +111,7 @@ class BffGatewayFiltersTest {
         }
 
         BffGatewayFilters.bearerPropagation.filter(
-            ClientRequest.create(org.springframework.http.HttpMethod.GET, java.net.URI.create("http://expense-core/groups")).build(),
+            ClientRequest.create(HttpMethod.GET, URI.create("http://expense-core/groups")).build(),
             next
         ).contextWrite(Context.empty()).block()
 

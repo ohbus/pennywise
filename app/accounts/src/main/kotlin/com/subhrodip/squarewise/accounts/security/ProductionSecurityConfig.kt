@@ -5,6 +5,7 @@ package com.subhrodip.squarewise.accounts.security
 import com.subhrodip.squarewise.accounts.auth.jwks.RsaKeyProvider
 import com.subhrodip.squarewise.security.OidcJwtDecoderFactory
 import com.subhrodip.squarewise.security.OidcSecurityConstants
+import com.subhrodip.squarewise.security.HttpHeadersConfiguration
 import com.subhrodip.squarewise.ids.contracts.ApiEndpoints
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -51,7 +52,7 @@ class ProductionSecurityConfig(
 
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain = http
-        .let { com.subhrodip.squarewise.security.HttpHeadersConfiguration.applyServletSecurityHeaders(it) }
+        .let { HttpHeadersConfiguration.applyServletSecurityHeaders(it) }
         .csrf { it.disable() }
         .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
         .authorizeHttpRequests {

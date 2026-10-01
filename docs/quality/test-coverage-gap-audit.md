@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **85
-production methods with missed branches** containing **154 missed branches**,
+As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **84
+production methods with missed branches** containing **152 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 37 operations without a literal E2E reference and 49 without a literal
@@ -184,7 +184,7 @@ classified as generated/structural with reviewer approval.
 
 | Module | Classes with missed lines | Classes with missed branches | Methods with missed branches |
 | --- | ---: | ---: | ---: |
-| `app/accounts` | 39 | 11 | 15 |
+| `app/accounts` | 39 | 11 | 14 |
 | `app/bff` | 34 | 6 | 9 |
 | `app/expense-core` | 52 | 19 | 42 |
 | `app/notifications` | 16 | 9 | 16 |
@@ -193,7 +193,7 @@ classified as generated/structural with reviewer approval.
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 3 | 0 | 0 |
-| **Total** | **163** | **48** | **85** |
+| **Total** | **163** | **48** | **84** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -215,9 +215,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**85**), and the sum of
+equal the `Methods with missed branches` total above (**84**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**154**). Each object carries the module, production class, source file,
+(**152**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, assignment basis, and the row's machine-readable
 `acceptance_criteria`. The record count and branch-count
@@ -252,16 +252,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 85-record JSON discovery inventory and
+The repository currently has the exact 84-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 85 records. The A07 and E02 residual tables are the first exact method-level
+all 84 records. The A07 and E02 residual tables are the first exact method-level
 ledger slices; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (85 records):
+Current provisional assignment workload (84 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -271,7 +271,7 @@ Current provisional assignment workload (85 records):
 | QA10-A04 | 0 | Explicit external identity-provider path; constructor and unsupported-delegation behavior are locally covered, deployed provider exchange remains required. |
 | QA10-A05 | 1 | Local and non-local OIDC decoder selection, discovery, and algorithm wiring; the original decoder terminal branch is retained and needs explicit test evidence. |
 | QA10-A06 | 1 | Profile controller and JPA persistence authorization boundary; restored private mapper requires classification or direct evidence. |
-| QA10-A07 | 11 | Session, credential, identity, replay, and cleanup behavior; blank and unknown refresh-token rotation and unmapped-account email-update rejection now fail closed, while database-invariant profile branches, concurrent database race, and deployed session evidence remain open. |
+| QA10-A07 | 10 | Session, credential, identity, replay, and cleanup behavior; blank and unknown refresh-token rotation, revoked-only/replaced-only/accountless refresh-session rejection, and unmapped-account email-update rejection now fail closed, while database-invariant profile branches, concurrent database race, and deployed session evidence remain open. |
 | QA10-A08 | 1 | Email canonicalization and malformed-input boundaries; restored explicit domain checks require direct boundary evidence. |
 | QA10-B01 | 2 | BFF upstream transport and gateway failure behavior; nullable bearer omission is covered across gateway operations, while timeout, partial-response, malformed-body, and deployed failure evidence remain open. |
 | QA10-B02 | 2 | GraphQL resolver, error, scalar, and limit behavior; resolver classification, DateTime literal acceptance/rejection, blank-bearer context omission, empty mutation invalidation behavior, required messaging startup validation, bounded deduplicator capacity validation, acceptance-fault filter boundary, empty settlement amount fallback, and subscription admission validation are covered, while two nullable-literal mapping residuals remain for structural review. |

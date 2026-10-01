@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `2962edc`, whose subject indicates
+(`master`) through the latest audited coverage commit `dc68c73`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -689,3 +689,11 @@ mapping. The full Java 25 Gradle wrapper run passed; the regenerated inventory
 remains 85 method records and falls from 156 to 154 missed branches. The
 individual valid-status fallback arms remain structurally governed by the
 immutable `ErrorCode` status invariant and are documented as such.
+
+`dc68c73` extends `TokenSessionServiceTest` with the missing refresh-session
+truth-table cases: revoked-only, replaced-only, and legacy accountless sessions.
+Each case asserts the stable `ERR_03` fail-closed outcome, while the accountless
+case also proves the persisted session is not mutated. The focused Accounts
+suite and full Java 25 wrapper run passed; the regenerated inventory falls from
+85 records / 154 missed branches to 84 records / 152 missed branches. Replay
+concurrency and deployed passwordless-session evidence remain open.

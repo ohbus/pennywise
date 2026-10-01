@@ -68,6 +68,32 @@ class GraphQlScalarConfigurationTest {
         }
     }
 
+    /** Verifies DateTime string literals accept ISO instants and reject malformed values. */
+    @Test
+    fun `DateTime validates string literals`() {
+        val coercing = scalar("DateTime").coercing
+        val variables = CoercedVariables.emptyVariables()
+        val context = GraphQLContext.getDefault()
+
+        assertEquals(
+            "2026-09-18T10:00:00Z",
+            coercing.parseLiteral(
+                StringValue.of("2026-09-18T10:00:00Z"),
+                variables,
+                context,
+                Locale.ROOT
+            )
+        )
+        assertThrows(CoercingParseLiteralException::class.java) {
+            coercing.parseLiteral(
+                StringValue.of("not-a-date"),
+                variables,
+                context,
+                Locale.ROOT
+            )
+        }
+    }
+
     private fun scalar(name: String): GraphQLScalarType {
         val builder = RuntimeWiring.newRuntimeWiring()
         GraphQlScalarConfiguration().runtimeWiringConfigurer().configure(builder)

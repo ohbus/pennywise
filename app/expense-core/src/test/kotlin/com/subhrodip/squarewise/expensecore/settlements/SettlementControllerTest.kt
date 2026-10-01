@@ -92,6 +92,26 @@ class SettlementControllerTest {
         ).andExpect(status().isNotFound)
     }
 
+    /** Verifies that the settlement boundary fails closed when no authenticated principal exists. */
+    @Test
+    fun `rejects settlement suggestions without an authenticated principal`() {
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions(UUID.randomUUID()))
+        ).andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
+    /** Verifies that a principal with no usable subject cannot cross the settlement boundary. */
+    @Test
+    fun `rejects settlement suggestions for a blank principal subject`() {
+        val blankSubject = RequestPostProcessor { request -> request.userPrincipal = Principal { " " }; request }
+
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions(UUID.randomUUID())).with(blankSubject)
+        ).andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
     /** Verifies recording, reversal, and reversal replay through the public REST boundary. */
     @Test
     fun `records and idempotently reverses settlement`() {

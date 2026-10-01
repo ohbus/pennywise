@@ -181,6 +181,33 @@ def main() -> None:
     )
     expect("Notifications rejects unauthenticated preference update", status, 401)
 
+    status, alice_preferences = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_PREFERENCES}",
+    )
+    expect("Notifications getPreferences returns authenticated defaults", status, 200)
+    if alice_preferences != {"emailEnabled": True, "pushEnabled": True}:
+        raise AssertionError(f"getPreferences returned unexpected defaults: {alice_preferences}")
+
+    status, _ = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_PREFERENCES}",
+        method="PUT", body={"emailEnabled": False, "pushEnabled": True},
+    )
+    expect("Notifications updatePreferences persists authenticated settings", status, 204)
+
+    status, alice_preferences = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_PREFERENCES}",
+    )
+    expect("Notifications getPreferences returns updated settings", status, 200)
+    if alice_preferences != {"emailEnabled": False, "pushEnabled": True}:
+        raise AssertionError(f"getPreferences returned unexpected update: {alice_preferences}")
+
+    status, bob_preferences = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_PREFERENCES}", token=SECONDARY_TOKEN,
+    )
+    expect("Notifications getPreferences isolates signed subjects", status, 200)
+    if bob_preferences != {"emailEnabled": True, "pushEnabled": True}:
+        raise AssertionError(f"getPreferences leaked Alice settings: {bob_preferences}")
+
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUPS}",
         method="POST",

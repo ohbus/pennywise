@@ -631,7 +631,7 @@ def main() -> None:
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_ARCHIVE.format(group_id=group_id)}",
         method="POST",
     )
-    expect("member can archive group", status, 200)
+    expect("Expense Core archiveGroup succeeds for an authorized member", status, 200)
 
     status, _ = request_json(f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}")
     expect("archived group is hidden from member lookup", status, 404)

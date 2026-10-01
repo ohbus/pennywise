@@ -229,6 +229,28 @@ def run_e2e_tests() -> int:
     )
     print("  ✓ Accounts getProfilesBatch enforces deduplication, omission, and isolation")
 
+    export_status, export_request = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/me/export-request",
+        method="POST",
+        bearer=user_a,
+    )
+    assert export_status == 202, (
+        f"Accounts requestExport failed: HTTP {export_status} ({export_request})"
+    )
+    export_id = export_request.get("exportId")
+    assert export_id, "Accounts requestExport must return an exportId"
+
+    exports_status, export_requests = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/me/export-requests", bearer=user_a
+    )
+    assert exports_status == 200, (
+        f"Accounts listExportRequests failed: HTTP {exports_status} ({export_requests})"
+    )
+    assert any(item.get("exportId") == export_id for item in export_requests), (
+        "Accounts listExportRequests must expose the newly requested export"
+    )
+    print("  ✓ Accounts requestExport and listExportRequests preserve the durable request")
+
     malformed_group_status, malformed_group_response = request_json(
         f"{BASE_URL}/graphql",
         method="POST",

@@ -137,6 +137,19 @@ class AuthEmailRabbitListenerTest {
         }
     }
 
+    /** Verifies an unparsable expiry is rejected as a permanent envelope failure. */
+    @Test
+    fun `rejects auth email envelopes with invalid expiry`() {
+        val channel = TestChannel()
+        val malformed = validEvent().replace("2099-09-21T01:00:00Z", "not-an-instant")
+
+        listener.onMessage(message(malformed, 27L), channel)
+
+        assertEquals(27L, channel.rejectedTag)
+        assertEquals(false, channel.rejectedRequeue)
+        assertNull(channel.ackedTag)
+    }
+
     /** Verifies channel-optional delivery remains safe when no broker channel is supplied. */
     @Test
     fun `does not require a channel to process a valid delivery`() {

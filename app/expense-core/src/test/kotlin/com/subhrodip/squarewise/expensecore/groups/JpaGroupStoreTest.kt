@@ -584,6 +584,30 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals(ErrorCode.ERR_06, error.errorCode)
     }
 
+    /** Verifies a placeholder already bound to a subject cannot receive a second targeted invite. */
+    @Test
+    fun `rejects invite targeting an already bound placeholder`() {
+        val group = store.create("bound-target-owner", CreateGroupRequest("Bound target", "TRIP", "EUR"))
+        val placeholder = store.addPlaceholder(
+            group.groupId,
+            "bound-target-owner",
+            CreatePlaceholderRequest("Already bound")
+        )
+        val boundPlaceholder = membershipRepository.findById(placeholder.membershipId).orElseThrow()
+        boundPlaceholder.subject = "existing-subject"
+        membershipRepository.saveAndFlush(boundPlaceholder)
+
+        val error = assertThrows<ApplicationException> {
+            store.invite(
+                group.groupId,
+                "bound-target-owner",
+                CreateInviteRequest(24, placeholder.membershipId)
+            )
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+    }
+
     /** Verifies an invitation cannot target a placeholder that was removed after creation. */
     @Test
     fun `rejects invite targeting a removed placeholder`() {

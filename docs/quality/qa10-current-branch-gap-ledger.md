@@ -7,7 +7,7 @@ a reviewed structural/invariant classification with exact source evidence. Regen
 after every test increment; the locked tooling tests assert that the record count and
 missed-branch total stay synchronized with the audit and CI documentation.
 
-Current baseline: **55 production methods with missed branches / 109 missed branches**.
+Current baseline: **55 production methods with missed branches / 108 missed branches**.
 
 ## Exact current records
 
@@ -42,7 +42,7 @@ Current baseline: **55 production methods with missed branches / 109 missed bran
 | `app/expense-core` | `QA10-C04` | `com/subhrodip/squarewise/expensecore/groups/persistence/store/JpaGroupStore` | `JpaGroupStore.kt` | `addPlaceholder` | 133 | 2 | 2 | group and membership lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects. |
 | `app/expense-core` | `QA10-C04` | `com/subhrodip/squarewise/expensecore/groups/persistence/store/JpaGroupStore` | `JpaGroupStore.kt` | `removeMember` | 166 | 2 | 8 | group and membership lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects. |
 | `app/expense-core` | `QA10-C04` | `com/subhrodip/squarewise/expensecore/groups/persistence/store/JpaGroupStore` | `JpaGroupStore.kt` | `listMembers` | 194 | 2 | 2 | group and membership lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects. |
-| `app/expense-core` | `QA10-C04` | `com/subhrodip/squarewise/expensecore/groups/persistence/store/JpaGroupStore` | `JpaGroupStore.kt` | `invite` | 205 | 2 | 10 | group and membership lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects. |
+| `app/expense-core` | `QA10-C04` | `com/subhrodip/squarewise/expensecore/groups/persistence/store/JpaGroupStore` | `JpaGroupStore.kt` | `invite` | 205 | 1 | 11 | group and membership lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects. |
 | `app/expense-core` | `QA10-C04` | `com/subhrodip/squarewise/expensecore/groups/persistence/store/JpaGroupStore` | `JpaGroupStore.kt` | `revokeInvite` | 225 | 1 | 3 | group and membership lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects. |
 | `app/expense-core` | `QA10-C04` | `com/subhrodip/squarewise/expensecore/groups/persistence/store/JpaGroupStore` | `JpaGroupStore.kt` | `claim` | 248 | 3 | 23 | group and membership lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects. |
 | `app/expense-core` | `QA10-C04` | `com/subhrodip/squarewise/expensecore/groups/persistence/store/JpaGroupStore` | `JpaGroupStore.kt` | `addMembership` | 303 | 1 | 1 | group and membership lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects. |

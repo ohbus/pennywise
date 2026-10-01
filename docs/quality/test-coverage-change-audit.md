@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the current branch tip `7d8e316`, whose subject indicates
+(`master`) through the current branch tip `95390e8`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -19,7 +19,7 @@ The audit found no contract-file changes in the test/coverage/QA commit set.
 Most commits were test, tooling, or documentation-only. Four commits had
 production implementation edits:
 
-As a reproducible history check, the subject-matching audit selected **68
+As a reproducible history check, the subject-matching audit selected **70
 commits** from `master..HEAD` whose subjects contain `test`, `coverage`, `QA`,
 `JaCoCo`, or `E2E`. `git diff-tree --diff-filter=D` found **no file deletion**
 in that set, and the same commit set has **no changes under `contracts/`**.
@@ -70,7 +70,8 @@ in any of them. `2a532eb` adds duplicate-expense payload conflict coverage,
 and `0e66e36` adds invitation expiry and claim-replay coverage. `7d8e316` adds
 transport validation coverage for invalid expense-update financial inputs. All
 three are implementation-preserving tests; no production implementation or
-contract file changed.
+contract file changed. `95390e8` adds settlement replay and group-state
+coverage, including no-posting guarantees for rejected financial mutations.
 
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation

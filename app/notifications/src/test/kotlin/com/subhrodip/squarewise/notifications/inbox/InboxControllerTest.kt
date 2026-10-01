@@ -122,6 +122,15 @@ class InboxControllerTest {
     }
 
     @Test
+    fun `rejects blank subject when listing the inbox`() {
+        val blankSubject = RequestPostProcessor { request -> request.userPrincipal = Principal { "   " }; request }
+
+        mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_INBOX).with(blankSubject))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
+    @Test
     fun `rejects blank subject when marking an inbox item as read`() {
         val blankSubject = RequestPostProcessor { request -> request.userPrincipal = Principal { "   " }; request }
 

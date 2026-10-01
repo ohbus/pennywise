@@ -52,7 +52,10 @@ preflight, validates contracts, REST path structure, GraphQL schema/resolver
 parity, and Compose files, runs Gradle `test`, `check`, and JaCoCo, and builds
 application jars. The lightweight checks also run the acceptance unit suite,
 workflow YAML parsing, strict Python typing via `uv run --frozen --no-build mypy`, and
-`git diff --check`. Jobs use Microsoft Build of OpenJDK. Python dependencies
+`git diff --check`. The nine matrix entries are capped at four concurrent jobs
+because each entry owns PostgreSQL and RabbitMQ service containers; this avoids
+hosted-runner broker startup contention without removing or changing any shard.
+Jobs use Microsoft Build of OpenJDK. Python dependencies
 and tooling are deterministically managed via `pyproject.toml` and `uv.lock`.
 CI workflows install dependencies via the immutable commit
 `astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e` (the `v6` tag)

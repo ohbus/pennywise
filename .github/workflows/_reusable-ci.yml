@@ -117,7 +117,11 @@ jobs:
     timeout-minutes: 20
     strategy:
       fail-fast: false
-      max-parallel: 9
+      # Each matrix job owns PostgreSQL and RabbitMQ service containers. Keep
+      # the fan-out below the hosted runner's dependency-container capacity;
+      # this preserves every verification shard while avoiding broker startup
+      # failures caused by launching all 18 service containers at once.
+      max-parallel: 4
       matrix:
         include:
           - { kind: app, name: accounts, path: ':app:accounts', report: 'app/accounts/build/reports/jacoco/test/jacocoTestReport.xml' }

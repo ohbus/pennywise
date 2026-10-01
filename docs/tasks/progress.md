@@ -3,6 +3,8 @@
 The registry is the authoritative state machine. This ledger records meaningful
 execution checkpoints and evidence; it does not replace task acceptance criteria.
 
+| 2026-10-01 | OPS-24 / CI reliability | Capped the verification matrix at four concurrent jobs. Each shard still runs unchanged, but each shard owns PostgreSQL and RabbitMQ service containers; limiting fan-out avoids hosted-runner RabbitMQ startup contention observed when all nine shards launched together. No verification shard, health check, test, report, or artifact was removed or weakened. | Workflow/YAML and documentation diff review passed; hosted validation is required on the pushed commit because Docker is unavailable in this Windows session. | current increment |
+
 | 2026-10-01 | QA-10 tooling | Extended `report_branch_gaps.py` so every one of the 86 machine-readable branch-gap records carries the concrete acceptance criterion for its assigned QA-10 row; added regression assertions and documented the field. No production implementation, test contract, or public behavior changed. | `uv run --frozen --no-build python -m unittest tools.coverage.test_report_tools` passed (14 tests); `uv run --frozen --no-build mypy tools/coverage` passed; generated JSON contains non-empty `acceptance_criteria`; `git diff --check` passed. | `b6a12c8` |
 
 | 2026-10-01 | QA-10 tooling | Refreshed the coverage-audit regression assertion to follow the current audited tip. No production implementation, test contract, or public behavior changed. | `uv run --frozen --no-build python -m unittest tools.coverage.test_report_tools` passed (14 tests); `uv run --frozen --no-build mypy tools/coverage` passed; `git diff --check` passed. | `1e357a4` |

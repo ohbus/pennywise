@@ -12,7 +12,7 @@ As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **78
 production methods with missed branches** containing **144 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
-finds 18 operations without a literal E2E reference and 49 without a literal
+finds 17 operations without a literal E2E reference and 49 without a literal
 Bruno reference. These numbers are backlog signals, not passing-test claims;
 the hard branch gate remains red until the production reports are regenerated
 against the current source and every record is covered or explicitly classified.
@@ -78,7 +78,7 @@ For repeatable operation-level discovery, run
 `uv run --frozen --no-build python tools/coverage/report_operation_test_gaps.py --format markdown`.
 The tool compares contract operation IDs and GraphQL root fields with literal
 operation-name references in `tests/e2e/` and `tools/bruno/`. The current
-inventory contains 54 operations; 18 have no E2E source signal and 49 have no
+inventory contains 54 operations; 17 have no E2E source signal and 49 have no
 Bruno source signal. These are discovery signals only: a missing string can be
 a naming mismatch, while a present string does not prove authorization,
 negative behavior, persistence, messaging, replay, or deployed side effects.
@@ -93,7 +93,7 @@ per-operation authorization and side-effect matrix.
 
 ### Current operations without a literal E2E source reference
 
-The current scan identifies the following 18 operations for explicit E2E
+The current scan identifies the following 17 operations for explicit E2E
 implementation or source-reference reconciliation. “No literal reference” is
 not proof that an operation is never exercised; it is a reproducible discovery
 signal that must be resolved with an operation-specific test name, or with a
@@ -105,7 +105,7 @@ the required durable or asynchronous side effect.
 | Service | Missing E2E operation IDs |
 | --- | --- |
 | Accounts API | `logout`, `startLogin`, `verifyLogin` |
-| Expense Core API | `createPlaceholder`, `createRecurringSchedule`, `deleteExpense`, `exportExpenses`, `getChanges`, `getRecurringSchedule`, `listRecurringSchedules`, `pauseRecurringSchedule`, `previewAllocation`, `recordSettlement`, `removeGroupMember`, `resumeRecurringSchedule`, `reverseSettlement`, `updateExpense`, `updateRecurringSchedule` |
+| Expense Core API | `createPlaceholder`, `createRecurringSchedule`, `deleteExpense`, `exportExpenses`, `getChanges`, `getRecurringSchedule`, `listRecurringSchedules`, `pauseRecurringSchedule`, `recordSettlement`, `removeGroupMember`, `resumeRecurringSchedule`, `reverseSettlement`, `updateExpense`, `updateRecurringSchedule` |
 | Notifications API | *(none; source references exist, but full acceptance remains open below)* |
 
 ### Operation-specific E2E acceptance matrix
@@ -123,7 +123,7 @@ operation IDs, not only against the family.
 | Passwordless authentication: `startLogin`, `verifyLogin` | LINK and CODE journeys use a test mailbox/Mailpit artifact, issuance and delivery failures remain generic, rate limits return bounded `Retry-After`, credentials are single-use/expiry-bound, replay and wrong-subject redemption are indistinguishable, and successful verification creates exactly one stable identity/session. |
 | Session ownership: `logout` | The signed subject can revoke only its own refresh-token family; blank, unknown, expired, mismatched, replayed, and deleted-account cases produce the documented no-op or unauthorized result, mutate no unrelated family, and leave an auditable redacted revocation event. |
 | Expense groups/membership: `archiveGroup`, `claimInvite`, `createInvite`, `createPlaceholder`, `getGroup`, `listGroupMembers`, `listGroups`, `removeGroupMember`, `revokeInvite` | Owner/member/non-member/removed-member personas exercise lifecycle and object hiding; invite expiry, revocation, duplicate/concurrent claim, placeholder binding, archive restrictions, membership revision/audit, sync change, and notification/outbox side effects are asserted transactionally. The signed-persona journey covers create/claim invite, member listing, owner-visible group listing/detail; the REST edge suite covers authorized `archiveGroup` and `revokeInvite` followed by claim rejection; placeholder, removal, and lifecycle edge cases remain open. |
-| Expense financial/search: `deleteExpense`, `exportExpenses`, `getBalances`, `getSettlementSuggestions`, `listExpenses`, `previewAllocation`, `recordSettlement`, `reverseSettlement`, `searchExpenses`, `updateExpense` | Valid and rejected writes prove authorization, validation, stale-version/idempotency, zero-sum ledger/postings, balance and suggestion consistency, search cursor/limit/filter behavior, CSV formula safety, audit/sync/outbox effects, rollback, and no cross-group visibility. The signed-persona journey now covers `getBalances`, REST `getSettlementSuggestions`, `listExpenses`, and description-based `searchExpenses` alongside GraphQL repayment/suggestion checks; expense mutation, export, preview, settlement REST, and rollback edges remain open. |
+| Expense financial/search: `deleteExpense`, `exportExpenses`, `getBalances`, `getSettlementSuggestions`, `listExpenses`, `previewAllocation`, `recordSettlement`, `reverseSettlement`, `searchExpenses`, `updateExpense` | Valid and rejected writes prove authorization, validation, stale-version/idempotency, zero-sum ledger/postings, balance and suggestion consistency, search cursor/limit/filter behavior, CSV formula safety, audit/sync/outbox effects, rollback, and no cross-group visibility. The signed-persona journey now covers `getBalances`, REST `getSettlementSuggestions`, `listExpenses`, description-based `searchExpenses`, and a valid equal-split `previewAllocation` alongside GraphQL repayment/suggestion checks; expense mutation, export, settlement REST, and rollback edges remain open. |
 | Recurrence: `createRecurringSchedule`, `getRecurringSchedule`, `listRecurringSchedules`, `pauseRecurringSchedule`, `resumeRecurringSchedule`, `updateRecurringSchedule` | Schedule ownership, date/time-zone/month-end policy, missing/archived group, pause/resume/update idempotency, concurrent worker claim, bounded catch-up, deterministic occurrence identity, duplicate prevention, failed occurrence rollback, and notification/outbox/sync effects are captured. |
 | Synchronization: `getChanges`, `getSnapshot` | Signed group members receive ordered revisions/tombstones and opaque cursors; empty/first/last/expired/malformed/decreasing/cross-group cursors, membership loss, and rejected-mutation revision behavior are asserted with no stale strong read. The signed-persona journey covers the common `getSnapshot` path; cursor, ownership, tombstone, and `getChanges` acceptance remain open. |
 | Notifications: `getPreferences`, `listInbox`, `markAsRead`, `updatePreferences` | Preferences and inbox rows are isolated by subject, defaults/version conflicts are enforced, invalid page/cursor and duplicate mark-read behavior is stable, broker delivery/deduplication/retry reaches the durable inbox, and unauthorized requests create no mutation or notification side effect. |
@@ -170,7 +170,7 @@ For each operation, the E2E ledger must carry these dimensions separately:
 | Isolation and redaction | Other subjects/groups cannot observe or mutate the result; credentials, tokens, and sensitive upstream details are absent from responses and logs. |
 
 An operation with a source-reference signal is not closed until these dimensions
-are evidenced. The 18 operations without a literal E2E reference are explicit
+are evidenced. The 17 operations without a literal E2E reference are explicit
 implementation/reconciliation work, while the remaining operations still need
 the same dimension review rather than being inferred closed from a string match.
 

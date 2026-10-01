@@ -521,6 +521,23 @@ def run_e2e_tests() -> int:
     bob_id = bob_membership_id
     print(f"  ✓ Group members verified: Alice membership={alice_id}, Bob membership={bob_id}")
 
+    preview_status, preview = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/allocations/preview",
+        method="POST",
+        body={"totalMinor": "10000", "participantIds": [alice_id, bob_id]},
+        bearer=user_a,
+    )
+    assert preview_status == 200, (
+        f"Expense Core previewAllocation failed: HTTP {preview_status} ({preview})"
+    )
+    assert preview.get("totalMinor") == "10000", (
+        "Expense Core previewAllocation must preserve the requested total"
+    )
+    assert preview.get("allocations") == {alice_id: "5000", bob_id: "5000"}, (
+        "Expense Core previewAllocation must split the total equally"
+    )
+    print("  ✓ Expense Core previewAllocation returns an equal two-member split")
+
     # 5. Add Expense via GraphQL createExpense
     print("\n[Step 5] Adding Expense via GraphQL createExpense (Alice pays 100.00 EUR split equally with Bob)...")
     expense_id = str(uuid.uuid4())

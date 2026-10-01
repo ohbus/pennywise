@@ -32,6 +32,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -295,7 +296,7 @@ class BffFanoutTest {
             shortTimeoutGateway.listGroups("bearer-token").block()
         }
         val cause = Exceptions.unwrap(ex)
-        assertThat(cause).isInstanceOf(java.util.concurrent.TimeoutException::class.java)
+        assertThat(cause).isInstanceOf(TimeoutException::class.java)
     }
 
     /**

@@ -197,6 +197,34 @@ class SearchControllerTest {
         assertTrue(response.startsWith("expenseId,description,currency,amountMinor,category"))
     }
 
+    /** Verifies export query, currency, and category filters are forwarded and applied together. */
+    @Test
+    fun `export applies optional search filters`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Filtered export", "TRIP", "EUR"))
+        searchStore.saveExpenses(
+            group.groupId,
+            listOf(
+                SearchExpense("00000000-0000-0000-0000-000000000011", "Dinner", "EUR", "2500", ExpenseCategory.FOOD),
+                SearchExpense("00000000-0000-0000-0000-000000000012", "Dinner", "USD", "2500", ExpenseCategory.FOOD),
+                SearchExpense("00000000-0000-0000-0000-000000000013", "Dinner", "EUR", "2500", ExpenseCategory.LODGING)
+            )
+        )
+
+        val response = mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupExport(group.groupId))
+                .with(alice)
+                .param("query", "dinner")
+                .param("currency", "eur")
+                .param("category", "food")
+        )
+            .andExpect(status().isOk)
+            .andReturn().response.contentAsString
+
+        assertTrue(response.contains("00000000-0000-0000-0000-000000000011,Dinner,EUR,2500,food"))
+        assertTrue(!response.contains("00000000-0000-0000-0000-000000000012"))
+        assertTrue(!response.contains("00000000-0000-0000-0000-000000000013"))
+    }
+
     @Test
     fun `export rejects when row count exceeds maxRows`() {
         val group = groupStore.create("alice", CreateGroupRequest("Large Group", "TRIP", "EUR"))

@@ -72,6 +72,29 @@ class BrokerEnvelopeConversionTest {
         )
     }
 
+    /** Verifies blank selected fields use the documented safe group/event fallbacks. */
+    @Test
+    fun `uses safe fallbacks for blank selected subject and message`() {
+        val event = envelope(
+            payload = mapOf(
+                "subject" to "   ",
+                "recipient" to "",
+                "recipientId" to "recipient@example.com",
+                "message" to "",
+                "description" to "Description fallback"
+            )
+        ).toNotificationEvent()
+
+        assertEquals(groupId.toString(), event.subject)
+        assertEquals("expense.created for group $groupId", event.message)
+
+        val finalFallback = envelope(
+            payload = mapOf("subject" to " ", "message" to " ", "description" to " ")
+        ).toNotificationEvent()
+        assertEquals(groupId.toString(), finalFallback.subject)
+        assertEquals("expense.created for group $groupId", finalFallback.message)
+    }
+
     private fun envelope(
         eventType: String = "expense.created",
         payload: Map<String, Any?> = emptyMap()

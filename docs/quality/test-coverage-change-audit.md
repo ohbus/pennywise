@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `0be4bbc`, whose subject indicates
+(`master`) through the current audited coverage commit `aaa34fd`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -727,3 +727,20 @@ changing the value-object contract or implementation. The focused Accounts
 suite and full Java 25 wrapper run passed; the regenerated inventory falls
 from 79 records / 145 missed branches to 78 records / 144 missed branches.
 Passwordless replay and deployed delivery evidence remain open.
+
+## Audit update through `aaa34fd`
+
+The branch was re-audited from `0be4bbc` through `aaa34fd`. The intervening
+coverage, acceptance-fixture, CI, and documentation commits do not delete any
+file, change any contract, or modify production implementation under
+`app/**/src/main` or `libs/**/src/main`. In particular, `c6e7c59` changes only
+live acceptance fixtures, `1ed9557` changes CI fan-out, and the QA-10 commits
+add tests or synchronize the ledger and evidence documents.
+
+The latest coverage increment, `817a5b2`, adds nullable GraphQL `StringValue`
+literal tests for `MoneyMinor` and `DateTime`; it does not remove or simplify
+scalar implementation logic. The authoritative inventory consequently moves
+from 59 methods / 113 missed branches to 57 methods / 111 missed branches.
+The follow-up documentation commit is `aaa34fd`. The remaining residuals are
+still open evidence work, not permission to delete implementation branches or
+weaken public behavior.

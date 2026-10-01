@@ -632,3 +632,10 @@ review rather than implementation deletion.
 missing authenticated subjects, asserting exact `ERR_02` and `ERR_03` failures
 before a live-update slot is admitted. No production implementation or contract
 changed. The current total is 87 method records / 165 missed branches.
+
+`f0a7946` adds the missing recurring membership direction: a custom payer who
+is not a group member now causes the schedule to pause with
+`invalid_membership`, creates no occurrence, and leaves the existing production
+membership guard unchanged. The focused and full Gradle wrapper suites passed;
+the regenerated total is 87 method records / 163 missed branches. Worker
+concurrency, rollback, broker, and deployed recurrence evidence remain open.

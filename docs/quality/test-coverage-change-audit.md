@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `7f184e4`, whose subject indicates
+(`master`) through the latest audited coverage commit `6a2027e`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -590,3 +590,9 @@ branches.
 total is 103 method records / 189 missed branches.
 `7f184e4` adds the deduplicator capacity guard tests; the current total is 102
 method records / 187 missed branches.
+
+`6a2027e` adds valid and malformed listener tests with a nullable broker channel.
+The listener consumes valid envelopes and tolerates poison-pill rejection when
+the optional channel is unavailable, without changing implementation or broker
+contracts. The current total is 101 method records / 185 missed branches;
+deployed broker acknowledgement/requeue and WebSocket evidence remain open.

@@ -7,9 +7,11 @@ import com.subhrodip.squarewise.expensecore.messaging.outbox.service.OutboxPubli
 import com.subhrodip.squarewise.expensecore.messaging.outbox.service.OutboxRelay
 import com.subhrodip.squarewise.expensecore.messaging.outbox.model.OutboxStatus
 import com.subhrodip.squarewise.expensecore.messaging.outbox.model.PublishBatchResult
+import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import tools.jackson.databind.ObjectMapper
@@ -43,5 +45,25 @@ class OutboxPublisherTest {
         secondRelay.append(OutboxMessage(eventId, "expense.created", UUID.randomUUID(), UUID.randomUUID(), 1, Instant.EPOCH, emptyMap(), attempts = 1))
         assertEquals(PublishBatchResult(1, 0, 1), OutboxPublisher(secondRelay, BrokerPublisher { PublishResult.Rejected("down") }, ObjectMapper(), maxAttempts = 2).publishAvailable())
         assertTrue(secondRelay.snapshot().single().status == OutboxStatus.PARKED)
+    }
+
+    @Test
+    fun `rejects invalid publisher delivery policy`() {
+        val relay = OutboxRelay()
+        val broker = BrokerPublisher { PublishResult.Confirmed }
+        val mapper = ObjectMapper()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            OutboxPublisher(relay, broker, mapper, batchSize = 0)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            OutboxPublisher(relay, broker, mapper, lease = Duration.ZERO)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            OutboxPublisher(relay, broker, mapper, lease = Duration.ofSeconds(-1))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            OutboxPublisher(relay, broker, mapper, maxAttempts = 0)
+        }
     }
 }

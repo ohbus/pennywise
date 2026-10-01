@@ -56,11 +56,17 @@ class SynchronizationTest {
     fun `rejects malformed cursor structure and numeric fields`() {
         val malformedStructure = Base64.getUrlEncoder().withoutPadding()
             .encodeToString("group|1".toByteArray())
+        val blankGroup = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("|1|${now.toEpochMilli()}".toByteArray())
         val malformedRevision = Base64.getUrlEncoder().withoutPadding()
             .encodeToString("group|not-a-number|${now.toEpochMilli()}".toByteArray())
+        val malformedExpiry = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("group|1|not-a-number".toByteArray())
 
         assertThrows(InvalidSyncCursorException::class.java) { SyncCursor.decode(malformedStructure) }
+        assertThrows(InvalidSyncCursorException::class.java) { SyncCursor.decode(blankGroup) }
         assertThrows(InvalidSyncCursorException::class.java) { SyncCursor.decode(malformedRevision) }
+        assertThrows(InvalidSyncCursorException::class.java) { SyncCursor.decode(malformedExpiry) }
     }
 
     @Test

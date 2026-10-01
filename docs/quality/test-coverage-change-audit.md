@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `1974d8f`, whose subject indicates
+(`master`) through the latest audited coverage commit `d661fb8`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -627,3 +627,8 @@ and deployed gateway evidence remain open.
 implementation or contract changed. The current total is 88 method records /
 167 missed branches; remaining BFF scalar/mapping residuals require reachability
 review rather than implementation deletion.
+
+`d661fb8` adds GraphQL subscription admission tests for blank group IDs and
+missing authenticated subjects, asserting exact `ERR_02` and `ERR_03` failures
+before a live-update slot is admitted. No production implementation or contract
+changed. The current total is 87 method records / 165 missed branches.

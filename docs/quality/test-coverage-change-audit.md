@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `7bac0e2`, whose subject indicates
+(`master`) through the latest audited coverage commit `0be4bbc`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -720,3 +720,10 @@ and key-identity boundaries without changing production logic or contracts. The
 focused Accounts suite and full Java 25 wrapper run passed; the regenerated
 inventory falls from 81 records / 148 missed branches to 79 records / 145
 missed branches. Deployed key rotation and discovery evidence remain open.
+
+`0be4bbc` adds a direct identity-equality assertion for
+`IssuedCredential.equals`, covering the object-identity fast path without
+changing the value-object contract or implementation. The focused Accounts
+suite and full Java 25 wrapper run passed; the regenerated inventory falls
+from 79 records / 145 missed branches to 78 records / 144 missed branches.
+Passwordless replay and deployed delivery evidence remain open.

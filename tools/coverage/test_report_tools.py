@@ -26,7 +26,7 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_every_current_branch_gap_has_a_qa_row(self) -> None:
         gaps = all_gaps(ROOT)
 
-        self.assertEqual(79, len(gaps))
+        self.assertEqual(78, len(gaps))
         self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
         self.assertTrue(all(gap.assignment_basis for gap in gaps))
         self.assertTrue(all(gap.acceptance_criteria for gap in gaps))
@@ -37,7 +37,7 @@ class CoverageInventoryTest(unittest.TestCase):
                 "QA10-A04": 0,
                 "QA10-A05": 1,
                 "QA10-A06": 1,
-                "QA10-A07": 8,
+                "QA10-A07": 7,
                 "QA10-A08": 1,
                 "QA10-B01": 2,
                 "QA10-B02": 2,
@@ -64,7 +64,7 @@ class CoverageInventoryTest(unittest.TestCase):
             expected_counts,
             {row: actual_counts.get(row, 0) for row in expected_counts},
         )
-        self.assertEqual(145, sum(gap.missed_branches for gap in gaps))
+        self.assertEqual(144, sum(gap.missed_branches for gap in gaps))
 
     def test_operation_inventory_is_complete_and_assigned(self) -> None:
         operations = inventory(ROOT)
@@ -108,7 +108,7 @@ class CoverageInventoryTest(unittest.TestCase):
         rendered = render_branch_gaps(gaps)
         rows = rendered.splitlines()
 
-        self.assertEqual(81, len(rows))
+        self.assertEqual(80, len(rows))
         self.assertEqual(
             "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria |",
             rows[0],
@@ -199,7 +199,6 @@ class CoverageInventoryTest(unittest.TestCase):
             encoding="utf-8"
         )
         targets = (
-            "OneTimeCredentialIssuer.kt:49",
             "AesGcmCredentialEnvelopeProtector.kt:38",
             "JpaAccountIdentityStore.kt:54",
             "JpaAccountIdentityStore.kt:74",
@@ -239,7 +238,7 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_ci_documentation_uses_current_branch_baseline(self) -> None:
         ci = (ROOT / "docs/operations/ci.md").read_text(encoding="utf-8")
 
-        self.assertIn("79 methods containing 145 missed", ci)
+        self.assertIn("78 methods containing 144 missed", ci)
         self.assertNotIn("220 missed-branch methods", ci)
 
     def test_ci_python_tooling_is_locked_and_build_hooks_are_disabled(self) -> None:
@@ -279,7 +278,7 @@ class CoverageInventoryTest(unittest.TestCase):
         )
 
         for marker in (
-            "through the latest audited coverage commit `7bac0e2`",
+            "through the latest audited coverage commit `0be4bbc`",
             "`2110ffd` is the explicit restoration/audit commit",
             "`3b3a3da` changes only `libs/security/build.gradle.kts`",
             "`cff7f76`\nchanges CI/Makefile Python execution",

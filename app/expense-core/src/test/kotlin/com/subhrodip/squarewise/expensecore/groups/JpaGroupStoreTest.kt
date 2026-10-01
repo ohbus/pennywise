@@ -584,6 +584,28 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals(ErrorCode.ERR_06, error.errorCode)
     }
 
+    /** Verifies an invitation cannot target a placeholder that was removed after creation. */
+    @Test
+    fun `rejects invite targeting a removed placeholder`() {
+        val group = store.create("removed-target-owner", CreateGroupRequest("Removed target", "TRIP", "EUR"))
+        val placeholder = store.addPlaceholder(
+            group.groupId,
+            "removed-target-owner",
+            CreatePlaceholderRequest("Former target")
+        )
+        store.removeMember(group.groupId, "removed-target-owner", placeholder.membershipId)
+
+        val error = assertThrows<ApplicationException> {
+            store.invite(
+                group.groupId,
+                "removed-target-owner",
+                CreateInviteRequest(24, placeholder.membershipId)
+            )
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+    }
+
     /** Verifies removing an unknown membership is rejected without changing the group revision or effects. */
     @Test
     fun `rejects removal of an unknown membership without mutation`() {

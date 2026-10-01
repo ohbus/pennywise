@@ -17,10 +17,14 @@ class SimpleMailMessageTest {
         assertThat(message.body).isEqualTo("hello")
         assertThat(message.text).isEqualTo("hello")
 
+        message.recipient = "bob@example.com"
+        assertThat(message.to).containsExactly("bob@example.com")
+
         message.recipient = null
         message.body = null
 
         assertThat(message.to).isNull()
+        assertThat(message.recipient).isNull()
         assertThat(message.text).isNull()
     }
 
@@ -70,6 +74,8 @@ class SimpleMailMessageTest {
         assertThat(empty.recipient).isNull()
         assertThat(empty.toString()).contains("to=[]", "subject=null", "text=null")
         assertThat(empty.hashCode()).isEqualTo(SimpleMailMessage(to = emptyArray()).hashCode())
+        assertThat(SimpleMailMessage().hashCode()).isEqualTo(SimpleMailMessage().hashCode())
         assertThat(empty).isNotEqualTo(null)
+        assertThat(SimpleMailMessage().toString()).contains("to=null")
     }
 }

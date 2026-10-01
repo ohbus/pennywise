@@ -98,6 +98,24 @@ class BffGatewayFiltersTest {
         assertThat(exchange.response.headers.getFirst(DbWatermarkHeaders.WRITER_WATERMARK)).isNull()
     }
 
+    /** Verifies an upstream response without a watermark leaves the response header unchanged. */
+    @Test
+    fun `ignores absent downstream watermark without mutating response`() {
+        val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/").build())
+        exchange.response.headers.set(DbWatermarkHeaders.WRITER_WATERMARK, DbWatermark.fromPosition(12).asLsn())
+        val next = ExchangeFunction {
+            Mono.just(ClientResponse.create(HttpStatus.OK).build())
+        }
+
+        BffGatewayFilters.bearerPropagation.filter(
+            ClientRequest.create(HttpMethod.GET, URI.create("http://expense-core/groups")).build(),
+            next
+        ).contextWrite(Context.of(BearerTokenContext.EXCHANGE_KEY, exchange)).block()
+
+        assertThat(exchange.response.headers.getFirst(DbWatermarkHeaders.WRITER_WATERMARK))
+            .isEqualTo(DbWatermark.fromPosition(12).asLsn())
+    }
+
     @Test
     fun `handles missing exchange context without propagating credentials or failing`() {
         var forwarded: ClientRequest? = null

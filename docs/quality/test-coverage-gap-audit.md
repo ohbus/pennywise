@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **137
-production methods with missed branches** containing **310 missed branches**,
+As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **136
+production methods with missed branches** containing **303 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
@@ -172,7 +172,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **137 methods with at least one missed
+The regenerated JaCoCo XML contains **136 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -189,7 +189,7 @@ classified as generated/structural with reviewer approval.
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **124** | **70** | **137** |
+| **Total** | **123** | **70** | **136** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -211,9 +211,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**137**), and the sum of
+equal the `Methods with missed branches` total above (**136**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**310**). Each object carries the module, production class, source file,
+(**303**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, and assignment basis. The record count and branch-count
 sum are both regression-tested so a changed JaCoCo baseline cannot silently
@@ -247,16 +247,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 137-record JSON discovery inventory and
+The repository currently has the exact 136-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 137 records. The A07 and E02 residual tables are the first exact method-level
+all 136 records. The A07 and E02 residual tables are the first exact method-level
 ledger slices; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (137 records):
+Current provisional assignment workload (136 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -272,7 +272,7 @@ Current provisional assignment workload (137 records):
 | QA10-B02 | 12 | GraphQL resolver, error, scalar, and limit behavior; resolver classification is now fully matrix-tested. |
 | QA10-B03 | 10 | Realtime fanout and broker consumer behavior. |
 | QA10-B04 | 2 | Browser origin, CSRF, cookie, and session filters. |
-| QA10-C01 | 33 | Expense persistence, transaction, ledger, idempotency, and outbox behavior; missing/repeated delete boundaries, update lookup/participant replacement, and in-memory/durable outbox retry/state validation now have persistence or behavioral assertions. |
+| QA10-C01 | 32 | Expense persistence, transaction, ledger, idempotency, and outbox behavior; missing/repeated delete boundaries, update lookup/participant replacement, in-memory/durable outbox retry/state validation, and publisher delivery-policy validation now have persistence or behavioral assertions. |
 | QA10-C02 | 0 | Pure calculator/validator slice is branch-complete; property tests remain required. |
 | QA10-C03 | 8 | Recurring schedules, claims, locking, and occurrence failures; creation now covers explicit IDs and valid day-of-month boundaries, with one compiler-generated range branch retained for review. |
 | QA10-C04 | 9 | Group, invite, membership, expiry, and revocation behavior; archived claims, removed/bound placeholders, and repository-missing claim outcomes now have explicit assertions. |
@@ -519,7 +519,7 @@ planned new test. This prevents a broad suite from absorbing an unrelated gap.
 | QA10-B02 | `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/config/BearerTokenContextWebFilterTest.kt`, `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/BearerAuthorizationTest.kt`, `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/GraphQlLimitErrorInstrumentationTest.kt`, `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/GraphqlHttpTransportTest.kt`, and `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/GraphQlScalarConfigurationTest.kt` | `BearerTokenContextWebFilterTest` now proves case-insensitive trimmed bearer capture, valid watermark capture, malformed-header/watermark omission, and exchange retention. Extend GraphQL HTTP and WebSocket suites with every limit/error dimension; prove bearer extraction, subject normalization, and public limit-error mapping at the unit boundary. |
 | QA10-B03 | `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/LiveUpdateFanoutTest.kt`, `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/messaging/BffEventConsumerTest.kt`, and `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/messaging/RabbitBffEventListenerTest.kt` | Extend `tests/e2e/test_concurrency_subscriptions.py` and add reconnect/replay cases. |
 | QA10-B04 | `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/config/BrowserCsrfWebFilterTest.kt`, `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/config/BrowserOriginPolicyTest.kt`, and cookie filter tests | Add browser-cookie mutation and WebSocket upgrade cases to the public E2E harness. |
-| QA10-C01 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/JpaExpenseStoreTest.kt`, `JpaExpenseStoreTransactionRollbackTest`, and controller tests | `JpaExpenseStoreTest` now covers actor-scoped active membership identifiers and duplicate/inactive participant rejection before mutation; `JpaExpenseStoreTransactionRollbackTest` injects an outbox-port failure and asserts expense, idempotency, postings, sync, and group revision rollback. Extend `tests/e2e/test_product_journey.py` with deployed write-failure rollback and ledger reconciliation. |
+| QA10-C01 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/JpaExpenseStoreTest.kt`, `JpaExpenseStoreTransactionRollbackTest`, controller tests, and outbox tests | `JpaExpenseStoreTest` now covers actor-scoped active membership identifiers and duplicate/inactive participant rejection before mutation; `JpaExpenseStoreTransactionRollbackTest` injects an outbox-port failure and asserts expense, idempotency, postings, sync, and group revision rollback; outbox tests cover retry policy, state boundaries, and publisher delivery-policy validation. Extend `tests/e2e/test_product_journey.py` with deployed write-failure rollback and ledger reconciliation. |
 | QA10-C02 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/AllocationCalculatorTest.kt` and `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/ExpenseValidatorTest.kt` | Add deterministic property/table tests in the same package. |
 | QA10-C03 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/recurring/RecurringExpenseServiceTest.kt`, `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/recurring/RecurringExpenseWorkerTest.kt`, and `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/recurring/RecurringExpenseControllerTest.kt` | Add multi-worker and bounded catch-up cases to the Docker E2E suite. |
 | QA10-C04 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/JpaGroupStoreTest.kt` and `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/GroupControllerTest.kt`; the JPA suite now covers archived member operations, invalid placeholder/invite tokens, and unknown membership removal without additional effects. | Extend signed-persona lifecycle coverage in `tests/e2e/test_product_journey.py`. |

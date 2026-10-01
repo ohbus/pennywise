@@ -2,7 +2,7 @@
 
 **Task:** QA-10  
 **Status:** In progress  
-**Last audited:** 2026-10-01
+**Last audited:** 2026-10-02
 **Scope:** `app/`, `libs/`, `tests/`, `tools/bruno/`, contracts, and the
 test/quality documentation.
 
@@ -116,6 +116,31 @@ the required durable or asynchronous side effect.
 | Accounts API | *(none; `startLogin`, `verifyLogin`, and `logout` are now represented by the deployed auth-email journey)* |
 | Expense Core API | *(none; recurrence source references exist, but worker and failure acceptance remains open below)* |
 | Notifications API | *(none; source references exist, but full acceptance remains open below)* |
+
+### Latest reported live-run failures
+
+The operation inventory is a discovery control, not an execution result. The
+latest reported `make acceptance-live` run on 2026-10-01 completed 71 requests
+with 65 passing and six failing: Accounts `logout` returned `400` instead of
+the asserted `204`/`401`; Expense Core `createExpense` returned `404`;
+`updateExpense` and `deleteExpense` returned `500`; `recordSettlement`
+returned `400`; and `reverseSettlement` returned `401`. The subsequent
+`make e2e-live` run stopped when the signed owner received `403` from
+`getProfilesBatch` because the endpoint requires internal workload authority.
+
+These failures remain open under `QA10-E2E01` and the affected QA10-A06,
+QA10-C01, and QA10-C05 rows. The required acceptance evidence is:
+
+| Observed failure | Required replacement evidence before closure |
+| --- | --- |
+| `logout` returned `400` | Use a valid signed refresh-family fixture and assert successful `204` revocation; separately exercise malformed/unknown credentials and assert the documented `401`/no-op behavior, with the family state and redacted audit evidence captured. |
+| `createExpense` returned `404` | Prove the signed subject owns or belongs to the referenced group in the same isolated stack, then assert `201`, postings, revision, idempotency, sync, outbox, and zero-sum state; a missing/foreign group must assert the structured not-found response and no mutation. |
+| `updateExpense`/`deleteExpense` returned `500` | Reproduce with persisted expense and matching subject/version fixtures; assert the documented success and durable mutation, plus structured stale/missing/unauthorized failures with unchanged expense, revision, postings, and idempotency state. An unexpected `500` is not a passing negative case. |
+| `recordSettlement` returned `400` / `reverseSettlement` returned `401` | Establish valid currency, participants, amount, idempotency identity, authenticated subject, and settlement ownership before asserting `201`/successful reversal, posting reconciliation, balance changes, replay behavior, and exact rejection/no-posting cases. |
+| Owner `getProfilesBatch` returned `403` | Align the signed-persona journey with the authoritative contract: either exercise the documented internal-workload authority with a workload token, or record a contract decision for an owner-visible operation before changing tests or implementation. The test must prove batch isolation, duplicate/empty/unknown/over-limit behavior, and no cross-subject leakage. |
+
+Until these cases pass with captured durable evidence, the presence of an
+operation name in an E2E source file must not be reported as E2E coverage.
 
 ### Operation-specific E2E acceptance matrix
 

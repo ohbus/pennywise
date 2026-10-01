@@ -124,6 +124,21 @@ change. Production-scale
 capacity, multi-region ordering, restore rehearsal, security scanning, and
 deployment rollback as environment-dependent evidence.
 
+The latest reported `make acceptance-live` run on 2026-10-01 is not a green
+closure artifact: 65 of 71 requests passed and six failed. The failures were
+Accounts logout (`400`, where the request assertion allowed only `204` or
+`401`), Expense Core create expense (`404`), update expense (`500`), delete
+expense (`500`), record settlement (`400`), and reverse settlement (`401`).
+The following `make e2e-live` run also stopped when the signed owner called
+Accounts `getProfilesBatch` and received `403` because the endpoint requires
+internal workload authority. These results are evidence of missing or
+misaligned deployed acceptance, not permission to loosen assertions: the
+replacement tests must first establish the signed persona, durable fixture
+state, expected contract status/error, and no-mutation or side-effect
+invariant for each failure. If the owner-versus-workload authority expectation
+is inconsistent with the contract, resolve that contract decision before
+changing either the implementation or the test.
+
 Every GraphQL HTTP query and mutation now has direct transport evidence for
 upstream failure or timeout conversion and detail redaction. Settlement
 suggestions additionally cover an empty upstream result. Retry timing and policy

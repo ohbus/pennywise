@@ -201,6 +201,32 @@ class AuthEmailRabbitListenerTest {
         listener.onMessage(message("{not-json}", 27L), null)
     }
 
+    /** Verifies validation failures remain safe when no broker channel is available. */
+    @Test
+    fun `does not require a channel to reject a consumer validation failure`() {
+        doThrow(IllegalArgumentException("auth email credential has expired"))
+            .`when`(consumer)
+            .consume(
+                any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("evt", "user@example.com", "LOGIN_CODE", "cipher", Instant.MAX),
+                any(Instant::class.java) ?: Instant.EPOCH
+            )
+
+        listener.onMessage(message(validEvent(), 30L), null)
+    }
+
+    /** Verifies transient retry handling remains safe when no broker channel is available. */
+    @Test
+    fun `does not require a channel to requeue a transient failure`() {
+        doThrow(IllegalStateException("temporary failure"))
+            .`when`(consumer)
+            .consume(
+                any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("evt", "user@example.com", "LOGIN_CODE", "cipher", Instant.MAX),
+                any(Instant::class.java) ?: Instant.EPOCH
+            )
+
+        listener.onMessage(message(validEvent(), 31L, redelivered = false), null)
+    }
+
     private fun fieldValue(field: String): String = when (field) {
         "recipient" -> "user@example.com"
         "template" -> "LOGIN_CODE"

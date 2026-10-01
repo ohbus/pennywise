@@ -7,7 +7,7 @@ a reviewed structural/invariant classification with exact source evidence. Regen
 after every test increment; the locked tooling tests assert that the record count and
 missed-branch total stay synchronized with the audit and CI documentation.
 
-Current baseline: **63 production methods with missed branches / 119 missed branches**.
+Current baseline: **62 production methods with missed branches / 117 missed branches**.
 
 ## Exact current records
 
@@ -69,7 +69,6 @@ Current baseline: **63 production methods with missed branches / 119 missed bran
 | `app/expense-core` | `QA10-C06` | `com/subhrodip/squarewise/expensecore/sync/api/SyncController` | `SyncController.kt` | `page` | 31 | 1 | 11 | synchronization and cursor behavior | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Sync ordering, cursor ownership/expiry/limits, tombstones, membership loss, and revision invariants. |
 | `app/expense-core` | `QA10-C06` | `com/subhrodip/squarewise/expensecore/sync/persistence/JpaSynchronizationStore` | `JpaSynchronizationStore.kt` | `snapshot` | 78 | 2 | 12 | synchronization and cursor behavior | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Sync ordering, cursor ownership/expiry/limits, tombstones, membership loss, and revision invariants. |
 | `app/expense-core` | `QA10-C06` | `com/subhrodip/squarewise/expensecore/sync/persistence/JpaSynchronizationStore` | `JpaSynchronizationStore.kt` | `validate` | 107 | 1 | 5 | synchronization and cursor behavior | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Sync ordering, cursor ownership/expiry/limits, tombstones, membership loss, and revision invariants. |
-| `app/notifications` | `QA10-D01` | `com/subhrodip/squarewise/notifications/email/delivery/AuthEmailRabbitListener` | `AuthEmailRabbitListener.kt` | `onMessage` | 27 | 2 | 8 | authentication email consumer | `app/notifications/build/reports/jacoco/test/jacocoTestReport.xml` | Auth-email envelope validation, decrypt/expiry handling, ack/retry/DLQ, deduplication, and redaction. |
 | `app/notifications` | `QA10-D01` | `com/subhrodip/squarewise/notifications/email/delivery/AuthEmailRabbitListener` | `AuthEmailRabbitListener.kt` | `parse` | 43 | 2 | 6 | authentication email consumer | `app/notifications/build/reports/jacoco/test/jacocoTestReport.xml` | Auth-email envelope validation, decrypt/expiry handling, ack/retry/DLQ, deduplication, and redaction. |
 | `app/notifications` | `QA10-D03` | `com/subhrodip/squarewise/notifications/email/delivery/EmailDispatcher` | `EmailDispatcher.kt` | `dispatch` | 22 | 2 | 16 | mail delivery adapter | `app/notifications/build/reports/jacoco/test/jacocoTestReport.xml` | SMTP mapping, validation, failure classification, retry/parking, metrics, and redaction. |
 | `app/notifications` | `QA10-D01` | `com/subhrodip/squarewise/notifications/email/security/AuthEmailEnvelopeProtector` | `AuthEmailEnvelopeProtector.kt` | `reveal` | 15 | 1 | 7 | authentication email consumer | `app/notifications/build/reports/jacoco/test/jacocoTestReport.xml` | Auth-email envelope validation, decrypt/expiry handling, ack/retry/DLQ, deduplication, and redaction. |

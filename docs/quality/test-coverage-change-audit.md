@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the current branch tip `6b267bf`, whose subject indicates
+(`master`) through the current branch tip `fa41e93`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -111,6 +111,10 @@ including rejection above the supported range. It changes no production
 implementation or contract; the regenerated report retains 144 records and
 reduces missed branches from 335 to 331. One compiler-generated range branch
 remains explicitly open for review.
+
+`fa41e93` changes only reusable-CI RabbitMQ health-check timing and the
+corresponding CI documentation/progress entry. It does not alter production
+implementation, contracts, or coverage evidence.
 
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation

@@ -113,6 +113,19 @@ class TokenSessionServiceTest @Autowired constructor(
         assertEquals(oldSession?.familyId, newSession?.familyId)
     }
 
+    /** Verifies rotation fails closed before lookup for blank and unknown refresh tokens. */
+    @Test
+    fun `rejects blank and unknown refresh tokens during rotation`() {
+        val now = Instant.now()
+
+        assertThrows(ApplicationException::class.java) {
+            service.rotateSession(" ", "test", now)
+        }
+        assertThrows(ApplicationException::class.java) {
+            service.rotateSession("unknown-rotate-token", "test", now)
+        }
+    }
+
     @Test
     fun `detects token reuse and revokes entire family`() {
         val now = Instant.now()

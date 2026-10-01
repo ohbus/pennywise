@@ -150,6 +150,22 @@ class JpaOutboxStoreTest @Autowired constructor(
         assertEquals(OutboxStatus.CLAIMED, snapshot.getValue(claimedId).status)
     }
 
+    /** Verifies durable append preserves the first payload and rejects duplicate event identifiers. */
+    @Test
+    fun `append rejects duplicate event ID without replacing the persisted message`() {
+        val eventId = UUID.randomUUID()
+        val original = message(eventId, Instant.now(), mapOf("amount" to 1250, "currency" to "EUR"))
+        val replacement = original.copy(payload = mapOf("amount" to 9999, "currency" to "USD"))
+
+        store.append(original)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            store.append(replacement)
+        }
+
+        assertEquals(original.payload, store.snapshot().single().payload)
+    }
+
     /** Verifies durable retry-policy validation and the harmless unknown-event no-op. */
     @Test
     fun `reject validates retry policy and ignores an unknown event`() {

@@ -173,6 +173,26 @@ def run_e2e_tests() -> int:
     assert alice_id, "Accounts getMe must return a non-empty accountId"
     print(f"  ✓ Alice profile created: accountId={alice_id}, displayName={profile_a['displayName']}")
 
+    profile_status, profile_by_id = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/profiles/{alice_id}", bearer=user_a
+    )
+    assert profile_status == 200, (
+        f"Accounts getProfileById failed for the owning subject: "
+        f"HTTP {profile_status} ({profile_by_id})"
+    )
+    assert profile_by_id.get("accountId") == alice_id, (
+        "Accounts getProfileById must return the requested owner profile"
+    )
+
+    foreign_profile_status, foreign_profile = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/profiles/{alice_id}", bearer=user_b
+    )
+    assert foreign_profile_status == 403, (
+        f"Accounts getProfileById must reject a foreign subject: "
+        f"HTTP {foreign_profile_status} ({foreign_profile})"
+    )
+    print("  ✓ Accounts getProfileById enforces owner access and foreign-subject denial")
+
     # Query 'me' for Bob via GraphQL BFF
     data_bob = graphql_query(
         "query { me { accountId displayName defaultCurrency timezone } }",

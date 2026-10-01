@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the current branch tip `9895812`, whose subject indicates
+(`master`) through the latest audited coverage commit `4145a05`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -146,6 +146,12 @@ implementation or contract; the regenerated report removes the publisher from
 the open inventory and reduces the baseline from 137 records / 310 missed
 branches to 136 records / 303 missed branches.
 
+`4145a05` adds PostgreSQL-backed claim-boundary tests for `JpaOutboxStore`,
+covering invalid claim policies, future pending messages, and active leases.
+It changes no production implementation or contract; the regenerated report
+removes `JpaOutboxStore.claim` from the open inventory and reduces the baseline
+from 136 records / 303 missed branches to 135 records / 298 missed branches.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -155,7 +161,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 136 methods with 303 missed branches. The remaining
+regenerated reports contain 135 methods with 298 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E

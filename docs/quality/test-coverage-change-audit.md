@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `716e6aa`, whose subject indicates
+(`master`) through the latest audited coverage commit `5bb9981`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -673,3 +673,11 @@ authorization dimensions remain open.
 durable read flag. It changes no production implementation or contract; inbox
 database-failure, duplicate-mark-read, broker, and remaining operation-matrix
 dimensions remain open.
+
+`5bb9981` adds the Expense Core outbox integration test for acknowledging an
+unknown event ID. The test proves the durable outbox snapshot remains empty,
+closing the residual no-op branch without changing production implementation,
+contracts, or acknowledgement behavior for known events. The focused test and
+full Java 25 Gradle wrapper run passed; the regenerated inventory is now 85
+method records / 156 missed branches. Broker acknowledgement/retry/DLQ and
+deployed messaging evidence remain open.

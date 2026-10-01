@@ -44,6 +44,34 @@ class BrokerEnvelopeConversionTest {
         assertEquals(2000, event.message.length)
     }
 
+    /** Verifies each supported subject/message fallback preserves a usable notification event. */
+    @Test
+    fun `uses subject and message fallback fields in precedence order`() {
+        assertEquals(
+            "subject@example.com",
+            envelope(payload = mapOf("subject" to "subject@example.com", "message" to "Direct message"))
+                .toNotificationEvent().subject
+        )
+        assertEquals(
+            "recipient@example.com",
+            envelope(payload = mapOf("recipient" to "recipient@example.com"))
+                .toNotificationEvent().subject
+        )
+        assertEquals(
+            "user@example.com",
+            envelope(payload = mapOf("userId" to "user@example.com"))
+                .toNotificationEvent().subject
+        )
+        assertEquals(
+            groupId.toString(),
+            envelope(payload = emptyMap()).toNotificationEvent().subject
+        )
+        assertEquals(
+            "expense.created for group $groupId",
+            envelope(payload = emptyMap()).toNotificationEvent().message
+        )
+    }
+
     private fun envelope(
         eventType: String = "expense.created",
         payload: Map<String, Any?> = emptyMap()

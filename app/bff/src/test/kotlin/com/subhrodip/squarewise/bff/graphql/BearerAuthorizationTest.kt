@@ -36,7 +36,7 @@ class BearerAuthorizationTest {
         val authentication = JwtAuthenticationToken(jwt)
         val namedPrincipal = Principal { "principal-subject" }
 
-        assertEquals("raw-token", bearerToken("raw-token"))
+        assertEquals("raw-token", bearerToken("raw-token" as Any?))
         assertEquals("jwt-token", bearerToken(jwt))
         assertEquals("jwt-subject", bearerToken(authentication))
         assertEquals("principal-subject", bearerToken(namedPrincipal))

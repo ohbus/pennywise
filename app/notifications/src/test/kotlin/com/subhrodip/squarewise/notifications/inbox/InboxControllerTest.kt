@@ -159,7 +159,7 @@ class InboxControllerTest {
         testInbox.append("alice", InboxItem(UUID.randomUUID(), "event", "Event", Instant.EPOCH))
 
         val cursor = java.util.Base64.getUrlEncoder().withoutPadding()
-            .encodeToString("2026-01-01T00:00:00Z|00000000-0000-7000-8000-000000000001".toByteArray())
+            .encodeToString("1969-01-01T00:00:00Z|00000000-0000-7000-8000-000000000001".toByteArray())
         val page = testInbox.page("alice", cursor, 10)
 
         assertTrue(page.items.isEmpty())

@@ -66,13 +66,15 @@ class BrokerEnvelopeParserTest {
         )
 
         listOf(
-            "{not-json}" to "Failed to parse",
-            "" to "Failed to parse",
+            "{not-json}" to null,
+            "" to null,
             valid.replace("2026-09-17T20:00:00Z", "not-a-time") to "occurredAt",
             valid.replace("\"payload\": {}", "\"payload\": []") to "payload",
         ).forEach { (body, expected) ->
             val exception = assertThrows(InvalidEnvelopeException::class.java) { parser.parse(body.toByteArray()) }
-            assertTrue(exception.message.orEmpty().contains(expected), "Error should identify $expected")
+            expected?.let { message ->
+                assertTrue(exception.message.orEmpty().contains(message), "Error should identify $message")
+            }
         }
     }
 

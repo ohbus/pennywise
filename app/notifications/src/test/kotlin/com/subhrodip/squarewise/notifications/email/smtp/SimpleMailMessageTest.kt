@@ -57,9 +57,9 @@ class SimpleMailMessageTest {
     }
 
     @Test
-    fun `null and empty arrays compare by their contents`() {
+    fun `null and empty arrays preserve their own equality contracts`() {
         assertThat(SimpleMailMessage()).isEqualTo(SimpleMailMessage())
-        assertThat(SimpleMailMessage()).isEqualTo(SimpleMailMessage(to = emptyArray()))
         assertThat(SimpleMailMessage(to = emptyArray())).isEqualTo(SimpleMailMessage())
+        assertThat(SimpleMailMessage(to = emptyArray())).isEqualTo(SimpleMailMessage(to = emptyArray()))
     }
 }

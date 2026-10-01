@@ -509,6 +509,30 @@ class ExpenseControllerTest {
         }
     }
 
+    /** Verifies the controller rejects a category beyond the documented request bound. */
+    @Test
+    fun `rejects an overlong category before store mutation`() {
+        val groupId = UUID.randomUUID()
+        val participantId = UUID.randomUUID().toString()
+        val request = CreateExpenseRequest(
+            expenseId = UUID.randomUUID(),
+            description = "Bounded category",
+            category = "x".repeat(33),
+            amount = MoneyDto("EUR", "100"),
+            payers = listOf(PayerDto(participantId, MoneyDto("EUR", "100"))),
+            allocation = AllocationInputDto(
+                "EXACT",
+                listOf(AllocationItemDto(participantId, "100"))
+            )
+        )
+
+        val error = assertThrows<ApplicationException> {
+            controller.createExpense(groupId, "category-boundary", request, Principal { "test-user" })
+        }
+
+        assertEquals(ErrorCode.ERR_02, error.errorCode)
+    }
+
     /** Verifies blank categories use the documented neutral category on create and update. */
     @Test
     fun `defaults blank category to other for create and update`() {

@@ -75,6 +75,9 @@ class SettlementServiceTest {
         assertThrows(IllegalArgumentException::class.java) {
             service.record(groupId, UUID.randomUUID(), participant, other, 1, "EUR", "actor-1", null)
         }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.record(groupId, UUID.randomUUID(), participant, other, 1, "EUR", null, "settlement-key-0001")
+        }
     }
 
     @Test

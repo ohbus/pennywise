@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **71
-production methods with missed branches** containing **132 missed branches**,
+As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **70
+production methods with missed branches** containing **130 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 0 operations without a literal E2E reference and 49 without a literal
@@ -179,7 +179,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **71 methods with at least one missed
+The regenerated JaCoCo XML contains **70 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -196,7 +196,7 @@ classified as generated/structural with reviewer approval.
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **109** | **43** | **71** |
+| **Total** | **109** | **43** | **70** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -218,9 +218,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**71**), and the sum of
+equal the `Methods with missed branches` total above (**70**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**132**). Each object carries the module, production class, source file,
+(**130**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, assignment basis, and the row's machine-readable
 `acceptance_criteria`. The record count and branch-count
@@ -255,16 +255,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 71-record JSON discovery inventory and
+The repository currently has the exact 70-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 71 records. The A07 and E02 residual tables are the first exact method-level
+all 70 records. The A07 and E02 residual tables are the first exact method-level
 ledger slices; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (71 records):
+Current provisional assignment workload (70 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -284,7 +284,7 @@ Current provisional assignment workload (71 records):
 | QA10-C02 | 0 | Pure calculator/validator slice is branch-complete; property tests remain required. |
 | QA10-C03 | 8 | Recurring schedules, claims, locking, and occurrence failures; creation now covers explicit IDs and valid day-of-month boundaries, both payer/allocation membership rejection directions, update mapping covers both one-sided custom specifications, and expense-store generation failure now proves schedule pause plus `generation_error` notification. One compiler-generated range branch and remaining date/membership/build fallbacks remain retained for review. |
 | QA10-C04 | 9 | Group, invite, membership, expiry, and revocation behavior; archived claims, removed/bound/ordinary-member placeholder targets, removed-placeholder invitation rejection, repository-missing claim outcomes, and normal/targeted invitation claim races now have explicit assertions. |
-| QA10-C05 | 3 | Settlement, balance, reconciliation, and rollback behavior; duplicate participant/currency balance aggregation, authenticated/blank-subject authorization, and the controller's optional suggestion-engine fallback are covered, while three engine mappings and independent corruption/rollback evidence remain open. |
+| QA10-C05 | 2 | Settlement, balance, reconciliation, and rollback behavior; duplicate participant/currency balance aggregation, authenticated/blank-subject authorization, the controller's optional suggestion-engine fallback, and the service boundary rejecting an idempotency key without an authenticated actor are covered, while two engine mappings and independent corruption/rollback evidence remain open. |
 | QA10-C06 | 3 | Sync revisions, cursors, ordering, and membership boundaries; durable empty-snapshot and malformed/blank/numeric cursor validation are covered, while cursor ownership, causal, and deployed evidence remain open. |
 | QA10-D01 | 4 | Auth-email broker parsing, retry, deduplication, and delivery; key configuration, envelope framing, numeric metadata validation, explicit-null/empty-body rejection, and invalid expiry rejection are covered, while listener acknowledgement, broker retry/redelivery, and deployed Mailpit evidence remain open. |
 | QA10-D02 | 2 | Notification event transaction and acknowledgement coupling; envelope conversion fallbacks and channelless auth-email rejection are covered, while broker acknowledgement/retry and transaction-coupling evidence remain open. |
@@ -657,7 +657,7 @@ The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
 The `qa10-coverage-inventory` job now downloads those module artifacts,
 restores them into their repository paths, and publishes one aggregate JSON
 inventory. It is intentionally discovery-only while the baseline contains
-71 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
+70 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
 single matrix shard is insufficient evidence for a repository-wide
 no-missed-branch claim.
 

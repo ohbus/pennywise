@@ -182,6 +182,14 @@ class JpaOutboxStoreTest @Autowired constructor(
         assertTrue(store.snapshot().isEmpty())
     }
 
+    /** Verifies acknowledging an unknown event is a durable no-op rather than a failure. */
+    @Test
+    fun `acknowledge ignores an unknown event`() {
+        store.acknowledge(UUID.randomUUID())
+
+        assertTrue(store.snapshot().isEmpty())
+    }
+
     /**
      * Creates a test [OutboxMessage] fixture with the specified parameters.
      */

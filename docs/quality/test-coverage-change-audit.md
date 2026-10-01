@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `eb5b6f5`, whose subject indicates
+(`master`) through the latest audited coverage commit `efbc4b9`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -357,6 +357,13 @@ the inventory from 106 methods / 193 missed branches to 104 methods / 191 missed
 branches. Upstream mutation authorization, replay, and deployed GraphQL evidence
 remain open.
 
+`efbc4b9` adds BFF configuration tests proving enabled RabbitMQ fanout is
+accepted and disabled fanout fails startup validation in deployed/local-OIDC
+profiles. It changes no production implementation or contract; the regenerated
+report reduces the inventory from 104 methods / 191 missed branches to 103
+methods / 189 missed branches. Broker connectivity and deployed profile evidence
+remain open.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -366,7 +373,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 104 methods with 191 missed branches. The remaining
+regenerated reports contain 103 methods with 189 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E
@@ -573,3 +580,5 @@ the existing production or contract behavior.
 `eb5b6f5` adds the matching empty `createExpense` and `recordRepayment`
 invalidation assertions; the current total is 104 method records / 191 missed
 branches.
+`efbc4b9` adds required BFF messaging startup validation coverage; the current
+total is 103 method records / 189 missed branches.

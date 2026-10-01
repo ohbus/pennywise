@@ -203,6 +203,32 @@ def run_e2e_tests() -> int:
     assert bob_id, "Bob accountId should not be empty"
     print(f"  ✓ Bob profile verified via GraphQL me: accountId={bob_id}, displayName={bob_me['displayName']}")
 
+    batch_status, batch_profiles = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/profiles/batch",
+        method="POST",
+        body={"accountIds": [alice_id, alice_id, str(uuid.uuid4())]},
+        bearer=user_a,
+    )
+    assert batch_status == 200, (
+        f"Accounts getProfilesBatch failed for the owning subject: "
+        f"HTTP {batch_status} ({batch_profiles})"
+    )
+    assert [profile["accountId"] for profile in batch_profiles] == [alice_id], (
+        "Accounts getProfilesBatch must deduplicate IDs and omit unknown profiles"
+    )
+
+    foreign_batch_status, foreign_batch = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/profiles/batch",
+        method="POST",
+        body={"accountIds": [alice_id]},
+        bearer=user_b,
+    )
+    assert foreign_batch_status == 403, (
+        f"Accounts getProfilesBatch must reject a foreign subject: "
+        f"HTTP {foreign_batch_status} ({foreign_batch})"
+    )
+    print("  ✓ Accounts getProfilesBatch enforces deduplication, omission, and isolation")
+
     malformed_group_status, malformed_group_response = request_json(
         f"{BASE_URL}/graphql",
         method="POST",

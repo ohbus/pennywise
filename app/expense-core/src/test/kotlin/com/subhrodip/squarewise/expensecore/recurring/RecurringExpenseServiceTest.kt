@@ -8,6 +8,7 @@ import com.subhrodip.squarewise.expensecore.groups.persistence.store.JpaGroupSto
 import com.subhrodip.squarewise.expensecore.messaging.outbox.persistence.OutboxStore
 import com.subhrodip.squarewise.expensecore.recurring.api.CreateRecurringScheduleRequest
 import com.subhrodip.squarewise.expensecore.recurring.api.UpdateRecurringScheduleRequest
+import com.subhrodip.squarewise.expensecore.recurring.domain.RecurringExpenseOccurrence
 import com.subhrodip.squarewise.expensecore.recurring.domain.RecurrenceFrequency
 import com.subhrodip.squarewise.expensecore.recurring.persistence.RecurringExpenseOccurrenceRepository
 import com.subhrodip.squarewise.expensecore.recurring.persistence.RecurringExpenseScheduleRepository
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
 import java.nio.charset.StandardCharsets
+import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
@@ -652,6 +654,46 @@ class RecurringExpenseServiceTest @Autowired constructor(
 
         val occurrences = service.getOccurrences(schedule.scheduleId)
         assertEquals(1, occurrences.size)
+    }
+
+    /** Verifies the schedule/date uniqueness guard independently of occurrence-ID equality. */
+    @Test
+    fun `idempotency skips an existing occurrence with a different occurrence id`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Legacy occurrence", "HOUSEHOLD", "EUR"))
+        val startDate = LocalDate.of(2026, 9, 1)
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Internet",
+                amountMinor = 2000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate
+            )
+        )
+
+        service.processDueOccurrences(asOfDate = startDate)
+        val generated = occurrenceRepository.findByScheduleIdAndOccurrenceDate(schedule.scheduleId, startDate)!!
+        val generatedExpenseId = generated.expenseId
+        occurrenceRepository.delete(generated)
+        occurrenceRepository.flush()
+        occurrenceRepository.saveAndFlush(
+            RecurringExpenseOccurrence(
+                occurrenceId = UUID.randomUUID(),
+                scheduleId = schedule.scheduleId,
+                occurrenceDate = startDate,
+                expenseId = generatedExpenseId,
+                createdAt = Instant.parse("2026-09-01T00:00:00Z")
+            )
+        )
+
+        schedule.nextOccurrenceDate = startDate
+        scheduleRepository.saveAndFlush(schedule)
+
+        assertEquals(0, service.processDueOccurrences(asOfDate = startDate))
+        assertEquals(1, service.getOccurrences(schedule.scheduleId).size)
+        assertNotNull(generatedExpenseId)
+        assertNotNull(expenseStore.findById(generatedExpenseId!!))
     }
 
     @Test

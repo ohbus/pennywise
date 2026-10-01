@@ -9,7 +9,7 @@ test/quality documentation.
 ## Current baseline
 
 As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **52
-production methods with missed branches** containing **104 missed branches**,
+production methods with missed branches** containing **103 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 0 operations without a literal E2E reference and 49 without a literal
@@ -251,7 +251,7 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 The JSON array is the machine-readable assignment set. Its record count must
 equal the `Methods with missed branches` total above (**52**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**104**). Each object carries the module, production class, source file,
+(**103**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, assignment basis, and the row's machine-readable
 `acceptance_criteria`. The record count and branch-count
@@ -313,7 +313,7 @@ Current provisional assignment workload (52 records):
 | QA10-B04 | 2 | Browser origin, CSRF, cookie, and session filters; malformed configured origins now have an explicit fail-fast construction assertion. |
 | QA10-C01 | 12 | Expense persistence, transaction, ledger, idempotency, and outbox behavior; allocation-preview malformed/negative totals, overlong category validation, multi-group lookup selection, missing/repeated delete boundaries, update lookup/participant replacement, durable duplicate-event append preservation, broker-message value semantics, in-memory/durable outbox retry/state validation, publisher delivery-policy validation, durable claim eligibility, cleanup retention/batch boundaries, blank/unknown-category defaulting, explicit-null category handling, single and simultaneous payer/allocation-count bounds, custom recurring request mapping, missing/foreign schedule lookup boundaries, recurring membership authorization, amount parsing, JPA search cursor/category fallback, persistent adapter limit bounds, filtered CSV export mapping, unknown-event acknowledgement no-op behavior, and group-controller rollback/fanout acceptance faults now have persistence or transport assertions. The recurring controller now covers both one-sided request mappings; null-principal forwarding mappings remain invariant-governed because membership validation rejects the request first. |
 | QA10-C02 | 0 | Pure calculator/validator slice is branch-complete; property tests remain required. |
-| QA10-C03 | 7 | Recurring schedules, claims, locking, and occurrence failures; creation now covers explicit IDs and valid day-of-month boundaries, monthly fallback to the source day, both payer/allocation membership rejection directions, service update mapping covers both one-sided custom specifications, and expense-store generation failure now proves schedule pause plus `generation_error` notification. One compiler-generated range branch and remaining date/membership/build fallbacks remain retained for review. |
+| QA10-C03 | 7 | Recurring schedules, claims, locking, and occurrence failures; creation now covers explicit IDs and valid day-of-month boundaries, monthly fallback to the source day, both payer/allocation membership rejection directions, service update mapping covers both one-sided custom specifications, occurrence-date deduplication is proven independently of occurrence-ID equality, and expense-store generation failure now proves schedule pause plus `generation_error` notification. One compiler-generated range branch and remaining date/membership/build fallbacks remain retained for review. |
 | QA10-C04 | 9 | Group, invite, membership, expiry, and revocation behavior; archived claims, removed/bound/ordinary-member placeholder targets, already-bound placeholder invitation rejection, removed-placeholder invitation rejection, repository-missing claim outcomes, and normal/targeted invitation claim races now have explicit assertions. |
 | QA10-C05 | 1 | Settlement, balance, reconciliation, and rollback behavior; duplicate participant/currency balance aggregation, authenticated/blank-subject authorization, the controller's optional suggestion-engine fallback, the active-group missing-settlement reversal boundary, and the service boundary rejecting an idempotency key without an authenticated actor are covered, while one engine mapping and independent corruption/rollback evidence remain open. |
 | QA10-C06 | 3 | Sync revisions, cursors, ordering, and membership boundaries; durable empty-snapshot and malformed/blank/numeric cursor validation are covered, while cursor ownership, causal, and deployed evidence remain open. |

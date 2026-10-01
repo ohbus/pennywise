@@ -132,6 +132,20 @@ class GroupControllerTest {
             .andExpect(jsonPath("$.name").value("Second Group"))
     }
 
+    /** Verifies a member-owned group list still returns not-found for an unknown requested ID. */
+    @Test
+    fun `returns 404 when a member requests an unknown group`() {
+        mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Known Group\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}")
+        ).andExpect(status().isCreated)
+
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupById(UUID.randomUUID().toString())).with(alice)
+        ).andExpect(status().isNotFound)
+    }
+
     /**
      * Verifies that group membership lists are visible to members and return 404 for non-members.
      */

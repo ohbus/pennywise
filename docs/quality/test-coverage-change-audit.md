@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `7887a41`, whose subject indicates
+(`master`) through the latest audited coverage commit `7bac0e2`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -713,3 +713,10 @@ called. The focused suite and full Java 25 wrapper run passed; the regenerated
 inventory falls from 84 records / 152 missed branches to 82 records / 150 missed
 branches. Deployed failure-path and signed-persona group E2E evidence remain
 open.
+
+`7bac0e2` adds RSA key-provider tests for blank PEM configuration values and an
+explicitly blank rotation `kid`. These cases exercise fail-closed configuration
+and key-identity boundaries without changing production logic or contracts. The
+focused Accounts suite and full Java 25 wrapper run passed; the regenerated
+inventory falls from 81 records / 148 missed branches to 79 records / 145
+missed branches. Deployed key rotation and discovery evidence remain open.

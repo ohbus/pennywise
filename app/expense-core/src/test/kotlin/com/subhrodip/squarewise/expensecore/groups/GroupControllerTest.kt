@@ -110,6 +110,28 @@ class GroupControllerTest {
             .andExpect(status().isNotFound)
     }
 
+    /** Verifies lookup scans past an earlier group before returning the requested member-owned group. */
+    @Test
+    fun `gets the matching group when the member owns multiple groups`() {
+        mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"First Group\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}")
+        ).andExpect(status().isCreated)
+
+        val second = mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Second Group\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}")
+        ).andExpect(status().isCreated).andReturn().response.contentAsString
+        val secondGroupId = Regex("\\\"groupId\\\":\\\"([^\\\"]+)\\\"").find(second)!!.groupValues[1]
+
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupById(secondGroupId)).with(alice))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.groupId").value(secondGroupId))
+            .andExpect(jsonPath("$.name").value("Second Group"))
+    }
+
     /**
      * Verifies that group membership lists are visible to members and return 404 for non-members.
      */

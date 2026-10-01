@@ -966,6 +966,72 @@ def run_e2e_tests() -> int:
     )
     print("  ✓ Expense Core getChanges accepts the snapshot continuation cursor")
 
+    schedule_payload = {
+        "description": "E2E future recurring schedule",
+        "amount": {"currency": "EUR", "minor": "90000"},
+        "frequency": "MONTHLY",
+        "dayOfMonth": 1,
+        "startDate": "2099-01-01",
+    }
+    schedule_status, schedule = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/schedules",
+        method="POST",
+        body=schedule_payload,
+        bearer=user_a,
+    )
+    assert schedule_status == 201, (
+        f"Expense Core createRecurringSchedule failed: HTTP {schedule_status} ({schedule})"
+    )
+    schedule_id = schedule.get("scheduleId")
+    assert schedule_id and schedule.get("paused") is False
+
+    schedules_status, schedules = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/schedules",
+        bearer=user_a,
+    )
+    assert schedules_status == 200 and any(
+        item.get("scheduleId") == schedule_id for item in schedules
+    ), "Expense Core listRecurringSchedules must include the created schedule"
+
+    schedule_get_status, schedule_get = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/schedules/{schedule_id}",
+        bearer=user_a,
+    )
+    assert schedule_get_status == 200 and schedule_get.get("scheduleId") == schedule_id, (
+        f"Expense Core getRecurringSchedule failed: HTTP {schedule_get_status} ({schedule_get})"
+    )
+
+    pause_status, paused_schedule = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/schedules/{schedule_id}/pause",
+        method="POST",
+        bearer=user_a,
+    )
+    assert pause_status == 200 and paused_schedule.get("paused") is True, (
+        f"Expense Core pauseRecurringSchedule failed: HTTP {pause_status} ({paused_schedule})"
+    )
+
+    resume_status, resumed_schedule = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/schedules/{schedule_id}/resume",
+        method="POST",
+        bearer=user_a,
+    )
+    assert resume_status == 200 and resumed_schedule.get("paused") is False, (
+        f"Expense Core resumeRecurringSchedule failed: HTTP {resume_status} ({resumed_schedule})"
+    )
+
+    update_status, updated_schedule = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/schedules/{schedule_id}",
+        method="PUT",
+        body={**schedule_payload, "description": "Updated E2E future recurring schedule", "amount": {"currency": "EUR", "minor": "91000"}},
+        bearer=user_a,
+    )
+    assert update_status == 200 and updated_schedule.get("scheduleId") == schedule_id, (
+        f"Expense Core updateRecurringSchedule failed: HTTP {update_status} ({updated_schedule})"
+    )
+    assert updated_schedule.get("description") == "Updated E2E future recurring schedule"
+    assert updated_schedule.get("amount", {}).get("minor") == "91000"
+    print("  [ok] Expense Core recurring schedule create/list/get/pause/resume/update lifecycle works")
+
     deletion_status, deletion_response = request_json(
         f"{ACCOUNTS_URL}/accounts/v1/me/deletion-request",
         method="POST",

@@ -567,6 +567,23 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals(outboxCount, outboxRepository.count())
     }
 
+    /** Verifies an active ordinary member cannot be used as a placeholder invite target. */
+    @Test
+    fun `rejects invite targeting an ordinary active member`() {
+        val group = store.create("ordinary-target-owner", CreateGroupRequest("Invite targets", "TRIP", "EUR"))
+        val ordinaryMember = membershipRepository.findByGroupIdAndStatus(group.groupId, "ACTIVE").single()
+
+        val error = assertThrows<ApplicationException> {
+            store.invite(
+                group.groupId,
+                "ordinary-target-owner",
+                CreateInviteRequest(24, ordinaryMember.membershipId)
+            )
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+    }
+
     /** Verifies removing an unknown membership is rejected without changing the group revision or effects. */
     @Test
     fun `rejects removal of an unknown membership without mutation`() {

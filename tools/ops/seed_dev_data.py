@@ -19,9 +19,9 @@ import os
 import subprocess
 import sys
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 import uuid
 from dataclasses import dataclass
 from typing import Any, Final
@@ -109,13 +109,13 @@ def request_json(
     if body is not None:
         data = json.dumps(body).encode("utf-8")
 
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    req = Request(url, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as response:
+        with urlopen(req, timeout=timeout) as response:
             status = response.status
             content = response.read().decode("utf-8")
             return status, json.loads(content) if content else {}
-    except urllib.error.HTTPError as error:
+    except HTTPError as error:
         try:
             content = error.read().decode("utf-8")
             parsed = json.loads(content) if content else {}
@@ -145,12 +145,12 @@ def graphql_mutate(
 def acquire_keycloak_token(client_id: str, secret: str) -> str:
     """Acquire token from Keycloak using client credentials."""
     url = f"{KEYCLOAK_URL}/realms/squarewise/protocol/openid-connect/token"
-    payload = urllib.parse.urlencode({
+    payload = urlencode({
         "grant_type": "client_credentials",
         "client_id": client_id,
         "client_secret": secret,
     }).encode("utf-8")
-    req = urllib.request.Request(
+    req = Request(
         url,
         data=payload,
         headers={
@@ -158,7 +158,7 @@ def acquire_keycloak_token(client_id: str, secret: str) -> str:
             CONTENT_TYPE: "application/x-www-form-urlencoded",
         },
     )
-    with urllib.request.urlopen(req, timeout=10) as resp:
+    with urlopen(req, timeout=10) as resp:
         data = json.loads(resp.read().decode("utf-8"))
         token = data.get("access_token")
         if not isinstance(token, str):

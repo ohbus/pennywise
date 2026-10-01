@@ -21,8 +21,8 @@ import io
 import os
 import sys
 import time
-import urllib.error
-import urllib.request
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 import uuid
 from typing import Any, Tuple
 from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE
@@ -54,13 +54,13 @@ def request_json(
     if body is not None:
         data = json.dumps(body).encode("utf-8")
 
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    req = Request(url, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as response:
+        with urlopen(req, timeout=timeout) as response:
             status = response.status
             content = response.read().decode("utf-8")
             return status, json.loads(content) if content else {}
-    except urllib.error.HTTPError as error:
+    except HTTPError as error:
         try:
             content = error.read().decode("utf-8")
             parsed = json.loads(content) if content else {}

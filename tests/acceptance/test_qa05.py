@@ -1,6 +1,6 @@
 """Deterministic public-interface tests for QA-05 edge-case journeys."""
 
-import http.server
+from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 import json
 import threading
 import unittest
@@ -15,7 +15,7 @@ except ImportError:
     import qa05
 
 
-class EdgeCaseHandler(http.server.BaseHTTPRequestHandler):
+class EdgeCaseHandler(BaseHTTPRequestHandler):
     """Contract-shaped server used without application internals."""
 
     renames = 0
@@ -63,7 +63,7 @@ class Qa05Test(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         EdgeCaseHandler.renames = 0
-        cls.server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), EdgeCaseHandler)
+        cls.server = ThreadingHTTPServer(("127.0.0.1", 0), EdgeCaseHandler)
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
         cls.thread.start()
 

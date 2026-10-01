@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import json
 import os
-import urllib.error
-import urllib.request
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from typing import Any
 from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, CONTENT_TYPE, REQUIRED_WATERMARK, WRITER_WATERMARK
 
@@ -22,12 +22,12 @@ def request_json(url: str, token: str, method: str, body: dict[str, Any] | None 
     if watermark is not None:
         headers[REQUIRED_HEADER] = watermark
     payload = json.dumps(body).encode("utf-8") if body is not None else None
-    request = urllib.request.Request(url, data=payload, headers=headers, method=method)
+    request = Request(url, data=payload, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(request, timeout=15) as response:
+        with urlopen(request, timeout=15) as response:
             content = response.read().decode("utf-8")
             return response.status, dict(response.headers.items()), json.loads(content) if content else {}
-    except urllib.error.HTTPError as error:
+    except HTTPError as error:
         return error.code, dict(error.headers.items()), error.read().decode("utf-8")
 
 

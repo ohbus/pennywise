@@ -13,8 +13,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-import urllib.error
-import urllib.request
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from typing import Any
 from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE, IDEMPOTENCY_KEY
 
@@ -34,12 +34,12 @@ def request_json(
         req_headers[CONTENT_TYPE] = APPLICATION_JSON
         data = json.dumps(body).encode("utf-8")
 
-    req = urllib.request.Request(url, data=data, headers=req_headers, method=method)
+    req = Request(url, data=data, headers=req_headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urlopen(req, timeout=timeout) as resp:
             content = resp.read().decode("utf-8")
             return resp.status, json.loads(content) if content else {}
-    except urllib.error.HTTPError as error:
+    except HTTPError as error:
         try:
             content = error.read().decode("utf-8")
             return error.code, json.loads(content) if content else {}

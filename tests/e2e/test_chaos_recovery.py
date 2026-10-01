@@ -20,8 +20,8 @@ import subprocess
 import io
 import sys
 import time
-import urllib.error
-import urllib.request
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 import uuid
 from typing import Any
 from tests.http_constants import APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE
@@ -56,11 +56,11 @@ def request_json(url: str, method: str = "GET", body: Any = None,
         headers.update(extra_headers)
 
     data = json.dumps(body).encode("utf-8") if body is not None else None
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    req = Request(url, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urlopen(req, timeout=10) as resp:
             return resp.status, json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
+    except HTTPError as e:
         raw = e.read().decode("utf-8")
         try:
             return e.code, json.loads(raw)

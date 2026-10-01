@@ -8,8 +8,8 @@ import base64
 import os
 import io
 import sys
-import urllib.error
-import urllib.request
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 import uuid
 from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, CONTENT_TYPE, IDEMPOTENCY_KEY, TEXT_CSV
 
@@ -70,12 +70,12 @@ def request_json(url: str, method: str = "GET", body: object | None = None, toke
     if headers:
         request_headers.update(headers)
     data = json.dumps(body).encode() if body is not None else None
-    request = urllib.request.Request(url, data=data, headers=request_headers, method=method)
+    request = Request(url, data=data, headers=request_headers, method=method)
     try:
-        with urllib.request.urlopen(request, timeout=5) as response:
+        with urlopen(request, timeout=5) as response:
             raw = response.read()
             return response.status, json.loads(raw) if raw else {}
-    except urllib.error.HTTPError as error:
+    except HTTPError as error:
         raw = error.read()
         try:
             return error.code, json.loads(raw) if raw else {}

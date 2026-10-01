@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Run a small dependency-free HTTP load probe and emit JSON evidence."""
 from __future__ import annotations
-import argparse, json, statistics, threading, time, urllib.error, urllib.request
+import argparse, json, statistics, threading, time
+from urllib.error import URLError
+from urllib.request import urlopen
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -19,9 +21,9 @@ def main() -> int:
         while time.monotonic() - started < args.duration:
             began = time.monotonic()
             try:
-                with urllib.request.urlopen(args.url, timeout=5) as response:
+                with urlopen(args.url, timeout=5) as response:
                     status = str(response.status); response.read(1)
-            except (OSError, urllib.error.URLError) as error:
+            except (OSError, URLError) as error:
                 status = f"error:{type(error).__name__}"
             with lock:
                 latencies.append(time.monotonic() - began)

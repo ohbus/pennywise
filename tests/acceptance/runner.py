@@ -5,8 +5,8 @@ import json
 import os
 import subprocess
 import sys
-import urllib.error
-import urllib.request
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -42,9 +42,9 @@ def http_json(
     if headers:
         req_headers.update(headers)
 
-    req = urllib.request.Request(url, data=data, headers=req_headers, method=method)
+    req = Request(url, data=data, headers=req_headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as response:
+        with urlopen(req, timeout=timeout) as response:
             status = response.status
             raw = response.read().decode("utf-8")
             try:
@@ -52,7 +52,7 @@ def http_json(
             except Exception:
                 parsed = raw
             return status, parsed
-    except urllib.error.HTTPError as error:
+    except HTTPError as error:
         try:
             raw = error.read().decode("utf-8")
             try:
@@ -62,8 +62,8 @@ def http_json(
             return error.code, parsed
         finally:
             error.close()
-    except (urllib.error.URLError, TimeoutError, OSError, ConnectionRefusedError) as error:
-        reason = error.reason if isinstance(error, urllib.error.URLError) else error
+    except (URLError, TimeoutError, OSError, ConnectionRefusedError) as error:
+        reason = error.reason if isinstance(error, URLError) else error
         err_msg = str(reason)
         if "Connection refused" in err_msg or isinstance(reason, ConnectionRefusedError):
             err_msg = "Connection refused"
@@ -71,17 +71,17 @@ def http_json(
 
 
 def probe(url: str, timeout: float) -> tuple[str, str]:
-    request = urllib.request.Request(url, method="GET")
+    request = Request(url, method="GET")
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with urlopen(request, timeout=timeout) as response:
             return ("passed", f"HTTP {response.status}")
-    except urllib.error.HTTPError as error:
+    except HTTPError as error:
         try:
             return ("passed" if error.code < 500 else "failed", f"HTTP {error.code}")
         finally:
             error.close()
-    except (urllib.error.URLError, TimeoutError, OSError, ConnectionRefusedError) as error:
-        reason = error.reason if isinstance(error, urllib.error.URLError) else error
+    except (URLError, TimeoutError, OSError, ConnectionRefusedError) as error:
+        reason = error.reason if isinstance(error, URLError) else error
         err_msg = str(reason)
         if "Connection refused" in err_msg or isinstance(reason, ConnectionRefusedError):
             err_msg = "Connection refused"

@@ -14,6 +14,7 @@ import com.subhrodip.squarewise.notifications.preferences.persistence.Preference
 import com.subhrodip.squarewise.notifications.inbox.persistence.NotificationInboxEntity
 import com.subhrodip.squarewise.notifications.inbox.persistence.NotificationInboxRepository
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -116,6 +117,32 @@ class NotificationEventConsumerTest @Autowired constructor(
         } finally {
             executor.shutdownNow()
         }
+    }
+
+    @Test
+    fun `rejects invalid inbox fields before recording an event`() {
+        clearState()
+        val valid = event(
+            UUID.fromString("00000000-0000-7000-8000-000000000115"),
+            UUID.fromString("00000000-0000-7000-8000-000000000116")
+        )
+        val invalidEvents = listOf(
+            valid.copy(subject = ""),
+            valid.copy(subject = "s".repeat(201)),
+            valid.copy(eventType = ""),
+            valid.copy(eventType = "t".repeat(201)),
+            valid.copy(message = ""),
+            valid.copy(message = "m".repeat(2001))
+        )
+
+        invalidEvents.forEach { invalid ->
+            assertThrows(IllegalArgumentException::class.java) {
+                consumer.consume(invalid.copy(eventId = UUID.randomUUID(), notificationId = UUID.randomUUID()))
+            }
+        }
+
+        assertEquals(0, inboxItems.count())
+        assertEquals(0, processedEvents.count())
     }
 
     private fun clearState() {

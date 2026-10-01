@@ -74,7 +74,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 151 methods with 419 missed branches. The remaining
+regenerated reports contain 150 methods with 407 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E
@@ -116,6 +116,13 @@ schedules retain their explicit allocations and derive the first active member
 as payer. The fresh report reduced missed branches from 434 to 419 without
 deleting or weakening implementation logic. Worker concurrency, rollback,
 outbox, and deployed recurrence evidence remain open.
+
+The current QA10-D02 increment adds persistence-backed invalid-boundary tests
+for `TransactionalNotificationEventProcessor.toInboxEntity` through the public
+consumer. Blank and overlength subject, event-type, and message values are
+rejected before either durable inbox or processed-event state is written. The
+fresh report removed that method from the inventory and reduced missed branches
+from 419 to 407 without changing notification implementation logic or contracts.
 
 The audit-control increment makes closure requirements executable in the
 documentation tooling: every branch record must name its exact test and

@@ -136,6 +136,18 @@ class JpaAccountIdentityStoreTest @Autowired constructor(
         assertNull(identityStore.findByEmail("missing@example.com"))
     }
 
+    /** Verifies email updates reject an account without a durable identity before mutation. */
+    @Test
+    fun `rejects email update when account has no identity`() {
+        val accountId = UUID.randomUUID()
+
+        val error = org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException::class.java) {
+            identityStore.updateEmail(accountId, "missing@example.com", verified = true)
+        }
+
+        assertEquals("No identity found for account $accountId", error.message)
+    }
+
     @Test
     fun `returns empty email when durable identity has no email`() {
         val accountId = UUID.randomUUID()

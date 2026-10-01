@@ -66,9 +66,10 @@ the follow-up `qa10-coverage-inventory` job, which publishes one JSON inventory
 artifact. A single matrix shard cannot prove repository-wide coverage. The
 eventual blocking gate command is
 `uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format json --fail-on-gaps`.
-The current local discovery baseline is 220 missed-branch methods. This is a
-backlog signal, not a target to reduce by deleting implementation; hosted
-closure requires tests or reviewed structural classification for every record.
+The current local discovery baseline is 188 methods containing 733 missed
+branches. This is a backlog signal, not a target to reduce by deleting
+implementation; hosted closure requires tests or reviewed structural
+classification for every record.
 Every test run publishes a readable test summary directly to GitHub Actions job
 summaries (`test-summary/action@v2`) and uploads JUnit XML and HTML reports as
 job artifacts with `if: always()` retention.

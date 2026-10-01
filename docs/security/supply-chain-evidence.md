@@ -26,7 +26,7 @@ contain at least the expected number of declared dependencies.
 **Local evidence (2026-09-29):**
 ```
 ./gradlew cyclonedxBom: BUILD SUCCESSFUL (24 tasks)
-uv run python tools/ops/validate_sbom_baseline.py: SBOM dependency baseline validation passed
+uv run --frozen --no-build python tools/ops/validate_sbom_baseline.py: SBOM dependency baseline validation passed
 ```
 
 ### Secret and hygiene scanning
@@ -83,11 +83,11 @@ marked green:
 
 | Check | Command | Current status |
 |---|---|---|
-| Contract validation | `uv run python tools/contracts/validate.py` | ✅ 207 tasks, all links valid |
-| Public surface validation | `uv run python tools/contracts/validate_public_surface.py` | ✅ 45 REST, 9 GraphQL roots |
-| Security hygiene scan | `uv run python tools/ops/check_security_hygiene.py` | ✅ 1035 files clean |
-| Architecture boundary check | `uv run python tools/ops/check_architecture.py` | ✅ Passed |
-| SBOM baseline validation | `uv run python tools/ops/validate_sbom_baseline.py` | ✅ Passed |
+| Contract validation | `uv run --frozen --no-build python tools/contracts/validate.py` | ✅ 207 tasks, all links valid |
+| Public surface validation | `uv run --frozen --no-build python tools/contracts/validate_public_surface.py` | ✅ 45 REST, 9 GraphQL roots |
+| Security hygiene scan | `uv run --frozen --no-build python tools/ops/check_security_hygiene.py` | ✅ 1035 files clean |
+| Architecture boundary check | `uv run --frozen --no-build python tools/ops/check_architecture.py` | ✅ Passed |
+| SBOM baseline validation | `uv run --frozen --no-build python tools/ops/validate_sbom_baseline.py` | ✅ Passed |
 | Python type checking | `uv run --frozen --no-build mypy tests tools` | ✅ Passed |
 | Workflow lint | `make workflow-validate` | ✅ Passed |
 | JVM full test suite | `./gradlew test check jacocoTestReport bootJar --parallel` | ✅ Passed (73 tasks) |

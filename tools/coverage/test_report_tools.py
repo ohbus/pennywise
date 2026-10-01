@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
-import unittest
 from collections import Counter
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+import re
+import unittest
 
-from tools.coverage.report_branch_gaps import all_gaps, main as branch_report_main
-from tools.coverage.report_operation_test_gaps import inventory
+from tools.coverage.report_branch_gaps import (
+    all_gaps,
+    main as branch_report_main,
+    markdown as render_branch_gaps,
+)
+from tools.coverage.report_operation_test_gaps import inventory, references
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -58,6 +63,7 @@ class CoverageInventoryTest(unittest.TestCase):
             expected_counts,
             {row: actual_counts.get(row, 0) for row in expected_counts},
         )
+        self.assertEqual(733, sum(gap.missed_branches for gap in gaps))
 
     def test_operation_inventory_is_complete_and_assigned(self) -> None:
         operations = inventory(ROOT)
@@ -77,6 +83,14 @@ class CoverageInventoryTest(unittest.TestCase):
             sum(not item.has_bruno_signal for item in operations),
         )
 
+    def test_operation_references_do_not_accept_identifier_substrings(self) -> None:
+        sources = (
+            ("tests/e2e/unrelated.py", "groups = []\ngroupId = 'x'"),
+            ("tests/e2e/actual.py", "query = '{ group }'"),
+        )
+
+        self.assertEqual(("tests/e2e/actual.py",), references("group", sources))
+
     def test_branch_closure_gate_rejects_current_gaps(self) -> None:
         output = StringIO()
 
@@ -87,6 +101,25 @@ class CoverageInventoryTest(unittest.TestCase):
 
         self.assertEqual(1, result)
         self.assertIn('"qa_row"', output.getvalue())
+
+    def test_branch_markdown_is_an_exact_per_record_ledger(self) -> None:
+        gaps = all_gaps(ROOT)
+        rendered = render_branch_gaps(gaps)
+        rows = rendered.splitlines()
+
+        self.assertEqual(190, len(rows))
+        self.assertEqual(
+            "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report |",
+            rows[0],
+        )
+        self.assertEqual(
+            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- |",
+            rows[1],
+        )
+        self.assertEqual(
+            sum(gap.missed_branches for gap in gaps),
+            sum(int(row.split("|")[7].strip()) for row in rows[2:]),
+        )
 
     def test_audit_documents_every_acceptance_row(self) -> None:
         audit = (ROOT / "docs/quality/test-coverage-gap-audit.md").read_text(
@@ -104,6 +137,149 @@ class CoverageInventoryTest(unittest.TestCase):
         for row in expected_rows:
             with self.subTest(row=row):
                 self.assertIn(row, audit)
+
+    def test_audit_requires_per_record_and_operation_evidence(self) -> None:
+        audit = (ROOT / "docs/quality/test-coverage-gap-audit.md").read_text(
+            encoding="utf-8"
+        )
+
+        for requirement in (
+            "### Per-record closure contract",
+            "test file and test name",
+            "exact JaCoCo mapping",
+            "| Authentication |",
+            "| Authorization |",
+            "| Durable state |",
+            "| Asynchronous state |",
+            "| Replay and concurrency |",
+            "| Isolation and redaction |",
+            "### Operation-specific E2E acceptance matrix",
+            "### Current per-record ledger status",
+            "does **not** yet have closure evidence for",
+            "Passwordless authentication",
+            "Expense financial/search",
+            "Notifications: `getPreferences`",
+            "### Reviewed structural branch candidates",
+            "The private `ProfileController.mapErrorCode` record is intentionally **not**",
+            "do not simplify the terminal guard",
+        ):
+            with self.subTest(requirement=requirement):
+                self.assertIn(requirement, audit)
+
+    def test_audit_has_complete_acceptance_cells_for_unit_and_e2e_rows(self) -> None:
+        audit = (ROOT / "docs/quality/test-coverage-gap-audit.md").read_text(
+            encoding="utf-8"
+        )
+        unit_rows = re.findall(
+            r"(?m)^\| (QA10-(?:A0[1-8]|B0[1-4]|C0[1-6]|D0[1-4]|E0[1-5]))"
+            r" \| ([^|]+) \| ([^|]+) \| ([^|]+) \|$",
+            audit,
+        )
+        self.assertEqual(27, len(unit_rows))
+        for row, target, missing, acceptance in unit_rows:
+            with self.subTest(row=row):
+                self.assertTrue(target.strip())
+                self.assertTrue(missing.strip())
+                self.assertTrue(acceptance.strip())
+
+        e2e_section = audit.split("## Missing deployed E2E and environment tests", 1)[1]
+        e2e_rows = re.findall(
+            r"(?m)^\| (QA10-E2E0[1-7]) \| ([^|]+) \| ([^|]+) \|$",
+            e2e_section,
+        )
+        self.assertEqual(7, len(e2e_rows))
+        for row, destination, acceptance in e2e_rows:
+            with self.subTest(row=row):
+                self.assertTrue(destination.strip())
+                self.assertTrue(acceptance.strip())
+
+    def test_audit_names_each_current_a07_method_target(self) -> None:
+        audit = (ROOT / "docs/quality/test-coverage-gap-audit.md").read_text(
+            encoding="utf-8"
+        )
+        targets = (
+            "OneTimeCredentialIssuer.kt:49",
+            "AesGcmCredentialEnvelopeProtector.kt:38",
+            "AccountIdentityStore.kt:70",
+            "JpaAccountIdentityStore.kt:33",
+            "JpaAccountIdentityStore.kt:54",
+            "JpaAccountIdentityStore.kt:74",
+            "JpaAccountIdentityStore.kt:104",
+            "JpaAccountIdentityStore.kt:145",
+            "DefaultRsaKeyProvider.kt:62",
+            "DefaultRsaKeyProvider.kt:73",
+            "LoginStartService.kt:40",
+            "LoginVerificationService.kt:60",
+            "AsymmetricJwtTokenProvider.kt:28",
+            "SessionExpiry.kt:14",
+            "SessionPolicy.kt:82",
+            "TokenSessionService.kt:116",
+            "TokenSessionService.kt:209",
+            "JpaDeletionRequestStore.kt:46",
+            "JpaDeletionRequestStore.kt:87",
+            "JpaDeletionRequestStore.kt:101",
+        )
+        for target in targets:
+            with self.subTest(target=target):
+                self.assertIn(target, audit)
+
+    def test_audit_lists_every_current_gap_row_count_and_missing_e2e_operation(self) -> None:
+        audit = (ROOT / "docs/quality/test-coverage-gap-audit.md").read_text(
+            encoding="utf-8"
+        )
+        gaps = all_gaps(ROOT)
+        row_counts = Counter(gap.qa_row for gap in gaps)
+        for row, count in row_counts.items():
+            with self.subTest(row=row):
+                self.assertIn(f"| {row} | {count} |", audit)
+
+        operations = inventory(ROOT)
+        missing_e2e = [item.operation for item in operations if not item.has_e2e_signal]
+        self.assertEqual(41, len(missing_e2e))
+        matrix = audit.split("### Operation-specific E2E acceptance matrix", 1)[1].split(
+            "The GraphQL roots currently have literal E2E references", 1
+        )[0]
+        for operation in (item.operation for item in operations):
+            with self.subTest(operation=operation):
+                self.assertRegex(
+                    matrix,
+                    rf"(?<![A-Za-z0-9_])`{re.escape(operation)}`(?![A-Za-z0-9_])",
+                )
+
+    def test_ci_documentation_uses_current_branch_baseline(self) -> None:
+        ci = (ROOT / "docs/operations/ci.md").read_text(encoding="utf-8")
+
+        self.assertIn("188 methods containing 733 missed", ci)
+        self.assertNotIn("220 missed-branch methods", ci)
+
+    def test_ci_python_tooling_is_locked_and_build_hooks_are_disabled(self) -> None:
+        workflow = (ROOT / ".github/workflows/_reusable-ci.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e",
+            workflow,
+        )
+        for line in workflow.splitlines():
+            if "uv sync" in line or "uv run" in line:
+                self.assertIn("--frozen", line)
+                self.assertIn("--no-build", line)
+
+    def test_change_audit_reaches_current_branch_tip(self) -> None:
+        audit = (ROOT / "docs/quality/test-coverage-change-audit.md").read_text(
+            encoding="utf-8"
+        )
+
+        for marker in (
+            "through the current branch tip `9b2fa85`",
+            "`2110ffd` is the explicit restoration/audit commit",
+            "`3b3a3da` changes only `libs/security/build.gradle.kts`",
+            "`cff7f76`\nchanges CI/Makefile Python execution",
+            "`9b2fa85`",
+            "with no uncommitted\nproduction implementation or contract-file change",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, audit)
 
 
 if __name__ == "__main__":

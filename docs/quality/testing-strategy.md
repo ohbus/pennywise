@@ -7,7 +7,7 @@ QA-07's contract-driven public-interface matrix is maintained in
 [`public-interface-coverage.md`](public-interface-coverage.md). It is the
 required cross-layer checklist for every REST method/path pair, GraphQL field,
 and WebSocket subscription lifecycle. Contract parsing, controller tests, and
-mocked gateway tests are not interchangeable with live integration evidence;
+mocked gateway tests are not interchangeable with live integration evidence.
 
 The repository-wide implementation-to-test gap register is
 [`test-coverage-gap-audit.md`](test-coverage-gap-audit.md). It is the source
@@ -23,7 +23,20 @@ to improve JaCoCo results. A behavior change requires an observed defect or
 explicit requirement, a focused regression test, and documented justification.
 The corrective history for the current branch is recorded in
 [`test-coverage-change-audit.md`](test-coverage-change-audit.md).
-reports must identify the highest evidence level actually executed.
+Reports must identify the highest evidence level actually executed.
+
+For QA-10 closure, the gap audit's per-record contract is mandatory: every
+remaining JaCoCo method record must name its exact test, invariant, evidence
+layer, and side-effect assertion. Every public operation must also account for
+authentication, authorization, input/failure behavior, durable state,
+asynchronous state, replay/concurrency, isolation, and redaction. A source
+reference or line-coverage increase is discovery evidence only; it is not a
+substitute for the required test layer. The current QA-10 discovery baseline
+contains 188 branch-gap method records and 733 missed branches, while the
+operation inventory contains 54 operations. Forty-one operations currently
+have no literal E2E source signal. These are tracked acceptance work, not
+permission to delete implementation branches or infer closure from a shared
+journey.
 
 For the practical test layout, commands, environment prerequisites, CI gates,
 coverage dimensions, and contribution workflow, see the

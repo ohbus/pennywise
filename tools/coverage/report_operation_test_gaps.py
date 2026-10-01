@@ -58,9 +58,17 @@ def text_files(directory: Path, root: Path) -> list[tuple[str, str]]:
 
 
 def references(operation: str, sources: Iterable[tuple[str, str]]) -> tuple[str, ...]:
-    """Return source paths containing the exact operation token."""
+    """Return source paths containing the operation as a standalone identifier.
 
-    return tuple(path for path, text in sources if operation in text)
+    A substring search is too permissive for short operation names: for example,
+    ``group`` would incorrectly match ``groups`` and ``groupId``.  Such false
+    positives hide missing E2E evidence, so the inventory uses identifier
+    boundaries while retaining support for operation names embedded in quoted
+    GraphQL/REST request text.
+    """
+
+    pattern = re.compile(rf"(?<![A-Za-z0-9_]){re.escape(operation)}(?![A-Za-z0-9_])")
+    return tuple(path for path, text in sources if pattern.search(text) is not None)
 
 
 def rest_operations(root: Path) -> list[OperationEvidence]:

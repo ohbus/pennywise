@@ -562,12 +562,12 @@ The next audit should retain exact command output and artifacts for:
 
 ```text
 ./gradlew.bat test check jacocoTestReport bootJar --parallel --no-daemon
-uv run python tools/contracts/validate.py
-uv run python tools/contracts/validate_public_surface.py
-uv run mypy tests tools
-uv run python tools/ops/check_security_hygiene.py
-uv run python tools/ops/check_architecture.py
-uv run python tools/ops/validate_sbom_baseline.py
+uv run --frozen --no-build python tools/contracts/validate.py
+uv run --frozen --no-build python tools/contracts/validate_public_surface.py
+uv run --frozen --no-build mypy tests tools
+uv run --frozen --no-build python tools/ops/check_security_hygiene.py
+uv run --frozen --no-build python tools/ops/check_architecture.py
+uv run --frozen --no-build python tools/ops/validate_sbom_baseline.py
 ./gradlew.bat cyclonedxBom --no-daemon
 ```
 

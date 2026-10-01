@@ -13,6 +13,15 @@ class RecurrencePolicyTest {
     fun `clamps monthly schedule at month end`() {
         assertEquals(LocalDate.of(2024, 2, 29), policy.nextAfter(LocalDate.of(2024, 1, 31), RecurrenceSchedule("s", RecurrenceFrequency.MONTHLY, 31)))
     }
+
+    @Test
+    fun `monthly schedule without a configured day preserves the source day`() {
+        assertEquals(
+            LocalDate.of(2026, 10, 17),
+            policy.nextAfter(LocalDate.of(2026, 9, 17), RecurrenceSchedule("s", RecurrenceFrequency.MONTHLY))
+        )
+    }
+
     @Test
     fun `advances weekly occurrence`() {
         assertEquals(LocalDate.of(2026, 9, 24), policy.nextAfter(LocalDate.of(2026, 9, 17), RecurrenceSchedule("s", RecurrenceFrequency.WEEKLY)))

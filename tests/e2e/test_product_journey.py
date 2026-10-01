@@ -823,6 +823,30 @@ def run_e2e_tests() -> int:
     assert rest_expense_status == 201, (
         f"REST settlement fixture expense failed: HTTP {rest_expense_status} ({rest_expense})"
     )
+    update_status, updated_rest_expense = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/expenses/{rest_expense_id}",
+        method="PUT",
+        body={
+            "version": 1,
+            "description": "Updated REST settlement fixture",
+            "amount": {"currency": "EUR", "minor": "1000"},
+            "payers": [{"participantId": alice_id, "amount": {"currency": "EUR", "minor": "1000"}}],
+            "allocation": {
+                "mode": "EQUAL",
+                "items": [
+                    {"participantId": alice_id, "value": "1"},
+                    {"participantId": bob_id, "value": "1"},
+                ],
+            },
+        },
+        bearer=user_a,
+    )
+    assert update_status == 200, (
+        f"Expense Core updateExpense failed: HTTP {update_status} ({updated_rest_expense})"
+    )
+    assert updated_rest_expense.get("expenseId") == rest_expense_id
+    assert updated_rest_expense.get("version") == 2
+
     settlement_status, rest_settlement = request_json(
         f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/settlements",
         method="POST",
@@ -855,7 +879,17 @@ def run_e2e_tests() -> int:
     )
     assert reversed_settlement.get("id") == settlement_id
     assert reversed_settlement.get("status") == "REVERSED"
+
+    delete_status, delete_response = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/expenses/{rest_expense_id}?version=2",
+        method="DELETE",
+        bearer=user_a,
+    )
+    assert delete_status == 204, (
+        f"Expense Core deleteExpense failed: HTTP {delete_status} ({delete_response})"
+    )
     print("  [ok] Expense Core recordSettlement and reverseSettlement preserve settlement identity")
+    print("  [ok] Expense Core updateExpense and deleteExpense preserve optimistic versioning")
 
     # 10. Verify Reconciled Balances via REST
     print("\n[Step 9] Verifying balances via REST /balances endpoint...")

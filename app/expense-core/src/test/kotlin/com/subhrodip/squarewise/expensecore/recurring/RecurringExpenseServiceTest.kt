@@ -178,6 +178,76 @@ class RecurringExpenseServiceTest @Autowired constructor(
         assertEquals(LocalDate.of(2026, 12, 31), updated.endDate)
     }
 
+    /** Verifies update-time one-sided custom specifications preserve the derived side. */
+    @Test
+    fun `updates schedules with allocation-only and payer-only specifications`() {
+        val group = groupStore.create("alice", CreateGroupRequest("One-sided updates", "HOUSEHOLD", "EUR"))
+        val invite = groupStore.invite(group.groupId, "alice", CreateInviteRequest(24))
+        groupStore.claim(invite.token, "bob")
+        val aliceId = UUID.nameUUIDFromBytes("alice".toByteArray(StandardCharsets.UTF_8))
+        val bobId = UUID.nameUUIDFromBytes("bob".toByteArray(StandardCharsets.UTF_8))
+        val startDate = LocalDate.of(2026, 9, 1)
+
+        val allocationOnly = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Allocation-only original",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate
+            )
+        )
+        service.updateSchedule(
+            group.groupId,
+            allocationOnly.scheduleId,
+            UpdateRecurringScheduleRequest(
+                description = "Allocation-only updated",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate,
+                allocations = listOf(ExpenseAllocation(bobId, 6000))
+            )
+        )
+
+        val payerOnly = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Payer-only original",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate
+            )
+        )
+        service.updateSchedule(
+            group.groupId,
+            payerOnly.scheduleId,
+            UpdateRecurringScheduleRequest(
+                description = "Payer-only updated",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate,
+                payers = listOf(ExpensePayer(aliceId, 6000))
+            )
+        )
+
+        assertEquals(2, service.processDueOccurrences(asOfDate = startDate))
+        val allocationOnlyExpense = expenseStore.findById(
+            service.getOccurrences(allocationOnly.scheduleId).single().expenseId!!
+        )
+        val payerOnlyExpense = expenseStore.findById(
+            service.getOccurrences(payerOnly.scheduleId).single().expenseId!!
+        )
+
+        assertEquals(listOf(ExpenseAllocation(bobId, 6000)), allocationOnlyExpense?.allocations)
+        assertEquals(6000, allocationOnlyExpense?.payers?.single()?.amountMinor)
+        assertEquals(listOf(ExpensePayer(aliceId, 6000)), payerOnlyExpense?.payers)
+        assertEquals(2, payerOnlyExpense?.allocations?.size)
+    }
+
     @Test
     fun `pauses and resumes schedule`() {
         val group = groupStore.create("alice", CreateGroupRequest("Cabin", "TRIP", "EUR"))

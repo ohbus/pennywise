@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `dc68c73`, whose subject indicates
+(`master`) through the latest audited coverage commit `b0e51f7`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -697,3 +697,11 @@ case also proves the persisted session is not mutated. The focused Accounts
 suite and full Java 25 wrapper run passed; the regenerated inventory falls from
 85 records / 154 missed branches to 84 records / 152 missed branches. Replay
 concurrency and deployed passwordless-session evidence remain open.
+
+`b0e51f7` adds MockMvc coverage for the Expense Core group-controller acceptance
+faults: rollback on group update and fanout failure on member listing. The tests
+assert the stable conflict and bad-gateway problem codes before the store is
+called. The focused suite and full Java 25 wrapper run passed; the regenerated
+inventory falls from 84 records / 152 missed branches to 82 records / 150 missed
+branches. Deployed failure-path and signed-persona group E2E evidence remain
+open.

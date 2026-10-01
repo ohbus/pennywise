@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `dce224a`, whose subject indicates
+(`master`) through the latest audited coverage commit `bcb5c8a`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -343,6 +343,13 @@ inventory from 108 methods / 196 missed branches to 107 methods / 194 missed
 branches. Upstream authorization, watermark propagation, and deployed GraphQL
 evidence remain open.
 
+`bcb5c8a` adds GraphQL controller coverage for an empty `updateGroup` gateway
+response, asserting no fabricated invalidation is published. It changes no
+production implementation or contract; the regenerated report reduces the
+inventory from 107 methods / 194 missed branches to 106 methods / 193 missed
+branches. Upstream mutation authorization, replay, and deployed GraphQL evidence
+remain open.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -352,7 +359,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 107 methods with 194 missed branches. The remaining
+regenerated reports contain 106 methods with 193 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E
@@ -552,4 +559,7 @@ persistence boundary rather than being tested with invalid database state.
 `22a6be3` adds the malformed configured-origin construction assertion without
 changing the current 108-record / 196-missed-branch baseline.
 `dce224a` adds the blank-bearer context assertion and reduces the current total
-to 107 method records / 194 missed branches.
+to 106 method records / 193 missed branches after the empty update-response
+increment in `bcb5c8a`.
+`bcb5c8a` adds the empty `updateGroup` invalidation assertion without changing
+the existing production or contract behavior.

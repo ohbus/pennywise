@@ -105,6 +105,16 @@ class JpaSynchronizationStoreTest @Autowired constructor(
         assertEquals(2L, g1r2)
     }
 
+    /** Verifies an empty durable snapshot has no continuation cursor or remaining changes. */
+    @Test
+    fun `empty group snapshot has no cursor and no remaining changes`() {
+        val snapshot = store.snapshot(UUID.randomUUID().toString(), null, 10)
+
+        assertTrue(snapshot.changes.isEmpty())
+        assertFalse(snapshot.hasMore)
+        assertNull(snapshot.nextCursor)
+    }
+
     /** Verifies blank identifiers and out-of-range page limits fail before persistence access. */
     @Test
     fun `rejects blank identifiers and invalid page limits`() {

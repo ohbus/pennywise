@@ -338,7 +338,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 60-method inventory is a discovery baseline, not closure evidence. QA-10
+The 57-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 

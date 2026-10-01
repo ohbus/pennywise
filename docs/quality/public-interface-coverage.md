@@ -93,7 +93,7 @@ check when the matrix requires one.
 | --- | --- | --- | --- |
 | Gradle service tests | Controller, service, persistence | Validation, authorization, not-found, conflict, money/allocation invariants, pagination, persistence, audit, sync, outbox, notification deduplication | Mocked or in-process dependencies do not prove deployed wiring |
 | BFF GraphQL HTTP transport tests | `/graphql` HTTP | Query/mutation success, malformed JSON transport, malformed input, invalid fields, upstream validation/auth/timeout/malformed failures, error redaction | Does not prove WebSocket framing or live upstream availability |
-| Bruno collection | Live REST and GraphQL HTTP | Contract-shaped success flows, persistence-visible sequencing, allocation, recurrence, settlement, sync, notification inbox/preferences, structured negative responses | The collection inventories all 41 REST operations and every current HTTP request has a direct assertion; dimension-specific negative cases remain in dedicated E2E suites |
+| Bruno collection | Live REST and GraphQL HTTP | Contract-shaped success flows, persistence-visible sequencing, allocation, recurrence, settlement, sync, notification inbox/preferences, structured negative responses | The collection contains 50 requests with 71 assertion-backed checks; the contract inventory contains 45 REST operations and 9 GraphQL roots, so 49 operations currently have no Bruno request signal. Dimension-specific negative cases remain in dedicated E2E suites. |
 | `tests/e2e/test_rest_edge_cases.py` | Live REST | Authentication, malformed IDs, boundary validation, missing resources, idempotent replay, tampered replay conflict | Does not cover every endpoint’s full authorization matrix |
 | `test_product_journey.py` | Live cross-service REST | Group/expense/settlement journey, balances, outbox-to-inbox delivery, offline replay | Production scale and deployment failure domains are not represented |
 | `test_offline_resilience.py` | Live REST sync | Queue/replay, duplicate suppression, idempotency conflict, cursor recovery | Client implementation is simulated |
@@ -117,8 +117,10 @@ production evidence. CI runs contract validation, formatting, all Gradle checks,
 acceptance tests, and—when the E2E input is enabled—the complete local-stack
 integration suites.
 
-The latest local `make e2e-all` execution passed all four suites. This confirms
-the listed local live-integration/E2E dimensions while leaving production-scale
+The prior local `make e2e-all` execution passed all four suites. This confirms
+the listed local live-integration/E2E dimensions for that recorded revision;
+the current stack must be rerun after every acceptance-fixture or contract
+change. Production-scale
 capacity, multi-region ordering, restore rehearsal, security scanning, and
 deployment rollback as environment-dependent evidence.
 

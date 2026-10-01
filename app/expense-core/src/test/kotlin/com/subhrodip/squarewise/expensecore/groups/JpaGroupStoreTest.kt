@@ -371,6 +371,35 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals("invitation.revoked", audit.action)
     }
 
+    /** Verifies expiry, idempotent same-subject replay, and competing-subject rejection for invitations. */
+    @Test
+    fun `rejects expired and already claimed invitations without extra membership effects`() {
+        val group = store.create("claim-owner", CreateGroupRequest("Claims", "TRIP", "EUR"))
+        val expired = store.invite(group.groupId, "claim-owner", CreateInviteRequest(0))
+
+        val expiredError = assertThrows<ApplicationException> {
+            store.claim(expired.token, "expired-member")
+        }
+        assertEquals(ErrorCode.ERR_06, expiredError.errorCode)
+        assertEquals(1, store.listMembers(group.groupId, "claim-owner").size)
+
+        val invite = store.invite(group.groupId, "claim-owner", CreateInviteRequest(24))
+        store.claim(invite.token, "claimed-member")
+        val revisionAfterClaim = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        val sameSubjectInvite = store.invite(group.groupId, "claim-owner", CreateInviteRequest(24))
+        val sameSubjectReplay = store.claim(sameSubjectInvite.token, "claimed-member")
+        assertEquals(group.groupId, sameSubjectReplay.groupId)
+        assertEquals(revisionAfterClaim, groupRepository.findById(group.groupId).orElseThrow().revision)
+
+        val competingSubjectError = assertThrows<ApplicationException> {
+            store.claim(invite.token, "competing-member")
+        }
+        assertEquals(ErrorCode.ERR_06, competingSubjectError.errorCode)
+        assertEquals(2, store.listMembers(group.groupId, "claim-owner").size)
+        assertTrue(store.list("competing-member").isEmpty())
+    }
+
     /**
      * Verifies archived groups reject member-facing mutations while preserving the archive state
      * and the already-recorded mutation effects.

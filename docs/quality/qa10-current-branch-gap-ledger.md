@@ -7,7 +7,7 @@ a reviewed structural/invariant classification with exact source evidence. Regen
 after every test increment; the locked tooling tests assert that the record count and
 missed-branch total stay synchronized with the audit and CI documentation.
 
-Current baseline: **55 production methods with missed branches / 108 missed branches**.
+Current baseline: **54 production methods with missed branches / 107 missed branches**.
 
 ## Exact current records
 
@@ -32,7 +32,6 @@ Current baseline: **55 production methods with missed branches / 108 missed bran
 | `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/expenses/api/ExpenseController` | `ExpenseController.kt` | `createExpense` | 61 | 1 | 17 | expense persistence and transport | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
 | `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/expenses/api/ExpenseController` | `ExpenseController.kt` | `updateExpense` | 142 | 1 | 17 | expense persistence and transport | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
 | `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/expenses/api/ExpenseController` | `ExpenseController.kt` | `deleteExpense` | 224 | 1 | 1 | expense persistence and transport | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
-| `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/expenses/api/ExpenseController` | `ExpenseController.kt` | `validateRequestBounds` | 288 | 1 | 7 | expense persistence and transport | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
 | `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/expenses/persistence/store/JpaExpenseStore` | `JpaExpenseStore.kt` | `create` | 61 | 3 | 19 | expense persistence and transport | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
 | `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/expenses/persistence/store/JpaExpenseStore` | `JpaExpenseStore.kt` | `validateFinancialParticipants` | 222 | 1 | 7 | expense persistence and transport | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
 | `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/expenses/persistence/store/JpaExpenseStore` | `JpaExpenseStore.kt` | `update` | 250 | 1 | 29 | expense persistence and transport | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |

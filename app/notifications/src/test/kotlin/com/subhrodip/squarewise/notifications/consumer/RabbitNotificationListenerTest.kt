@@ -213,6 +213,30 @@ class RabbitNotificationListenerTest {
         listener.onMessage(message, null)
     }
 
+    @Test
+    fun `accepts a valid delivery when the broker channel is unavailable`() {
+        val consumer = NotificationConsumer { NotificationConsumptionOutcome.APPLIED }
+        val listener = RabbitNotificationListener(consumer, envelopeParser)
+        val message = createMessage(
+            """{"eventId":"00000000-0000-7000-8000-000000000215","eventType":"expense.created","schemaVersion":1,"aggregateId":"00000000-0000-7000-8000-000000000216","groupId":"00000000-0000-7000-8000-000000000217","groupRevision":1,"occurredAt":"2026-09-17T20:00:00Z","payload":{}}""",
+            80L
+        )
+
+        listener.onMessage(message, null)
+    }
+
+    @Test
+    fun `swallows transient failure when the broker channel is unavailable`() {
+        val consumer = NotificationConsumer { throw IllegalStateException("database unavailable") }
+        val listener = RabbitNotificationListener(consumer, envelopeParser)
+        val message = createMessage(
+            """{"eventId":"00000000-0000-0000-0000-000000000215","eventType":"expense.created","schemaVersion":1,"aggregateId":"00000000-0000-0000-0000-000000000216","groupId":"00000000-0000-0000-0000-000000000217","groupRevision":1,"occurredAt":"2026-09-17T20:00:00Z","payload":{}}""",
+            81L
+        )
+
+        listener.onMessage(message, null)
+    }
+
     private fun createMessage(content: String, deliveryTag: Long, redelivered: Boolean = false): Message {
         val props = MessageProperties().apply {
             this.deliveryTag = deliveryTag

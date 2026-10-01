@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `d9beab3`, whose subject indicates
+(`master`) through the latest audited coverage commit `7d1fbce`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -324,7 +324,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 109 methods with 200 missed branches. The remaining
+regenerated reports contain 109 methods with 199 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E
@@ -508,3 +508,8 @@ contract; the full regenerated report reduces the inventory from 111 methods /
 205 missed branches to 109 methods / 200 missed branches. Export authorization,
 formula safety, durable search isolation, and deployed financial E2E evidence
 remain open.
+`7d1fbce` adds integration coverage for blank and unknown refresh-token rotation,
+asserting both fail closed before a session lookup or token issuance. It changes
+no production implementation or contract; the full regenerated report preserves
+109 method records and reduces missed branches from 200 to 199. Real concurrent
+rotation and deployed OIDC/session evidence remain open.

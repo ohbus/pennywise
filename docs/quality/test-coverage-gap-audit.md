@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **56
-production methods with missed branches** containing **110 missed branches**,
+As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **55
+production methods with missed branches** containing **109 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 0 operations without a literal E2E reference and 49 without a literal
@@ -185,7 +185,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **56 methods with at least one missed
+The regenerated JaCoCo XML contains **55 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -202,7 +202,7 @@ classified as generated/structural with reviewer approval.
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **109** | **34** | **56** |
+| **Total** | **108** | **34** | **55** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -224,9 +224,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**56**), and the sum of
+equal the `Methods with missed branches` total above (**55**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**110**). Each object carries the module, production class, source file,
+(**109**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, assignment basis, and the row's machine-readable
 `acceptance_criteria`. The record count and branch-count
@@ -261,16 +261,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 56-record JSON discovery inventory and
+The repository currently has the exact 55-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 56 records. The A07 and E02 residual tables are the first exact method-level
+all 55 records. The A07 and E02 residual tables are the first exact method-level
 ledger slices; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (56 records):
+Current provisional assignment workload (55 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -290,7 +290,7 @@ Current provisional assignment workload (56 records):
 | QA10-C02 | 0 | Pure calculator/validator slice is branch-complete; property tests remain required. |
 | QA10-C03 | 7 | Recurring schedules, claims, locking, and occurrence failures; creation now covers explicit IDs and valid day-of-month boundaries, monthly fallback to the source day, both payer/allocation membership rejection directions, update mapping covers both one-sided custom specifications, and expense-store generation failure now proves schedule pause plus `generation_error` notification. One compiler-generated range branch and remaining date/membership/build fallbacks remain retained for review. |
 | QA10-C04 | 9 | Group, invite, membership, expiry, and revocation behavior; archived claims, removed/bound/ordinary-member placeholder targets, removed-placeholder invitation rejection, repository-missing claim outcomes, and normal/targeted invitation claim races now have explicit assertions. |
-| QA10-C05 | 2 | Settlement, balance, reconciliation, and rollback behavior; duplicate participant/currency balance aggregation, authenticated/blank-subject authorization, the controller's optional suggestion-engine fallback, and the service boundary rejecting an idempotency key without an authenticated actor are covered, while two engine mappings and independent corruption/rollback evidence remain open. |
+| QA10-C05 | 1 | Settlement, balance, reconciliation, and rollback behavior; duplicate participant/currency balance aggregation, authenticated/blank-subject authorization, the controller's optional suggestion-engine fallback, the active-group missing-settlement reversal boundary, and the service boundary rejecting an idempotency key without an authenticated actor are covered, while one engine mapping and independent corruption/rollback evidence remain open. |
 | QA10-C06 | 3 | Sync revisions, cursors, ordering, and membership boundaries; durable empty-snapshot and malformed/blank/numeric cursor validation are covered, while cursor ownership, causal, and deployed evidence remain open. |
 | QA10-D01 | 0 | Auth-email broker parsing, retry, deduplication, and delivery; key configuration, envelope framing, numeric metadata validation, explicit-null/empty-body rejection, null parser-result rejection, invalid-Base64 rejection, and channel-safe ack/reject/requeue boundaries are covered locally, while real broker retry/redelivery and deployed Mailpit evidence remain open. |
 | QA10-D02 | 0 | Notification event transaction and acknowledgement coupling, envelope conversion, recipient fallback, and channelless delivery rejection are branch-covered locally; broker acknowledgement/retry and transaction-coupling evidence remain environment-owned. |
@@ -338,7 +338,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 56-method inventory is a discovery baseline, not closure evidence. QA-10
+The 55-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 

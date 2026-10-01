@@ -741,7 +741,7 @@ The latest coverage increments add nullable GraphQL `StringValue` literal tests
 for `MoneyMinor` and `DateTime` and an invalid-existing-watermark test for the
 BFF gateway; they do not remove or simplify implementation logic. The
 authoritative inventory consequently moves from 59 methods / 113 missed
-branches to 56 methods / 110 missed branches. The related commits are
+branches to 55 methods / 109 missed branches. The related commits are
 `817a5b2` and `820a899`; the remaining residuals
 are still open evidence work, not permission to delete implementation branches
 or weaken public behavior.

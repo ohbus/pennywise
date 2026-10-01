@@ -68,6 +68,19 @@ class JpaSettlementStoreTest @Autowired constructor(
         assertEquals(ErrorCode.ERR_05, error.errorCode)
     }
 
+    /** Verifies an active group still returns not-found when the settlement row is absent. */
+    @Test
+    fun `rejects reversal of a missing settlement in an active group`() {
+        val groupId = UUID.randomUUID()
+        groupRepository.save(GroupEntity(groupId, "Active group", "HOUSEHOLD", "EUR"))
+
+        val error = assertThrows(ApplicationException::class.java) {
+            store.reverse(groupId, UUID.randomUUID(), "missing")
+        }
+
+        assertEquals(ErrorCode.ERR_05, error.errorCode)
+    }
+
     /** Verifies settlement replay compares every financial identity dimension before returning an existing row. */
     @Test
     fun `rejects conflicting settlement replays without additional postings`() {

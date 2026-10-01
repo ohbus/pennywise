@@ -646,3 +646,10 @@ test and full repository JaCoCo run passed; the deletion-store records are no
 longer present in the current 87-record inventory. The aggregate remains 163
 missed branches because other residual mappings remain open. No production
 logic or deletion contract changed.
+
+`7418acc` adds cleanup boundary tests for an empty expired-claim page and all
+non-positive retention/batch constructor guards. The focused Expense Core test
+and full repository JaCoCo run passed; the regenerated inventory falls from
+87 records / 163 missed branches to 86 records / 158 missed branches. Durable
+multi-worker cleanup and operational scheduling evidence remain open. No
+production implementation or idempotency contract changed.

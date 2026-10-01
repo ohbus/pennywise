@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `b84502b`, whose subject indicates
+(`master`) through the latest audited coverage commit `80c3f5d`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -322,6 +322,14 @@ reduces the inventory from 109 methods / 199 missed branches to 108 methods /
 197 missed branches. Outbox broker delivery, transaction rollback, and deployed
 messaging evidence remain open.
 
+`80c3f5d` adds persistence coverage for an email update targeting an unmapped
+account, asserting the existing fail-closed exception before any mutation. It
+changes no production implementation or contract; the full regenerated report
+preserves 108 method records and reduces missed branches from 197 to 196. The
+identity table's profile foreign key makes profile-missing identity rows
+unreachable through the real persistence boundary; concurrent identity races and
+deployed identity evidence remain open.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -331,7 +339,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 108 methods with 197 missed branches. The remaining
+regenerated reports contain 108 methods with 196 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E
@@ -522,5 +530,9 @@ no production implementation or contract; the full regenerated report preserves
 rotation and deployed OIDC/session evidence remain open.
 `b84502b` adds JPA coverage for duplicate durable outbox append, preserving the
 first payload while rejecting replacement. The current total is 108 method
-records and 197 missed branches; broker delivery and transaction rollback
+records and 196 missed branches; broker delivery and transaction rollback
 evidence remain open.
+`80c3f5d` adds JPA coverage for the unmapped-account email-update rejection. The
+profile foreign-key invariant prevents meaningful orphan-identity fixtures, so
+those residual branches remain explicitly classified as unreachable at the
+persistence boundary rather than being tested with invalid database state.

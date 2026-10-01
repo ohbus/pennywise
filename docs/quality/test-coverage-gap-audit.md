@@ -9,7 +9,7 @@ test/quality documentation.
 ## Current baseline
 
 As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **108
-production methods with missed branches** containing **197 missed branches**,
+production methods with missed branches** containing **196 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
@@ -213,7 +213,7 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 The JSON array is the machine-readable assignment set. Its record count must
 equal the `Methods with missed branches` total above (**108**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**197**). Each object carries the module, production class, source file,
+(**196**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, and assignment basis. The record count and branch-count
 sum are both regression-tested so a changed JaCoCo baseline cannot silently
@@ -266,7 +266,7 @@ Current provisional assignment workload (108 records):
 | QA10-A04 | 0 | Explicit external identity-provider path; constructor and unsupported-delegation behavior are locally covered, deployed provider exchange remains required. |
 | QA10-A05 | 1 | Local and non-local OIDC decoder selection, discovery, and algorithm wiring; the original decoder terminal branch is retained and needs explicit test evidence. |
 | QA10-A06 | 1 | Profile controller and JPA persistence authorization boundary; restored private mapper requires classification or direct evidence. |
-| QA10-A07 | 11 | Session, credential, identity, replay, and cleanup behavior; blank and unknown refresh-token rotation now fails closed before lookup, while concurrent database race and deployed session evidence remain open. |
+| QA10-A07 | 11 | Session, credential, identity, replay, and cleanup behavior; blank and unknown refresh-token rotation and unmapped-account email-update rejection now fail closed, while database-invariant profile branches, concurrent database race, and deployed session evidence remain open. |
 | QA10-A08 | 1 | Email canonicalization and malformed-input boundaries; restored explicit domain checks require direct boundary evidence. |
 | QA10-B01 | 12 | BFF upstream transport and gateway failure behavior. |
 | QA10-B02 | 12 | GraphQL resolver, error, scalar, and limit behavior; resolver classification and DateTime literal acceptance/rejection are covered, while two nullable-literal mapping residuals remain for structural review. |

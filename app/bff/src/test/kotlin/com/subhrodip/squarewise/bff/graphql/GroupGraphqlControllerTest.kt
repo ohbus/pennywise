@@ -237,6 +237,25 @@ class GroupGraphqlControllerTest {
         }
     }
 
+    /** Verifies an empty update response does not publish a fabricated invalidation. */
+    @Test
+    fun `updateGroup does not emit invalidation when gateway returns empty`() {
+        val groupId = UUID.randomUUID().toString()
+        `when`(gateway.getGroup(groupId, "alice"))
+            .thenReturn(Mono.just(BffGroup(groupId, "Trip", "TRIP", "1")))
+        `when`(gateway.updateGroup(groupId, "Renamed", "alice"))
+            .thenReturn(Mono.empty())
+
+        val events = mutableListOf<GroupInvalidation>()
+        val disposable = controller.groupChanged(groupId, principal).subscribe { events.add(it) }
+        try {
+            assertEquals(null, controller.updateGroup(groupId, "Renamed", principal).block())
+            assertTrue(events.isEmpty())
+        } finally {
+            disposable.dispose()
+        }
+    }
+
     @Test
     fun `groupChanged rejects a user at the subscription limit with rate limit code`() {
         val boundedFanout = LiveUpdateFanout(maxSubscriptionsPerUser = 1)

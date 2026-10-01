@@ -49,4 +49,47 @@ class JpaDeletionRequestStoreTest {
         verify(profileStore).requestDeletion(subject)
         verifyNoInteractions(authSessionRepository)
     }
+
+    /** Verifies cancellation and completion return null without creating missing requests. */
+    @Test
+    fun `cancel and complete return null for unknown subjects`() {
+        val cancelSubject = "oidc|missing-cancel-${UUID.randomUUID()}"
+        val completeSubject = "oidc|missing-complete-${UUID.randomUUID()}"
+        `when`(repository.findById(cancelSubject)).thenReturn(Optional.empty())
+        `when`(repository.findById(completeSubject)).thenReturn(Optional.empty())
+
+        assertEquals(null, store.cancel(cancelSubject))
+        assertEquals(null, store.complete(completeSubject))
+
+        verify(repository).findById(cancelSubject)
+        verify(repository).findById(completeSubject)
+        verifyNoInteractions(profileStore, profileRepository, authSessionRepository)
+    }
+
+    /** Verifies existing requests persist the exact terminal status transitions. */
+    @Test
+    fun `cancel and complete persist terminal statuses`() {
+        val cancelSubject = "oidc|cancel-${UUID.randomUUID()}"
+        val completeSubject = "oidc|complete-${UUID.randomUUID()}"
+        val cancelEntity = AccountDeletionRequestEntity(
+            subject = cancelSubject,
+            status = DeletionStatus.REQUESTED,
+            requestedAt = Instant.EPOCH
+        )
+        val completeEntity = AccountDeletionRequestEntity(
+            subject = completeSubject,
+            status = DeletionStatus.REQUESTED,
+            requestedAt = Instant.EPOCH
+        )
+        `when`(repository.findById(cancelSubject)).thenReturn(Optional.of(cancelEntity))
+        `when`(repository.findById(completeSubject)).thenReturn(Optional.of(completeEntity))
+        `when`(repository.save(cancelEntity)).thenReturn(cancelEntity)
+        `when`(repository.save(completeEntity)).thenReturn(completeEntity)
+
+        assertEquals(DeletionStatus.CANCELLED, store.cancel(cancelSubject)?.status)
+        assertEquals(DeletionStatus.COMPLETED, store.complete(completeSubject)?.status)
+
+        verify(repository).save(cancelEntity)
+        verify(repository).save(completeEntity)
+    }
 }

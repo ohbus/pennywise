@@ -112,6 +112,45 @@ class AuthEmailRabbitListenerTest {
         assertEquals(false, channel.rejectedRequeue)
     }
 
+    /** Verifies missing payload fields are permanent envelope failures. */
+    @Test
+    fun `rejects auth email envelopes with missing required fields`() {
+        listOf(
+            "eventId",
+            "recipient",
+            "template",
+            "encryptedCredential",
+            "expiresAt"
+        ).forEachIndexed { index, field ->
+            val malformed = when (field) {
+                "eventId" -> validEvent().replace("\"eventId\":\"evt-1\",", "")
+                else -> validEvent()
+                    .replace("\"$field\":\"${fieldValue(field)}\",", "")
+                    .replace("\"$field\":\"${fieldValue(field)}\"", "")
+            }
+            val channel = TestChannel()
+
+            listener.onMessage(message(malformed, 20L + index), channel)
+
+            assertEquals(20L + index, channel.rejectedTag)
+            assertEquals(false, channel.rejectedRequeue)
+        }
+    }
+
+    /** Verifies channel-optional delivery remains safe when no broker channel is supplied. */
+    @Test
+    fun `does not require a channel to process a valid delivery`() {
+        listener.onMessage(message(validEvent(), 26L), null)
+    }
+
+    private fun fieldValue(field: String): String = when (field) {
+        "recipient" -> "user@example.com"
+        "template" -> "LOGIN_CODE"
+        "encryptedCredential" -> "cipher"
+        "expiresAt" -> "2099-09-21T01:00:00Z"
+        else -> error("Unsupported test field: $field")
+    }
+
     private fun message(body: String, tag: Long, redelivered: Boolean = false): Message = Message(
         body.toByteArray(StandardCharsets.UTF_8),
         MessageProperties().apply {

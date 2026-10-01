@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the current branch tip `fa41e93`, whose subject indicates
+(`master`) through the current branch tip `5007283`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -116,6 +116,12 @@ remains explicitly open for review.
 corresponding CI documentation/progress entry. It does not alter production
 implementation, contracts, or coverage evidence.
 
+`5007283` adds public REST boundary tests for missing and blank settlement
+principal subjects. It changes no production implementation or contract; the
+regenerated report removes `SettlementController.ensureMembership` and reduces
+the inventory from 144 records / 331 missed branches to 143 records / 326
+missed branches.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -125,7 +131,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 144 methods with 331 missed branches. The remaining
+regenerated reports contain 143 methods with 326 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E

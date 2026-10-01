@@ -237,7 +237,7 @@ def run_e2e_tests() -> int:
     batch_status, batch_profiles = request_json(
         f"{ACCOUNTS_URL}/accounts/v1/profiles/batch",
         method="POST",
-        body={"accountIds": [alice_id, alice_id, str(uuid.uuid4())]},
+        body={"accountIds": [alice_id, alice_id]},
         bearer=user_a,
     )
     assert batch_status == 200, (
@@ -245,7 +245,22 @@ def run_e2e_tests() -> int:
         f"HTTP {batch_status} ({batch_profiles})"
     )
     assert [profile["accountId"] for profile in batch_profiles] == [alice_id], (
-        "Accounts getProfilesBatch must deduplicate IDs and omit unknown profiles"
+        "Accounts getProfilesBatch must deduplicate owner-only IDs"
+    )
+
+    workload_batch_status, workload_batch = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/profiles/batch",
+        method="POST",
+        body={"accountIds": [alice_id, alice_id, str(uuid.uuid4())]},
+        bearer=user_a,
+        extra_headers={"X-Squarewise-Workload-Role": "internal-service"},
+    )
+    assert workload_batch_status == 200, (
+        f"Accounts getProfilesBatch failed with workload authority: "
+        f"HTTP {workload_batch_status} ({workload_batch})"
+    )
+    assert [profile["accountId"] for profile in workload_batch] == [alice_id], (
+        "Accounts getProfilesBatch workload lookup must deduplicate IDs and omit unknown profiles"
     )
 
     foreign_batch_status, foreign_batch = request_json(

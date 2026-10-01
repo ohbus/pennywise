@@ -20,3 +20,9 @@ tests {
     expect(res.getBody()).to.be.an("array");
   });
 }
+
+script:post-response {
+  if (res.status === 200 && res.body.length > 0) {
+    bru.setVar("participantId1", res.body[0].membershipId);
+  }
+}

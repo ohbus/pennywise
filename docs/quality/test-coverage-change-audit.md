@@ -653,3 +653,11 @@ and full repository JaCoCo run passed; the regenerated inventory falls from
 87 records / 163 missed branches to 86 records / 158 missed branches. Durable
 multi-worker cleanup and operational scheduling evidence remain open. No
 production implementation or idempotency contract changed.
+
+`7377e46` adds the missing malformed-delivery case when
+`AuthEmailRabbitListener` has no broker channel. The listener remains
+non-throwing and performs no acknowledgement attempt; the focused listener
+test and full repository JaCoCo run passed. The inventory remains 86 records
+and falls from 158 to 157 missed branches. RabbitMQ acknowledgement/retry/DLQ
+and deployed Mailpit evidence remain open. No production implementation or
+contract changed.

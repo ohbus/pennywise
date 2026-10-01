@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the current branch tip `c4b8852`, whose subject indicates
+(`master`) through the current branch tip `69f2d27`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -19,7 +19,7 @@ The audit found no contract-file changes in the test/coverage/QA commit set.
 Most commits were test, tooling, or documentation-only. Four commits had
 production implementation edits:
 
-As a reproducible history check, the subject-matching audit selected **50
+As a reproducible history check, the subject-matching audit selected **59
 commits** from `master..HEAD` whose subjects contain `test`, `coverage`, `QA`,
 `JaCoCo`, or `E2E`. `git diff-tree --diff-filter=D` found **no file deletion**
 in that set, and the same commit set has **no changes under `contracts/`**.
@@ -51,7 +51,7 @@ to provide test-scope web/converter dependencies for decoder tests; it does not
 alter production implementation or runtime dependency behavior. `cff7f76`
 changes CI/Makefile Python execution to immutable, frozen, no-build tooling.
 
-The remaining post-`dfa25ae` commits are implementation-preserving tests or
+The remaining post-`dfa25ae` commits through the previous audit tip are implementation-preserving tests or
 documentation/tooling increments:
 
 `c133f69`, `da69b8f`, `7be34df`, `b73792c`, `9f283ef`, `56a41c5`, `e643cd5`,
@@ -59,6 +59,11 @@ documentation/tooling increments:
 `2be84c5`, `76becf4`, `c55e6b0`, `7acb986`, `0597559`, `cb73ac9`, `880fd3c`,
 `cf4533f`, `af67c75`, `f096886`, `abff7ab`, `9b2fa85`, `dbac7e7`,
 `8034208`, `bb35873`, `52f270c`, `6ef0803`, and `c4b8852`.
+
+Since that audit checkpoint, `73e111c` fixes a missing JDK exception import in
+a BFF test, and `69f2d27` adds persistence-backed recurring-expense tests plus
+the synchronized QA-10 baseline. Both preserve production behavior and public
+contracts; no implementation file was deleted in either commit.
 
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
@@ -69,7 +74,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 151 methods with 434 missed branches. The remaining
+regenerated reports contain 151 methods with 419 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E
@@ -103,6 +108,14 @@ The subsequent login-start increment adds `LoginStartServiceTest` for both
 delivery templates, generic credential-issuance failure, ordinary rate-limit
 denial, and rate-limit-store outage. It changes no production behavior; the
 focused test and JaCoCo effect remain unverified until Gradle 9.7.1 can run.
+
+The current QA10-C03 increment adds a real persistence-backed test for the two
+reachable one-sided recurring-expense specification paths. Payer-only schedules
+retain their explicit payer and receive equal allocations; allocation-only
+schedules retain their explicit allocations and derive the first active member
+as payer. The fresh report reduced missed branches from 434 to 419 without
+deleting or weakening implementation logic. Worker concurrency, rollback,
+outbox, and deployed recurrence evidence remain open.
 
 The audit-control increment makes closure requirements executable in the
 documentation tooling: every branch record must name its exact test and

@@ -168,8 +168,9 @@ def run_e2e_tests() -> int:
 
     # Query 'me' for Alice via Accounts API
     status_a, profile_a = bootstrap_profile(f"{ACCOUNTS_URL}/accounts/v1/me", user_a)
-    assert status_a == 200, f"Failed to get profile for Alice: HTTP {status_a} ({profile_a})"
+    assert status_a == 200, f"Accounts getMe failed for Alice: HTTP {status_a} ({profile_a})"
     alice_id = profile_a["accountId"]
+    assert alice_id, "Accounts getMe must return a non-empty accountId"
     print(f"  ✓ Alice profile created: accountId={alice_id}, displayName={profile_a['displayName']}")
 
     # Query 'me' for Bob via GraphQL BFF

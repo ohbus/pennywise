@@ -87,6 +87,7 @@ class OneTimeCredentialIssuerTest {
             remainingAttempts = 3,
         )
 
+        assertEquals(base, base)
         assertNotEquals(base, base.copy(plaintext = "different"))
         assertNotEquals(base, base.copy(digest = byteArrayOf(1, 2, 4)))
         assertNotEquals(base, base.copy(issuedAt = now.plusSeconds(1)))

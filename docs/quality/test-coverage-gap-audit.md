@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **123
-production methods with missed branches** containing **232 missed branches**,
+As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **118
+production methods with missed branches** containing **229 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
@@ -172,7 +172,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **123 methods with at least one missed
+The regenerated JaCoCo XML contains **118 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -211,9 +211,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**123**), and the sum of
+equal the `Methods with missed branches` total above (**118**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**232**). Each object carries the module, production class, source file,
+(**229**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, and assignment basis. The record count and branch-count
 sum are both regression-tested so a changed JaCoCo baseline cannot silently

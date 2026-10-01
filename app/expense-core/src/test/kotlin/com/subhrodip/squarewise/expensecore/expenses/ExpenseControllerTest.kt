@@ -509,6 +509,50 @@ class ExpenseControllerTest {
         }
     }
 
+    /** Verifies blank categories use the documented neutral category on create and update. */
+    @Test
+    fun `defaults blank category to other for create and update`() {
+        val groupId = UUID.randomUUID()
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID().toString()
+        val principal = Principal { "test-user" }
+        val allocation = AllocationInputDto(
+            "EXACT",
+            listOf(AllocationItemDto(participantId, "100"))
+        )
+        val payer = listOf(PayerDto(participantId, MoneyDto("EUR", "100")))
+
+        val created = controller.createExpense(
+            groupId,
+            "blank-category-create",
+            CreateExpenseRequest(
+                expenseId = expenseId,
+                description = "Created with blank category",
+                category = "   ",
+                amount = MoneyDto("EUR", "100"),
+                payers = payer,
+                allocation = allocation
+            ),
+            principal
+        )
+        assertEquals("other", created.category)
+
+        val updated = controller.updateExpense(
+            groupId,
+            expenseId,
+            UpdateExpenseRequest(
+                version = 1,
+                description = "Updated with blank category",
+                category = "   ",
+                amount = MoneyDto("EUR", "100"),
+                payers = payer,
+                allocation = allocation
+            ),
+            principal
+        )
+        assertEquals("other", updated.category)
+    }
+
     @Test
     fun `deletes expense successfully and removes it from listing`() {
         val groupId = UUID.randomUUID()

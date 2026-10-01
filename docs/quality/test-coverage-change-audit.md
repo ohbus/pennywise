@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the current branch tip `95390e8`, whose subject indicates
+(`master`) through the current branch tip `ce406b6`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -19,7 +19,7 @@ The audit found no contract-file changes in the test/coverage/QA commit set.
 Most commits were test, tooling, or documentation-only. Four commits had
 production implementation edits:
 
-As a reproducible history check, the subject-matching audit selected **70
+As a reproducible history check, the subject-matching audit selected **72
 commits** from `master..HEAD` whose subjects contain `test`, `coverage`, `QA`,
 `JaCoCo`, or `E2E`. `git diff-tree --diff-filter=D` found **no file deletion**
 in that set, and the same commit set has **no changes under `contracts/`**.
@@ -72,6 +72,8 @@ transport validation coverage for invalid expense-update financial inputs. All
 three are implementation-preserving tests; no production implementation or
 contract file changed. `95390e8` adds settlement replay and group-state
 coverage, including no-posting guarantees for rejected financial mutations.
+`ce406b6` adds create-side expense financial-input validation coverage; it also
+preserves the existing `ERR_02` contract and changes no production code.
 
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
@@ -82,7 +84,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 148 methods with 369 missed branches. The remaining
+regenerated reports contain 148 methods with 366 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E
@@ -157,6 +159,12 @@ payer amounts, payer-currency mismatch, payer-total mismatch, and invalid exact
 allocation before the expense store is called. The test preserves the existing
 `ERR_02` transport contract; the regenerated report reduces the repository total
 from 381 to 377 missed branches.
+
+The latest QA10-C01 controller increment mirrors the update validation matrix
+on `createExpense`: malformed/non-positive payer amounts, currency mismatch,
+sum mismatch, and invalid exact allocation are rejected before persistence.
+The regenerated report reduces the current total from 369 to 366 missed
+branches.
 
 The subsequent QA10-C01 invitation increment covers an expired invitation,
 same-subject claim idempotency through a second invitation, and a competing

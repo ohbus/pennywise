@@ -294,7 +294,7 @@ Current provisional assignment workload (60 records):
 | QA10-C06 | 3 | Sync revisions, cursors, ordering, and membership boundaries; durable empty-snapshot and malformed/blank/numeric cursor validation are covered, while cursor ownership, causal, and deployed evidence remain open. |
 | QA10-D01 | 0 | Auth-email broker parsing, retry, deduplication, and delivery; key configuration, envelope framing, numeric metadata validation, explicit-null/empty-body rejection, null parser-result rejection, invalid-Base64 rejection, and channel-safe ack/reject/requeue boundaries are covered locally, while real broker retry/redelivery and deployed Mailpit evidence remain open. |
 | QA10-D02 | 0 | Notification event transaction and acknowledgement coupling, envelope conversion, recipient fallback, and channelless delivery rejection are branch-covered locally; broker acknowledgement/retry and transaction-coupling evidence remain environment-owned. |
-| QA10-D03 | 1 | SMTP/Mailpit delivery and retry classification; `SimpleMailMessage` value/accessor/rendering behavior is fully unit-covered, while one dispatcher mapping branch and external Mailpit/SMTP failure evidence remain open. |
+| QA10-D03 | 1 | SMTP/Mailpit delivery and retry classification; `SimpleMailMessage` value/accessor/rendering behavior is fully unit-covered, while the compiler-generated dispatcher loop-exit branch is retained for structural classification and external Mailpit/SMTP failure evidence remains open. |
 | QA10-D04 | 0 | Local inbox/preferences persistence and controller branches are covered, including blank listing subjects and overlength event/message rejection before persistence; deployed subject-isolation and database-failure evidence remain open. |
 | QA10-E01 | 1 | Error mapping, framework failures, headers, and correlation cleanup; invalid-status defensive fallback is exercised, while valid catalog status arms remain governed by the enum invariant. |
 | QA10-E02 | 2 | Database routing, reader health, fallback, and operational lifecycle. |
@@ -323,6 +323,7 @@ does not delete code or create a coverage exclusion.
 | `app/accounts/.../SessionPolicy.kt:82`, `isExpired` | `SessionExpiry` enforces `idleExpiresAt <= absoluteExpiresAt`. If the first short-circuit operand (`now + skew >= idle`) is false, the absolute boundary is necessarily later and the second operand is also false; if the absolute boundary is reached, idle expiry has already made the first operand true. Existing tests cover both observable expiry boundaries and skew. | Retain the `SessionExpiry` ordering invariant and the idle, absolute, and skew tests; confirm the JaCoCo residual is the unreachable short-circuit path after regeneration. |
 | `app/accounts/.../JpaAccountIdentityStore.kt:54,74,104,145` | `account_identities.account_id` is a non-null foreign key to `account_profiles.account_id`, so the nullable-profile fallbacks in composite lookup, email lookup, enrollment, and email update cannot occur in a valid persisted state. The email lookup repository also requires a non-null matching email, so its `identity.email ?: email` fallback cannot be selected by that query. Existing JPA tests cover valid profile-backed lookup, nullable email mapping through composite lookup, enrollment replacement, and missing-identity rejection. | Retain the foreign-key migration and repository query constraints, plus the existing JPA tests. Do not weaken the schema or add test-only invalid rows; classify only the exact residual JaCoCo branches governed by these invariants after a full report regeneration. |
 | `app/accounts/.../LoginVerificationService.kt:60`, `verify` | `EmailAddress.parse` requires a non-empty local part, so `redeemed.canonicalEmail.substringBefore("@").ifBlank { "User" }` cannot select its fallback for a valid `LoginCredentialService` redemption. Existing tests cover invalid/replayed credentials, new enrollment, and existing-identity reuse. | Retain the email value-object invariant and the redemption/enrollment/reuse tests; classify only the generated `ifBlank` branch after full JaCoCo regeneration. |
+| `app/notifications/.../EmailDispatcher.kt:46`, `dispatch` | `maxAttempts` is normalized with `coerceAtLeast(1)`, and every reachable loop body path either returns a delivery outcome or continues to another attempt. The false `hasNext` branch and post-loop fallback are therefore defensive compiler mapping for an unreachable state; existing tests cover successful first/subsequent sends, exhausted transient retry, permanent/unknown failures, interruption, zero-attempt normalization, and disabled delivery. | Retain the `maxAttempts >= 1` invariant and the complete dispatcher outcome matrix; classify only the exact loop-exit mapping after each full JaCoCo regeneration. Do not remove the terminal fallback or weaken retry behavior to alter the metric. |
 
 The private `ProfileController.mapErrorCode` record is intentionally **not**
 listed here: it is currently unreferenced rather than structurally unreachable.
@@ -337,7 +338,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 135-method inventory is a discovery baseline, not closure evidence. QA-10
+The 60-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 
@@ -663,7 +664,7 @@ The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
 The `qa10-coverage-inventory` job now downloads those module artifacts,
 restores them into their repository paths, and publishes one aggregate JSON
 inventory. It is intentionally discovery-only while the baseline contains
-62 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
+60 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
 single matrix shard is insufficient evidence for a repository-wide
 no-missed-branch claim.
 

@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `bf15f07`, whose subject indicates
+(`master`) through the latest audited coverage commit `14eeb9c`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -608,6 +608,13 @@ repayment, and settlement-suggestion response mapping plus typed mutation failur
 propagation. No production implementation or contract changed. The current
 total is 99 method records / 178 missed branches; timeout, partial-response, and
 deployed gateway evidence remain open.
+
+`14eeb9c` adds causal-watermark boundary assertions for absent downstream
+values, preserving the current watermark or returning null when no value exists.
+No production implementation or contract changed. The JaCoCo inventory remains
+89 method records / 168 missed branches because the residual branch is a Kotlin
+short-circuit mapping candidate; the explicit causal-header acceptance behavior
+is now covered.
 
 `bf15f07` adds an HTTP-double slice exercising all nullable-bearer gateway
 operations and asserting that absent credentials produce no Authorization header.

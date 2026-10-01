@@ -74,6 +74,42 @@ class RecurringExpenseServiceTest @Autowired constructor(
     }
 
     @Test
+    fun `creates monthly schedule with explicit identifier and valid day of month`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Monthly bills", "HOUSEHOLD", "EUR"))
+        val scheduleId = UUID.randomUUID()
+
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                scheduleId = scheduleId,
+                description = "Rent",
+                amountMinor = 120000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.MONTHLY,
+                dayOfMonth = 31,
+                startDate = LocalDate.of(2026, 9, 1)
+            )
+        )
+
+        assertEquals(scheduleId, schedule.scheduleId)
+        assertEquals(31, schedule.dayOfMonth)
+        assertEquals(scheduleId, scheduleRepository.findById(scheduleId).orElseThrow().scheduleId)
+
+        val firstOfMonth = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Insurance",
+                amountMinor = 4500,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.MONTHLY,
+                dayOfMonth = 1,
+                startDate = LocalDate.of(2026, 9, 1)
+            )
+        )
+        assertEquals(1, firstOfMonth.dayOfMonth)
+    }
+
+    @Test
     fun `updates schedule properties successfully`() {
         val group = groupStore.create("alice", CreateGroupRequest("Apartment 4B", "HOUSEHOLD", "EUR"))
         val startDate = LocalDate.of(2026, 9, 1)
@@ -655,6 +691,9 @@ class RecurringExpenseServiceTest @Autowired constructor(
 
         assertThrows(IllegalArgumentException::class.java) {
             service.createSchedule(group.groupId, valid.copy(endDate = LocalDate.of(2026, 8, 31)))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.createSchedule(group.groupId, valid.copy(dayOfMonth = 32))
         }
         assertThrows(IllegalArgumentException::class.java) {
             service.createSchedule(group.groupId, valid.copy(payers = emptyList()))

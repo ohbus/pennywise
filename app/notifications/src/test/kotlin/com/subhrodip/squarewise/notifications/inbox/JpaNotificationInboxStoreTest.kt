@@ -128,4 +128,32 @@ class JpaNotificationInboxStoreTest @Autowired constructor(
         }
         assertEquals(0, inboxRepository.count())
     }
+
+    @Test
+    fun `rejects an overlength event type before persistence`() {
+        inboxRepository.deleteAll()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            store.append(
+                "alice",
+                InboxItem(UUID.randomUUID(), "e".repeat(201), "Message", Instant.EPOCH)
+            )
+        }
+
+        assertEquals(0, inboxRepository.count())
+    }
+
+    @Test
+    fun `rejects an overlength message before persistence`() {
+        inboxRepository.deleteAll()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            store.append(
+                "alice",
+                InboxItem(UUID.randomUUID(), "event", "m".repeat(2001), Instant.EPOCH)
+            )
+        }
+
+        assertEquals(0, inboxRepository.count())
+    }
 }

@@ -368,6 +368,26 @@ def run_e2e_tests() -> int:
     assert group_id, "Expected non-empty groupId"
     print(f"  ✓ Group created: id={group_id}, name='{group_name}'")
 
+    listed_groups_status, listed_groups = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups", bearer=user_a
+    )
+    assert listed_groups_status == 200, (
+        f"Expense Core listGroups failed: HTTP {listed_groups_status} ({listed_groups})"
+    )
+    assert any(group.get("groupId") == group_id for group in listed_groups), (
+        "Expense Core listGroups must include the created group"
+    )
+    group_status, group_response = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}", bearer=user_a
+    )
+    assert group_status == 200, (
+        f"Expense Core getGroup failed: HTTP {group_status} ({group_response})"
+    )
+    assert group_response.get("groupId") == group_id, (
+        "Expense Core getGroup must return the requested group"
+    )
+    print("  ✓ Expense Core listGroups and getGroup expose the owner-visible group")
+
     outsider_update_status, outsider_update_response = request_json(
         f"{BASE_URL}/graphql",
         method="POST",
@@ -474,7 +494,7 @@ def run_e2e_tests() -> int:
         body={"expiresInHours": 24},
         bearer=user_a
     )
-    assert status_inv == 201, f"Failed to create invite: {invite}"
+    assert status_inv == 201, f"Expense Core createInvite failed: {invite}"
     token = invite["token"]
     print(f"  ✓ Invite generated with token={token[:12]}...")
 
@@ -484,7 +504,7 @@ def run_e2e_tests() -> int:
         method="POST",
         bearer=user_b
     )
-    assert status_claim == 200, f"Bob failed to claim invite: {claim_res}"
+    assert status_claim == 200, f"Expense Core claimInvite failed for Bob: {claim_res}"
     print(f"  ✓ Bob claimed invite successfully: {claim_res.get('name')}")
 
     # Verify group members via Expense Core
@@ -492,7 +512,7 @@ def run_e2e_tests() -> int:
         f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/members",
         bearer=user_a
     )
-    assert status_members == 200, f"Failed to list members: {members}"
+    assert status_members == 200, f"Expense Core listGroupMembers failed: {members}"
     alice_sub = extract_jwt_subject(user_a)
     bob_sub = extract_jwt_subject(user_b)
     alice_membership_id = resolve_membership_id(members, alice_sub, profile_a.get("displayName"), profile_a.get("accountId"))
@@ -628,6 +648,20 @@ def run_e2e_tests() -> int:
     assert sugg["amount"]["minor"] == "5000"
     print(f"  ✓ Settlement suggestion verified: Bob pays Alice 50.00 EUR")
 
+    rest_suggestions_status, rest_suggestions = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/settlements/suggestions",
+        bearer=user_a,
+    )
+    assert rest_suggestions_status == 200, (
+        f"Expense Core getSettlementSuggestions failed: "
+        f"HTTP {rest_suggestions_status} ({rest_suggestions})"
+    )
+    assert any(
+        item.get("fromParticipantId") == bob_id and item.get("toParticipantId") == alice_id
+        for item in rest_suggestions
+    ), "Expense Core getSettlementSuggestions must expose Bob's outstanding payment"
+    print("  ✓ Expense Core getSettlementSuggestions matches the GraphQL projection")
+
     # 8. Record Repayment via GraphQL
     print("\n[Step 8] Recording repayment via GraphQL recordRepayment...")
     record_repayment_mutation = """
@@ -661,9 +695,9 @@ def run_e2e_tests() -> int:
         f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/balances",
         bearer=user_a
     )
-    assert status_bal == 200, f"Failed to get balances: {rest_balances}"
+    assert status_bal == 200, f"Expense Core getBalances failed: {rest_balances}"
     bal_items = rest_balances.get("balances", [])
-    print(f"  ✓ REST balances returned: {len(bal_items)} items")
+    print(f"  ✓ Expense Core getBalances returned: {len(bal_items)} items")
 
     # 10. Verify Outbox Dispatch & Notifications Inbox
     print("\n[Step 10] Verifying Outbox Relay & Notifications Inbox...")
@@ -710,7 +744,7 @@ def run_e2e_tests() -> int:
         f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/sync/snapshot",
         bearer=user_a
     )
-    assert status_snap == 200, f"Failed to get sync snapshot: {snapshot}"
+    assert status_snap == 200, f"Expense Core getSnapshot failed: {snapshot}"
     changes = snapshot.get("changes", [])
     assert len(changes) >= 1, "Expected at least one change record in sync snapshot"
     print(f"  ✓ Sync snapshot verified: {len(changes)} revisions tracked (latest revision={changes[-1]['revision']})")

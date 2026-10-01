@@ -423,6 +423,34 @@ class RecurringExpenseServiceTest @Autowired constructor(
         assertEquals("invalid_membership", notificationMsg?.payload?.get("reason"))
     }
 
+    /** Verifies a payer outside the group cannot authorize recurring expense generation. */
+    @Test
+    fun `pauses recurring schedule when a custom payer is not a group member`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Payer membership", "HOUSEHOLD", "EUR"))
+        val aliceId = UUID.nameUUIDFromBytes("alice".toByteArray(StandardCharsets.UTF_8))
+        val nonMemberId = UUID.randomUUID()
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Unauthorized payer",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = LocalDate.of(2026, 9, 1),
+                payers = listOf(ExpensePayer(nonMemberId, 6000)),
+                allocations = listOf(ExpenseAllocation(aliceId, 6000))
+            )
+        )
+
+        assertEquals(0, service.processDueOccurrences(asOfDate = schedule.startDate))
+        assertTrue(service.getSchedule(schedule.scheduleId)?.paused == true)
+        assertEquals(
+            "invalid_membership",
+            outboxStore.snapshot().single { it.aggregateId == schedule.scheduleId }.payload["reason"]
+        )
+        assertTrue(service.getOccurrences(schedule.scheduleId).isEmpty())
+    }
+
     @Test
     fun `does not process paused schedules`() {
         val group = groupStore.create("alice", CreateGroupRequest("Ski House", "HOUSEHOLD", "EUR"))

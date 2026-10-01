@@ -81,6 +81,7 @@ class RestGatewayTest {
         assertEquals("settlement-123", settlement.id)
         assertEquals("2500", settlement.amount.minor)
         assertEquals("EUR", settlement.amount.currency)
+        assertEquals("0", BffSettlement("settlement-empty", status = "RECORDED", currency = "EUR").amount.minor)
 
         val suggestion = BffSuggestedSettlement(
             fromParticipantId = participantId,

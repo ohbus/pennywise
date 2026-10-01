@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `9692227`, whose subject indicates
+(`master`) through the latest audited coverage commit `b60f458`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -173,6 +173,12 @@ implementation or contract; the regenerated report removes two recurring
 controller records and reduces the baseline from 131 records / 281 missed
 branches to 129 records / 276 missed branches.
 
+`b60f458` adds malformed member-removal payload coverage to the BFF event
+consumer. It changes no production implementation or public contract; the
+regenerated report removes `BffEventConsumer.consume` from the open inventory
+and reduces the baseline from 129 methods / 276 missed branches to 128 methods
+/ 271 missed branches.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -182,7 +188,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 129 methods with 276 missed branches. The remaining
+regenerated reports contain 128 methods with 271 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E

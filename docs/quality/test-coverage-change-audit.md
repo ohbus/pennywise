@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `ff5fac3`, whose subject indicates
+(`master`) through the latest audited coverage commit `9b3e19e`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -186,6 +186,12 @@ five `LiveUpdateFanout` records and reduces the baseline from 128 methods /
 revocation/expiry lambda records remain for explicit structural or boundary
 review; no implementation was deleted to improve the metric.
 
+`9b3e19e` adds persistence-backed recurring update coverage for allocation-only
+and payer-only custom specifications, asserting the omitted side is derived when
+occurrences are generated. It changes no production implementation or public
+contract; the regenerated report reduces missed branches from 254 to 251 while
+retaining the one generated `updateSchedule` mapping branch for review.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -195,7 +201,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 123 methods with 254 missed branches. The remaining
+regenerated reports contain 123 methods with 251 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E

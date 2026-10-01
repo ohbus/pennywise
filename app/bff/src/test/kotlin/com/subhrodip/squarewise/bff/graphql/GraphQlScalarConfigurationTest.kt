@@ -24,6 +24,8 @@ import graphql.schema.idl.RuntimeWiring
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.doReturn
+import org.mockito.Mockito.mock
 import java.util.Locale
 
 class GraphQlScalarConfigurationTest {
@@ -68,6 +70,22 @@ class GraphQlScalarConfigurationTest {
         }
     }
 
+    /** Verifies a nullable GraphQL string literal is rejected as an empty MoneyMinor value. */
+    @Test
+    fun `MoneyMinor rejects a null string literal value`() {
+        val input = mock(StringValue::class.java)
+        doReturn(null).`when`(input).value
+
+        assertThrows(CoercingParseLiteralException::class.java) {
+            scalar("MoneyMinor").coercing.parseLiteral(
+                input,
+                CoercedVariables.emptyVariables(),
+                GraphQLContext.getDefault(),
+                Locale.ROOT
+            )
+        }
+    }
+
     /** Verifies DateTime string literals accept ISO instants and reject malformed values. */
     @Test
     fun `DateTime validates string literals`() {
@@ -89,6 +107,22 @@ class GraphQlScalarConfigurationTest {
                 StringValue.of("not-a-date"),
                 variables,
                 context,
+                Locale.ROOT
+            )
+        }
+    }
+
+    /** Verifies a nullable GraphQL string literal is rejected as an invalid DateTime value. */
+    @Test
+    fun `DateTime rejects a null string literal value`() {
+        val input = mock(StringValue::class.java)
+        doReturn(null).`when`(input).value
+
+        assertThrows(CoercingParseLiteralException::class.java) {
+            scalar("DateTime").coercing.parseLiteral(
+                input,
+                CoercedVariables.emptyVariables(),
+                GraphQLContext.getDefault(),
                 Locale.ROOT
             )
         }

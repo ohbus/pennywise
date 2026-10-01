@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `a4c7f8f`, whose subject indicates
+(`master`) through the latest audited coverage commit `5fc7009`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -602,3 +602,9 @@ acceptance fault and the ordinary pass-through path. No production implementatio
 or contract changed. The current total is 100 method records / 184 missed
 branches; deployed GraphQL authentication, authorization, and WebSocket evidence
 remain open.
+
+`5fc7009` adds HTTP-double coverage for Expense Core gateway group, expense,
+repayment, and settlement-suggestion response mapping plus typed mutation failure
+propagation. No production implementation or contract changed. The current
+total is 99 method records / 178 missed branches; timeout, partial-response, and
+deployed gateway evidence remain open.

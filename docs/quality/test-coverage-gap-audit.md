@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **100
-production methods with missed branches** containing **184 missed branches**,
+As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **99
+production methods with missed branches** containing **178 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
@@ -172,7 +172,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **100 methods with at least one missed
+The regenerated JaCoCo XML contains **99 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -181,7 +181,7 @@ classified as generated/structural with reviewer approval.
 | Module | Classes with missed lines | Classes with missed branches | Methods with missed branches |
 | --- | ---: | ---: | ---: |
 | `app/accounts` | 40 | 11 | 15 |
-| `app/bff` | 40 | 10 | 22 |
+| `app/bff` | 40 | 9 | 21 |
 | `app/expense-core` | 52 | 21 | 44 |
 | `app/notifications` | 16 | 9 | 16 |
 | `libs/db` | 11 | 2 | 2 |
@@ -189,7 +189,7 @@ classified as generated/structural with reviewer approval.
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **170** | **53** | **100** |
+| **Total** | **170** | **52** | **99** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -211,9 +211,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**100**), and the sum of
+equal the `Methods with missed branches` total above (**99**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**184**). Each object carries the module, production class, source file,
+(**178**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, and assignment basis. The record count and branch-count
 sum are both regression-tested so a changed JaCoCo baseline cannot silently
@@ -247,16 +247,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 100-record JSON discovery inventory and
+The repository currently has the exact 99-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 100 records. The A07 and E02 residual tables are the first exact method-level
+all 99 records. The A07 and E02 residual tables are the first exact method-level
 ledger slices; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (100 records):
+Current provisional assignment workload (99 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -269,7 +269,7 @@ Current provisional assignment workload (100 records):
 | QA10-A07 | 11 | Session, credential, identity, replay, and cleanup behavior; blank and unknown refresh-token rotation and unmapped-account email-update rejection now fail closed, while database-invariant profile branches, concurrent database race, and deployed session evidence remain open. |
 | QA10-A08 | 1 | Email canonicalization and malformed-input boundaries; restored explicit domain checks require direct boundary evidence. |
 | QA10-B01 | 12 | BFF upstream transport and gateway failure behavior. |
-| QA10-B02 | 5 | GraphQL resolver, error, scalar, and limit behavior; resolver classification, DateTime literal acceptance/rejection, blank-bearer context omission, empty mutation invalidation behavior, required messaging startup validation, bounded deduplicator capacity validation, and the acceptance-fault filter boundary are covered, while two nullable-literal mapping residuals remain for structural review. |
+| QA10-B02 | 4 | GraphQL resolver, error, scalar, and limit behavior; resolver classification, DateTime literal acceptance/rejection, blank-bearer context omission, empty mutation invalidation behavior, required messaging startup validation, bounded deduplicator capacity validation, and the acceptance-fault filter boundary are covered, while two nullable-literal mapping residuals remain for structural review. |
 | QA10-B03 | 3 | Realtime fanout and broker consumer behavior; fanout configuration, input, queue, delivery, expiry, and nullable broker-channel listener boundaries are now covered, while generated revocation predicates, broker acknowledgement, reconnect/replay, and deployed WebSocket evidence remain open. |
 | QA10-B04 | 2 | Browser origin, CSRF, cookie, and session filters; malformed configured origins now have an explicit fail-fast construction assertion. |
 | QA10-C01 | 21 | Expense persistence, transaction, ledger, idempotency, and outbox behavior; missing/repeated delete boundaries, update lookup/participant replacement, durable duplicate-event append preservation, in-memory/durable outbox retry/state validation, publisher delivery-policy validation, durable claim eligibility, blank/unknown-category defaulting, explicit-null category handling, single and simultaneous payer/allocation-count bounds, custom recurring request mapping, missing/foreign schedule lookup boundaries, recurring membership authorization, amount parsing, JPA search cursor/category fallback, persistent adapter limit bounds, and filtered CSV export mapping now have persistence or behavioral assertions. |

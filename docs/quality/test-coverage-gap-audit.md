@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **116
-production methods with missed branches** containing **225 missed branches**,
+As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **115
+production methods with missed branches** containing **223 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
@@ -183,13 +183,13 @@ classified as generated/structural with reviewer approval.
 | `app/accounts` | 28 | 11 | 15 |
 | `app/bff` | 21 | 15 | 30 |
 | `app/expense-core` | 42 | 23 | 51 |
-| `app/notifications` | 9 | 9 | 17 |
+| `app/notifications` | 9 | 9 | 16 |
 | `libs/db` | 7 | 2 | 2 |
 | `libs/errors` | 1 | 1 | 1 |
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **115** | **61** | **116** |
+| **Total** | **115** | **61** | **115** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -211,9 +211,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**116**), and the sum of
+equal the `Methods with missed branches` total above (**115**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**225**). Each object carries the module, production class, source file,
+(**223**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, and assignment basis. The record count and branch-count
 sum are both regression-tested so a changed JaCoCo baseline cannot silently
@@ -247,7 +247,7 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 116-record JSON discovery inventory and
+The repository currently has the exact 115-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
 all 118 records. The A07 and E02 residual tables are the first exact method-level
 ledger slices; the remaining records still require one of the following to be
@@ -256,7 +256,7 @@ persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (116 records):
+Current provisional assignment workload (115 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -280,7 +280,7 @@ Current provisional assignment workload (116 records):
 | QA10-C06 | 4 | Sync revisions, cursors, ordering, and membership boundaries. |
 | QA10-D01 | 6 | Auth-email broker parsing, retry, deduplication, and delivery; key configuration, envelope framing, and numeric metadata validation are covered, while listener parsing/acknowledgement, broker retry/redelivery, and deployed Mailpit evidence remain open. |
 | QA10-D02 | 2 | Notification event transaction and acknowledgement coupling; envelope conversion fallbacks are covered, while broker acknowledgement/retry and transaction-coupling evidence remain open. |
-| QA10-D03 | 7 | SMTP/Mailpit delivery and retry classification. |
+| QA10-D03 | 6 | SMTP/Mailpit delivery and retry classification. |
 | QA10-D04 | 2 | Inbox/preferences persistence and subject isolation. |
 | QA10-E01 | 1 | Error mapping, framework failures, headers, and correlation cleanup; restored status fallback requires explicit evidence. |
 | QA10-E02 | 2 | Database routing, reader health, fallback, and operational lifecycle. |
@@ -592,7 +592,7 @@ test cannot close a row by merely executing a line.
 | --- | --- | --- | --- |
 | QA10-D01 | `AuthEmailRabbitListener`, `AuthEmailDeliveryConsumer`, envelope parser | Parser/ack branches have partial coverage; listener behavior depends on RabbitMQ channel semantics. | `U+M+E`: valid encrypted envelope is consumed once; missing/wrong-type/malformed/expired payload is rejected without requeue; transient SMTP/decrypt failure requeues once then parks; duplicate event is acknowledged without a second email; no credential appears in logs or DLQ payloads. |
 | QA10-D02 | `RabbitNotificationListener`, `NotificationEventConsumer`, `TransactionalNotificationEventProcessor`, `RedisDeliveryRateLimiter`, broker parser | Existing persistence tests cover applied/duplicate/concurrent inbox outcomes; broker conversion tests now prove subject precedence, group fallback, message fallback, and bounded fields; `NotificationEventConsumerTest` now also rejects blank and overlength subject, event-type, and message fields before either inbox or processed-event persistence. `NotificationEventConsumerUnitTest` specifies recipient trimming/validation, preference/rate suppression, durable constraint-duplicate acknowledgement, non-duplicate constraint propagation, preference/dispatcher failure isolation, and broker-retry propagation. Explicit transaction/ack coupling, poison/retry matrix, and production Redis admission evidence remain open. `RedisDeliveryRateLimiterTest` covers atomic key/arguments, allow/deny, null decisions, and Redis failure propagation. | `U+M+E`: applied, duplicate, malformed, poison, transient, and permanent failures produce exact DB transaction and manual ack/reject/requeue outcome; Redis admission uses the subject-scoped key, configured TTL/limit, atomic increment, and fail-closed store behavior; inbox, processed-event, preference, and email side effects commit together or roll back together. |
-| QA10-D03 | `SmtpMailSender`/mail adapter, `EmailDispatcher`, `SimpleMailMessage` | Adapter line coverage was low; `SmtpJavaMailSenderTest` exercises the local SMTP wire sequence, and `SimpleMailMessageTest` covers array-content equality, nullable accessors, hash code, and string representation. External Mailpit/SMTP failure evidence remains open. | `U+M+E`: valid message maps recipient/template/body correctly; invalid recipient and missing preference are suppressed; SMTP timeout/auth/rejection is classified as retryable/permanent; retry count, DLQ/parking, metrics, and redaction are asserted. |
+| QA10-D03 | `SmtpMailSender`/mail adapter, `EmailDispatcher`, `SimpleMailMessage` | `SmtpJavaMailSenderTest` exercises the local SMTP wire sequence, configured sender/optional-field fallbacks, rejected responses, and premature response streams; `EmailDispatcherTest` covers validation, retry, interruption, nested permanent causes, and direct I/O classification. One dispatcher mapping record remains, and external Mailpit/SMTP failure evidence remains open. | `U+M+E`: valid message maps recipient/template/body correctly; invalid recipient and missing preference are suppressed; SMTP timeout/auth/rejection is classified as retryable/permanent; retry count, DLQ/parking, metrics, and redaction are asserted. |
 | QA10-D04 | Notification inbox/preferences stores/controllers | `JpaPreferenceStoreTest` proves blank and overlength preference subjects are rejected before persistence. `InboxControllerTest` proves blank mark-read subjects and valid cursors beyond stored data; `JpaNotificationInboxStoreTest` proves blank/overlength subjects and blank event/message payloads are rejected before any row is created. | `T+P+E`: subject isolation, default preferences, update versioning, blank/overlength subject rejection before query, invalid page/cursor bounds, valid cursor exhaustion, unknown notification, duplicate mark-read, missing membership/context, reader fallback, and database failure map to exact public errors without changing another subject’s rows. |
 
 ### Shared libraries and cross-cutting infrastructure

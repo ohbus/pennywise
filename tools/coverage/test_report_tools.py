@@ -26,7 +26,7 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_every_current_branch_gap_has_a_qa_row(self) -> None:
         gaps = all_gaps(ROOT)
 
-        self.assertEqual(113, len(gaps))
+        self.assertEqual(112, len(gaps))
         self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
         self.assertTrue(all(gap.assignment_basis for gap in gaps))
         expected_counts = {
@@ -47,7 +47,7 @@ class CoverageInventoryTest(unittest.TestCase):
                 "QA10-C03": 8,
                 "QA10-C04": 9,
                 "QA10-C05": 3,
-                "QA10-C06": 4,
+                "QA10-C06": 3,
                 "QA10-D01": 6,
                 "QA10-D02": 2,
                 "QA10-D03": 6,
@@ -63,7 +63,7 @@ class CoverageInventoryTest(unittest.TestCase):
             expected_counts,
             {row: actual_counts.get(row, 0) for row in expected_counts},
         )
-        self.assertEqual(211, sum(gap.missed_branches for gap in gaps))
+        self.assertEqual(209, sum(gap.missed_branches for gap in gaps))
 
     def test_operation_inventory_is_complete_and_assigned(self) -> None:
         operations = inventory(ROOT)
@@ -107,7 +107,7 @@ class CoverageInventoryTest(unittest.TestCase):
         rendered = render_branch_gaps(gaps)
         rows = rendered.splitlines()
 
-        self.assertEqual(115, len(rows))
+        self.assertEqual(114, len(rows))
         self.assertEqual(
             "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report |",
             rows[0],
@@ -249,7 +249,7 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_ci_documentation_uses_current_branch_baseline(self) -> None:
         ci = (ROOT / "docs/operations/ci.md").read_text(encoding="utf-8")
 
-        self.assertIn("113 methods containing 211 missed", ci)
+        self.assertIn("112 methods containing 209 missed", ci)
         self.assertNotIn("220 missed-branch methods", ci)
 
     def test_ci_python_tooling_is_locked_and_build_hooks_are_disabled(self) -> None:
@@ -289,7 +289,7 @@ class CoverageInventoryTest(unittest.TestCase):
         )
 
         for marker in (
-            "through the latest audited coverage commit `0886354`",
+            "through the latest audited coverage commit `a36b1c5`",
             "`2110ffd` is the explicit restoration/audit commit",
             "`3b3a3da` changes only `libs/security/build.gradle.kts`",
             "`cff7f76`\nchanges CI/Makefile Python execution",
@@ -343,7 +343,7 @@ class CoverageInventoryTest(unittest.TestCase):
             "`7a9689f`",
             "`433ebe2`",
             "`5592be7`",
-            "`0886354`",
+            "`a36b1c5`",
             "with no production implementation\nor contract-file change",
         ):
             with self.subTest(marker=marker):

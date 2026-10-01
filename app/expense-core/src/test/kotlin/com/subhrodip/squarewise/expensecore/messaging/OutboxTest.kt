@@ -64,4 +64,32 @@ class OutboxTest {
         relay.reject(UUID.randomUUID(), maxAttempts = 1, retryAfter = Duration.ZERO)
         assertEquals(0, relay.snapshot().size)
     }
+
+    @Test
+    fun `claim and append enforce event state boundaries`() {
+        val now = Instant.parse("2026-01-01T00:00:00Z")
+        val eventId = UUID.randomUUID()
+        val relay = OutboxRelay { now }
+        val message = OutboxMessage(
+            eventId,
+            "expense.created",
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            1,
+            now,
+            emptyMap()
+        )
+
+        assertThrows(IllegalArgumentException::class.java) { relay.claim(0, Duration.ofMinutes(1)) }
+        relay.append(message)
+        assertThrows(IllegalArgumentException::class.java) { relay.append(message.copy()) }
+
+        val claimedWithoutLease = message.copy(status = OutboxStatus.CLAIMED, leaseUntil = null)
+        relay.append(claimedWithoutLease.copy(eventId = UUID.randomUUID()))
+        assertEquals(1, relay.claim(10, Duration.ofMinutes(1)).size)
+        assertEquals(0, relay.claim(10, Duration.ofMinutes(1)).size)
+
+        relay.acknowledge(UUID.randomUUID())
+        assertEquals(2, relay.snapshot().size)
+    }
 }

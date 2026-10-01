@@ -24,6 +24,7 @@ dependencies {
     runtimeOnly(libs.boot.flyway)
     runtimeOnly(libs.flyway.postgresql)
     testImplementation(libs.boot.test)
+    testImplementation(kotlin("test"))
     testRuntimeOnly(libs.h2)
 }
 tasks.withType<Test> { useJUnitPlatform() }

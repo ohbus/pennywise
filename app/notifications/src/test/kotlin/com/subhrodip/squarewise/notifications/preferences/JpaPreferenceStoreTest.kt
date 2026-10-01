@@ -7,6 +7,7 @@ import com.subhrodip.squarewise.notifications.preferences.persistence.JpaPrefere
 import com.subhrodip.squarewise.notifications.preferences.persistence.NotificationPreferenceRepository
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -43,5 +44,21 @@ class JpaPreferenceStoreTest @Autowired constructor(
             store.get("alice")
         )
         assertEquals(1, repository.count())
+    }
+
+    @Test
+    fun `rejects blank subject before repository access`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            store.get("   ")
+        }
+        assertEquals(0, repository.count())
+    }
+
+    @Test
+    fun `rejects subject longer than the durable column contract`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            store.put("a".repeat(201), NotificationPreferences())
+        }
+        assertEquals(0, repository.count())
     }
 }

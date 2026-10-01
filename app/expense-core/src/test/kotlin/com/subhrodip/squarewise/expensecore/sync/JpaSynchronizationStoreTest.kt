@@ -104,4 +104,15 @@ class JpaSynchronizationStoreTest @Autowired constructor(
         assertEquals(1L, g2r1)
         assertEquals(2L, g1r2)
     }
+
+    /** Verifies blank identifiers and out-of-range page limits fail before persistence access. */
+    @Test
+    fun `rejects blank identifiers and invalid page limits`() {
+        assertThrows(IllegalArgumentException::class.java) { store.append(" ", "entity", null) }
+        assertThrows(IllegalArgumentException::class.java) { store.append("group", " ", null) }
+        assertThrows(IllegalArgumentException::class.java) { store.delete(" ", "entity") }
+        assertThrows(IllegalArgumentException::class.java) { store.delete("group", " ") }
+        assertThrows(IllegalArgumentException::class.java) { store.snapshot("group", null, 0) }
+        assertThrows(IllegalArgumentException::class.java) { store.snapshot("group", null, 101) }
+    }
 }

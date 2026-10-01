@@ -13,6 +13,7 @@ import com.subhrodip.squarewise.notifications.consumer.persistence.ProcessedNoti
 import com.subhrodip.squarewise.notifications.delivery.persistence.JpaEventDeduplicator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -110,5 +111,21 @@ class JpaNotificationInboxStoreTest @Autowired constructor(
 
         val entity = inboxRepository.findById(notificationId).orElseThrow()
         assertTrue(entity.read)
+    }
+
+    @Test
+    fun `rejects invalid subjects and inbox payloads before persistence`() {
+        inboxRepository.deleteAll()
+        assertThrows(IllegalArgumentException::class.java) { store.list(" ") }
+        assertThrows(IllegalArgumentException::class.java) {
+            store.append("alice", InboxItem(UUID.randomUUID(), "", "Message", Instant.now()))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            store.append("alice", InboxItem(UUID.randomUUID(), "event", " ", Instant.now()))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            store.append("a".repeat(201), InboxItem(UUID.randomUUID(), "event", "Message", Instant.now()))
+        }
+        assertEquals(0, inboxRepository.count())
     }
 }

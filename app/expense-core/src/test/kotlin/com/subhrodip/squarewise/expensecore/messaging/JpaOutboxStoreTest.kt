@@ -10,6 +10,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -113,6 +114,22 @@ class JpaOutboxStoreTest @Autowired constructor(
         assertEquals(eventId, reclaimed.eventId)
         assertEquals(2, reclaimed.attempts)
         assertEquals(OutboxStatus.CLAIMED, reclaimed.status)
+    }
+
+    /** Verifies durable retry-policy validation and the harmless unknown-event no-op. */
+    @Test
+    fun `reject validates retry policy and ignores an unknown event`() {
+        val unknownEventId = UUID.randomUUID()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            store.reject(unknownEventId, maxAttempts = 0, retryAfter = Duration.ZERO)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            store.reject(unknownEventId, maxAttempts = 1, retryAfter = Duration.ofSeconds(-1))
+        }
+
+        store.reject(unknownEventId, maxAttempts = 1, retryAfter = Duration.ZERO)
+        assertTrue(store.snapshot().isEmpty())
     }
 
     /**

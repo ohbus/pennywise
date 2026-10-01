@@ -53,6 +53,19 @@ class NotificationEventConsumerUnitTest {
     }
 
     @Test
+    fun `falls back to a trimmed verified subject when explicit recipient is blank`() {
+        val event = sampleEvent(subject = "  alice@example.com  ", recipientEmail = "   ")
+        doReturn(NotificationConsumptionOutcome.APPLIED).`when`(processor).process(event)
+        doReturn(NotificationPreferences(emailEnabled = true)).`when`(preferenceStore).get("  alice@example.com  ")
+        doReturn(true).`when`(deliveryRateLimiter).allow("  alice@example.com  ")
+        doReturn(EmailDeliveryOutcome.DELIVERED).`when`(emailDispatcher)
+            .send("alice@example.com", "Notification: expense.created", "Dinner was added")
+
+        assertEquals(NotificationConsumptionOutcome.APPLIED, consumer.consume(event))
+        verify(emailDispatcher).send("alice@example.com", "Notification: expense.created", "Dinner was added")
+    }
+
+    @Test
     fun `suppresses dispatch for disabled preferences rate denial and invalid fallback recipient`() {
         val disabled = sampleEvent(subject = "disabled")
         doReturn(NotificationConsumptionOutcome.APPLIED).`when`(processor).process(disabled)

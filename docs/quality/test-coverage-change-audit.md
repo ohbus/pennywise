@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `5592be7`, whose subject indicates
+(`master`) through the latest audited coverage commit `b5b814c`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -283,6 +283,13 @@ and simultaneous oversized payer/allocation collections. It changes no productio
 implementation or contract; the regenerated report preserves 115 method records
 and reduces missed branches from 216 to 215. Financial mutation rollback and
 deployed lifecycle evidence remain open.
+
+`b5b814c` adds a Spring integration test for recurring expense-store failure.
+It changes no production implementation or contract; the regenerated report
+preserves 115 method records and 215 missed branches because the newly asserted
+pause/error behavior was already represented by covered mappings. Remaining
+recurrence date, membership, generated-expense fallback, and deployed worker
+evidence remain open.
 
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation

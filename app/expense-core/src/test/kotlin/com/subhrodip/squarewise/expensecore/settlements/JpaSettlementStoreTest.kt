@@ -67,4 +67,50 @@ class JpaSettlementStoreTest @Autowired constructor(
         }
         assertEquals(ErrorCode.ERR_05, error.errorCode)
     }
+
+    /** Verifies settlement replay compares every financial identity dimension before returning an existing row. */
+    @Test
+    fun `rejects conflicting settlement replays without additional postings`() {
+        val groupId = UUID.randomUUID()
+        groupRepository.save(GroupEntity(groupId, "Replay group", "HOUSEHOLD", "EUR"))
+        val from = UUID.randomUUID()
+        val to = UUID.randomUUID()
+        val settlement = Settlement(UUID.randomUUID(), from, to, 1_250, "EUR", reason = "original")
+        store.record(groupId, settlement)
+
+        assertEquals(settlement.id, store.record(groupId, settlement.copy(reason = "same identity")).id)
+        listOf(
+            settlement.copy(fromParticipantId = UUID.randomUUID()),
+            settlement.copy(toParticipantId = UUID.randomUUID()),
+            settlement.copy(amountMinor = 1_251)
+        ).forEach { conflicting ->
+            val error = assertThrows(ApplicationException::class.java) {
+                store.record(groupId, conflicting)
+            }
+            assertEquals(ErrorCode.ERR_06, error.errorCode)
+        }
+        assertEquals(2, balancePostingRepository.findBySettlementId(settlement.id).size)
+    }
+
+    /** Verifies missing and archived settlement mutations fail closed without creating ledger postings. */
+    @Test
+    fun `rejects settlement mutations for missing or archived groups`() {
+        val missingGroupError = assertThrows(ApplicationException::class.java) {
+            store.record(UUID.randomUUID(), Settlement(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 100, "EUR"))
+        }
+        assertEquals(ErrorCode.ERR_05, missingGroupError.errorCode)
+
+        val archivedGroupId = UUID.randomUUID()
+        groupRepository.save(GroupEntity(archivedGroupId, "Archived group", "HOUSEHOLD", "EUR", status = "ARCHIVED"))
+        val archivedSettlement = Settlement(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 100, "EUR")
+        val archivedRecordError = assertThrows(ApplicationException::class.java) {
+            store.record(archivedGroupId, archivedSettlement)
+        }
+        assertEquals(ErrorCode.ERR_06, archivedRecordError.errorCode)
+        val archivedReverseError = assertThrows(ApplicationException::class.java) {
+            store.reverse(archivedGroupId, archivedSettlement.id, "archived")
+        }
+        assertEquals(ErrorCode.ERR_06, archivedReverseError.errorCode)
+        assertEquals(0, balancePostingRepository.findBySettlementId(archivedSettlement.id).size)
+    }
 }

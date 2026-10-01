@@ -79,4 +79,37 @@ class RabbitBffEventListenerTest {
         verify(channel, never()).basicAck(99L, false)
         verify(channel).basicReject(99L, false)
     }
+
+    @Test
+    fun `consumes valid envelope when broker channel is unavailable`() {
+        val eventId = UUID.randomUUID()
+        val aggregateId = UUID.randomUUID()
+        val groupId = UUID.randomUUID()
+        val subscriber = fanout.subscribe("user-2", groupId.toString())
+        val json = """
+            {
+              "eventId": "$eventId",
+              "eventType": "group.updated",
+              "schemaVersion": 1,
+              "aggregateId": "$aggregateId",
+              "groupId": "$groupId",
+              "groupRevision": 11,
+              "occurredAt": "${Instant.now()}",
+              "payload": {"name": "Winter Vacation"}
+            }
+        """.trimIndent()
+        val message = Message(json.toByteArray(Charsets.UTF_8), MessageProperties())
+
+        listener.onMessage(message, null)
+
+        assertEquals(1, fanout.pendingCount(subscriber.id))
+        assertEquals(11L, fanout.poll(subscriber.id)?.revision)
+    }
+
+    @Test
+    fun `does not throw when rejecting malformed message without broker channel`() {
+        val message = Message("{ not-valid-json }".toByteArray(Charsets.UTF_8), MessageProperties())
+
+        listener.onMessage(message, null)
+    }
 }

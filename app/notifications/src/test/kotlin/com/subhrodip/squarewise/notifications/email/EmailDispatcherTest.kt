@@ -18,6 +18,7 @@ import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import java.net.ConnectException
 import java.net.SocketException
+import java.io.IOException
 
 class EmailDispatcherTest {
 
@@ -97,6 +98,53 @@ class EmailDispatcherTest {
         verify(mailSender, times(2)).send(anyMessage())
     }
 
+    /** Verifies an interrupted retry delay stops retrying and preserves interruption. */
+    @Test
+    fun `interrupted retry delay returns retryable failure and restores interrupt`() {
+        properties.retryDelayMs = 1L
+        doThrow(MailSendException("temporary SMTP failure"))
+            .`when`(mailSender)
+            .send(anyMessage())
+
+        Thread.currentThread().interrupt()
+        try {
+            val outcome = dispatcher.dispatch("delay@example.com", "Subject", "Body")
+
+            assertThat(outcome).isEqualTo(EmailDeliveryOutcome.RETRYABLE_FAILURE)
+            assertThat(Thread.currentThread().isInterrupted).isTrue()
+            verify(mailSender, times(1)).send(anyMessage())
+        } finally {
+            Thread.interrupted()
+        }
+    }
+
+    /** Verifies permanent causes remain non-retryable when wrapped by a mail failure. */
+    @Test
+    fun `nested illegal argument failure is permanent without retrying`() {
+        doThrow(MailSendException("invalid message", IllegalArgumentException("invalid header")))
+            .`when`(mailSender)
+            .send(anyMessage())
+
+        val outcome = dispatcher.dispatch("nested@example.com", "Subject", "Body")
+
+        assertThat(outcome).isEqualTo(EmailDeliveryOutcome.PERMANENT_FAILURE)
+        verify(mailSender, times(1)).send(anyMessage())
+    }
+
+    /** Verifies direct I/O failures use the transient retry policy. */
+    @Test
+    fun `direct io failure exhausts transient retries`() {
+        properties.maxAttempts = 2
+        doAnswer { throw IOException("connection reset") }
+            .`when`(mailSender)
+            .send(anyMessage())
+
+        val outcome = dispatcher.dispatch("io@example.com", "Subject", "Body")
+
+        assertThat(outcome).isEqualTo(EmailDeliveryOutcome.RETRYABLE_FAILURE)
+        verify(mailSender, times(2)).send(anyMessage())
+    }
+
     @Test
     fun `disabled dispatcher skips sending and returns SKIPPED`() {
         properties.enabled = false
@@ -108,7 +156,14 @@ class EmailDispatcherTest {
 
     @Test
     fun `invalid email address returns PERMANENT_FAILURE without sending`() {
-        val invalidEmails = listOf("", "   ", "not-an-email", "@missinguser.com", "missingdomain@.com")
+        val invalidEmails = listOf(
+            "",
+            "   ",
+            "not-an-email",
+            "@missinguser.com",
+            "missingdomain@.com",
+            "${"a".repeat(245)}@example.com"
+        )
 
         for (invalid in invalidEmails) {
             val outcome = dispatcher.dispatch(invalid, "Subject", "Body")

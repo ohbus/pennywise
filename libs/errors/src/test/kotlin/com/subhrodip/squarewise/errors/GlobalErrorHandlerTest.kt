@@ -50,6 +50,27 @@ class GlobalErrorHandlerTest {
         assertEquals("60", response.headers.getFirst("Retry-After"))
     }
 
+    /**
+     * Verifies an invalid catalog status fails closed to an internal error.
+     *
+     * Production [ErrorCode] entries all carry valid HTTP statuses; the mocked
+     * value exercises the handler's defensive fallback if that invariant is
+     * ever violated by a future catalog change.
+     */
+    @Test
+    fun `invalid catalog status falls back to internal error`() {
+        val invalidCode = mock(ErrorCode::class.java)
+        `when`(invalidCode.httpStatus).thenReturn(999)
+        `when`(invalidCode.safeDetail).thenReturn("Unknown catalog error")
+        `when`(invalidCode.code).thenReturn("ERR-X")
+        `when`(invalidCode.name).thenReturn("ERR_X")
+
+        val response = handler.applicationException(ApplicationException(invalidCode, "safe detail"))
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.statusCode)
+        assertEquals("safe detail", response.body?.detail)
+    }
+
     @Test
     fun `all ErrorCode values map to RFC problem schema codes`() {
         val allowedCodes = setOf(

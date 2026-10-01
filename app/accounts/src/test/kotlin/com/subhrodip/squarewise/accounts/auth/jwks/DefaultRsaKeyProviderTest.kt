@@ -83,6 +83,31 @@ class DefaultRsaKeyProviderTest {
     }
 
     @Test
+    fun `generates a key when PEM configuration contains blank values`() {
+        val source = RSAKeyGenerator(2048).generate()
+
+        val blankPrivate = DefaultRsaKeyProvider(
+            RsaKeyProperties(
+                keyId = "blank-private",
+                privateKeyPem = "   ",
+                publicKeyPem = pem("PUBLIC KEY", source.toRSAPublicKey().encoded),
+            ),
+        )
+        val blankPublic = DefaultRsaKeyProvider(
+            RsaKeyProperties(
+                keyId = "blank-public",
+                privateKeyPem = pem("PRIVATE KEY", source.toRSAPrivateKey().encoded),
+                publicKeyPem = "   ",
+            ),
+        )
+
+        assertTrue(blankPrivate.activeSigningKey().isPrivate)
+        assertEquals("blank-private", blankPrivate.activeSigningKey().keyID)
+        assertTrue(blankPublic.activeSigningKey().isPrivate)
+        assertEquals("blank-public", blankPublic.activeSigningKey().keyID)
+    }
+
+    @Test
     fun `rejects malformed complete PEM configuration`() {
         assertThrows<IllegalArgumentException> {
             DefaultRsaKeyProvider(
@@ -215,6 +240,19 @@ class DefaultRsaKeyProviderTest {
         assertThrows<IllegalArgumentException> {
             provider.rotateKey(noKidKey)
         }
+        assertEquals("original-kid", provider.activeSigningKey().keyID)
+    }
+
+    @Test
+    fun `rotateKey rejects key with explicitly blank kid`() {
+        val provider = DefaultRsaKeyProvider(RsaKeyProperties(keyId = "original-kid"))
+        val blankKidKey = RSAKeyGenerator(2048)
+            .keyID("")
+            .keyUse(KeyUse.SIGNATURE)
+            .algorithm(JWSAlgorithm.RS256)
+            .generate()
+
+        assertThrows<IllegalArgumentException> { provider.rotateKey(blankKidKey) }
         assertEquals("original-kid", provider.activeSigningKey().keyID)
     }
 

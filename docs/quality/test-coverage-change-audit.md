@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `dcdc2c2`, whose subject indicates
+(`master`) through the latest audited coverage commit `7a9689f`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -267,6 +267,12 @@ contract; the regenerated report preserves 115 method records and reduces
 missed branches from 219 to 218. Search authorization, pagination isolation,
 export, and deployed financial E2E evidence remain open.
 
+`7a9689f` adds a JPA invitation-boundary test for an active ordinary membership
+supplied as a placeholder target. It changes no production implementation or
+contract; the regenerated report preserves 115 method records and reduces
+missed branches from 218 to 217. Invitation concurrency, mutation side effects,
+and deployed group-lifecycle evidence remain open.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -276,7 +282,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 115 methods with 218 missed branches. The remaining
+regenerated reports contain 115 methods with 217 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E

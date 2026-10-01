@@ -25,7 +25,14 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 import uuid
 from typing import Any, Tuple
-from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE
+from tests.http_constants import (
+    ACCEPT,
+    APPLICATION_JSON,
+    AUTHORIZATION,
+    BEARER_PREFIX,
+    CONTENT_TYPE,
+    IDEMPOTENCY_KEY,
+)
 
 BASE_URL = os.environ.get("SQUAREWISE_BFF_URL", "http://localhost:8080")
 ACCOUNTS_URL = os.environ.get("SQUAREWISE_ACCOUNTS_URL", "http://localhost:8081")
@@ -792,7 +799,65 @@ def run_e2e_tests() -> int:
     assert settlement["amount"]["minor"] == "5000"
     print(f"  ✓ Repayment recorded successfully: id={settlement['id']}, status={settlement['status']}")
 
-    # 9. Verify Reconciled Balances via REST
+    # 9. Record and reverse a REST settlement against a second persisted expense.
+    rest_expense_id = str(uuid.uuid4())
+    rest_expense_status, rest_expense = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/expenses",
+        method="POST",
+        body={
+            "expenseId": rest_expense_id,
+            "description": "REST settlement fixture",
+            "amount": {"currency": "EUR", "minor": "1000"},
+            "payers": [{"participantId": alice_id, "amount": {"currency": "EUR", "minor": "1000"}}],
+            "allocation": {
+                "mode": "EQUAL",
+                "items": [
+                    {"participantId": alice_id, "value": "1"},
+                    {"participantId": bob_id, "value": "1"},
+                ],
+            },
+        },
+        bearer=user_a,
+        extra_headers={IDEMPOTENCY_KEY: f"rest-expense-{uuid.uuid4()}"},
+    )
+    assert rest_expense_status == 201, (
+        f"REST settlement fixture expense failed: HTTP {rest_expense_status} ({rest_expense})"
+    )
+    settlement_status, rest_settlement = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/settlements",
+        method="POST",
+        body={
+            "fromParticipantId": bob_id,
+            "toParticipantId": alice_id,
+            "amountMinor": "500",
+            "currency": "EUR",
+        },
+        bearer=user_b,
+        extra_headers={IDEMPOTENCY_KEY: f"rest-settlement-{uuid.uuid4()}"},
+    )
+    assert settlement_status == 201, (
+        f"Expense Core recordSettlement failed: HTTP {settlement_status} ({rest_settlement})"
+    )
+    settlement_id = rest_settlement.get("id")
+    assert settlement_id and rest_settlement.get("status") == "RECORDED"
+    assert rest_settlement.get("fromParticipantId") == bob_id
+    assert rest_settlement.get("toParticipantId") == alice_id
+    assert rest_settlement.get("amountMinor") == 500
+
+    reversal_status, reversed_settlement = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/settlements/{settlement_id}/reversal",
+        method="POST",
+        body={"reason": "E2E settlement reversal"},
+        bearer=user_b,
+    )
+    assert reversal_status == 200, (
+        f"Expense Core reverseSettlement failed: HTTP {reversal_status} ({reversed_settlement})"
+    )
+    assert reversed_settlement.get("id") == settlement_id
+    assert reversed_settlement.get("status") == "REVERSED"
+    print("  [ok] Expense Core recordSettlement and reverseSettlement preserve settlement identity")
+
+    # 10. Verify Reconciled Balances via REST
     print("\n[Step 9] Verifying balances via REST /balances endpoint...")
     status_bal, rest_balances = request_json(
         f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/balances",
@@ -802,8 +867,8 @@ def run_e2e_tests() -> int:
     bal_items = rest_balances.get("balances", [])
     print(f"  ✓ Expense Core getBalances returned: {len(bal_items)} items")
 
-    # 10. Verify Outbox Dispatch & Notifications Inbox
-    print("\n[Step 10] Verifying Outbox Relay & Notifications Inbox...")
+    # 11. Verify Outbox Dispatch & Notifications Inbox
+    print("\n[Step 11] Verifying Outbox Relay & Notifications Inbox...")
     # Allow background outbox daemon and rabbit listener a few seconds to deliver
     found_notification = False
     for attempt in range(1, 10):
@@ -841,8 +906,8 @@ def run_e2e_tests() -> int:
 
     assert found_notification, "Expected notification to be delivered to Notifications inbox"
 
-    # 11. Verify Offline Sync Snapshot and Changes Feed
-    print("\n[Step 11] Verifying Offline Sync Feed...")
+    # 12. Verify Offline Sync Snapshot and Changes Feed
+    print("\n[Step 12] Verifying Offline Sync Feed...")
     status_snap, snapshot = request_json(
         f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/sync/snapshot",
         bearer=user_a

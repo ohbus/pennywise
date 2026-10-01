@@ -181,6 +181,38 @@ class GroupControllerTest {
             .andExpect(jsonPath("$.name").value("New Name"))
     }
 
+    /** Verifies the controlled rollback fault returns the documented conflict without a store call. */
+    @Test
+    fun `update acceptance rollback fault maps to conflict`() {
+        mvc.perform(
+            patch(ApiEndpoints.ExpenseCore.V1.groupById(UUID.randomUUID().toString()))
+                .with(alice)
+                .header(
+                    ApiEndpoints.Headers.ACCEPTANCE_FAULT,
+                    ApiEndpoints.Headers.ACCEPTANCE_FAULT_ROLLBACK
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"ignored\"}")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("CONFLICT"))
+    }
+
+    /** Verifies the controlled member-fanout fault returns the documented upstream error. */
+    @Test
+    fun `member list acceptance fanout fault maps to bad gateway`() {
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupMembers(UUID.randomUUID().toString()))
+                .with(alice)
+                .header(
+                    ApiEndpoints.Headers.ACCEPTANCE_FAULT,
+                    ApiEndpoints.Bff.ACCEPTANCE_FAULT_FANOUT
+                )
+        )
+            .andExpect(status().isBadGateway)
+            .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
+    }
+
     /**
      * Verifies archiving a group transitions status to ARCHIVED and rejects subsequent write mutations with 409 CONFLICT.
      */

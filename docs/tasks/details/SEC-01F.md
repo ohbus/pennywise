@@ -85,6 +85,19 @@ Created `docs/security/supply-chain-evidence.md` documenting:
 - Explicit enumeration of remaining release-gated controls (container scanning,
   image signing, dependency renovation, license policy, admission control)
 
+The CI workflow now pins every non-GitHub-owned action to the full commit SHA
+behind its documented major tag: Gradle setup, test-summary, Docker login,
+Buildx, metadata, and Build/Push. A repository regression test rejects future
+floating third-party action tags while retaining major tags for `actions/*`.
+
+Sonar secret-detector findings for the two Base64 values in the reusable CI
+workflow are intentional false positives. They are deterministic, public
+local-fixture keys used only to boot test services; they are not deployment
+credentials, are not stored in GitHub secrets, and production/staging sanity
+guards reject these predictable values. Suppress those two findings as false
+positives in Sonar with this rationale; rotating or hiding them would not add
+security and would make the CI fixture less reproducible.
+
 ### SEC-013: Endpoint matrix update
 
 Rewrote `docs/quality/public-interface-operation-matrix.md` to:

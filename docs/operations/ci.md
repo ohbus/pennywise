@@ -58,6 +58,10 @@ with `uv sync --frozen --no-build`, running tools and scripts via
 `--no-build` prevents dependency/project build hooks from executing during the
 tool-environment setup and invocation. Local Python tooling
 must use `uv` rather than installing packages into the system interpreter.
+All non-GitHub-owned actions are also pinned to full commit SHAs; the repository
+test suite rejects floating third-party action tags. GitHub-owned actions remain
+on their supported major tags because the repository policy scopes this pinning
+requirement to third-party actions.
 The lightweight lint job also installs the same Microsoft JDK 25 and Gradle
 setup before generating the CycloneDX SBOM; every job that invokes Gradle owns
 its toolchain setup explicitly.

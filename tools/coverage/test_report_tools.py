@@ -265,6 +265,24 @@ class CoverageInventoryTest(unittest.TestCase):
                 self.assertIn("--frozen", line)
                 self.assertIn("--no-build", line)
 
+    def test_ci_third_party_actions_are_immutable(self) -> None:
+        workflow_paths = sorted((ROOT / ".github/workflows").glob("*.yml"))
+        action_refs: list[str] = []
+        for path in workflow_paths:
+            action_refs.extend(
+                re.findall(r"uses:\s*([^\s#]+)", path.read_text(encoding="utf-8"))
+            )
+
+        for ref in action_refs:
+            owner = ref.split("/", 1)[0]
+            if owner == "actions" or ref.startswith("./"):
+                continue
+            self.assertRegex(
+                ref,
+                r"^[^@]+@[0-9a-f]{40}$",
+                msg=f"third-party action must use a full commit SHA: {ref}",
+            )
+
     def test_change_audit_reaches_current_branch_tip(self) -> None:
         audit = (ROOT / "docs/quality/test-coverage-change-audit.md").read_text(
             encoding="utf-8"

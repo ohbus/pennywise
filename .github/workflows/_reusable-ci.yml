@@ -68,7 +68,7 @@ jobs:
           distribution: microsoft
           java-version: ${{ env.JAVA_VERSION }}
           cache: gradle
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
       - name: Cache Gradle wrapper distribution
         uses: actions/cache@v4
         with:
@@ -140,7 +140,7 @@ jobs:
           distribution: microsoft
           java-version: ${{ env.JAVA_VERSION }}
           cache: gradle
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
       - name: Cache Gradle wrapper distribution
         uses: actions/cache@v4
         with:
@@ -167,7 +167,7 @@ jobs:
           if-no-files-found: error
           retention-days: 5
       - name: Publish test summary
-        uses: test-summary/action@v2
+        uses: test-summary/action@37b508cfee6d4d080eedd00b5bb240a6a784a6a5 # v2
         if: always()
         with:
           paths: "**/build/test-results/test/TEST-*.xml"
@@ -256,7 +256,7 @@ jobs:
           distribution: microsoft
           java-version: ${{ env.JAVA_VERSION }}
           cache: gradle
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
       - name: Cache SonarQube packages
         uses: actions/cache@v4
         with:

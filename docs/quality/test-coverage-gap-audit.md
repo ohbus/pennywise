@@ -78,7 +78,7 @@ For repeatable operation-level discovery, run
 `uv run --frozen --no-build python tools/coverage/report_operation_test_gaps.py --format markdown`.
 The tool compares contract operation IDs and GraphQL root fields with literal
 operation-name references in `tests/e2e/` and `tools/bruno/`. The current
-inventory contains 54 operations; 16 have no E2E source signal and 49 have no
+inventory contains 54 operations; 13 have no E2E source signal and 49 have no
 Bruno source signal. These are discovery signals only: a missing string can be
 a naming mismatch, while a present string does not prove authorization,
 negative behavior, persistence, messaging, replay, or deployed side effects.

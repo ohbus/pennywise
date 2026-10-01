@@ -322,6 +322,51 @@ class JpaExpenseStoreTest @Autowired constructor(
     }
 
     @Test
+    fun `duplicate expense ID conflicts for every compared payload dimension`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Conflict dimensions", "TRIP", "EUR"))
+        val expenseId = UUID.randomUUID()
+        val originalPayer = UUID.randomUUID()
+        val alternatePayer = UUID.randomUUID()
+        val originalAllocation = UUID.randomUUID()
+        val alternateAllocation = UUID.randomUUID()
+        val original = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Original description",
+            category = "travel",
+            currency = "EUR",
+            amountMinor = 4000,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(originalPayer, 4000)),
+            allocations = listOf(ExpenseAllocation(originalAllocation, 4000))
+        )
+        expenseStore.create(group.groupId, original, "conflict-original")
+
+        val conflictingPayloads = listOf(
+            original.copy(description = "Changed description"),
+            original.copy(currency = "USD"),
+            original.copy(payers = listOf(ExpensePayer(alternatePayer, 4000))),
+            original.copy(allocations = listOf(ExpenseAllocation(alternateAllocation, 4000)))
+        )
+
+        conflictingPayloads.forEachIndexed { index, conflicting ->
+            val error = assertThrows(ApplicationException::class.java) {
+                expenseStore.create(group.groupId, conflicting, "conflict-$index")
+            }
+            assertEquals(ErrorCode.ERR_06, error.errorCode)
+        }
+
+        val persisted = expenseStore.findById(expenseId)
+        assertEquals(original.description, persisted?.description)
+        assertEquals(original.currency, persisted?.currency)
+        assertEquals(original.payers, persisted?.payers)
+        assertEquals(original.allocations, persisted?.allocations)
+        assertEquals(2, balancePostingRepository.findByExpenseId(expenseId).size)
+    }
+
+    @Test
     fun `updates expense, reverses previous postings, creates new postings, and updates group revision`() {
         val group = groupStore.create("alice", CreateGroupRequest("Weekend Trip", "TRIP", "EUR"))
         val groupId = group.groupId

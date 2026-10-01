@@ -4,6 +4,7 @@ import com.subhrodip.squarewise.errors.domain.ErrorCode
 import com.subhrodip.squarewise.expensecore.expenses.api.ExpenseController
 import com.subhrodip.squarewise.expensecore.expenses.api.request.AllocationInputDto
 import com.subhrodip.squarewise.expensecore.expenses.api.request.AllocationItemDto
+import com.subhrodip.squarewise.expensecore.expenses.api.request.CreateExpenseRequest
 import com.subhrodip.squarewise.expensecore.expenses.api.request.MoneyDto
 import com.subhrodip.squarewise.expensecore.expenses.api.request.PayerDto
 import com.subhrodip.squarewise.expensecore.expenses.api.request.UpdateExpenseRequest
@@ -470,6 +471,39 @@ class ExpenseControllerTest {
         invalidRequests.forEach { request ->
             val error = assertThrows<ApplicationException> {
                 controller.updateExpense(groupId, expenseId, request, principal)
+            }
+            assertEquals(ErrorCode.ERR_02, error.errorCode)
+        }
+    }
+
+    /** Verifies create validation rejects malformed payer values, currency drift, sums, and allocations before persistence. */
+    @Test
+    fun `rejects invalid create financial inputs before store mutation`() {
+        val groupId = UUID.randomUUID()
+        val participantId = UUID.randomUUID().toString()
+        val principal = Principal { "test-user" }
+        val base = CreateExpenseRequest(
+            expenseId = UUID.randomUUID(),
+            description = "Created",
+            amount = MoneyDto("EUR", "100"),
+            payers = listOf(PayerDto(participantId, MoneyDto("EUR", "100"))),
+            allocation = AllocationInputDto(
+                "EXACT",
+                listOf(AllocationItemDto(participantId, "100"))
+            )
+        )
+
+        val invalidRequests = listOf(
+            base.copy(payers = listOf(PayerDto(participantId, MoneyDto("EUR", "not-an-integer")))),
+            base.copy(payers = listOf(PayerDto(participantId, MoneyDto("EUR", "-1")))),
+            base.copy(payers = listOf(PayerDto(participantId, MoneyDto("USD", "100")))),
+            base.copy(payers = listOf(PayerDto(participantId, MoneyDto("EUR", "99")))),
+            base.copy(allocation = AllocationInputDto("EXACT", listOf(AllocationItemDto(participantId, "99"))))
+        )
+
+        invalidRequests.forEachIndexed { index, request ->
+            val error = assertThrows<ApplicationException> {
+                controller.createExpense(groupId, "create-validation-$index", request, principal)
             }
             assertEquals(ErrorCode.ERR_02, error.errorCode)
         }

@@ -176,6 +176,34 @@ class AuthEmailRabbitListenerTest {
         }
     }
 
+    /** Verifies a nullable parser result is treated as a permanent envelope failure. */
+    @Test
+    fun `rejects auth email when the object mapper returns no root`() {
+        val objectMapper = mock(ObjectMapper::class.java)
+        doReturn(null).`when`(objectMapper).readTree(any<ByteArray>())
+        val boundaryListener = AuthEmailRabbitListener(objectMapper, consumer)
+        val channel = TestChannel()
+
+        boundaryListener.onMessage(message("ignored", 32L), channel)
+
+        assertEquals(32L, channel.rejectedTag)
+        assertEquals(false, channel.rejectedRequeue)
+        assertNull(channel.ackedTag)
+    }
+
+    /** Verifies an absent payload object is rejected separately from an explicit JSON null. */
+    @Test
+    fun `rejects auth email envelopes without a payload object`() {
+        val missingPayload = """{"eventType":"auth.email.requested.v1","eventId":"evt-1"}"""
+        val channel = TestChannel()
+
+        listener.onMessage(message(missingPayload, 33L), channel)
+
+        assertEquals(33L, channel.rejectedTag)
+        assertEquals(false, channel.rejectedRequeue)
+        assertNull(channel.ackedTag)
+    }
+
     /** Verifies an unparsable expiry is rejected as a permanent envelope failure. */
     @Test
     fun `rejects auth email envelopes with invalid expiry`() {

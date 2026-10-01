@@ -30,6 +30,9 @@ class AuthEmailEnvelopeProtectorTest {
         assertThrows(IllegalArgumentException::class.java) { AuthEmailEnvelopeProtector(ByteArray(0)) }
         assertThrows(IllegalArgumentException::class.java) { AuthEmailEnvelopeProtector(ByteArray(31)) }
         assertThrows(IllegalArgumentException::class.java) { protector.reveal("", "person@example.com", "LOGIN_CODE") }
+        assertThrows(IllegalArgumentException::class.java) {
+            protector.reveal("not%base64", "person@example.com", "LOGIN_CODE")
+        }
 
         val envelope = encrypt("code-123", "person@example.com", "LOGIN_CODE")
         val encoded = Base64.getUrlDecoder().decode(envelope)

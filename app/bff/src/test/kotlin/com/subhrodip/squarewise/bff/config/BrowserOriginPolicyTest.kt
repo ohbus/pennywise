@@ -31,6 +31,14 @@ class BrowserOriginPolicyTest {
         }
     }
 
+    /** Verifies deployment fails fast when a configured origin is not an absolute origin. */
+    @Test
+    fun `rejects malformed configured origins`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            BrowserOriginPolicy(listOf("/relative"))
+        }
+    }
+
     @Test
     fun `rejects malformed origins and preserves explicit non-default ports`() {
         assertTrue(BrowserOriginPolicy(listOf("https://app.example.test:8443")).allows("https://app.example.test:8443"))

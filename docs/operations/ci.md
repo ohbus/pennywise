@@ -21,8 +21,9 @@ Node 24 ahead of runner deprecation deadlines.
 Each verification-matrix job receives isolated PostgreSQL 17 and RabbitMQ 4.3
 service containers. Docker health checks (`pg_isready` and
 `rabbitmq-diagnostics ping`) must pass before job steps begin. RabbitMQ receives
-a 30-second health-check start period and 24 five-second retries to accommodate
-slow hosted-runner startup without weakening the readiness command. No service
+a 60-second health-check start period, 10-second health-check timeout, and 24
+five-second retries to accommodate slow hosted-runner startup without weakening
+the readiness command. No service
 state is shared between matrix jobs. The parallelized E2E jobs instead let the complete
 local Compose topology exclusively own PostgreSQL, RabbitMQ, Keycloak, Redis, and
 Mailpit; declaring duplicate job services on the host would contend for host ports `5432`

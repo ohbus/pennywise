@@ -113,7 +113,7 @@ jobs:
         ports: ['5672:5672']
         options: >-
           --health-cmd="rabbitmq-diagnostics -q ping"
-          --health-start-period=30s --health-interval=5s --health-timeout=5s --health-retries=24
+          --health-start-period=60s --health-interval=5s --health-timeout=10s --health-retries=24
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -242,7 +242,7 @@ jobs:
         ports: ['5672:5672']
         options: >-
           --health-cmd="rabbitmq-diagnostics -q ping"
-          --health-start-period=30s --health-interval=5s --health-timeout=5s --health-retries=24
+          --health-start-period=60s --health-interval=5s --health-timeout=10s --health-retries=24
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5

@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `4145a05`, whose subject indicates
+(`master`) through the latest audited coverage commit `8b26630`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -152,6 +152,15 @@ It changes no production implementation or contract; the regenerated report
 removes `JpaOutboxStore.claim` from the open inventory and reduces the baseline
 from 136 records / 303 missed branches to 135 records / 298 missed branches.
 
+`eb045bb` adds public controller tests for blank-category defaulting on create
+and update. It changes no production implementation or contract; the
+regenerated report reduces missed branches from 298 to 290 while retaining the
+null-principal forwarding branch for structural review.
+
+`8b26630` adds a public controller test for the allocation-side participant
+limit, independent of payer count. It changes no production implementation or
+contract; the regenerated report reduces missed branches from 290 to 289.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -161,7 +170,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 135 methods with 298 missed branches. The remaining
+regenerated reports contain 135 methods with 289 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E

@@ -106,6 +106,43 @@ class RecurringExpenseServiceTest @Autowired constructor(
     }
 
     @Test
+    fun `updates schedule with valid monthly bounds and custom participants`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Monthly update", "HOUSEHOLD", "EUR"))
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Original schedule",
+                amountMinor = 8000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = LocalDate.of(2026, 9, 1)
+            )
+        )
+        val participantId = UUID.randomUUID()
+
+        val updated = service.updateSchedule(
+            group.groupId,
+            schedule.scheduleId,
+            UpdateRecurringScheduleRequest(
+                description = "Month-end schedule",
+                amountMinor = 8000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.MONTHLY,
+                dayOfMonth = 31,
+                startDate = LocalDate.of(2026, 9, 1),
+                endDate = LocalDate.of(2026, 12, 31),
+                payers = listOf(ExpensePayer(participantId, 8000)),
+                allocations = listOf(ExpenseAllocation(participantId, 8000))
+            )
+        )
+
+        assertEquals("Month-end schedule", updated.description)
+        assertEquals(RecurrenceFrequency.MONTHLY, updated.frequency)
+        assertEquals(31, updated.dayOfMonth)
+        assertEquals(LocalDate.of(2026, 12, 31), updated.endDate)
+    }
+
+    @Test
     fun `pauses and resumes schedule`() {
         val group = groupStore.create("alice", CreateGroupRequest("Cabin", "TRIP", "EUR"))
         val schedule = service.createSchedule(

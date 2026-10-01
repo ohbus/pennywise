@@ -74,7 +74,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 150 methods with 402 missed branches. The remaining
+regenerated reports contain 150 methods with 393 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E
@@ -130,6 +130,11 @@ change while preserving one payer/allocation row per participant and a zero net
 posting balance. The fresh report reduces the `JpaExpenseStore.update` residual
 from 12 to 6 missed branches and the repository total from 407 to 402, with no
 production implementation or contract change.
+
+The follow-up QA10-C03 increment adds a valid positive `updateSchedule` case
+covering monthly day-of-month, end-date, payer, and allocation combinations.
+The test asserts the persisted schedule fields; JaCoCo reduces that method's
+residual from 13 to 4 missed branches and the repository total from 402 to 393.
 
 The audit-control increment makes closure requirements executable in the
 documentation tooling: every branch record must name its exact test and

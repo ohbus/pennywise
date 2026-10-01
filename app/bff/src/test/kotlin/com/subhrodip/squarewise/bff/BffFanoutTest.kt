@@ -492,6 +492,81 @@ class BffFanoutTest {
         assertThat((cause as UpstreamServiceException).status).isEqualTo(422)
     }
 
+    /** Verifies nullable bearer inputs never create an empty or synthetic Authorization header. */
+    @Test
+    fun `omits authorization when gateway bearer is absent`() {
+        val authorizationHeaders = CopyOnWriteArrayList<String>()
+        fun capture(exchange: HttpExchange) {
+            authorizationHeaders.addAll(
+                exchange.requestHeaders.getOrDefault(ApiEndpoints.Headers.AUTHORIZATION, emptyList())
+            )
+        }
+
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
+            capture(exchange)
+            val response = if (exchange.requestMethod == "POST") {
+                groupJson("g-null", "No Token")
+            } else {
+                "[${groupJson("g-null", "No Token")}]"
+            }
+            respondJson(exchange, 200, response)
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupById("g-null")) { exchange ->
+            capture(exchange)
+            respondJson(exchange, 200, groupJson("g-null", "No Token"))
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupBalances("g-null")) { exchange ->
+            capture(exchange)
+            respondJson(exchange, 200, """{"groupId":"g-null","balances":[]}""")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupExpenses("g-null")) { exchange ->
+            capture(exchange)
+            val response = if (exchange.requestMethod == "POST") {
+                """{"expenseId":"e-null","version":1,"amount":{"currency":"EUR","minor":"1"},"allocations":[]}"""
+            } else {
+                "[]"
+            }
+            respondJson(exchange, 200, response)
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-null")) { exchange ->
+            capture(exchange)
+            respondJson(exchange, 200, "[]")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupSettlements("g-null")) { exchange ->
+            capture(exchange)
+            respondJson(exchange, 200, """{"id":"s-null","fromParticipantId":"p-1","toParticipantId":"p-2","amountMinor":1,"currency":"EUR","status":"RECORDED"}""")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions("g-null")) { exchange ->
+            capture(exchange)
+            respondJson(exchange, 200, "[]")
+        }
+
+        gateway.listGroups(null).block()
+        gateway.getGroup("g-null", null).block()
+        gateway.createGroup(BffCreateGroup("No Token", "TRIP", "EUR"), null).block()
+        gateway.updateGroup("g-null", "No Token", null).block()
+        gateway.createExpense(
+            "g-null",
+            CreateExpenseInput(
+                "e-null",
+                "No Token",
+                MoneyInput("EUR", "1"),
+                listOf(PayerInput("p-null", MoneyInput("EUR", "1"))),
+                AllocationInput("EQUAL", emptyList())
+            ),
+            "idempotency-null",
+            null
+        ).block()
+        gateway.recordRepayment(
+            "g-null",
+            RepaymentInput("g-null", "p-1", "p-2", MoneyInput("EUR", "1"), null),
+            null
+        ).block()
+        gateway.getSettlementSuggestions("g-null", null).block()
+
+        assertThat(authorizationHeaders).isEmpty()
+    }
+
     /**
      * Verifies authorization header is forwarded to upstream endpoints.
      */

@@ -1,8 +1,11 @@
 package com.subhrodip.squarewise.expensecore.expenses
 import com.subhrodip.squarewise.expensecore.expenses.api.AllocationPreviewController
+import com.subhrodip.squarewise.expensecore.expenses.api.request.AllocationPreviewRequest
 import com.subhrodip.squarewise.expensecore.expenses.domain.AllocationCalculator
+import com.subhrodip.squarewise.errors.domain.ApplicationException
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
@@ -46,5 +49,23 @@ class AllocationPreviewControllerTest {
         ).andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
             .andExpect(jsonPath("$.requestId").value("missing-request-id"))
+    }
+
+    @Test
+    fun `preview rejects a non numeric total before allocation`() {
+        assertThrows(ApplicationException::class.java) {
+            AllocationPreviewController().preview(
+                AllocationPreviewRequest("not-a-number", listOf("a"))
+            )
+        }
+    }
+
+    @Test
+    fun `preview rejects a negative total before allocation`() {
+        assertThrows(ApplicationException::class.java) {
+            AllocationPreviewController().preview(
+                AllocationPreviewRequest("-1", listOf("a"))
+            )
+        }
     }
 }

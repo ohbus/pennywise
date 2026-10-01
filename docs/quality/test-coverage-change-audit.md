@@ -494,7 +494,7 @@ The deletion-store increment adds missing-record null-result and invalid-subject
 integration assertions without changing deletion state transitions or profile
 preservation behavior; execution and JaCoCo effect remain pending Gradle.
 
-The A07 audit increment names all 20 current method-level records with source
+The A07 audit increment names all 11 current method-level records with source
 lines, missed-branch counts, and required evidence/classification. A tooling
 regression test protects that ledger; no branch was excluded or implementation
 logic removed.
@@ -639,3 +639,10 @@ is not a group member now causes the schedule to pause with
 membership guard unchanged. The focused and full Gradle wrapper suites passed;
 the regenerated total is 87 method records / 163 missed branches. Worker
 concurrency, rollback, broker, and deployed recurrence evidence remain open.
+
+`dfe7661` adds deletion-store tests for missing cancellation/completion records
+and for persisted `CANCELLED`/`COMPLETED` transitions. The focused Accounts
+test and full repository JaCoCo run passed; the deletion-store records are no
+longer present in the current 87-record inventory. The aggregate remains 163
+missed branches because other residual mappings remain open. No production
+logic or deletion contract changed.

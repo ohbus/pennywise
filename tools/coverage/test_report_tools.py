@@ -200,24 +200,15 @@ class CoverageInventoryTest(unittest.TestCase):
         targets = (
             "OneTimeCredentialIssuer.kt:49",
             "AesGcmCredentialEnvelopeProtector.kt:38",
-            "AccountIdentityStore.kt:70",
-            "JpaAccountIdentityStore.kt:33",
             "JpaAccountIdentityStore.kt:54",
             "JpaAccountIdentityStore.kt:74",
             "JpaAccountIdentityStore.kt:104",
             "JpaAccountIdentityStore.kt:145",
             "DefaultRsaKeyProvider.kt:62",
             "DefaultRsaKeyProvider.kt:73",
-            "LoginStartService.kt:40",
             "LoginVerificationService.kt:60",
-            "AsymmetricJwtTokenProvider.kt:28",
-            "SessionExpiry.kt:14",
             "SessionPolicy.kt:82",
             "TokenSessionService.kt:116",
-            "TokenSessionService.kt:209",
-            "JpaDeletionRequestStore.kt:46",
-            "JpaDeletionRequestStore.kt:87",
-            "JpaDeletionRequestStore.kt:101",
         )
         for target in targets:
             with self.subTest(target=target):

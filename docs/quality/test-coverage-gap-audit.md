@@ -215,7 +215,8 @@ equal the `Methods with missed branches` total above (**86**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
 (**157**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
-provisional QA-10 row, and assignment basis. The record count and branch-count
+provisional QA-10 row, assignment basis, and the row's machine-readable
+`acceptance_criteria`. The record count and branch-count
 sum are both regression-tested so a changed JaCoCo baseline cannot silently
 replace one uncovered branch with another while appearing stable by method
 count alone.

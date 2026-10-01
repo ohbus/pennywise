@@ -29,6 +29,7 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertEqual(86, len(gaps))
         self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
         self.assertTrue(all(gap.assignment_basis for gap in gaps))
+        self.assertTrue(all(gap.acceptance_criteria for gap in gaps))
         expected_counts = {
             "QA10-A01": 0,
                 "QA10-A02": 0,
@@ -109,11 +110,11 @@ class CoverageInventoryTest(unittest.TestCase):
 
         self.assertEqual(88, len(rows))
         self.assertEqual(
-            "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report |",
+            "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria |",
             rows[0],
         )
         self.assertEqual(
-            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- |",
+            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |",
             rows[1],
         )
         self.assertEqual(

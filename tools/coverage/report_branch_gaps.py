@@ -33,6 +33,7 @@ class BranchGap:
     report: str
     qa_row: str
     assignment_basis: str
+    acceptance_criteria: str
 
 
 def qa_assignment(module: str, class_name: str) -> tuple[str, str]:
@@ -104,6 +105,41 @@ def qa_assignment(module: str, class_name: str) -> tuple[str, str]:
     return default
 
 
+def qa_acceptance(qa_row: str) -> str:
+    """Return the minimum evidence required for an assigned QA-10 row."""
+
+    criteria = {
+        "QA10-A01": "Auth-email publication, acknowledgement/retry state, redaction, and deployed broker delivery.",
+        "QA10-A02": "Protected outbox handoff, caller-transaction rollback, replay safety, and durable delivery state.",
+        "QA10-A03": "Normalized identity limits, atomic shared-Redis behavior, outage recovery, and public 429 semantics.",
+        "QA10-A04": "Explicit external OIDC selection, exchange, failure mapping, and no fallback authority.",
+        "QA10-A05": "Issuer, audience, algorithm, key discovery/rotation, invalid-token rejection, and fail-closed wiring.",
+        "QA10-A06": "Subject-scoped profile/deletion/export authorization, exact errors, durable state, and redaction.",
+        "QA10-A07": "Identity/session/replay/expiry/deletion invariants, durable transitions, concurrency, and redacted outcomes.",
+        "QA10-A08": "Canonical email normalization plus malformed, length, whitespace, IDN, and label boundaries.",
+        "QA10-B01": "Bearer/watermark propagation, transport failure mapping, redaction, and deployed gateway behavior.",
+        "QA10-B02": "GraphQL resolver/scalar/error/limit behavior, admission validation, and exact public extensions.",
+        "QA10-B03": "Fanout ordering, deduplication, expiry/revocation, broker ack/retry, reconnect, and WebSocket isolation.",
+        "QA10-B04": "Origin/CSRF/cookie/session policy for browser, native, preflight, and WebSocket paths.",
+        "QA10-C01": "Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation.",
+        "QA10-C02": "Arithmetic conservation, deterministic allocation, overflow/invalid-input rejection, and zero-sum invariants.",
+        "QA10-C03": "Recurring date/catch-up/locking/membership/duplicate/failure behavior and notification/outbox effects.",
+        "QA10-C04": "Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects.",
+        "QA10-C05": "Settlement/reversal validation, idempotency, balances, corruption detection, concurrency, and zero-sum state.",
+        "QA10-C06": "Sync ordering, cursor ownership/expiry/limits, tombstones, membership loss, and revision invariants.",
+        "QA10-D01": "Auth-email envelope validation, decrypt/expiry handling, ack/retry/DLQ, deduplication, and redaction.",
+        "QA10-D02": "Notification transaction/ack coupling, deduplication, poison/retry behavior, Redis admission, and inbox effects.",
+        "QA10-D03": "SMTP mapping, validation, failure classification, retry/parking, metrics, and redaction.",
+        "QA10-D04": "Subject-isolated preferences/inbox behavior, cursors/versioning, duplicate mark-read, and database failures.",
+        "QA10-E01": "Every catalog/framework error envelope, correlation lifecycle, negotiation, headers, and redaction.",
+        "QA10-E02": "Writer/reader routing, lag/fallback/recovery, causal watermarks, pool bounds, and safe write routing.",
+        "QA10-E03": "Servlet/reactive OIDC parity, issuer/audience/algorithm/time/key rotation, and fail-closed headers.",
+        "QA10-E04": "Endpoint/event/error/ID uniqueness and contract drift, with explicit generated-code classification.",
+        "QA10-E05": "Bounded observability labels and exact success/failure/slow/fallback metric behavior.",
+    }
+    return criteria.get(qa_row, "Exact behavior test or reviewed structural rationale linked to this production branch.")
+
+
 def report_paths(root: Path) -> list[Path]:
     """Return application and library JaCoCo XML reports in stable order."""
 
@@ -161,6 +197,7 @@ def parse_report(root: Path, report: Path) -> list[BranchGap]:
                         report=str(report.relative_to(root)).replace("\\", "/"),
                         qa_row=qa_row,
                         assignment_basis=assignment_basis,
+                        acceptance_criteria=qa_acceptance(qa_row),
                     )
                 )
     return gaps
@@ -185,14 +222,15 @@ def markdown(gaps: Iterable[BranchGap]) -> str:
     """Render branch gaps as a review-friendly Markdown table."""
 
     rows = [
-        "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report |",
-        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- |",
+        "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |",
     ]
     for gap in gaps:
         rows.append(
             f"| `{gap.module}` | `{gap.qa_row}` | `{gap.class_name}` | `{gap.source_file}` | "
             f"`{gap.method}` | {gap.source_line or ''} | {gap.missed_branches} | "
-            f"{gap.covered_branches} | {gap.assignment_basis} | `{gap.report}` |"
+            f"{gap.covered_branches} | {gap.assignment_basis} | `{gap.report}` | "
+            f"{gap.acceptance_criteria} |"
         )
     return "\n".join(rows)
 

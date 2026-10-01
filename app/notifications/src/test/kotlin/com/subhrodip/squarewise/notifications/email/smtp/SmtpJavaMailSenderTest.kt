@@ -55,6 +55,38 @@ class SmtpJavaMailSenderTest {
         assertThat(error.message).contains("Unexpected SMTP response")
     }
 
+    /** Verifies configured sender and empty optional fields are serialized safely. */
+    @Test
+    fun `uses configured sender and empty optional fields`() {
+        val received = runSmtpServer(
+            SimpleMailMessage(to = arrayOf("alice@example.com"))
+        ) { reader, writer, capture ->
+            writer.reply("220 test SMTP")
+            capture.command(reader, writer, "250 test")
+            capture.command(reader, writer, "250 test")
+            capture.command(reader, writer, "250 test")
+            capture.command(reader, writer, "354 continue")
+            capture.data(reader, writer, "250 queued")
+            capture.command(reader, writer, "221 bye")
+        }
+
+        assertThat(received).contains(
+            "MAIL FROM:<sender@example.com>",
+            "Subject: ",
+            "Content-Type: text/plain; charset=UTF-8"
+        )
+    }
+
+    /** Verifies a closed SMTP response stream is reported as a delivery failure. */
+    @Test
+    fun `rejects a premature SMTP response stream`() {
+        val error = assertThrows(MailSendException::class.java) {
+            runSmtpServer { _, writer, _ -> writer.close() }
+        }
+
+        assertThat(error.message).contains("Premature end of stream")
+    }
+
     @Test
     fun `rejects messages without recipients before opening a socket`() {
         val properties = EmailProperties("127.0.0.1", 1, "sender@example.com", true, 1, 0)
@@ -66,7 +98,22 @@ class SmtpJavaMailSenderTest {
         assertEquals(ErrorCode.ERR_02, error.errorCode)
     }
 
-    private fun runSmtpServer(script: (BufferedReaderWithReply, BufferedWriterWithCapture, Capture) -> Unit): String {
+    private fun runSmtpServer(
+        script: (BufferedReaderWithReply, BufferedWriterWithCapture, Capture) -> Unit
+    ): String = runSmtpServer(
+        SimpleMailMessage(
+            from = "sender@example.com",
+            to = arrayOf("alice@example.com", "bob@example.com"),
+            subject = "Test subject",
+            text = "hello from SMTP"
+        ),
+        script
+    )
+
+    private fun runSmtpServer(
+        message: SimpleMailMessage,
+        script: (BufferedReaderWithReply, BufferedWriterWithCapture, Capture) -> Unit
+    ): String {
         ServerSocket(0).use { server ->
             val received = StringBuilder()
             val failure = AtomicReference<Throwable?>(null)
@@ -85,12 +132,7 @@ class SmtpJavaMailSenderTest {
             SmtpJavaMailSender(
                 EmailProperties("127.0.0.1", server.localPort, "sender@example.com", true, 1, 0)
             ).send(
-                SimpleMailMessage(
-                    from = "sender@example.com",
-                    to = arrayOf("alice@example.com", "bob@example.com"),
-                    subject = "Test subject",
-                    text = "hello from SMTP"
-                )
+                message
             )
             worker.join(5000)
             failure.get()?.let { throw it }

@@ -19,7 +19,7 @@ The audit found no contract-file changes in the test/coverage/QA commit set.
 Most commits were test, tooling, or documentation-only. Four commits had
 production implementation edits:
 
-As a reproducible history check, the subject-matching audit selected **82
+As a reproducible history check, the subject-matching audit selected **240
 commits** from `master..HEAD` whose subjects contain `test`, `coverage`, `QA`,
 `JaCoCo`, or `E2E`. `git diff-tree --diff-filter=D` found **no file deletion**
 in that set, and the same commit set has **no changes under `contracts/`**.

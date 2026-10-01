@@ -71,6 +71,30 @@ def request_json(
         return 503, {"error": str(error)}
 
 
+def request_text(
+    url: str,
+    method: str = "GET",
+    bearer: str | None = None,
+    extra_headers: dict[str, str] | None = None,
+    timeout: float = 10.0,
+) -> Tuple[int, str]:
+    """Request a non-JSON response while preserving the signed-persona headers."""
+    headers = {CONTENT_TYPE: APPLICATION_JSON}
+    if bearer:
+        headers[AUTHORIZATION] = f"{BEARER_PREFIX}{bearer}"
+    if extra_headers:
+        headers.update(extra_headers)
+
+    req = Request(url, headers=headers, method=method)
+    try:
+        with urlopen(req, timeout=timeout) as response:
+            return response.status, response.read().decode("utf-8")
+    except HTTPError as error:
+        return error.code, error.read().decode("utf-8", errors="replace")
+    except Exception as error:
+        return 503, str(error)
+
+
 def graphql_query(
     query: str,
     variables: dict[str, Any] | None = None,
@@ -608,6 +632,22 @@ def run_e2e_tests() -> int:
         item.get("expenseId") == expense_id for item in searched_expenses.get("expenses", [])
     ), "Expense Core searchExpenses must find the persisted expense by description"
     print("  ✓ Expense Core listExpenses and searchExpenses expose the persisted expense")
+
+    export_status, export_csv = request_text(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/export?query=Ski",
+        bearer=user_a,
+        extra_headers={"Accept": "text/csv"},
+    )
+    assert export_status == 200, (
+        f"Expense Core exportExpenses failed: HTTP {export_status} ({export_csv})"
+    )
+    assert export_csv.startswith("expenseId,description,currency,amountMinor,category\n"), (
+        "Expense Core exportExpenses must return the documented CSV header"
+    )
+    assert expense_id in export_csv and "Ski Passes" in export_csv and ",10000," in export_csv, (
+        "Expense Core exportExpenses must include the persisted matching expense"
+    )
+    print("  [ok] Expense Core exportExpenses returns the persisted matching CSV row")
 
     replay_res = graphql_query(
         create_expense_mutation,

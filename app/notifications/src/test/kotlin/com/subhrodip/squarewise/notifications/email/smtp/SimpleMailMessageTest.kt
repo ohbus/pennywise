@@ -61,5 +61,15 @@ class SimpleMailMessageTest {
         assertThat(SimpleMailMessage()).isEqualTo(SimpleMailMessage())
         assertThat(SimpleMailMessage(to = emptyArray())).isEqualTo(SimpleMailMessage())
         assertThat(SimpleMailMessage(to = emptyArray())).isEqualTo(SimpleMailMessage(to = emptyArray()))
+        assertThat(SimpleMailMessage()).isNotEqualTo(SimpleMailMessage(to = emptyArray()))
+    }
+
+    @Test
+    fun `empty recipients and null fields retain safe diagnostics and hashes`() {
+        val empty = SimpleMailMessage(to = emptyArray())
+        assertThat(empty.recipient).isNull()
+        assertThat(empty.toString()).contains("to=[]", "subject=null", "text=null")
+        assertThat(empty.hashCode()).isEqualTo(SimpleMailMessage(to = emptyArray()).hashCode())
+        assertThat(empty).isNotEqualTo(null)
     }
 }

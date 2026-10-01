@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.doReturn
+import org.mockito.Mockito.mock
 import tools.jackson.databind.ObjectMapper
 
 /** Verifies broker-envelope validation and lossless scalar payload conversion. */
@@ -100,6 +103,16 @@ class BrokerEnvelopeParserTest {
             expected?.let { message ->
                 assertTrue(exception.message.orEmpty().contains(message), "Error should identify $message")
             }
+        }
+    }
+
+    @Test
+    fun `rejects a null parser result as an empty envelope`() {
+        val objectMapper = mock(ObjectMapper::class.java)
+        doReturn(null).`when`(objectMapper).readTree(any<ByteArray>())
+
+        assertThrows(InvalidEnvelopeException::class.java) {
+            BrokerEnvelopeParser(objectMapper).parse("ignored".toByteArray())
         }
     }
 

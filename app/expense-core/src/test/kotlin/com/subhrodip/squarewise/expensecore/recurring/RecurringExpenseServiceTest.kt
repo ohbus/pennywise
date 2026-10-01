@@ -398,6 +398,63 @@ class RecurringExpenseServiceTest @Autowired constructor(
     }
 
     @Test
+    fun `fills only the omitted side of a custom recurring specification`() {
+        val group = groupStore.create("alice", CreateGroupRequest("One-sided custom specs", "HOUSEHOLD", "EUR"))
+        val invite = groupStore.invite(group.groupId, "alice", CreateInviteRequest(24))
+        groupStore.claim(invite.token, "bob")
+
+        val aliceId = UUID.nameUUIDFromBytes("alice".toByteArray(StandardCharsets.UTF_8))
+        val bobId = UUID.nameUUIDFromBytes("bob".toByteArray(StandardCharsets.UTF_8))
+        val startDate = LocalDate.of(2026, 9, 1)
+
+        val payersOnly = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Payer only",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate,
+                payers = listOf(ExpensePayer(bobId, 6000))
+            )
+        )
+        val allocationsOnly = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Allocation only",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate,
+                allocations = listOf(
+                    ExpenseAllocation(aliceId, 4000),
+                    ExpenseAllocation(bobId, 2000)
+                )
+            )
+        )
+
+        assertEquals(2, service.processDueOccurrences(asOfDate = startDate))
+
+        val payerOnlyExpense = expenseStore.findById(
+            service.getOccurrences(payersOnly.scheduleId).single().expenseId!!
+        )
+        assertEquals(listOf(ExpensePayer(bobId, 6000)), payerOnlyExpense?.payers)
+        assertEquals(listOf(3000L, 3000L), payerOnlyExpense?.allocations?.map { it.allocatedMinor }?.sorted())
+
+        val allocationOnlyExpense = expenseStore.findById(
+            service.getOccurrences(allocationsOnly.scheduleId).single().expenseId!!
+        )
+        assertEquals(listOf(ExpensePayer(aliceId, 6000)), allocationOnlyExpense?.payers)
+        assertEquals(
+            listOf(
+                ExpenseAllocation(aliceId, 4000),
+                ExpenseAllocation(bobId, 2000)
+            ),
+            allocationOnlyExpense?.allocations
+        )
+    }
+
+    @Test
     fun `idempotency skips already generated occurrence`() {
         val group = groupStore.create("alice", CreateGroupRequest("Dorm", "HOUSEHOLD", "EUR"))
         val startDate = LocalDate.of(2026, 9, 1)

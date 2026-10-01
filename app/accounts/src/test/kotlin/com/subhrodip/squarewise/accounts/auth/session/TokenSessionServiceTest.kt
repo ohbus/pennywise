@@ -161,6 +161,102 @@ class TokenSessionServiceTest @Autowired constructor(
         assertNotNull(rotatedSession?.revokedAt)
     }
 
+    /** Verifies a revoked-only refresh session is rejected before identity lookup. */
+    @Test
+    fun `rejects a revoked refresh session without replacement metadata`() {
+        val now = Instant.now()
+        val rawRefreshToken = UUID.randomUUID().toString()
+        val familyId = UUID.randomUUID()
+        sessionRepository.save(AuthSessionEntity(
+            sessionId = UUID.randomUUID(),
+            accountId = UUID.randomUUID(),
+            familyId = familyId,
+            refreshTokenDigest = digest.digest(rawRefreshToken),
+            createdAt = now,
+            lastUsedAt = now,
+            expiresAt = now.plusSeconds(300),
+            absoluteExpiresAt = now.plusSeconds(600),
+            revokedAt = now,
+            replacedBySessionId = null,
+            subject = currentSubject,
+            clientKind = "BROWSER"
+        ))
+
+        val ex = assertThrows(ApplicationException::class.java) {
+            service.rotateSession(rawRefreshToken, "test", now.plusSeconds(1))
+        }
+
+        assertEquals(ErrorCode.ERR_03, ex.errorCode)
+    }
+
+    /** Verifies a replacement-only refresh session is treated as token reuse. */
+    @Test
+    fun `rejects a replaced refresh session without a revocation timestamp`() {
+        val now = Instant.now()
+        val rawRefreshToken = UUID.randomUUID().toString()
+        val familyId = UUID.randomUUID()
+        val replacementSessionId = UUID.randomUUID()
+        sessionRepository.save(AuthSessionEntity(
+            sessionId = replacementSessionId,
+            accountId = UUID.randomUUID(),
+            familyId = familyId,
+            refreshTokenDigest = digest.digest(UUID.randomUUID().toString()),
+            createdAt = now,
+            lastUsedAt = now,
+            expiresAt = now.plusSeconds(300),
+            absoluteExpiresAt = now.plusSeconds(600),
+            subject = currentSubject,
+            clientKind = "BROWSER"
+        ))
+        sessionRepository.save(AuthSessionEntity(
+            sessionId = UUID.randomUUID(),
+            accountId = UUID.randomUUID(),
+            familyId = familyId,
+            refreshTokenDigest = digest.digest(rawRefreshToken),
+            createdAt = now,
+            lastUsedAt = now,
+            expiresAt = now.plusSeconds(300),
+            absoluteExpiresAt = now.plusSeconds(600),
+            revokedAt = null,
+            replacedBySessionId = replacementSessionId,
+            subject = currentSubject,
+            clientKind = "BROWSER"
+        ))
+
+        val ex = assertThrows(ApplicationException::class.java) {
+            service.rotateSession(rawRefreshToken, "test", now.plusSeconds(1))
+        }
+
+        assertEquals(ErrorCode.ERR_03, ex.errorCode)
+    }
+
+    /** Verifies a legacy accountless refresh session fails closed without mutation. */
+    @Test
+    fun `rejects an accountless refresh session`() {
+        val now = Instant.now()
+        val rawRefreshToken = UUID.randomUUID().toString()
+        val sessionId = UUID.randomUUID()
+        sessionRepository.save(AuthSessionEntity(
+            sessionId = sessionId,
+            accountId = null,
+            familyId = UUID.randomUUID(),
+            refreshTokenDigest = digest.digest(rawRefreshToken),
+            createdAt = now,
+            lastUsedAt = now,
+            expiresAt = now.plusSeconds(300),
+            absoluteExpiresAt = now.plusSeconds(600),
+            subject = currentSubject,
+            clientKind = "NATIVE"
+        ))
+
+        val ex = assertThrows(ApplicationException::class.java) {
+            service.rotateSession(rawRefreshToken, "legacy", now.plusSeconds(1))
+        }
+
+        assertEquals(ErrorCode.ERR_03, ex.errorCode)
+        assertEquals(null, sessionRepository.findById(sessionId).orElseThrow().revokedAt)
+    }
+
     @Test
     fun `logout does not revoke a family when authenticated subject does not own it`() {
         val now = Instant.now()

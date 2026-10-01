@@ -715,6 +715,16 @@ def run_e2e_tests() -> int:
     assert len(changes) >= 1, "Expected at least one change record in sync snapshot"
     print(f"  ✓ Sync snapshot verified: {len(changes)} revisions tracked (latest revision={changes[-1]['revision']})")
 
+    deletion_status, deletion_response = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/me/deletion-request",
+        method="POST",
+        bearer=user_a,
+    )
+    assert deletion_status == 202, (
+        f"Accounts requestDeletion failed: HTTP {deletion_status} ({deletion_response})"
+    )
+    print("  ✓ Accounts requestDeletion accepted as the final lifecycle action")
+
     print("\n" + "=" * 70)
     print("🎉 ALL END-TO-END PRODUCT LIFECYCLE TESTS PASSED SUCCESSFULLY!")
     print("=" * 70)

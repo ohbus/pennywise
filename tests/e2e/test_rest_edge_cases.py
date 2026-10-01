@@ -380,7 +380,7 @@ def main() -> None:
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_INVITE_REVOKE.format(group_id=group_id, token=revoked_token)}",
         method="POST",
     )
-    expect("member can revoke invite", status, 204)
+    expect("Expense Core revokeInvite succeeds for an authorized member", status, 204)
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_INVITE_CLAIM.format(token=revoked_token)}",
         method="POST", token="revoked-claim-user",

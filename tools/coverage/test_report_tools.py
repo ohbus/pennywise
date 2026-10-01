@@ -76,7 +76,7 @@ class CoverageInventoryTest(unittest.TestCase):
         )
         self.assertTrue(all(item.acceptance_row == "QA10-E2E01" for item in operations))
         self.assertEqual(
-            19,
+            18,
             sum(not item.has_e2e_signal for item in operations),
         )
         self.assertEqual(
@@ -224,7 +224,7 @@ class CoverageInventoryTest(unittest.TestCase):
 
         operations = inventory(ROOT)
         missing_e2e = [item.operation for item in operations if not item.has_e2e_signal]
-        self.assertEqual(19, len(missing_e2e))
+        self.assertEqual(18, len(missing_e2e))
         matrix = audit.split("### Operation-specific E2E acceptance matrix", 1)[1].split(
             "The GraphQL roots currently have literal E2E references", 1
         )[0]

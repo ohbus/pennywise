@@ -96,6 +96,23 @@ class SettlementSuggestionTest {
         assertEquals(1000L, usdSuggestion.amountMinor)
     }
 
+    /** Verifies repeated balance rows aggregate by participant before matching. */
+    @Test
+    fun `aggregates duplicate participant balances within a currency`() {
+        val debtor = UUID.randomUUID()
+        val creditor = UUID.randomUUID()
+
+        val suggestions = engine.calculateSuggestions(
+            listOf(
+                GroupBalanceItem(debtor.toString(), MoneyDto("EUR", "-400")),
+                GroupBalanceItem(debtor.toString(), MoneyDto("EUR", "-600")),
+                GroupBalanceItem(creditor.toString(), MoneyDto("EUR", "1000"))
+            )
+        )
+
+        assertEquals(listOf(SuggestedSettlement(debtor, creditor, 1000L, "EUR")), suggestions)
+    }
+
     @Test
     fun `zero balance handling produces no suggestions`() {
         val a = UUID.randomUUID()

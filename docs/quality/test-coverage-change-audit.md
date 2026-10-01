@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `80c3f5d`, whose subject indicates
+(`master`) through the latest audited coverage commit `22a6be3`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -330,6 +330,12 @@ identity table's profile foreign key makes profile-missing identity rows
 unreachable through the real persistence boundary; concurrent identity races and
 deployed identity evidence remain open.
 
+`22a6be3` adds an explicit BFF configuration test for malformed allow-listed
+origins, proving deployment fails fast instead of accepting an invalid browser
+origin. It changes no production implementation or contract; the regenerated
+inventory remains 108 method records / 196 missed branches because the malformed
+origin path was already represented in JaCoCo coverage.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -536,3 +542,5 @@ evidence remain open.
 profile foreign-key invariant prevents meaningful orphan-identity fixtures, so
 those residual branches remain explicitly classified as unreachable at the
 persistence boundary rather than being tested with invalid database state.
+`22a6be3` adds the malformed configured-origin construction assertion without
+changing the current 108-record / 196-missed-branch baseline.

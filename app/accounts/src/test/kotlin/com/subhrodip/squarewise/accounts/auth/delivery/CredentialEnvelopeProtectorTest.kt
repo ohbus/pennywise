@@ -62,7 +62,7 @@ class CredentialEnvelopeProtectorTest {
     @Test
     fun `malformed and unsupported envelopes are rejected`() {
         assertThrows(IllegalArgumentException::class.java) {
-            protector.reveal("not-base64", context)
+            protector.reveal("not%base64", context)
         }
 
         val truncated = Base64.getUrlEncoder().withoutPadding().encodeToString(byteArrayOf(1, 2))

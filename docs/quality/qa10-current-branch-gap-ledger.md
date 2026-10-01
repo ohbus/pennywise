@@ -7,14 +7,13 @@ a reviewed structural/invariant classification with exact source evidence. Regen
 after every test increment; the locked tooling tests assert that the record count and
 missed-branch total stay synchronized with the audit and CI documentation.
 
-Current baseline: **60 production methods with missed branches / 114 missed branches**.
+Current baseline: **59 production methods with missed branches / 113 missed branches**.
 
 ## Exact current records
 
 | Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |
 | `app/accounts` | `QA10-A03` | `com/subhrodip/squarewise/accounts/auth/abuse/ClientAddressResolver` | `ClientAddressResolver.kt` | `normalizeToPartition` | 89 | 3 | 6 | authentication abuse and rate limiting | `app/accounts/build/reports/jacoco/test/jacocoTestReport.xml` | Normalized identity limits, atomic shared-Redis behavior, outage recovery, and public 429 semantics. |
-| `app/accounts` | `QA10-A07` | `com/subhrodip/squarewise/accounts/auth/delivery/security/AesGcmCredentialEnvelopeProtector` | `AesGcmCredentialEnvelopeProtector.kt` | `reveal` | 38 | 1 | 9 | authentication session and identity behavior | `app/accounts/build/reports/jacoco/test/jacocoTestReport.xml` | Identity/session/replay/expiry/deletion invariants, durable transitions, concurrency, and redacted outcomes. |
 | `app/accounts` | `QA10-A08` | `com/subhrodip/squarewise/accounts/auth/identity/EmailAddress$Companion` | `EmailAddress.kt` | `parse-cJDfx0k` | 28 | 11 | 43 | email canonicalization value object | `app/accounts/build/reports/jacoco/test/jacocoTestReport.xml` | Canonical email normalization plus malformed, length, whitespace, IDN, and label boundaries. |
 | `app/accounts` | `QA10-A07` | `com/subhrodip/squarewise/accounts/auth/identity/persistence/JpaAccountIdentityStore` | `JpaAccountIdentityStore.kt` | `findByIssuerAndSubject` | 54 | 1 | 5 | authentication session and identity behavior | `app/accounts/build/reports/jacoco/test/jacocoTestReport.xml` | Identity/session/replay/expiry/deletion invariants, durable transitions, concurrency, and redacted outcomes. |
 | `app/accounts` | `QA10-A07` | `com/subhrodip/squarewise/accounts/auth/identity/persistence/JpaAccountIdentityStore` | `JpaAccountIdentityStore.kt` | `findByEmail` | 74 | 2 | 4 | authentication session and identity behavior | `app/accounts/build/reports/jacoco/test/jacocoTestReport.xml` | Identity/session/replay/expiry/deletion invariants, durable transitions, concurrency, and redacted outcomes. |

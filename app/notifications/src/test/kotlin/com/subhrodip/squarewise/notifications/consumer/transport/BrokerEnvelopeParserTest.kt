@@ -47,7 +47,9 @@ class BrokerEnvelopeParserTest {
         )
 
         listOf(
+            valid.replace("\"eventType\": \"expense.created\",", "") to "eventType",
             valid.replace("\"eventType\": \"expense.created\"", "\"eventType\": \" \"") to "eventType",
+            valid.replace("\"eventType\": \"expense.created\"", "\"eventType\": 42") to "eventType",
             valid.replace("\"schemaVersion\": 1", "\"schemaVersion\": 0") to "schemaVersion",
             valid.replace("\"groupRevision\": 3", "\"groupRevision\": 0") to "groupRevision",
             valid.replace("\"groupId\":", "\"groupId\": \"not-a-uuid\", \"unused\":") to "groupId",
@@ -91,6 +93,7 @@ class BrokerEnvelopeParserTest {
             "{not-json}" to null,
             "" to null,
             valid.replace("2026-09-17T20:00:00Z", "not-a-time") to "occurredAt",
+            valid.replace("\"payload\": {}", "\"unrelated\": true") to "payload",
             valid.replace("\"payload\": {}", "\"payload\": []") to "payload",
         ).forEach { (body, expected) ->
             val exception = assertThrows(InvalidEnvelopeException::class.java) { parser.parse(body.toByteArray()) }

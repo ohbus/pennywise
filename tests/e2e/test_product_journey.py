@@ -791,6 +791,21 @@ def run_e2e_tests() -> int:
     assert len(changes) >= 1, "Expected at least one change record in sync snapshot"
     print(f"  ✓ Sync snapshot verified: {len(changes)} revisions tracked (latest revision={changes[-1]['revision']})")
 
+    next_cursor = snapshot.get("nextCursor")
+    assert next_cursor, "Expense Core getSnapshot must return a continuation cursor"
+    changes_status, changes_page = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/sync/changes"
+        f"?cursor={next_cursor}&limit=50",
+        bearer=user_a,
+    )
+    assert changes_status == 200, (
+        f"Expense Core getChanges failed: HTTP {changes_status} ({changes_page})"
+    )
+    assert isinstance(changes_page.get("changes"), list), (
+        "Expense Core getChanges must return a changes page"
+    )
+    print("  ✓ Expense Core getChanges accepts the snapshot continuation cursor")
+
     deletion_status, deletion_response = request_json(
         f"{ACCOUNTS_URL}/accounts/v1/me/deletion-request",
         method="POST",

@@ -7,6 +7,7 @@ import com.subhrodip.squarewise.expensecore.groups.api.CreateInviteRequest
 import com.subhrodip.squarewise.expensecore.groups.api.CreatePlaceholderRequest
 import com.subhrodip.squarewise.expensecore.groups.api.UpdateGroupRequest
 import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupAuditRepository
+import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupMembershipRepository
 import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupRepository
 import com.subhrodip.squarewise.expensecore.groups.persistence.store.JpaGroupStore
 import com.subhrodip.squarewise.expensecore.messaging.outbox.persistence.OutboxRepository
@@ -36,6 +37,7 @@ class JpaGroupStoreTest @Autowired constructor(
     private val syncRepository: SyncChangeRepository,
     private val outboxRepository: OutboxRepository,
     private val groupRepository: GroupRepository,
+    private val membershipRepository: GroupMembershipRepository,
     private val objectMapper: ObjectMapper
 ) {
     /**
@@ -73,6 +75,35 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals(1, results.count { it.get() })
         executor.shutdown()
         assertEquals(1, (1..8).sumOf { store.list("member-$it").size })
+    }
+
+    /** Verifies the atomic claim failure path for two users racing on one targeted placeholder invite. */
+    @Test
+    fun `allows exactly one concurrent targeted placeholder claim`() {
+        val group = store.create("targeted-race-owner", CreateGroupRequest("Targeted race", "TRIP", "EUR"))
+        val placeholder = store.addPlaceholder(
+            group.groupId,
+            "targeted-race-owner",
+            CreatePlaceholderRequest("Racing placeholder")
+        )
+        val invitation = store.invite(
+            group.groupId,
+            "targeted-race-owner",
+            CreateInviteRequest(24, placeholder.membershipId)
+        )
+        val executor = Executors.newFixedThreadPool(2)
+        val start = CountDownLatch(1)
+        val results = (1..2).map { index ->
+            executor.submit(Callable {
+                start.await()
+                runCatching { store.claim(invitation.token, "targeted-race-$index") }.isSuccess
+            })
+        }
+        start.countDown()
+
+        assertEquals(1, results.count { it.get() })
+        executor.shutdown()
+        assertEquals(1, store.list("targeted-race-1").size + store.list("targeted-race-2").size)
     }
 
     /**
@@ -398,6 +429,77 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals(ErrorCode.ERR_06, competingSubjectError.errorCode)
         assertEquals(2, store.listMembers(group.groupId, "claim-owner").size)
         assertTrue(store.list("competing-member").isEmpty())
+    }
+
+    /** Verifies an invitation cannot mutate an archived group after the token was issued. */
+    @Test
+    fun `rejects invitation claim for archived group without membership effects`() {
+        val group = store.create("archived-claim-owner", CreateGroupRequest("Archived claim", "TRIP", "EUR"))
+        val invitation = store.invite(group.groupId, "archived-claim-owner", CreateInviteRequest(24))
+        store.archive(group.groupId, "archived-claim-owner")
+        val revisionAfterArchive = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        val error = assertThrows<ApplicationException> {
+            store.claim(invitation.token, "archived-invitee")
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+        assertEquals(revisionAfterArchive, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertTrue(store.list("archived-invitee").isEmpty())
+    }
+
+    /** Verifies a targeted invitation rejects a placeholder removed after the invitation was issued. */
+    @Test
+    fun `rejects claim when targeted placeholder is no longer active`() {
+        val group = store.create("removed-placeholder-owner", CreateGroupRequest("Removed placeholder", "TRIP", "EUR"))
+        val placeholder = store.addPlaceholder(
+            group.groupId,
+            "removed-placeholder-owner",
+            CreatePlaceholderRequest("Former placeholder")
+        )
+        val invitation = store.invite(
+            group.groupId,
+            "removed-placeholder-owner",
+            CreateInviteRequest(24, placeholder.membershipId)
+        )
+        store.removeMember(group.groupId, "removed-placeholder-owner", placeholder.membershipId)
+        val revisionAfterRemoval = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        val error = assertThrows<ApplicationException> {
+            store.claim(invitation.token, "replacement-subject")
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+        assertEquals(revisionAfterRemoval, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertTrue(store.list("replacement-subject").isEmpty())
+    }
+
+    /** Verifies an unclaimed invitation cannot bind a placeholder already associated with a subject. */
+    @Test
+    fun `rejects claim when targeted placeholder is already bound`() {
+        val group = store.create("bound-placeholder-owner", CreateGroupRequest("Bound placeholder", "TRIP", "EUR"))
+        val placeholder = store.addPlaceholder(
+            group.groupId,
+            "bound-placeholder-owner",
+            CreatePlaceholderRequest("Bound placeholder")
+        )
+        val invitation = store.invite(
+            group.groupId,
+            "bound-placeholder-owner",
+            CreateInviteRequest(24, placeholder.membershipId)
+        )
+        val persistedPlaceholder = membershipRepository.findById(placeholder.membershipId).orElseThrow()
+        persistedPlaceholder.subject = "existing-subject"
+        membershipRepository.saveAndFlush(persistedPlaceholder)
+        val revisionBeforeClaim = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        val error = assertThrows<ApplicationException> {
+            store.claim(invitation.token, "new-subject")
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+        assertEquals(revisionBeforeClaim, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertTrue(store.list("new-subject").isEmpty())
     }
 
     /**

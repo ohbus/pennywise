@@ -10,6 +10,8 @@ import com.subhrodip.squarewise.notifications.delivery.policy.RetryPolicy
 import com.subhrodip.squarewise.notifications.delivery.rate.DeliveryRateLimiter
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.time.Duration
 
@@ -21,5 +23,17 @@ class RetryPolicyTest {
         assertEquals(Duration.ofSeconds(2), policy.decide(2, DeliveryOutcome.RETRYABLE_FAILURE).delay)
         assertEquals(true, policy.decide(3, DeliveryOutcome.RETRYABLE_FAILURE).parked)
         assertEquals(true, policy.decide(1, DeliveryOutcome.PERMANENT_FAILURE).parked)
+        assertFalse(policy.decide(1, DeliveryOutcome.SUCCESS).retry)
+        assertEquals(Duration.ZERO, policy.decide(1, DeliveryOutcome.SUCCESS).delay)
+    }
+
+    @Test
+    fun `rejects non-positive attempts and policy limits`() {
+        assertThrows(IllegalArgumentException::class.java) { RetryPolicy(0) }
+        val policy = RetryPolicy(3)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            policy.decide(0, DeliveryOutcome.SUCCESS)
+        }
     }
 }

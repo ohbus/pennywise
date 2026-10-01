@@ -27,7 +27,12 @@ class RabbitBrokerPublisherTest {
     private val publisher = RabbitBrokerPublisher(rabbitTemplate, objectMapper, EventConstants.EVENTS_EXCHANGE)
 
     init {
-        `when`(rabbitTemplate.invoke<Any?>(any())).thenAnswer { invocation ->
+        `when`(
+            rabbitTemplate.invoke<Any?>(
+                any(RabbitOperations.OperationsCallback::class.java)
+                    ?: mock(RabbitOperations.OperationsCallback::class.java)
+            )
+        ).thenAnswer { invocation ->
             @Suppress("UNCHECKED_CAST")
             (invocation.getArgument<Any>(0) as RabbitOperations.OperationsCallback<Any?>)
                 .doInRabbit(rabbitTemplate)

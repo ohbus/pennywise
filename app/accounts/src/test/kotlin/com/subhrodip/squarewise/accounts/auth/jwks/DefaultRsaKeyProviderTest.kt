@@ -59,6 +59,42 @@ class DefaultRsaKeyProviderTest {
         assertEquals(source.toRSAPublicKey().modulus, activeKey.toRSAPublicKey().modulus)
     }
 
+    @Test
+    fun `generates a key when PEM configuration is only partially supplied`() {
+        val source = RSAKeyGenerator(2048).generate()
+
+        val privateOnly = DefaultRsaKeyProvider(
+            RsaKeyProperties(
+                keyId = "private-only",
+                privateKeyPem = pem("PRIVATE KEY", source.toRSAPrivateKey().encoded),
+            ),
+        )
+        val publicOnly = DefaultRsaKeyProvider(
+            RsaKeyProperties(
+                keyId = "public-only",
+                publicKeyPem = pem("PUBLIC KEY", source.toRSAPublicKey().encoded),
+            ),
+        )
+
+        assertTrue(privateOnly.activeSigningKey().isPrivate)
+        assertEquals("private-only", privateOnly.activeSigningKey().keyID)
+        assertTrue(publicOnly.activeSigningKey().isPrivate)
+        assertEquals("public-only", publicOnly.activeSigningKey().keyID)
+    }
+
+    @Test
+    fun `rejects malformed complete PEM configuration`() {
+        assertThrows<IllegalArgumentException> {
+            DefaultRsaKeyProvider(
+                RsaKeyProperties(
+                    keyId = "malformed",
+                    privateKeyPem = "not-a-private-key",
+                    publicKeyPem = "not-a-public-key",
+                ),
+            )
+        }
+    }
+
     private fun pem(label: String, bytes: ByteArray): String =
         "-----BEGIN $label-----\n" +
             Base64.getMimeEncoder(64, "\n".toByteArray()).encodeToString(bytes) +

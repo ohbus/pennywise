@@ -1,6 +1,8 @@
 package com.subhrodip.squarewise.accounts.auth.identity.persistence
 
 import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentityStore
+import com.subhrodip.squarewise.accounts.profile.persistence.ProfileEntity
+import com.subhrodip.squarewise.accounts.profile.persistence.ProfileRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -18,7 +20,8 @@ import java.util.UUID
 @Transactional
 class JpaAccountIdentityStoreTest @Autowired constructor(
     private val identityStore: AccountIdentityStore,
-    private val profileRepository: com.subhrodip.squarewise.accounts.profile.persistence.ProfileRepository
+    private val identityRepository: AccountIdentityRepository,
+    private val profileRepository: ProfileRepository
 ) {
 
     @Test
@@ -29,7 +32,7 @@ class JpaAccountIdentityStoreTest @Autowired constructor(
         val email = "alice.smith@example.com"
 
         profileRepository.save(
-            com.subhrodip.squarewise.accounts.profile.persistence.ProfileEntity(
+            ProfileEntity(
                 accountId = accountId,
                 subject = subject,
                 displayName = "Alice Smith",
@@ -72,7 +75,7 @@ class JpaAccountIdentityStoreTest @Autowired constructor(
         val newEmail = "bob.new@example.com"
 
         profileRepository.save(
-            com.subhrodip.squarewise.accounts.profile.persistence.ProfileEntity(
+            ProfileEntity(
                 accountId = accountId,
                 subject = subject,
                 displayName = "Bob Jones",
@@ -97,5 +100,98 @@ class JpaAccountIdentityStoreTest @Autowired constructor(
         val byNewEmail = identityStore.findByEmail(newEmail)
         assertNotNull(byNewEmail)
         assertEquals(accountId, byNewEmail?.accountId)
+    }
+
+    @Test
+    fun `falls back to profile subject and internal issuer without durable identity`() {
+        val accountId = UUID.randomUUID()
+        profileRepository.save(
+            ProfileEntity(
+                accountId = accountId,
+                subject = "internal:fallback@example.com",
+                displayName = "Fallback User",
+                timezone = "UTC",
+                defaultCurrency = "EUR",
+                deletionRequested = true,
+            )
+        )
+
+        val resolved = identityStore.findByAccountId(accountId)
+
+        assertNotNull(resolved)
+        assertEquals("internal:fallback@example.com", resolved?.subject)
+        assertEquals("fallback@example.com", resolved?.email)
+        assertEquals("squarewise-internal", resolved?.issuer)
+        assertEquals(true, resolved?.deletionRequested)
+    }
+
+    @Test
+    fun `returns null when account profile does not exist`() {
+        assertNull(identityStore.findByAccountId(UUID.randomUUID()))
+    }
+
+    @Test
+    fun `returns null for unknown composite identity and email`() {
+        assertNull(identityStore.findByIssuerAndSubject("https://unknown.example", "missing-subject"))
+        assertNull(identityStore.findByEmail("missing@example.com"))
+    }
+
+    @Test
+    fun `returns empty email when durable identity has no email`() {
+        val accountId = UUID.randomUUID()
+        val issuer = "https://accounts.squarewise.test"
+        val subject = "sqw:null-email-$accountId"
+        profileRepository.save(
+            ProfileEntity(
+                accountId = accountId,
+                subject = subject,
+                displayName = "No Email",
+                timezone = "UTC",
+                defaultCurrency = "EUR",
+            )
+        )
+        identityRepository.save(
+            AccountIdentityEntity(
+                identityId = UUID.randomUUID(),
+                accountId = accountId,
+                issuer = issuer,
+                providerSubject = subject,
+                email = null,
+            )
+        )
+
+        val resolved = identityStore.findByIssuerAndSubject(issuer, subject)
+
+        assertNotNull(resolved)
+        assertEquals("", resolved?.email)
+    }
+
+    @Test
+    fun `re-enrolling an existing composite identity updates contact and verification state`() {
+        val accountId = UUID.randomUUID()
+        val issuer = "https://accounts.squarewise.test"
+        val subject = "sqw:re-enroll-$accountId"
+        profileRepository.save(
+            ProfileEntity(
+                accountId = accountId,
+                subject = subject,
+                displayName = "Re-enrolled User",
+                timezone = "UTC",
+                defaultCurrency = "EUR",
+            )
+        )
+
+        identityStore.enrollIdentity(accountId, issuer, subject, "old@example.com", verified = false)
+        val updated = identityStore.enrollIdentity(
+            accountId,
+            issuer,
+            subject,
+            "new@example.com",
+            verified = true,
+        )
+
+        assertEquals("new@example.com", updated.email)
+        assertEquals(accountId, identityStore.findByEmail("new@example.com")?.accountId)
+        assertNull(identityStore.findByEmail("old@example.com"))
     }
 }

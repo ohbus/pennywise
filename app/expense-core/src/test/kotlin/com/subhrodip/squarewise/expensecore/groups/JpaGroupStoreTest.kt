@@ -367,4 +367,86 @@ class JpaGroupStoreTest @Autowired constructor(
         val audit = auditRepository.findAll().single { it.groupId == group.groupId && it.action == "invitation.revoked" }
         assertEquals("invitation.revoked", audit.action)
     }
+
+    /**
+     * Verifies archived groups reject member-facing mutations while preserving the archive state
+     * and the already-recorded mutation effects.
+     */
+    @Test
+    fun `rejects archived group member operations without additional effects`() {
+        val group = store.create("archived-members-owner", CreateGroupRequest("Archived", "TRIP", "EUR"))
+        store.archive(group.groupId, "archived-members-owner")
+        val auditCount = auditRepository.count()
+        val outboxCount = outboxRepository.count()
+
+        val listError = org.junit.jupiter.api.assertThrows<ApplicationException> {
+            store.listMembers(group.groupId, "archived-members-owner")
+        }
+        assertEquals(ErrorCode.ERR_05, listError.errorCode)
+
+        val placeholderError = org.junit.jupiter.api.assertThrows<ApplicationException> {
+            store.addPlaceholder(
+                group.groupId,
+                "archived-members-owner",
+                CreatePlaceholderRequest("No mutation")
+            )
+        }
+        assertEquals(ErrorCode.ERR_06, placeholderError.errorCode)
+        assertEquals("ARCHIVED", groupRepository.findById(group.groupId).orElseThrow().status)
+        assertEquals(auditCount, auditRepository.count())
+        assertEquals(outboxCount, outboxRepository.count())
+    }
+
+    /** Verifies invalid placeholder and invitation tokens fail before any group mutation is recorded. */
+    @Test
+    fun `rejects invalid placeholder and invitation operations without mutation`() {
+        val group = store.create("invalid-invite-owner", CreateGroupRequest("Invites", "TRIP", "EUR"))
+        val auditCount = auditRepository.count()
+        val outboxCount = outboxRepository.count()
+
+        val placeholderError = org.junit.jupiter.api.assertThrows<ApplicationException> {
+            store.invite(
+                group.groupId,
+                "invalid-invite-owner",
+                CreateInviteRequest(24, java.util.UUID.randomUUID())
+            )
+        }
+        assertEquals(ErrorCode.ERR_06, placeholderError.errorCode)
+
+        val unknownToken = "a".repeat(64)
+        val revokeError = org.junit.jupiter.api.assertThrows<ApplicationException> {
+            store.revokeInvite(group.groupId, "invalid-invite-owner", unknownToken)
+        }
+        assertEquals(ErrorCode.ERR_06, revokeError.errorCode)
+
+        val malformedClaimError = org.junit.jupiter.api.assertThrows<ApplicationException> {
+            store.claim("not-a-token", "invitee")
+        }
+        assertEquals(ErrorCode.ERR_06, malformedClaimError.errorCode)
+
+        val unknownClaimError = org.junit.jupiter.api.assertThrows<ApplicationException> {
+            store.claim(unknownToken, "invitee")
+        }
+        assertEquals(ErrorCode.ERR_06, unknownClaimError.errorCode)
+        assertEquals(0L, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertEquals(auditCount, auditRepository.count())
+        assertEquals(outboxCount, outboxRepository.count())
+    }
+
+    /** Verifies removing an unknown membership is rejected without changing the group revision or effects. */
+    @Test
+    fun `rejects removal of an unknown membership without mutation`() {
+        val group = store.create("missing-member-owner", CreateGroupRequest("Members", "HOUSEHOLD", "EUR"))
+        val auditCount = auditRepository.count()
+        val outboxCount = outboxRepository.count()
+
+        val error = org.junit.jupiter.api.assertThrows<ApplicationException> {
+            store.removeMember(group.groupId, "missing-member-owner", java.util.UUID.randomUUID())
+        }
+
+        assertEquals(ErrorCode.ERR_05, error.errorCode)
+        assertEquals(0L, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertEquals(auditCount, auditRepository.count())
+        assertEquals(outboxCount, outboxRepository.count())
+    }
 }

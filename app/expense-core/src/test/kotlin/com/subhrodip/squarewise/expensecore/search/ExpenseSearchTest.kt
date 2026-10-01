@@ -2,10 +2,12 @@ package com.subhrodip.squarewise.expensecore.search
 
 import com.subhrodip.squarewise.expensecore.search.model.ExpenseSearch
 import com.subhrodip.squarewise.expensecore.search.model.SearchExpense
+import com.subhrodip.squarewise.expensecore.search.persistence.decodeSearchCursor
 import com.subhrodip.squarewise.expensecore.categories.ExpenseCategory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import java.util.Base64
 
 class ExpenseSearchTest {
     @Test
@@ -14,6 +16,17 @@ class ExpenseSearchTest {
         val data = listOf(SearchExpense("2", "Dinner", "EUR", "1000"), SearchExpense("1", "dinner taxi", "EUR", "2000"))
         assertEquals(listOf("1", "2"), search.filter(data, "DINNER").map { it.expenseId })
         assertEquals("'=SUM(A1)", search.csvCell("=SUM(A1)"))
+    }
+
+    @Test
+    fun `escapes every formula prefix and quotes csv delimiters`() {
+        val search = ExpenseSearch()
+
+        assertEquals("'+value", search.csvCell("+value"))
+        assertEquals("'-value", search.csvCell("-value"))
+        assertEquals("'@value", search.csvCell("@value"))
+        assertEquals("\"'@a,\"\"b\"\"\"", search.csvCell("@a,\"b\""))
+        assertEquals("\"line\nvalue\"", search.csvCell("line\nvalue"))
     }
 
     @Test
@@ -66,5 +79,32 @@ class ExpenseSearchTest {
     fun `rejects unknown category`() {
         val err = assertThrows(com.subhrodip.squarewise.errors.domain.ApplicationException::class.java) { ExpenseCategory.fromKey("travel") }
         assertEquals(com.subhrodip.squarewise.errors.domain.ErrorCode.ERR_02, err.errorCode)
+    }
+
+    @Test
+    fun `rejects unbounded pages and malformed currency filters`() {
+        val search = ExpenseSearch()
+        val data = listOf(SearchExpense("1", "Dinner", "EUR", "100"))
+
+        assertThrows(IllegalArgumentException::class.java) { search.page(data, limit = 0) }
+        assertThrows(IllegalArgumentException::class.java) { search.page(data, limit = ExpenseSearch.MAX_LIMIT + 1) }
+        assertThrows(IllegalArgumentException::class.java) { search.page(data, currency = "EURO") }
+        assertThrows(IllegalArgumentException::class.java) { search.page(data, currency = "12") }
+    }
+
+    @Test
+    fun `decodes valid search cursors and rejects blank or malformed values`() {
+        val cursor = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("expense-42".toByteArray())
+
+        assertEquals(null, decodeSearchCursor(null))
+        assertEquals("expense-42", decodeSearchCursor(cursor))
+
+        listOf("%%%invalid%%%", Base64.getUrlEncoder().withoutPadding().encodeToString(" ".toByteArray())).forEach { value ->
+            val error = assertThrows(com.subhrodip.squarewise.errors.domain.ApplicationException::class.java) {
+                decodeSearchCursor(value)
+            }
+            assertEquals(com.subhrodip.squarewise.errors.domain.ErrorCode.ERR_02, error.errorCode)
+        }
     }
 }

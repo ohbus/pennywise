@@ -496,4 +496,85 @@ class RecurringExpenseServiceTest @Autowired constructor(
             )
         }
     }
+
+    @Test
+    fun `update validation rejects invalid schedule state before saving`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Update validation", "HOUSEHOLD", "EUR"))
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Valid schedule",
+                amountMinor = 1000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.MONTHLY,
+                startDate = LocalDate.of(2026, 9, 1)
+            )
+        )
+        val valid = UpdateRecurringScheduleRequest(
+            description = "Updated schedule",
+            amountMinor = 1000,
+            currency = "EUR",
+            frequency = RecurrenceFrequency.MONTHLY,
+            startDate = LocalDate.of(2026, 9, 1)
+        )
+
+        assertThrows(ApplicationException::class.java) {
+            service.updateSchedule(UUID.randomUUID(), schedule.scheduleId, valid)
+        }
+        assertThrows(ApplicationException::class.java) {
+            service.updateSchedule(group.groupId, UUID.randomUUID(), valid)
+        }
+        assertThrows(IllegalArgumentException::class.java) { service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(description = " ")) }
+        assertThrows(IllegalArgumentException::class.java) { service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(amountMinor = 0)) }
+        assertThrows(IllegalArgumentException::class.java) { service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(currency = "eur")) }
+        assertThrows(IllegalArgumentException::class.java) { service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(dayOfMonth = 0)) }
+        assertThrows(IllegalArgumentException::class.java) { service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(frequency = RecurrenceFrequency.WEEKLY, dayOfMonth = 1)) }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(endDate = LocalDate.of(2026, 8, 31)))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(payers = emptyList()))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(payers = listOf(ExpensePayer(UUID.randomUUID(), 999))))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(allocations = emptyList()))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(allocations = listOf(ExpenseAllocation(UUID.randomUUID(), 999))))
+        }
+
+        assertEquals("Valid schedule", service.getSchedule(schedule.scheduleId)?.description)
+    }
+
+    @Test
+    fun `create validation rejects date and participant invariants`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Create validation", "HOUSEHOLD", "EUR"))
+        val valid = CreateRecurringScheduleRequest(
+            description = "Valid schedule",
+            amountMinor = 1000,
+            currency = "EUR",
+            frequency = RecurrenceFrequency.MONTHLY,
+            startDate = LocalDate.of(2026, 9, 1)
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            service.createSchedule(group.groupId, valid.copy(endDate = LocalDate.of(2026, 8, 31)))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.createSchedule(group.groupId, valid.copy(payers = emptyList()))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.createSchedule(group.groupId, valid.copy(payers = listOf(ExpensePayer(UUID.randomUUID(), 999))))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.createSchedule(group.groupId, valid.copy(allocations = emptyList()))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.createSchedule(group.groupId, valid.copy(allocations = listOf(ExpenseAllocation(UUID.randomUUID(), 999))))
+        }
+
+        assertEquals(0, scheduleRepository.count())
+    }
 }

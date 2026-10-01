@@ -1,0 +1,65 @@
+package com.subhrodip.squarewise.notifications.email.smtp
+
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+
+/** Verifies the SMTP-neutral message value object's array and nullable-field contracts. */
+class SimpleMailMessageTest {
+    @Test
+    fun `recipient and body properties map to the wire fields`() {
+        val message = SimpleMailMessage()
+
+        message.setTo("alice@example.com")
+        message.body = "hello"
+
+        assertThat(message.recipient).isEqualTo("alice@example.com")
+        assertThat(message.to).containsExactly("alice@example.com")
+        assertThat(message.body).isEqualTo("hello")
+        assertThat(message.text).isEqualTo("hello")
+
+        message.recipient = null
+        message.body = null
+
+        assertThat(message.to).isNull()
+        assertThat(message.text).isNull()
+    }
+
+    @Test
+    fun `equality compares array contents and every message field`() {
+        val original = SimpleMailMessage(
+            from = "sender@example.com",
+            to = arrayOf("alice@example.com", "bob@example.com"),
+            subject = "Subject",
+            text = "Body"
+        )
+        val same = SimpleMailMessage(
+            from = "sender@example.com",
+            to = arrayOf("alice@example.com", "bob@example.com"),
+            subject = "Subject",
+            text = "Body"
+        )
+
+        assertThat(original).isEqualTo(same)
+        assertThat(original.hashCode()).isEqualTo(same.hashCode())
+        assertThat(original.toString()).contains(
+            "sender@example.com",
+            "alice@example.com",
+            "bob@example.com",
+            "Subject",
+            "Body"
+        )
+
+        assertThat(original).isNotEqualTo(original.copy(from = "other@example.com"))
+        assertThat(original).isNotEqualTo(original.copy(to = arrayOf("different@example.com")))
+        assertThat(original).isNotEqualTo(original.copy(subject = "Different"))
+        assertThat(original).isNotEqualTo(original.copy(text = "Different"))
+        assertThat(original).isNotEqualTo("not a mail message")
+    }
+
+    @Test
+    fun `null and empty arrays compare by their contents`() {
+        assertThat(SimpleMailMessage()).isEqualTo(SimpleMailMessage())
+        assertThat(SimpleMailMessage()).isEqualTo(SimpleMailMessage(to = emptyArray()))
+        assertThat(SimpleMailMessage(to = emptyArray())).isEqualTo(SimpleMailMessage())
+    }
+}

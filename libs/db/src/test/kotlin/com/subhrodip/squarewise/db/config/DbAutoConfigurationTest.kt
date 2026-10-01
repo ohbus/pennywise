@@ -7,6 +7,7 @@ import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import org.mockito.Mockito.mock
 
@@ -65,6 +66,35 @@ class DbAutoConfigurationTest {
         ) as DbRoutingDataSource
 
         assertSame(writer, routing.readerDataSources()["replica"])
+    }
+
+    /** Verifies normal mode builds an independent reader pool rather than aliasing the writer. */
+    @Test
+    fun `normal mode builds configured reader datasource`() {
+        val writer = mock(HikariDataSource::class.java)
+        val writerPool = PoolProperties(
+            url = "jdbc:postgresql://writer/db",
+            username = "app",
+        )
+        val readerPool = PoolProperties(
+            url = "jdbc:postgresql://reader/db",
+            username = "app",
+        )
+        val routing = configuration.squarewiseDataSource(
+            DbProperties(writer = writerPool, readers = mapOf("replica" to readerPool)),
+            writer,
+            DbReaderHealth(),
+            DbTelemetry(),
+        ) as DbRoutingDataSource
+
+        val reader = routing.readerDataSources()["replica"] as HikariDataSource
+        try {
+            assertNotSame(writer, reader)
+            assertEquals("jdbc:postgresql://reader/db", reader.jdbcUrl)
+            assertEquals("app", reader.username)
+        } finally {
+            reader.close()
+        }
     }
 
     @Test

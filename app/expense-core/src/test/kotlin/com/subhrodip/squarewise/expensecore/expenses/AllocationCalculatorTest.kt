@@ -145,4 +145,32 @@ class AllocationCalculatorTest {
             AllocationCalculator.calculate("unknown", 10, exactItems)
         }
     }
+
+    /**
+     * Exercises the allocation invariants across small boundary totals and input permutations.
+     * The algorithms must be deterministic, non-negative, and conserve every minor unit.
+     */
+    @Test
+    fun `allocation modes are permutation invariant and conserve every boundary total`() {
+        val participants = listOf("c", "a", "b")
+        val totals = listOf(0L, 1L, 2L, 5L, 100L, 101L, 999L)
+        val weights = mapOf("c" to 3L, "a" to 1L, "b" to 2L)
+        val percentages = mapOf("c" to 3_333L, "a" to 3_333L, "b" to 3_334L)
+
+        totals.forEach { total ->
+            val equal = AllocationCalculator.equal(total, participants)
+            val weighted = AllocationCalculator.weightedShares(total, weights)
+            val percentage = AllocationCalculator.percentage(total, percentages)
+
+            assertEquals(total, equal.values.sum())
+            assertEquals(total, weighted.values.sum())
+            assertEquals(total, percentage.values.sum())
+            assertEquals(equal, AllocationCalculator.equal(total, participants.reversed()))
+            assertEquals(weighted, AllocationCalculator.weightedShares(total, weights.entries.reversed().associate { it.key to it.value }))
+            assertEquals(percentage, AllocationCalculator.percentage(total, percentages.entries.reversed().associate { it.key to it.value }))
+            assertEquals(true, equal.values.all { it >= 0L })
+            assertEquals(true, weighted.values.all { it >= 0L })
+            assertEquals(true, percentage.values.all { it >= 0L })
+        }
+    }
 }

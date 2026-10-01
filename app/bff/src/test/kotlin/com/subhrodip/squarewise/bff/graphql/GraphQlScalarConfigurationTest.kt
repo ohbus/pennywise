@@ -14,6 +14,7 @@ import com.subhrodip.squarewise.bff.realtime.LiveUpdateFanout
 
 import graphql.GraphQLContext
 import graphql.execution.CoercedVariables
+import graphql.language.BooleanValue
 import graphql.language.IntValue
 import graphql.language.StringValue
 import graphql.schema.CoercingParseLiteralException
@@ -47,6 +48,9 @@ class GraphQlScalarConfigurationTest {
         assertThrows(CoercingParseLiteralException::class.java) {
             coercing.parseLiteral(StringValue.of(" "), CoercedVariables.emptyVariables(), GraphQLContext.getDefault(), Locale.ROOT)
         }
+        assertThrows(CoercingParseLiteralException::class.java) {
+            coercing.parseLiteral(BooleanValue.of(true), CoercedVariables.emptyVariables(), GraphQLContext.getDefault(), Locale.ROOT)
+        }
     }
 
     @Test
@@ -58,6 +62,9 @@ class GraphQlScalarConfigurationTest {
         assertEquals("2026-09-18T10:00:00Z", coercing.serialize("2026-09-18T10:00:00Z", context, Locale.ROOT))
         assertThrows(CoercingParseValueException::class.java) {
             coercing.parseValue("not-a-date", context, Locale.ROOT)
+        }
+        assertThrows(CoercingParseLiteralException::class.java) {
+            coercing.parseLiteral(IntValue.of(20260918), CoercedVariables.emptyVariables(), context, Locale.ROOT)
         }
     }
 

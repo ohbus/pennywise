@@ -11,6 +11,7 @@ import com.subhrodip.squarewise.accounts.profile.persistence.InMemoryProfileStor
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
 import java.time.Instant
+import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -93,5 +94,32 @@ class LoginVerificationServiceTest @Autowired constructor(
             service.verify(issued.plaintext, "NATIVE", null, now.plusSeconds(2))
         }
         assertEquals(ErrorCode.ERR_03, ex.errorCode)
+    }
+
+    @Test
+    fun `reuses an existing identity without provisioning another account`() {
+        val now = Instant.now()
+        val accountId = UUID.randomUUID()
+        val subject = "sqw:existing-$accountId"
+        profileStore.create(accountId, subject, "Existing User", "UTC", "EUR")
+        profileStore.enrollIdentity(
+            accountId = accountId,
+            issuer = "squarewise-internal",
+            providerSubject = subject,
+            email = "existing@example.com",
+            verified = true,
+        )
+        val issued = credentialService.issue(
+            email = "existing@example.com",
+            kind = LoginCredentialService.CredentialKind.LINK,
+            now = now,
+        )
+
+        val tokens = service.verify(issued.plaintext, "BROWSER", "existing-device", now.plusSeconds(1))
+
+        assertNotNull(tokens.accessToken)
+        assertEquals(accountId, profileStore.findByEmail("existing@example.com")?.accountId)
+        assertEquals(subject, profileStore.findByEmail("existing@example.com")?.subject)
+        assertEquals("Existing User", profileStore.get(subject)?.displayName)
     }
 }

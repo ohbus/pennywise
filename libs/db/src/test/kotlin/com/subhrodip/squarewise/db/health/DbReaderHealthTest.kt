@@ -95,6 +95,23 @@ class DbReaderHealthTest {
         assertEquals(DbReaderState.DISCONNECTED, health.state("search"))
     }
 
+    /** Verifies the circuit remains open at the exact deadline and only transitions after it. */
+    @Test
+    fun `open circuit remains closed to probing at the exact deadline`() {
+        val clock = MutableClock(Instant.parse("2026-01-01T00:00:00Z"))
+        val health = DbReaderHealth(
+            failureThreshold = 1,
+            openDuration = Duration.ofSeconds(10),
+            clock = clock,
+        )
+
+        health.markFailure("search")
+        clock.now = clock.now.plusSeconds(10)
+        assertEquals(DbReaderState.OPEN, health.state("search"))
+        health.markFailure("search")
+        assertEquals(DbReaderState.OPEN, health.state("search"))
+    }
+
     /** A missing replay watermark is unsafe even when the reader otherwise appears healthy. */
     @Test
     fun `causal query fails when reader has not replayed a watermark`() {

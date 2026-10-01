@@ -239,6 +239,33 @@ class TokenSessionServiceTest @Autowired constructor(
     }
 
     @Test
+    fun `logout with an authenticated subject ignores a legacy session without an account`() {
+        val now = Instant.now()
+        val rawRefreshToken = "legacy-accountless-logout"
+        val session = AuthSessionEntity(
+            sessionId = UUID.randomUUID(),
+            accountId = null,
+            familyId = UUID.randomUUID(),
+            refreshTokenDigest = digest.digest(rawRefreshToken),
+            createdAt = now,
+            lastUsedAt = now,
+            expiresAt = now.plusSeconds(300),
+            absoluteExpiresAt = now.plusSeconds(600),
+            subject = null,
+            clientKind = "NATIVE"
+        )
+        sessionRepository.save(session)
+
+        service.revokeSessionByRefreshToken(
+            rawRefreshToken = rawRefreshToken,
+            expectedSubject = currentSubject,
+            now = now.plusSeconds(1)
+        )
+
+        assertEquals(null, sessionRepository.findByRefreshTokenDigest(digest.digest(rawRefreshToken))?.revokedAt)
+    }
+
+    @Test
     fun `provider subject change revokes the existing session family`() {
         val now = Instant.now()
         val accountId = UUID.randomUUID()

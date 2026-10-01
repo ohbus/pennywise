@@ -213,4 +213,16 @@ class JpaRequestStoresTest @Autowired constructor(
             profileStore.requestDeletion("oidc|missing-${UUID.randomUUID()}")
         }
     }
+
+    @Test
+    fun `returns null for missing deletion records and rejects blank subjects`() {
+        val missingSubject = "oidc|missing-${UUID.randomUUID()}"
+
+        assertNull(deletionStore.get(missingSubject))
+        assertNull(deletionStore.cancel(missingSubject))
+        assertNull(deletionStore.complete(missingSubject))
+        assertThrows(ApplicationException::class.java) { deletionStore.get(" ") }
+        assertThrows(ApplicationException::class.java) { deletionStore.cancel(" ") }
+        assertThrows(ApplicationException::class.java) { deletionStore.complete(" ") }
+    }
 }

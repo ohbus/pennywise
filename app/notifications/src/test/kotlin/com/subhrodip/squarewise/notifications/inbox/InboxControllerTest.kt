@@ -119,6 +119,15 @@ class InboxControllerTest {
     }
 
     @Test
+    fun `rejects blank subject when marking an inbox item as read`() {
+        val blankSubject = RequestPostProcessor { request -> request.userPrincipal = Principal { "   " }; request }
+
+        mvc.perform(post(ApiEndpoints.Notifications.V1.inboxMarkRead(UUID.randomUUID())).with(blankSubject))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
+    @Test
     fun `rejects invalid inbox page limits with the validation application code`() {
         mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_INBOX).with(user).param("limit", "0"))
             .andExpect(status().isBadRequest)
@@ -142,6 +151,19 @@ class InboxControllerTest {
                 .param("cursor", "not-a-valid-cursor")
         ).andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+    }
+
+    @Test
+    fun `returns an empty page when a valid cursor is after all stored items`() {
+        val testInbox = NotificationInboxService(InMemoryNotificationInboxStore())
+        testInbox.append("alice", InboxItem(UUID.randomUUID(), "event", "Event", Instant.EPOCH))
+
+        val cursor = java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("2026-01-01T00:00:00Z|00000000-0000-7000-8000-000000000001".toByteArray())
+        val page = testInbox.page("alice", cursor, 10)
+
+        assertTrue(page.items.isEmpty())
+        assertEquals(null, page.nextCursor)
     }
 
     @Test

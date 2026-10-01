@@ -7,6 +7,7 @@ import java.time.Duration
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
 /** Unit tests for AsymmetricJwtTokenProvider verifying RS256 issuance and claim validity. */
@@ -52,5 +53,29 @@ class AsymmetricJwtTokenProviderTest {
         assertEquals(email, jwt.getClaimAsString("email"))
         assertEquals("sec01a-test-key", jwt.headers["kid"])
         assertEquals("RS256", jwt.headers["alg"])
+    }
+
+    @Test
+    fun `rejects a blank issuer before token issuance`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            AsymmetricJwtTokenProvider(
+                rsaKeyProvider = rsaKeyProvider,
+                issuerUri = " ",
+                audience = audience,
+                tokenLifetime = tokenLifetime,
+            )
+        }
+    }
+
+    @Test
+    fun `rejects a blank audience before token issuance`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            AsymmetricJwtTokenProvider(
+                rsaKeyProvider = rsaKeyProvider,
+                issuerUri = issuerUri,
+                audience = "\t",
+                tokenLifetime = tokenLifetime,
+            )
+        }
     }
 }

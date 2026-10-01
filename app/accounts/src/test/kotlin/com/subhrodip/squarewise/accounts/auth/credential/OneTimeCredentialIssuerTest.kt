@@ -77,6 +77,25 @@ class OneTimeCredentialIssuerTest {
     }
 
     @Test
+    fun `equality rejects every differing field null and unrelated types`() {
+        val base = OneTimeCredentialIssuer.IssuedCredential(
+            plaintext = "abc",
+            digest = byteArrayOf(1, 2, 3),
+            issuedAt = now,
+            expiresAt = now.plusSeconds(300),
+            remainingAttempts = 3,
+        )
+
+        assertNotEquals(base, base.copy(plaintext = "different"))
+        assertNotEquals(base, base.copy(digest = byteArrayOf(1, 2, 4)))
+        assertNotEquals(base, base.copy(issuedAt = now.plusSeconds(1)))
+        assertNotEquals(base, base.copy(expiresAt = now.plusSeconds(301)))
+        assertNotEquals(base, base.copy(remainingAttempts = 2))
+        assertNotEquals(base, null)
+        assertNotEquals(base, "not-an-issued-credential")
+    }
+
+    @Test
     fun `rejects weak digest secret`() {
         assertThrows(IllegalArgumentException::class.java) { HmacCredentialDigest(ByteArray(31)) }
     }

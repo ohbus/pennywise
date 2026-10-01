@@ -52,6 +52,22 @@ class SyncControllerTest {
             .andExpect(status().isBadRequest)
         mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSyncSnapshot(groupId)).with(user).param("limit", "101"))
             .andExpect(status().isBadRequest)
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSyncSnapshot(groupId)).with(user).param("limit", "0"))
+            .andExpect(status().isBadRequest)
+    }
+
+    /** Verifies a blank authenticated subject cannot access synchronization data. */
+    @Test
+    fun `rejects blank authenticated subject`() {
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupSyncSnapshot(groupId)).with(
+                RequestPostProcessor { request ->
+                    request.userPrincipal = Principal { " " }
+                    request
+                }
+            )
+        )
+            .andExpect(status().isUnauthorized)
     }
 
     @Test

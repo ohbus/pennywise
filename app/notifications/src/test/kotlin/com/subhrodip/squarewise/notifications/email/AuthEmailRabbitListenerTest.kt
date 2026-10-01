@@ -9,10 +9,14 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.doThrow
+import org.mockito.Mockito.doReturn
 import org.mockito.Mockito.any
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageProperties
 import tools.jackson.databind.ObjectMapper
+import com.subhrodip.squarewise.notifications.email.delivery.EmailDeliveryOutcome
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.times
 
 class AuthEmailRabbitListenerTest {
     private val consumer = mock(AuthEmailDeliveryConsumer::class.java)
@@ -26,6 +30,68 @@ class AuthEmailRabbitListenerTest {
         assertEquals(11L, channel.rejectedTag)
         assertEquals(false, channel.rejectedRequeue)
         assertNull(channel.ackedTag)
+    }
+
+    @Test
+    fun `acknowledges valid auth email after consumer succeeds`() {
+        doReturn(EmailDeliveryOutcome.DELIVERED).`when`(consumer).consume(
+            any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("event", "user@example.com", "LOGIN_CODE", "cipher", java.time.Instant.MAX),
+            any(java.time.Instant::class.java) ?: java.time.Instant.EPOCH
+        )
+        val channel = TestChannel()
+
+        listener.onMessage(message(validEvent(), 13L), channel)
+
+        assertEquals(13L, channel.ackedTag)
+        assertNull(channel.rejectedTag)
+        verify(consumer, times(1)).consume(
+            any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("event", "user@example.com", "LOGIN_CODE", "cipher", java.time.Instant.MAX),
+            any(java.time.Instant::class.java) ?: java.time.Instant.EPOCH
+        )
+    }
+
+    @Test
+    fun `requeues first transient auth email failure`() {
+        doThrow(IllegalStateException("temporary failure"))
+            .`when`(consumer)
+            .consume(
+                any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("evt", "user@example.com", "LOGIN_CODE", "cipher", java.time.Instant.MAX),
+                any(java.time.Instant::class.java) ?: java.time.Instant.EPOCH
+            )
+        val channel = TestChannel()
+
+        listener.onMessage(message(validEvent(), 14L, redelivered = false), channel)
+
+        assertEquals(14L, channel.rejectedTag)
+        assertEquals(true, channel.rejectedRequeue)
+    }
+
+    @Test
+    fun `rejects unsupported event type without requeue`() {
+        val unsupported = validEvent().replace("auth.email.requested.v1", "expense.created.v1")
+        val channel = TestChannel()
+
+        listener.onMessage(message(unsupported, 15L), channel)
+
+        assertEquals(15L, channel.rejectedTag)
+        assertEquals(false, channel.rejectedRequeue)
+        assertNull(channel.ackedTag)
+    }
+
+    @Test
+    fun `rejects consumer validation failure without requeue`() {
+        doThrow(IllegalArgumentException("auth email credential has expired"))
+            .`when`(consumer)
+            .consume(
+                any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("evt", "user@example.com", "LOGIN_CODE", "cipher", java.time.Instant.MAX),
+                any(java.time.Instant::class.java) ?: java.time.Instant.EPOCH
+            )
+        val channel = TestChannel()
+
+        listener.onMessage(message(validEvent(), 16L), channel)
+
+        assertEquals(16L, channel.rejectedTag)
+        assertEquals(false, channel.rejectedRequeue)
     }
 
     @Test
@@ -52,6 +118,9 @@ class AuthEmailRabbitListenerTest {
             isRedelivered = redelivered
         }
     )
+
+    private fun validEvent(): String =
+        """{"eventType":"auth.email.requested.v1","eventId":"evt-1","payload":{"recipient":"user@example.com","template":"LOGIN_CODE","encryptedCredential":"cipher","expiresAt":"2099-09-21T01:00:00Z"}}"""
 
     private class TestChannel : Channel by mock(Channel::class.java) {
         var ackedTag: Long? = null

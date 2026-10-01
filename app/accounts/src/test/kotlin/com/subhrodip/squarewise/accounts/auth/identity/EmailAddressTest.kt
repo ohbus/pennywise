@@ -61,4 +61,20 @@ class EmailAddressTest {
 
         assertThrows(IllegalArgumentException::class.java) { EmailAddress.parse(raw) }
     }
+
+    @Test
+    fun `accepts the maximum local and complete address lengths`() {
+        val local = "l".repeat(64)
+        val domain = "a".repeat(63) + "." + "b".repeat(63) + "." + "c".repeat(61)
+
+        assertEquals("$local@$domain", EmailAddress.parse("$local@$domain").value)
+        assertEquals(254, "$local@$domain".length)
+    }
+
+    @Test
+    fun `rejects domain labels that violate IDN separator rules`() {
+        listOf("alice@-example.com", "alice@example-.com", "alice@.com.").forEach { raw ->
+            assertThrows(IllegalArgumentException::class.java) { EmailAddress.parse(raw) }
+        }
+    }
 }

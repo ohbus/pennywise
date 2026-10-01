@@ -138,6 +138,29 @@ class EmailDispatcherTest {
         verify(mailSender, times(1)).send(anyMessage())
     }
 
+    @Test
+    fun `unknown mail failure is permanent and is not retried`() {
+        doThrow(IllegalStateException("unexpected sender failure"))
+            .`when`(mailSender)
+            .send(anyMessage())
+
+        val outcome = dispatcher.dispatch("alice@example.com", "Valid Subject", "Body")
+
+        assertThat(outcome).isEqualTo(EmailDeliveryOutcome.PERMANENT_FAILURE)
+        verify(mailSender, times(1)).send(anyMessage())
+    }
+
+    @Test
+    fun `normalizes zero max attempts to one send and trims recipient`() {
+        properties.maxAttempts = 0
+        val outcome = dispatcher.dispatch("  alice@example.com  ", "Valid Subject", "Body")
+
+        assertThat(outcome).isEqualTo(EmailDeliveryOutcome.DELIVERED)
+        val messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage::class.java)
+        verify(mailSender).send(captureMessage(messageCaptor))
+        assertThat(messageCaptor.value.to).containsExactly("alice@example.com")
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun anyMessage(): SimpleMailMessage = any(SimpleMailMessage::class.java) ?: SimpleMailMessage()
 

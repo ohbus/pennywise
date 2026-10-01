@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `cc21733`, whose subject indicates
+(`master`) through the latest audited coverage commit `716e6aa`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -667,3 +667,9 @@ and `updatePreferences`: default retrieval, persisted update, and isolation
 from a second subject. It changes no production implementation or contract;
 inbox listing/mark-read, broker delivery, and the remaining per-operation
 authorization dimensions remain open.
+
+`716e6aa` extends the same signed-persona product journey through Notifications
+`markAsRead`: it asserts the 204 response and rereads the inbox to verify the
+durable read flag. It changes no production implementation or contract; inbox
+database-failure, duplicate-mark-read, broker, and remaining operation-matrix
+dimensions remain open.

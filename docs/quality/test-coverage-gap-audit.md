@@ -12,7 +12,7 @@ As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **86
 production methods with missed branches** containing **157 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
-finds 39 operations without a literal E2E reference and 49 without a literal
+finds 37 operations without a literal E2E reference and 49 without a literal
 Bruno reference. These numbers are backlog signals, not passing-test claims;
 the hard branch gate remains red until the production reports are regenerated
 against the current source and every record is covered or explicitly classified.
@@ -78,7 +78,7 @@ For repeatable operation-level discovery, run
 `uv run --frozen --no-build python tools/coverage/report_operation_test_gaps.py --format markdown`.
 The tool compares contract operation IDs and GraphQL root fields with literal
 operation-name references in `tests/e2e/` and `tools/bruno/`. The current
-inventory contains 54 operations; 39 have no E2E source signal and 49 have no
+inventory contains 54 operations; 37 have no E2E source signal and 49 have no
 Bruno source signal. These are discovery signals only: a missing string can be
 a naming mismatch, while a present string does not prove authorization,
 negative behavior, persistence, messaging, replay, or deployed side effects.
@@ -93,7 +93,7 @@ per-operation authorization and side-effect matrix.
 
 ### Current operations without a literal E2E source reference
 
-The current scan identifies the following 39 operations for explicit E2E
+The current scan identifies the following 37 operations for explicit E2E
 implementation or source-reference reconciliation. “No literal reference” is
 not proof that an operation is never exercised; it is a reproducible discovery
 signal that must be resolved with an operation-specific test name, or with a
@@ -106,7 +106,7 @@ the required durable or asynchronous side effect.
 | --- | --- |
 | Accounts API | `getMe`, `getProfileById`, `getProfilesBatch`, `listExportRequests`, `logout`, `requestDeletion`, `requestExport`, `startLogin`, `updateMe`, `verifyLogin` |
 | Expense Core API | `archiveGroup`, `claimInvite`, `createInvite`, `createPlaceholder`, `createRecurringSchedule`, `deleteExpense`, `exportExpenses`, `getBalances`, `getChanges`, `getGroup`, `getRecurringSchedule`, `getSettlementSuggestions`, `getSnapshot`, `listExpenses`, `listGroupMembers`, `listGroups`, `listRecurringSchedules`, `pauseRecurringSchedule`, `previewAllocation`, `recordSettlement`, `removeGroupMember`, `resumeRecurringSchedule`, `reverseSettlement`, `revokeInvite`, `searchExpenses`, `updateExpense`, `updateRecurringSchedule` |
-| Notifications API | `listInbox`, `markAsRead` |
+| Notifications API | *(none; source references exist, but full acceptance remains open below)* |
 
 ### Operation-specific E2E acceptance matrix
 
@@ -140,6 +140,8 @@ acceptance evidence:
 | REST `updateGroup` | Owner/member authorization, optimistic version behavior, archived-group policy, audit/revision/sync effects, and rejected-request immutability are asserted with signed personas. |
 | REST `getPreferences` | A signed subject receives default preferences, reads its own persisted update, and cannot observe another subject's settings; unauthenticated access remains rejected. |
 | REST `updatePreferences` | A signed subject updates only its own preference row and receives the documented no-content response; unauthenticated updates create no persistence mutation. |
+| REST `listInbox` | A signed subject receives only its own delivered notifications with stable cursor pagination; invalid bounds/cursors and unauthenticated access are rejected without leakage. |
+| REST `markAsRead` | A signed subject marks its own notification once, receives 204, observes the durable read flag, and cannot mark another subject's notification. |
 | GraphQL `createExpense` | The GraphQL mutation preserves REST financial invariants, maps catalog errors and request IDs, propagates authentication and causal context, and exposes no forbidden group or ledger data. |
 | GraphQL `createGroup` | The mutation enforces signed-subject authorization, creates the documented durable owner state once, maps failures consistently, and emits the expected asynchronous event without duplication. |
 | GraphQL `recordRepayment` | Valid, replayed, conflicting, unauthorized, and invalid repayment mutations assert exact GraphQL errors, posting/balance/revision effects, idempotency, and zero-sum preservation. |
@@ -168,7 +170,7 @@ For each operation, the E2E ledger must carry these dimensions separately:
 | Isolation and redaction | Other subjects/groups cannot observe or mutate the result; credentials, tokens, and sensitive upstream details are absent from responses and logs. |
 
 An operation with a source-reference signal is not closed until these dimensions
-are evidenced. The 39 operations without a literal E2E reference are explicit
+are evidenced. The 37 operations without a literal E2E reference are explicit
 implementation/reconciliation work, while the remaining operations still need
 the same dimension review rather than being inferred closed from a string match.
 

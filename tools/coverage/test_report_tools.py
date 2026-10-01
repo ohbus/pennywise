@@ -281,7 +281,7 @@ class CoverageInventoryTest(unittest.TestCase):
         )
 
         for marker in (
-            "through the latest audited coverage commit `cc21733`",
+            "through the latest audited coverage commit `716e6aa`",
             "`2110ffd` is the explicit restoration/audit commit",
             "`3b3a3da` changes only `libs/security/build.gradle.kts`",
             "`cff7f76`\nchanges CI/Makefile Python execution",

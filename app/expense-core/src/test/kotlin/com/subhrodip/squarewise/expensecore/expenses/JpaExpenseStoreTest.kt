@@ -389,6 +389,44 @@ class JpaExpenseStoreTest @Autowired constructor(
     }
 
     @Test
+    fun `updates existing payer and allocation rows in place`() {
+        val group = groupStore.create("alice", CreateGroupRequest("In-place update", "TRIP", "EUR"))
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val initial = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Initial charge",
+            category = "travel",
+            currency = "EUR",
+            amountMinor = 2000,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(participantId, 2000)),
+            allocations = listOf(ExpenseAllocation(participantId, 2000))
+        )
+        expenseStore.create(group.groupId, initial, "idemp-in-place")
+
+        val updated = expenseStore.update(
+            group.groupId,
+            expenseId,
+            initial.copy(
+                description = "Updated charge",
+                amountMinor = 3000,
+                payers = listOf(ExpensePayer(participantId, 3000)),
+                allocations = listOf(ExpenseAllocation(participantId, 3000))
+            )
+        )
+
+        assertEquals(2, updated.version)
+        assertEquals("Updated charge", updated.description)
+        assertEquals(listOf(ExpensePayer(participantId, 3000)), updated.payers)
+        assertEquals(listOf(ExpenseAllocation(participantId, 3000)), updated.allocations)
+        assertEquals(0L, balancePostingRepository.findByExpenseId(expenseId).sumOf { it.amountMinor })
+    }
+
+    @Test
     fun `deletes expense, reverses postings, sets deleted flag, and clears active balances`() {
         val group = groupStore.create("alice", CreateGroupRequest("Cabin Trip", "TRIP", "EUR"))
         val groupId = group.groupId

@@ -74,7 +74,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 150 methods with 407 missed branches. The remaining
+regenerated reports contain 150 methods with 402 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E
@@ -109,7 +109,7 @@ delivery templates, generic credential-issuance failure, ordinary rate-limit
 denial, and rate-limit-store outage. It changes no production behavior; the
 focused test and JaCoCo effect remain unverified until Gradle 9.7.1 can run.
 
-The current QA10-C03 increment adds a real persistence-backed test for the two
+The QA10-C03 increment adds a real persistence-backed test for the two
 reachable one-sided recurring-expense specification paths. Payer-only schedules
 retain their explicit payer and receive equal allocations; allocation-only
 schedules retain their explicit allocations and derive the first active member
@@ -117,12 +117,19 @@ as payer. The fresh report reduced missed branches from 434 to 419 without
 deleting or weakening implementation logic. Worker concurrency, rollback,
 outbox, and deployed recurrence evidence remain open.
 
-The current QA10-D02 increment adds persistence-backed invalid-boundary tests
+The QA10-D02 increment adds persistence-backed invalid-boundary tests
 for `TransactionalNotificationEventProcessor.toInboxEntity` through the public
 consumer. Blank and overlength subject, event-type, and message values are
 rejected before either durable inbox or processed-event state is written. The
 fresh report removed that method from the inventory and reduced missed branches
 from 419 to 407 without changing notification implementation logic or contracts.
+
+The QA10-C01 persistence increment adds an in-place update test for an
+existing payer and allocation participant. It asserts the version and payload
+change while preserving one payer/allocation row per participant and a zero net
+posting balance. The fresh report reduces the `JpaExpenseStore.update` residual
+from 12 to 6 missed branches and the repository total from 407 to 402, with no
+production implementation or contract change.
 
 The audit-control increment makes closure requirements executable in the
 documentation tooling: every branch record must name its exact test and

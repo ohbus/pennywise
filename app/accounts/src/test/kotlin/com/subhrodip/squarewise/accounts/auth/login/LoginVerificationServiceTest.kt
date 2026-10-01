@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.accounts.auth.login
+import java.time.Duration
 
 import com.subhrodip.squarewise.accounts.auth.credential.HmacCredentialDigest
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialRepository
@@ -35,7 +36,7 @@ class LoginVerificationServiceTest @Autowired constructor(
         secretSigningKey = secret,
         issuerUri = "https://issuer.example.squarewise",
         audience = "squarewise-api",
-        tokenLifetime = java.time.Duration.ofMinutes(10)
+        tokenLifetime = Duration.ofMinutes(10)
     )
     private val tokenSessionService = TokenSessionService(
         sessionRepository = sessionRepository,

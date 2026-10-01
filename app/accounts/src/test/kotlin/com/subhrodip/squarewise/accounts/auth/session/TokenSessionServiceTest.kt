@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.accounts.auth.session
+import java.time.Duration
 
 import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentity
 import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentityStore
@@ -31,17 +32,17 @@ class TokenSessionServiceTest @Autowired constructor(
         secretSigningKey = secret,
         issuerUri = "https://issuer.example.squarewise",
         audience = "squarewise-api",
-        tokenLifetime = java.time.Duration.ofMinutes(10)
+        tokenLifetime = Duration.ofMinutes(10)
     )
     private val service = TokenSessionService(
         sessionRepository = sessionRepository,
         identityProviderPort = tokenProvider,
         credentialDigest = digest,
         sessionPolicy = SessionPolicy(
-            accessTokenLifetime = java.time.Duration.ofMinutes(10),
-            refreshIdleLifetime = java.time.Duration.ofDays(30),
-            absoluteSessionLifetime = java.time.Duration.ofDays(90),
-            clockSkew = java.time.Duration.ZERO
+            accessTokenLifetime = Duration.ofMinutes(10),
+            refreshIdleLifetime = Duration.ofDays(30),
+            absoluteSessionLifetime = Duration.ofDays(90),
+            clockSkew = Duration.ZERO
         ),
         accountIdentityStore = object : AccountIdentityStore {
             override fun findByAccountId(accountId: UUID): AccountIdentity? =

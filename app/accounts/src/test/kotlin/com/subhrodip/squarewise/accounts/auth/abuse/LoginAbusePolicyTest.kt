@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.accounts.auth.abuse
+import java.time.Duration
 
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -48,11 +49,11 @@ class LoginAbusePolicyTest {
 
     @Test
     fun `rejects invalid policy configuration`() {
-        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(window = java.time.Duration.ZERO) }
-        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(window = java.time.Duration.ofSeconds(-1)) }
+        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(window = Duration.ZERO) }
+        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(window = Duration.ofSeconds(-1)) }
         assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(maximumRequests = 0) }
-        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(resendCooldown = java.time.Duration.ofSeconds(-1)) }
-        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(resendCooldown = java.time.Duration.ofMinutes(16)) }
+        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(resendCooldown = Duration.ofSeconds(-1)) }
+        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(resendCooldown = Duration.ofMinutes(16)) }
     }
 
     private fun state(count: Int, lastRequestedAt: Instant?) = LoginRateLimitState(

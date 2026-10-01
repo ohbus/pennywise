@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.accounts.auth.login
+import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailTemplate
 
 import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditEvent
 import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditLogger
@@ -66,7 +67,7 @@ class LoginStartService(
 
     private fun LoginCredentialService.CredentialKind.toTemplate() =
         when (this) {
-            LoginCredentialService.CredentialKind.LINK -> com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailTemplate.LOGIN_LINK
-            LoginCredentialService.CredentialKind.CODE -> com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailTemplate.LOGIN_CODE
+            LoginCredentialService.CredentialKind.LINK -> AuthEmailTemplate.LOGIN_LINK
+            LoginCredentialService.CredentialKind.CODE -> AuthEmailTemplate.LOGIN_CODE
         }
 }

@@ -1,4 +1,7 @@
 package com.subhrodip.squarewise.accounts.auth
+import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailDeliveryResult
+import java.time.Duration
+import org.junit.jupiter.api.Assertions.assertNotNull
 
 import com.subhrodip.squarewise.accounts.auth.abuse.ClientAddressResolver
 import com.subhrodip.squarewise.accounts.auth.credential.HmacCredentialDigest
@@ -54,7 +57,7 @@ class AuthControllerTest @Autowired constructor(
     private val sentEmails = mutableListOf<AuthEmailMessage>()
     private val emailSender = AuthEmailSender {
         sentEmails.add(it)
-        com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailDeliveryResult.QUEUED
+        AuthEmailDeliveryResult.QUEUED
     }
     private val startService = LoginStartService(rateLimitService, credentialService, emailSender)
 
@@ -63,7 +66,7 @@ class AuthControllerTest @Autowired constructor(
         secretSigningKey = secret,
         issuerUri = "https://issuer.example.squarewise",
         audience = "squarewise-api",
-        tokenLifetime = java.time.Duration.ofMinutes(10)
+        tokenLifetime = Duration.ofMinutes(10)
     )
     private val tokenSessionService = TokenSessionService(
         sessionRepository = sessionRepository,
@@ -283,7 +286,7 @@ class AuthControllerTest @Autowired constructor(
             .andExpect(status().isNoContent)
 
         val stored = sessionRepository.findByRefreshTokenDigest(digest.digest(session.refreshToken))
-        org.junit.jupiter.api.Assertions.assertNotNull(stored?.revokedAt)
+        assertNotNull(stored?.revokedAt)
     }
 
     @Test

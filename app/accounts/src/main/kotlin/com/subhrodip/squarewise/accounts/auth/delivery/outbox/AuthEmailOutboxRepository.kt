@@ -1,4 +1,6 @@
 package com.subhrodip.squarewise.accounts.auth.delivery.outbox
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.repository.query.Param
 
 import java.util.UUID
 import java.time.Instant
@@ -23,15 +25,15 @@ interface AuthEmailOutboxRepository : JpaRepository<AuthEmailOutboxEntity, UUID>
          order by outbox.createdAt asc
         """
     )
-    fun findAvailableForClaim(@org.springframework.data.repository.query.Param("now") now: Instant): List<AuthEmailOutboxEntity>
+    fun findAvailableForClaim(@Param("now") now: Instant): List<AuthEmailOutboxEntity>
 
     /** Acknowledges only the currently claimed event. */
-    @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true, clearAutomatically = true)
-    @org.springframework.data.jpa.repository.Query("update AuthEmailOutboxEntity e set e.status = 'PUBLISHED', e.availableAt = :now where e.eventId = :eventId and e.status = 'CLAIMED'")
-    fun acknowledge(@org.springframework.data.repository.query.Param("eventId") eventId: UUID, @org.springframework.data.repository.query.Param("now") now: Instant): Int
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update AuthEmailOutboxEntity e set e.status = 'PUBLISHED', e.availableAt = :now where e.eventId = :eventId and e.status = 'CLAIMED'")
+    fun acknowledge(@Param("eventId") eventId: UUID, @Param("now") now: Instant): Int
 
     /** Returns a claimed event to retry or parks it after the attempt limit. */
-    @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true, clearAutomatically = true)
-    @org.springframework.data.jpa.repository.Query("update AuthEmailOutboxEntity e set e.status = case when e.attempts >= :maximumAttempts then 'PARKED' else 'PENDING' end, e.availableAt = :availableAt where e.eventId = :eventId and e.status = 'CLAIMED'")
-    fun reject(@org.springframework.data.repository.query.Param("eventId") eventId: UUID, @org.springframework.data.repository.query.Param("maximumAttempts") maximumAttempts: Int, @org.springframework.data.repository.query.Param("availableAt") availableAt: Instant): Int
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update AuthEmailOutboxEntity e set e.status = case when e.attempts >= :maximumAttempts then 'PARKED' else 'PENDING' end, e.availableAt = :availableAt where e.eventId = :eventId and e.status = 'CLAIMED'")
+    fun reject(@Param("eventId") eventId: UUID, @Param("maximumAttempts") maximumAttempts: Int, @Param("availableAt") availableAt: Instant): Int
 }

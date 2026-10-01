@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.accounts.profile.api
+import org.springframework.web.bind.annotation.RequestHeader
 
 import com.subhrodip.squarewise.accounts.requests.deletion.service.DeletionRequestService
 import com.subhrodip.squarewise.accounts.requests.export.service.ExportRequestService
@@ -124,7 +125,7 @@ class ProfileController(
     fun getProfileById(
         @PathVariable accountId: UUID,
         principal: Principal?,
-        @org.springframework.web.bind.annotation.RequestHeader(
+        @RequestHeader(
             value = ApiEndpoints.Headers.WORKLOAD_ROLE,
             required = false
         ) workloadRole: String? = null
@@ -161,7 +162,7 @@ class ProfileController(
     fun getProfilesBatch(
         @Valid @RequestBody request: BatchProfileRequest,
         principal: Principal?,
-        @org.springframework.web.bind.annotation.RequestHeader(
+        @RequestHeader(
             value = ApiEndpoints.Headers.WORKLOAD_ROLE,
             required = false
         ) workloadRole: String? = null

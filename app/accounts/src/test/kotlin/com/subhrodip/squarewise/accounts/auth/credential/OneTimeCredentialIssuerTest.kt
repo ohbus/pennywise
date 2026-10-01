@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.accounts.auth.credential
+import org.junit.jupiter.api.Assertions.assertEquals
 
 import java.time.Duration
 import java.time.Instant
@@ -70,8 +71,8 @@ class OneTimeCredentialIssuerTest {
             remainingAttempts = 3
         )
 
-        org.junit.jupiter.api.Assertions.assertEquals(cred1, cred2)
-        org.junit.jupiter.api.Assertions.assertEquals(cred1.hashCode(), cred2.hashCode())
+        assertEquals(cred1, cred2)
+        assertEquals(cred1.hashCode(), cred2.hashCode())
         assertNotEquals(cred1, cred3)
         assertTrue(cred1.toString().contains("[REDACTED]"))
     }

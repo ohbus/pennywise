@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.accounts.auth.session
+import java.time.Duration
 
 import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditEvent
 import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditLogger
@@ -36,10 +37,10 @@ open class TokenSessionService(
     private val credentialDigest: CredentialDigest,
     private val random: SecureRandom = SecureRandom(),
     private val sessionPolicy: SessionPolicy = SessionPolicy(
-        accessTokenLifetime = java.time.Duration.ofMinutes(10),
-        refreshIdleLifetime = java.time.Duration.ofDays(30),
-        absoluteSessionLifetime = java.time.Duration.ofDays(90),
-        clockSkew = java.time.Duration.ZERO
+        accessTokenLifetime = Duration.ofMinutes(10),
+        refreshIdleLifetime = Duration.ofDays(30),
+        absoluteSessionLifetime = Duration.ofDays(90),
+        clockSkew = Duration.ZERO
     ),
     private val accountIdentityStore: AccountIdentityStore,
     private val auditLogger: SecurityAuditLogger = SecurityAuditLogger()

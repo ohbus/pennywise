@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.accounts.auth.login
+import org.mockito.ArgumentMatchers.any
 
 import com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitService
 import com.subhrodip.squarewise.accounts.auth.abuse.RateLimitStoreUnavailableException
@@ -94,7 +95,7 @@ class LoginStartServiceTest {
             service.start("user@example.com", "network", LoginCredentialService.CredentialKind.LINK, now),
         )
         verify(emailSender, never()).send(
-            org.mockito.ArgumentMatchers.any(AuthEmailMessage::class.java)
+            any(AuthEmailMessage::class.java)
                 ?: AuthEmailMessage("ignored@example.com", AuthEmailTemplate.LOGIN_LINK, "", now)
         )
     }

@@ -1,4 +1,7 @@
 package com.subhrodip.squarewise.accounts.profile
+import com.subhrodip.squarewise.db.routing.DbExecutionContext
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
 
 import com.subhrodip.squarewise.accounts.profile.api.ProfileController
 import com.subhrodip.squarewise.accounts.profile.api.ProfilePatchRequest
@@ -51,7 +54,7 @@ class ProfileControllerTest {
     private val aliceId = UUID.nameUUIDFromBytes("oidc|alice".toByteArray(StandardCharsets.UTF_8))
     private val policyId = UUID.nameUUIDFromBytes("oidc|policy".toByteArray(StandardCharsets.UTF_8))
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     fun setUp() {
         recordingProfiles.seed("oidc|alice", aliceId)
         recordingProfiles.seed("oidc|policy", policyId)
@@ -242,7 +245,7 @@ class ProfileControllerTest {
         val store = InMemoryProfileStore()
         val created = store.seed("oidc|bob")
         assertEquals(created, store.findById(created.accountId))
-        org.junit.jupiter.api.Assertions.assertNull(store.findById(UUID.randomUUID()))
+        assertNull(store.findById(UUID.randomUUID()))
     }
 
     @Test
@@ -403,7 +406,7 @@ class ProfileControllerTest {
 }
 
 private class RecordingProfileStore(private val delegate: InMemoryProfileStore) : ProfileStore {
-    var lastContext: com.subhrodip.squarewise.db.routing.DbExecutionContext? = null
+    var lastContext: DbExecutionContext? = null
 
     override fun get(subject: String): ProfileResponse? = delegate.get(subject)
 

@@ -1,6 +1,11 @@
 @file:Suppress("CanConvertToMultiDollarString")
 
 package com.subhrodip.squarewise.accounts.auth.config
+import com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitKeyDeriver
+import com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitService
+import com.subhrodip.squarewise.accounts.auth.abuse.RefreshRateLimitService
+import com.subhrodip.squarewise.accounts.auth.delivery.service.AuthEmailSender
+import com.subhrodip.squarewise.accounts.auth.login.LoginStartService
 
 import com.subhrodip.squarewise.accounts.auth.abuse.ClientAddressResolver
 import com.subhrodip.squarewise.accounts.auth.abuse.TrustedProxyProperties
@@ -49,33 +54,33 @@ class AuthenticationCredentialConfiguration(
 
     /** Creates the rate limit key deriver. */
     @Bean
-    fun loginRateLimitKeyDeriver(digest: CredentialDigest): com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitKeyDeriver =
-        com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitKeyDeriver(digest)
+    fun loginRateLimitKeyDeriver(digest: CredentialDigest): LoginRateLimitKeyDeriver =
+        LoginRateLimitKeyDeriver(digest)
 
     /** Creates the transactional login rate limit service. */
     @Bean
     fun loginRateLimitService(
-        keyDeriver: com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitKeyDeriver,
+        keyDeriver: LoginRateLimitKeyDeriver,
         repository: com.subhrodip.squarewise.accounts.auth.abuse.RateLimitBucketStore
-    ): com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitService =
-        com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitService(keyDeriver, repository)
+    ): LoginRateLimitService =
+        LoginRateLimitService(keyDeriver, repository)
 
     /** Creates the fail-closed refresh-token rotation limiter. */
     @Bean
     fun refreshRateLimitService(
         digest: CredentialDigest,
         repository: com.subhrodip.squarewise.accounts.auth.abuse.RateLimitBucketStore
-    ): com.subhrodip.squarewise.accounts.auth.abuse.RefreshRateLimitService =
-        com.subhrodip.squarewise.accounts.auth.abuse.RefreshRateLimitService(digest, repository)
+    ): RefreshRateLimitService =
+        RefreshRateLimitService(digest, repository)
 
     /** Creates the login start application service. */
     @Bean
     fun loginStartService(
-        rateLimitService: com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitService,
+        rateLimitService: LoginRateLimitService,
         credentialService: LoginCredentialService,
-        emailSender: com.subhrodip.squarewise.accounts.auth.delivery.service.AuthEmailSender
-    ): com.subhrodip.squarewise.accounts.auth.login.LoginStartService =
-        com.subhrodip.squarewise.accounts.auth.login.LoginStartService(rateLimitService, credentialService, emailSender)
+        emailSender: AuthEmailSender
+    ): LoginStartService =
+        LoginStartService(rateLimitService, credentialService, emailSender)
 
     /**
      * Creates the [ClientAddressResolver] from deployment-configured trusted-proxy addresses.

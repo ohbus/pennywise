@@ -44,7 +44,7 @@ class TokenSessionServiceRaceTest {
     @Test
     fun `rotation race revokes the family and fails closed before minting a token`() {
         val now = Instant.parse("2026-01-01T00:00:00Z")
-        val rawRefreshToken = "race-refresh-token"
+        val rawRefreshToken = "race-refresh-token" // security-hygiene: test-fixture
         val session = AuthSessionEntity(
             sessionId = UUID.randomUUID(),
             accountId = accountId,

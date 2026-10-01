@@ -242,7 +242,7 @@ class TokenSessionServiceTest @Autowired constructor(
     @Test
     fun `logout with an authenticated subject ignores a legacy session without an account`() {
         val now = Instant.now()
-        val rawRefreshToken = "legacy-accountless-logout"
+        val rawRefreshToken = "legacy-accountless-logout" // security-hygiene: test-fixture
         val session = AuthSessionEntity(
             sessionId = UUID.randomUUID(),
             accountId = null,

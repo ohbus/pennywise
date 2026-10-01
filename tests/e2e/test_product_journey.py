@@ -567,6 +567,31 @@ def run_e2e_tests() -> int:
     assert created_exp["amount"]["minor"] == "10000"
     print(f"  ✓ Expense recorded: id={expense_id}, amount=100.00 EUR, allocations count={len(created_exp['allocations'])}")
 
+    listed_expenses_status, listed_expenses = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/expenses",
+        bearer=user_a,
+    )
+    assert listed_expenses_status == 200, (
+        f"Expense Core listExpenses failed: "
+        f"HTTP {listed_expenses_status} ({listed_expenses})"
+    )
+    assert any(item.get("expenseId") == expense_id for item in listed_expenses), (
+        "Expense Core listExpenses must return the persisted expense"
+    )
+
+    searched_expenses_status, searched_expenses = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/search?query=Ski",
+        bearer=user_a,
+    )
+    assert searched_expenses_status == 200, (
+        f"Expense Core searchExpenses failed: "
+        f"HTTP {searched_expenses_status} ({searched_expenses})"
+    )
+    assert any(
+        item.get("expenseId") == expense_id for item in searched_expenses.get("expenses", [])
+    ), "Expense Core searchExpenses must find the persisted expense by description"
+    print("  ✓ Expense Core listExpenses and searchExpenses expose the persisted expense")
+
     replay_res = graphql_query(
         create_expense_mutation,
         variables={"groupId": group_id, "input": expense_input, "idempotencyKey": idempotency_key},

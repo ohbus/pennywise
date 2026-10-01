@@ -6,6 +6,8 @@ import com.subhrodip.squarewise.expensecore.expenses.api.request.MoneyDto
 import com.subhrodip.squarewise.expensecore.groups.api.CreateGroupRequest
 import com.subhrodip.squarewise.expensecore.groups.persistence.store.JpaGroupStore
 import com.subhrodip.squarewise.expensecore.recurring.api.CreateRecurringScheduleRequestDto
+import com.subhrodip.squarewise.expensecore.recurring.api.ExpenseAllocationItemDto
+import com.subhrodip.squarewise.expensecore.recurring.api.ExpensePayerDto
 import com.subhrodip.squarewise.expensecore.recurring.api.RecurringExpenseController
 import com.subhrodip.squarewise.expensecore.recurring.api.UpdateRecurringScheduleRequestDto
 import com.subhrodip.squarewise.expensecore.recurring.domain.RecurrenceFrequency
@@ -32,13 +34,18 @@ class RecurringExpenseControllerTest @Autowired constructor(
     @Test
     fun `creates, inspects, lists, updates, pauses, and resumes recurring schedule`() {
         val group = groupStore.create("alice", CreateGroupRequest("Penthouse", "HOUSEHOLD", "USD"))
+        val aliceId = UUID.nameUUIDFromBytes("alice".toByteArray()).toString()
+        val customPayers = listOf(ExpensePayerDto(aliceId, MoneyDto("USD", "250000")))
+        val customAllocations = listOf(ExpenseAllocationItemDto(aliceId, MoneyDto("USD", "250000")))
 
         val createRequest = CreateRecurringScheduleRequestDto(
             description = "Monthly Rent",
             amount = MoneyDto("USD", "250000"),
             frequency = RecurrenceFrequency.MONTHLY,
             dayOfMonth = 1,
-            startDate = LocalDate.of(2026, 10, 1)
+            startDate = LocalDate.of(2026, 10, 1),
+            payers = customPayers,
+            allocations = customAllocations
         )
 
         // 1. Create schedule
@@ -68,7 +75,9 @@ class RecurringExpenseControllerTest @Autowired constructor(
             amount = MoneyDto("USD", "270000"),
             frequency = RecurrenceFrequency.MONTHLY,
             dayOfMonth = 1,
-            startDate = LocalDate.of(2026, 10, 1)
+            startDate = LocalDate.of(2026, 10, 1),
+            payers = listOf(ExpensePayerDto(aliceId, MoneyDto("USD", "270000"))),
+            allocations = listOf(ExpenseAllocationItemDto(aliceId, MoneyDto("USD", "270000")))
         )
         val updated = controller.updateSchedule(group.groupId, created.scheduleId, updateRequest, alice)
         assertEquals("Monthly Rent & Water", updated.description)
@@ -108,6 +117,36 @@ class RecurringExpenseControllerTest @Autowired constructor(
             controller.getSchedule(randomGroup, randomSchedule, alice)
         }
         assertEquals(ErrorCode.ERR_05, getErr.errorCode)
+    }
+
+    /** Verifies schedule lookup, pause, and resume reject missing and foreign schedules. */
+    @Test
+    fun `rejects missing and foreign schedules within an authorized group`() {
+        val ownerGroup = groupStore.create("alice", CreateGroupRequest("Owner group", "TRIP", "EUR"))
+        val otherGroup = groupStore.create("alice", CreateGroupRequest("Other group", "TRIP", "EUR"))
+        val schedule = controller.createSchedule(
+            ownerGroup.groupId,
+            CreateRecurringScheduleRequestDto(
+                description = "Shared cost",
+                amount = MoneyDto("EUR", "100"),
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = LocalDate.of(2026, 10, 1)
+            ),
+            alice
+        )
+        val missingScheduleId = UUID.randomUUID()
+
+        listOf(
+            { controller.getSchedule(ownerGroup.groupId, missingScheduleId, alice) },
+            { controller.getSchedule(otherGroup.groupId, schedule.scheduleId, alice) },
+            { controller.pauseSchedule(ownerGroup.groupId, missingScheduleId, alice) },
+            { controller.pauseSchedule(otherGroup.groupId, schedule.scheduleId, alice) },
+            { controller.resumeSchedule(ownerGroup.groupId, missingScheduleId, alice) },
+            { controller.resumeSchedule(otherGroup.groupId, schedule.scheduleId, alice) }
+        ).forEach { operation ->
+            val error = assertThrows<ApplicationException> { operation() }
+            assertEquals(ErrorCode.ERR_05, error.errorCode)
+        }
     }
 
     @Test

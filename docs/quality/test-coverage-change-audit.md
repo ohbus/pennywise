@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `13f6c30`, whose subject indicates
+(`master`) through the latest audited coverage commit `35c0242`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -248,6 +248,13 @@ report preserves 115 method records and reduces missed branches from 223 to
 221. The remaining nullable-literal mappings are retained for structural
 JaCoCo review, and deployed GraphQL transport evidence remains open.
 
+`35c0242` adds a persistence-backed empty synchronization snapshot test,
+asserting no changes, no continuation cursor, and `hasMore=false`. It changes
+no production implementation or contract; the regenerated report preserves
+115 method records and reduces missed branches from 221 to 220. Cursor
+validation, causal revision, and deployed synchronization evidence remain
+open.
+
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
 or contract-file change in the current coverage increment. No branch in this audit is
@@ -257,7 +264,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 115 methods with 221 missed branches. The remaining
+regenerated reports contain 115 methods with 220 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E

@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `b6a12c8`, whose subject indicates
+(`master`) through the latest audited coverage commit `cc21733`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -661,3 +661,9 @@ test and full repository JaCoCo run passed. The inventory remains 86 records
 and falls from 158 to 157 missed branches. RabbitMQ acknowledgement/retry/DLQ
 and deployed Mailpit evidence remain open. No production implementation or
 contract changed.
+
+`cc21733` adds signed-persona E2E coverage for Notifications `getPreferences`
+and `updatePreferences`: default retrieval, persisted update, and isolation
+from a second subject. It changes no production implementation or contract;
+inbox listing/mark-read, broker delivery, and the remaining per-operation
+authorization dimensions remain open.

@@ -12,7 +12,7 @@ As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **86
 production methods with missed branches** containing **157 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
-finds 41 operations without a literal E2E reference and 49 without a literal
+finds 39 operations without a literal E2E reference and 49 without a literal
 Bruno reference. These numbers are backlog signals, not passing-test claims;
 the hard branch gate remains red until the production reports are regenerated
 against the current source and every record is covered or explicitly classified.
@@ -78,7 +78,7 @@ For repeatable operation-level discovery, run
 `uv run --frozen --no-build python tools/coverage/report_operation_test_gaps.py --format markdown`.
 The tool compares contract operation IDs and GraphQL root fields with literal
 operation-name references in `tests/e2e/` and `tools/bruno/`. The current
-inventory contains 54 operations; 41 have no E2E source signal and 49 have no
+inventory contains 54 operations; 39 have no E2E source signal and 49 have no
 Bruno source signal. These are discovery signals only: a missing string can be
 a naming mismatch, while a present string does not prove authorization,
 negative behavior, persistence, messaging, replay, or deployed side effects.
@@ -93,7 +93,7 @@ per-operation authorization and side-effect matrix.
 
 ### Current operations without a literal E2E source reference
 
-The current scan identifies the following 41 operations for explicit E2E
+The current scan identifies the following 39 operations for explicit E2E
 implementation or source-reference reconciliation. “No literal reference” is
 not proof that an operation is never exercised; it is a reproducible discovery
 signal that must be resolved with an operation-specific test name, or with a
@@ -106,7 +106,7 @@ the required durable or asynchronous side effect.
 | --- | --- |
 | Accounts API | `getMe`, `getProfileById`, `getProfilesBatch`, `listExportRequests`, `logout`, `requestDeletion`, `requestExport`, `startLogin`, `updateMe`, `verifyLogin` |
 | Expense Core API | `archiveGroup`, `claimInvite`, `createInvite`, `createPlaceholder`, `createRecurringSchedule`, `deleteExpense`, `exportExpenses`, `getBalances`, `getChanges`, `getGroup`, `getRecurringSchedule`, `getSettlementSuggestions`, `getSnapshot`, `listExpenses`, `listGroupMembers`, `listGroups`, `listRecurringSchedules`, `pauseRecurringSchedule`, `previewAllocation`, `recordSettlement`, `removeGroupMember`, `resumeRecurringSchedule`, `reverseSettlement`, `revokeInvite`, `searchExpenses`, `updateExpense`, `updateRecurringSchedule` |
-| Notifications API | `getPreferences`, `listInbox`, `markAsRead`, `updatePreferences` |
+| Notifications API | `listInbox`, `markAsRead` |
 
 ### Operation-specific E2E acceptance matrix
 
@@ -138,6 +138,8 @@ acceptance evidence:
 | REST `createExpense` | Owner/member personas prove validation, idempotency, posting/revision/audit/outbox effects, rollback, zero-sum ledger state, and no cross-group mutation for rejected or replayed requests. |
 | REST `createGroup` | The authenticated subject creates exactly one durable group with the documented owner membership, revision, audit, and event effects; duplicate, malformed, and unauthorized requests create no partial state. |
 | REST `updateGroup` | Owner/member authorization, optimistic version behavior, archived-group policy, audit/revision/sync effects, and rejected-request immutability are asserted with signed personas. |
+| REST `getPreferences` | A signed subject receives default preferences, reads its own persisted update, and cannot observe another subject's settings; unauthenticated access remains rejected. |
+| REST `updatePreferences` | A signed subject updates only its own preference row and receives the documented no-content response; unauthenticated updates create no persistence mutation. |
 | GraphQL `createExpense` | The GraphQL mutation preserves REST financial invariants, maps catalog errors and request IDs, propagates authentication and causal context, and exposes no forbidden group or ledger data. |
 | GraphQL `createGroup` | The mutation enforces signed-subject authorization, creates the documented durable owner state once, maps failures consistently, and emits the expected asynchronous event without duplication. |
 | GraphQL `recordRepayment` | Valid, replayed, conflicting, unauthorized, and invalid repayment mutations assert exact GraphQL errors, posting/balance/revision effects, idempotency, and zero-sum preservation. |
@@ -166,7 +168,7 @@ For each operation, the E2E ledger must carry these dimensions separately:
 | Isolation and redaction | Other subjects/groups cannot observe or mutate the result; credentials, tokens, and sensitive upstream details are absent from responses and logs. |
 
 An operation with a source-reference signal is not closed until these dimensions
-are evidenced. The 41 operations without a literal E2E reference are explicit
+are evidenced. The 39 operations without a literal E2E reference are explicit
 implementation/reconciliation work, while the remaining operations still need
 the same dimension review rather than being inferred closed from a string match.
 
@@ -520,7 +522,7 @@ planned new test. This prevents a broad suite from absorbing an unrelated gap.
 | QA10-D01 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/consumer/transport/BrokerEnvelopeParserTest.kt`, `AuthEmailRabbitListenerTest.kt`, `AuthEmailDeliveryConsumerTest.kt`, envelope tests, and `AuthEmailSecurityConfigurationTest.kt` | Key configuration, envelope framing, numeric metadata validation, context-bound decryption, template mapping, expiry/type rejection, and plaintext non-dispatch are covered locally. Add broker/Mailpit auth-email delivery to `tests/e2e/test_auth_email_delivery.py`; consumer tests must still prove listener ack/requeue, broker retry/redelivery, and deployed delivery. |
 | QA10-D02 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/consumer/RabbitNotificationListenerTest.kt`, `BrokerEnvelopeConversionTest.kt`, `NotificationEventConsumerTest.kt`, `NotificationEventConsumerUnitTest.kt`, and `RedisDeliveryRateLimiterTest.kt` | The conversion test now covers malformed notification-ID fallback, blank-field safe fallbacks, recipient/description mapping, and bounded fields; add real RabbitMQ ack/retry/DLQ and shared-Redis TTL/concurrency cases to the chaos E2E suite. |
 | QA10-D03 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/email/EmailDispatcherTest.kt`, `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/email/smtp/SmtpJavaMailSenderTest.kt`, and `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/email/smtp/SimpleMailMessageTest.kt` | Add Mailpit failure/retry assertions to deployed notification E2E. |
-| QA10-D04 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/inbox/InboxControllerTest.kt`, `JpaNotificationInboxStoreTest.kt`, and `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/preferences/JpaPreferenceStoreTest.kt` | Extend signed subject-isolation cases in REST-edge E2E. |
+| QA10-D04 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/inbox/InboxControllerTest.kt`, `JpaNotificationInboxStoreTest.kt`, and `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/preferences/JpaPreferenceStoreTest.kt`; `tests/e2e/test_rest_edge_cases.py` now proves signed default retrieval, update persistence, and subject isolation for preferences. | Extend signed inbox listing/mark-read and database-failure cases in REST-edge E2E. |
 | QA10-E01 | `libs/errors/src/test/kotlin/com/subhrodip/squarewise/errors/GlobalErrorHandlerTest.kt` and `libs/errors/src/test/kotlin/com/subhrodip/squarewise/errors/request/RequestIdContextAndFilterTest.kt` | Assert public error envelopes and correlation behavior in REST/GraphQL E2E; the available JaCoCo baseline is not a fresh current-source report. |
 | QA10-E02 | `libs/db/src/test/kotlin/com/subhrodip/squarewise/db/config/DbAutoConfigurationTest.kt`, `libs/db/src/test/kotlin/com/subhrodip/squarewise/db/policy/DbOperationPolicyTest.kt`, and health/routing tests | `DbAutoConfigurationTest` now covers normal reader-pool construction and `DbReaderHealthTest` covers the exact circuit deadline; `DbRouteGuardTest` asserts exception restoration. Extend `tests/e2e/test_causal_watermark.py` and replica failure/recovery suites. |
 | QA10-E03 | `libs/security/src/test/kotlin/com/subhrodip/squarewise/security/OidcJwtDecoderFactoryTest.kt` and policy tests | Extend signed invalid-token and key-rotation E2E across all services. |

@@ -34,6 +34,17 @@ class AuthEmailRabbitListenerTest {
     }
 
     @Test
+    fun `rejects an empty auth email body without requeue`() {
+        val channel = TestChannel()
+
+        listener.onMessage(message("", 10L), channel)
+
+        assertEquals(10L, channel.rejectedTag)
+        assertEquals(false, channel.rejectedRequeue)
+        assertNull(channel.ackedTag)
+    }
+
+    @Test
     fun `acknowledges valid auth email after consumer succeeds`() {
         doReturn(EmailDeliveryOutcome.DELIVERED).`when`(consumer).consume(
             any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("event", "user@example.com", "LOGIN_CODE", "cipher", Instant.MAX),
@@ -134,6 +145,34 @@ class AuthEmailRabbitListenerTest {
 
             assertEquals(20L + index, channel.rejectedTag)
             assertEquals(false, channel.rejectedRequeue)
+        }
+    }
+
+    @Test
+    fun `rejects auth email envelopes with explicit null required fields`() {
+        val channel = TestChannel()
+        val malformed = validEvent().replace("\"eventId\":\"evt-1\"", "\"eventId\":null")
+
+        listener.onMessage(message(malformed, 28L), channel)
+
+        assertEquals(28L, channel.rejectedTag)
+        assertEquals(false, channel.rejectedRequeue)
+        assertNull(channel.ackedTag)
+    }
+
+    @Test
+    fun `rejects auth email envelopes with null event type or payload`() {
+        listOf(
+            validEvent().replace("\"eventType\":\"auth.email.requested.v1\"", "\"eventType\":null"),
+            validEvent().replace("\"payload\":{", "\"payload\":null")
+        ).forEachIndexed { index, malformed ->
+            val channel = TestChannel()
+
+            listener.onMessage(message(malformed, 29L + index), channel)
+
+            assertEquals(29L + index, channel.rejectedTag)
+            assertEquals(false, channel.rejectedRequeue)
+            assertNull(channel.ackedTag)
         }
     }
 

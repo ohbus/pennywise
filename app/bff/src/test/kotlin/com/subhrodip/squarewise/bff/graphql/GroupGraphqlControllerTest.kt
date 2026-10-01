@@ -256,6 +256,59 @@ class GroupGraphqlControllerTest {
         }
     }
 
+    /** Verifies an empty expense response does not publish a fabricated invalidation. */
+    @Test
+    fun `createExpense does not emit invalidation when gateway returns empty`() {
+        val groupId = UUID.randomUUID().toString()
+        val participantId = UUID.randomUUID().toString()
+        val input = CreateExpenseInput(
+            expenseId = UUID.randomUUID().toString(),
+            description = "Dinner",
+            amount = MoneyInput("EUR", "2000"),
+            payers = listOf(PayerInput(participantId, MoneyInput("EUR", "2000"))),
+            allocation = AllocationInput("EQUAL", listOf(AllocationItemInput(participantId, "1")))
+        )
+        `when`(gateway.getGroup(groupId, "alice"))
+            .thenReturn(Mono.just(BffGroup(groupId, "Trip", "TRIP", "1")))
+        `when`(gateway.createExpense(groupId, input, "empty-expense", "alice"))
+            .thenReturn(Mono.empty())
+
+        val events = mutableListOf<GroupInvalidation>()
+        val disposable = controller.groupChanged(groupId, principal).subscribe { events.add(it) }
+        try {
+            assertEquals(null, controller.createExpense(groupId, input, "empty-expense", principal).block())
+            assertTrue(events.isEmpty())
+        } finally {
+            disposable.dispose()
+        }
+    }
+
+    /** Verifies an empty repayment response does not publish a fabricated invalidation. */
+    @Test
+    fun `recordRepayment does not emit invalidation when gateway returns empty`() {
+        val groupId = UUID.randomUUID().toString()
+        val input = RepaymentInput(
+            groupId = groupId,
+            fromParticipantId = UUID.randomUUID().toString(),
+            toParticipantId = UUID.randomUUID().toString(),
+            amount = MoneyInput("EUR", "1000"),
+            reason = "Settling up lunch"
+        )
+        `when`(gateway.getGroup(groupId, "alice"))
+            .thenReturn(Mono.just(BffGroup(groupId, "Trip", "TRIP", "1")))
+        `when`(gateway.recordRepayment(groupId, input, "alice"))
+            .thenReturn(Mono.empty())
+
+        val events = mutableListOf<GroupInvalidation>()
+        val disposable = controller.groupChanged(groupId, principal).subscribe { events.add(it) }
+        try {
+            assertEquals(null, controller.recordRepayment(input, principal).block())
+            assertTrue(events.isEmpty())
+        } finally {
+            disposable.dispose()
+        }
+    }
+
     @Test
     fun `groupChanged rejects a user at the subscription limit with rate limit code`() {
         val boundedFanout = LiveUpdateFanout(maxSubscriptionsPerUser = 1)

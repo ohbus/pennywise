@@ -9,7 +9,7 @@ test/quality documentation.
 ## Current baseline
 
 As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **123
-production methods with missed branches** containing **245 missed branches**,
+production methods with missed branches** containing **241 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
@@ -189,7 +189,7 @@ classified as generated/structural with reviewer approval.
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **115** | **64** | **122** |
+| **Total** | **115** | **64** | **121** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -213,7 +213,7 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 The JSON array is the machine-readable assignment set. Its record count must
 equal the `Methods with missed branches` total above (**123**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**245**). Each object carries the module, production class, source file,
+(**241**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, and assignment basis. The record count and branch-count
 sum are both regression-tested so a changed JaCoCo baseline cannot silently
@@ -247,16 +247,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 122-record JSON discovery inventory and
+The repository currently has the exact 121-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 122 records. The A07 and E02 residual tables are the first exact method-level
+all 121 records. The A07 and E02 residual tables are the first exact method-level
 ledger slices; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (122 records):
+Current provisional assignment workload (121 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -279,7 +279,7 @@ Current provisional assignment workload (122 records):
 | QA10-C05 | 5 | Settlement, balance, reconciliation, and rollback behavior; duplicate participant/currency balance aggregation and authenticated/blank-subject suggestion boundaries are covered, while three engine mappings and independent corruption/rollback evidence remain open. |
 | QA10-C06 | 4 | Sync revisions, cursors, ordering, and membership boundaries. |
 | QA10-D01 | 9 | Auth-email broker parsing, retry, deduplication, and delivery; envelope key/framing and delivery-consumer boundaries are covered, while broker retry/redelivery and deployed Mailpit evidence remain open. |
-| QA10-D02 | 3 | Notification event transaction and acknowledgement coupling. |
+| QA10-D02 | 2 | Notification event transaction and acknowledgement coupling; envelope conversion fallbacks are covered, while broker acknowledgement/retry and transaction-coupling evidence remain open. |
 | QA10-D03 | 9 | SMTP/Mailpit delivery and retry classification. |
 | QA10-D04 | 2 | Inbox/preferences persistence and subject isolation. |
 | QA10-E01 | 1 | Error mapping, framework failures, headers, and correlation cleanup; restored status fallback requires explicit evidence. |
@@ -526,7 +526,7 @@ planned new test. This prevents a broad suite from absorbing an unrelated gap.
 | QA10-C05 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/settlements/JpaSettlementStoreTest.kt`, `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/settlements/SettlementServiceTest.kt`, and `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/settlements/PostgresSettlementReconciliationTest.kt` | Existing JPA and opt-in PostgreSQL tests cover settlement/reversal postings, replay, cardinality, directional signs, and zero-sum totals. Extend financial lifecycle E2E and reconciliation operations with intentional-corruption detection and rollback/failure evidence. |
 | QA10-C06 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/sync/JpaSynchronizationStoreTest.kt`, `SynchronizationTest.kt`, and `SyncControllerTest.kt`; the suites now cover blank identifiers, invalid limits, malformed cursor fields, and blank authenticated subjects. | Extend `tests/e2e/test_offline_resilience.py` and causal cursor probes. |
 | QA10-D01 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/consumer/transport/BrokerEnvelopeParserTest.kt`, `AuthEmailRabbitListenerTest.kt`, `AuthEmailDeliveryConsumerTest.kt`, and envelope tests | Envelope key/framing, context-bound decryption, template mapping, expiry/type rejection, and plaintext non-dispatch are covered locally. Add broker/Mailpit auth-email delivery to `tests/e2e/test_auth_email_delivery.py`; consumer tests must still prove listener ack/requeue, broker retry/redelivery, and deployed delivery. |
-| QA10-D02 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/consumer/RabbitNotificationListenerTest.kt`, `BrokerEnvelopeConversionTest.kt`, `NotificationEventConsumerTest.kt`, `NotificationEventConsumerUnitTest.kt`, and `RedisDeliveryRateLimiterTest.kt` | The conversion test now covers malformed notification-ID fallback, recipient/description mapping, and bounded fields; add real RabbitMQ ack/retry/DLQ and shared-Redis TTL/concurrency cases to the chaos E2E suite. |
+| QA10-D02 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/consumer/RabbitNotificationListenerTest.kt`, `BrokerEnvelopeConversionTest.kt`, `NotificationEventConsumerTest.kt`, `NotificationEventConsumerUnitTest.kt`, and `RedisDeliveryRateLimiterTest.kt` | The conversion test now covers malformed notification-ID fallback, blank-field safe fallbacks, recipient/description mapping, and bounded fields; add real RabbitMQ ack/retry/DLQ and shared-Redis TTL/concurrency cases to the chaos E2E suite. |
 | QA10-D03 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/email/EmailDispatcherTest.kt`, `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/email/smtp/SmtpJavaMailSenderTest.kt`, and `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/email/smtp/SimpleMailMessageTest.kt` | Add Mailpit failure/retry assertions to deployed notification E2E. |
 | QA10-D04 | `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/inbox/InboxControllerTest.kt`, `JpaNotificationInboxStoreTest.kt`, and `app/notifications/src/test/kotlin/com/subhrodip/squarewise/notifications/preferences/JpaPreferenceStoreTest.kt` | Extend signed subject-isolation cases in REST-edge E2E. |
 | QA10-E01 | `libs/errors/src/test/kotlin/com/subhrodip/squarewise/errors/GlobalErrorHandlerTest.kt` and `libs/errors/src/test/kotlin/com/subhrodip/squarewise/errors/request/RequestIdContextAndFilterTest.kt` | Assert public error envelopes and correlation behavior in REST/GraphQL E2E; the available JaCoCo baseline is not a fresh current-source report. |

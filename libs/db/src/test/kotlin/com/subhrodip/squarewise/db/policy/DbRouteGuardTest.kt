@@ -61,12 +61,26 @@ class DbRouteGuardTest {
     }
 
     @Test
+    fun `context is restored when scoped execution throws`() {
+        val before = DbContextHolder.current()
+
+        assertFailsWith<IllegalStateException> {
+            DbContextHolder.withContext(DbExecutionContext("expense.failure", DbOperationKind.COMMAND)) {
+                error("simulated JDBC failure")
+            }
+        }
+
+        assertEquals(before, DbContextHolder.current())
+    }
+
+    @Test
     fun `context inherits the causal watermark when not explicitly set`() {
         DbCausalContext.withRequiredWatermark("0/10") {
             DbContextHolder.withContext(
                 DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)
             ) {
                 assertEquals("0/10", DbContextHolder.current().requiredWatermark)
+            }
         }
     }
 
@@ -86,8 +100,6 @@ class DbRouteGuardTest {
             }
         }
     }
-}
-
     @Test
     fun `eventual query without reader eligibility remains writer-only`() {
         assertEquals(

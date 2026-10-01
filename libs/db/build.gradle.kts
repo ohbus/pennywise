@@ -9,6 +9,7 @@ dependencies {
     testImplementation(libs.boot.web)
     testImplementation(libs.boot.test)
     testImplementation(libs.boot.data.jpa)
+    testImplementation(libs.postgresql)
 }
 
 tasks.withType<Test> { useJUnitPlatform() }

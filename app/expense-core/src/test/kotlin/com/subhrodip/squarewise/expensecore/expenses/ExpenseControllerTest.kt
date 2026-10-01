@@ -664,4 +664,31 @@ class ExpenseControllerTest {
                 .content(json)
         ).andExpect(status().isBadRequest)
     }
+
+    /** Verifies the allocation-side participant limit is enforced independently of payer count. */
+    @Test
+    fun `rejects oversized allocation collection before financial processing`() {
+        val groupId = UUID.randomUUID()
+        val participantId = UUID.randomUUID().toString()
+        val request = CreateExpenseRequest(
+            expenseId = UUID.randomUUID(),
+            description = "bounded allocations",
+            amount = MoneyDto("EUR", "101"),
+            payers = listOf(PayerDto(participantId, MoneyDto("EUR", "101"))),
+            allocation = AllocationInputDto(
+                "EQUAL",
+                (1..101).map { AllocationItemDto(UUID.randomUUID().toString(), "1") }
+            )
+        )
+
+        val error = assertThrows<ApplicationException> {
+            controller.createExpense(
+                groupId,
+                "bounded-allocation-count",
+                request,
+                Principal { "test-user" }
+            )
+        }
+        assertEquals(ErrorCode.ERR_02, error.errorCode)
+    }
 }

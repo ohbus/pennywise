@@ -289,7 +289,7 @@ class CoverageInventoryTest(unittest.TestCase):
         )
 
         for marker in (
-            "through the current branch tip `811bcdd`",
+            "through the current branch tip `0e66e36`",
             "`2110ffd` is the explicit restoration/audit commit",
             "`3b3a3da` changes only `libs/security/build.gradle.kts`",
             "`cff7f76`\nchanges CI/Makefile Python execution",
@@ -304,6 +304,8 @@ class CoverageInventoryTest(unittest.TestCase):
             "`4b391a6`",
             "`cb02a39`",
             "`811bcdd`",
+            "`2a532eb`",
+            "`0e66e36`",
             "with no production implementation\nor contract-file change",
         ):
             with self.subTest(marker=marker):

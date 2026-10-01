@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the current branch tip `811bcdd`, whose subject indicates
+(`master`) through the current branch tip `0e66e36`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -19,7 +19,7 @@ The audit found no contract-file changes in the test/coverage/QA commit set.
 Most commits were test, tooling, or documentation-only. Four commits had
 production implementation edits:
 
-As a reproducible history check, the subject-matching audit selected **63
+As a reproducible history check, the subject-matching audit selected **66
 commits** from `master..HEAD` whose subjects contain `test`, `coverage`, `QA`,
 `JaCoCo`, or `E2E`. `git diff-tree --diff-filter=D` found **no file deletion**
 in that set, and the same commit set has **no changes under `contracts/`**.
@@ -66,7 +66,10 @@ synchronized QA-10 baseline, `4b391a6` adds notification payload-boundary
 tests, `cb02a39` adds in-place expense-update persistence coverage, and
 `811bcdd` adds positive recurring-update coverage. These increments preserve
 production behavior and public contracts; no implementation file was deleted
-in any of them.
+in any of them. `2a532eb` adds duplicate-expense payload conflict coverage,
+and `0e66e36` adds invitation expiry and claim-replay coverage. Both are
+implementation-preserving persistence tests; no production implementation or
+contract file changed.
 
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation
@@ -77,7 +80,7 @@ contract, or adding a coverage exclusion.
 ## Current evidence
 
 After restoring implementation logic and retaining the added tests, the freshly
-regenerated reports contain 150 methods with 383 missed branches. The remaining
+regenerated reports contain 150 methods with 381 missed branches. The remaining
 count is an honest discovery baseline, not a claim that any implementation was
 removed to improve metrics. The full repository Gradle test and JaCoCo run and
 all four application test suites pass under Java 25; environment-owned E2E
@@ -145,6 +148,13 @@ identity, and allocation identity. Each conflicting replay returns `ERR_06`,
 leaves the original persisted payload unchanged, and preserves the two original
 balance postings. This test changes no implementation logic or public contract;
 the regenerated report reduces the repository total from 393 to 383 missed
+branches.
+
+The subsequent QA10-C01 invitation increment covers an expired invitation,
+same-subject claim idempotency through a second invitation, and a competing
+subject attempting an already-claimed token. The test preserves the existing
+conflict semantics and verifies no duplicate membership or revision side effect;
+the regenerated report reduces the repository total from 383 to 381 missed
 branches.
 
 The audit-control increment makes closure requirements executable in the

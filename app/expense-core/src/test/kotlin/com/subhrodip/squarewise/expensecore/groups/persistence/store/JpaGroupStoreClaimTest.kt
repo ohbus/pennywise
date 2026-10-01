@@ -4,6 +4,7 @@ import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
 import com.subhrodip.squarewise.expensecore.groups.domain.GroupEntity
 import com.subhrodip.squarewise.expensecore.groups.domain.GroupInvitationEntity
+import com.subhrodip.squarewise.expensecore.groups.domain.GroupMembershipEntity
 import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupInvitationRepository
 import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupMembershipRepository
 import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupRepository
@@ -55,6 +56,50 @@ class JpaGroupStoreClaimTest {
         `when`(invitations.findById(token)).thenReturn(Optional.of(invitation))
         `when`(groups.findForMembershipUpdate(groupId)).thenReturn(GroupEntity(groupId, "Trip", "TRIP", "EUR"))
         `when`(memberships.findByMembershipIdAndGroupId(placeholderId, groupId)).thenReturn(null)
+
+        val error = assertThrows<ApplicationException> {
+            store.claim(token, "invitee")
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+    }
+
+    /** Verifies a normal invitation race fails before creating a membership or side effects. */
+    @Test
+    fun `rejects normal claim when atomic invitation update loses the race`() {
+        val groupId = UUID.randomUUID()
+        val token = "c".repeat(64)
+        val invitation = invitation(token, groupId)
+        `when`(invitations.findById(token)).thenReturn(Optional.of(invitation))
+        `when`(groups.findForMembershipUpdate(groupId)).thenReturn(GroupEntity(groupId, "Trip", "TRIP", "EUR"))
+        `when`(memberships.existsByGroupIdAndSubjectAndStatus(groupId, "invitee", "ACTIVE"))
+            .thenReturn(false)
+
+        val error = assertThrows<ApplicationException> {
+            store.claim(token, "invitee")
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+    }
+
+    /** Verifies a targeted placeholder race fails before binding the placeholder. */
+    @Test
+    fun `rejects targeted claim when atomic invitation update loses the race`() {
+        val groupId = UUID.randomUUID()
+        val placeholderId = UUID.randomUUID()
+        val token = "d".repeat(64)
+        val invitation = invitation(token, groupId, placeholderId)
+        `when`(invitations.findById(token)).thenReturn(Optional.of(invitation))
+        `when`(groups.findForMembershipUpdate(groupId)).thenReturn(GroupEntity(groupId, "Trip", "TRIP", "EUR"))
+        `when`(memberships.findByMembershipIdAndGroupId(placeholderId, groupId)).thenReturn(
+            GroupMembershipEntity(
+                membershipId = placeholderId,
+                groupId = groupId,
+                subject = null,
+                isPlaceholder = true,
+                status = "ACTIVE"
+            )
+        )
 
         val error = assertThrows<ApplicationException> {
             store.claim(token, "invitee")

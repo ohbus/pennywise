@@ -32,6 +32,11 @@ class ExpenseSearchTest {
     }
 
     @Test
+    fun `csv cell preserves an empty value`() {
+        assertEquals("", ExpenseSearch().csvCell(""))
+    }
+
+    @Test
     fun `pages with an opaque stable cursor and per currency totals`() {
         val search = ExpenseSearch()
         val data = listOf(

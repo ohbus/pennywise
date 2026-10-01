@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **141
-production methods with missed branches** containing **318 missed branches**,
+As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **137
+production methods with missed branches** containing **310 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
@@ -172,7 +172,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **141 methods with at least one missed
+The regenerated JaCoCo XML contains **137 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -182,14 +182,14 @@ classified as generated/structural with reviewer approval.
 | --- | ---: | ---: | ---: |
 | `app/accounts` | 28 | 11 | 15 |
 | `app/bff` | 24 | 18 | 36 |
-| `app/expense-core` | 47 | 25 | 63 |
+| `app/expense-core` | 47 | 25 | 59 |
 | `app/notifications` | 10 | 13 | 24 |
 | `libs/db` | 7 | 2 | 2 |
 | `libs/errors` | 1 | 1 | 1 |
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **124** | **70** | **141** |
+| **Total** | **124** | **70** | **137** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -211,9 +211,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**141**), and the sum of
+equal the `Methods with missed branches` total above (**137**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**318**). Each object carries the module, production class, source file,
+(**310**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, and assignment basis. The record count and branch-count
 sum are both regression-tested so a changed JaCoCo baseline cannot silently
@@ -247,16 +247,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 141-record JSON discovery inventory and
+The repository currently has the exact 137-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 141 records. The A07 and E02 residual tables are the first exact method-level
+all 137 records. The A07 and E02 residual tables are the first exact method-level
 ledger slices; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (141 records):
+Current provisional assignment workload (137 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -272,7 +272,7 @@ Current provisional assignment workload (141 records):
 | QA10-B02 | 12 | GraphQL resolver, error, scalar, and limit behavior; resolver classification is now fully matrix-tested. |
 | QA10-B03 | 10 | Realtime fanout and broker consumer behavior. |
 | QA10-B04 | 2 | Browser origin, CSRF, cookie, and session filters. |
-| QA10-C01 | 37 | Expense persistence, transaction, ledger, idempotency, and outbox behavior; missing/repeated delete boundaries, update lookup/participant replacement, and in-memory/durable outbox retry validation now have persistence or behavioral assertions. |
+| QA10-C01 | 33 | Expense persistence, transaction, ledger, idempotency, and outbox behavior; missing/repeated delete boundaries, update lookup/participant replacement, and in-memory/durable outbox retry/state validation now have persistence or behavioral assertions. |
 | QA10-C02 | 0 | Pure calculator/validator slice is branch-complete; property tests remain required. |
 | QA10-C03 | 8 | Recurring schedules, claims, locking, and occurrence failures; creation now covers explicit IDs and valid day-of-month boundaries, with one compiler-generated range branch retained for review. |
 | QA10-C04 | 9 | Group, invite, membership, expiry, and revocation behavior; archived claims, removed/bound placeholders, and repository-missing claim outcomes now have explicit assertions. |
@@ -321,7 +321,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 141-method inventory is a discovery baseline, not closure evidence. QA-10
+The 137-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 

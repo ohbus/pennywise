@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.notifications.email.delivery
+import org.mockito.ArgumentMatchers.anyString
 
 import com.subhrodip.squarewise.notifications.email.security.AuthEmailEnvelopeProtector
 import java.time.Instant
@@ -71,11 +72,11 @@ class AuthEmailDeliveryConsumerTest {
 
         assertThrows(IllegalArgumentException::class.java) { consumer.consume(expired, now) }
 
-        verify(protector, never()).reveal(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString())
+        verify(protector, never()).reveal(anyString(), anyString(), anyString())
         verify(dispatcher, never()).send(
-            org.mockito.ArgumentMatchers.anyString(),
-            org.mockito.ArgumentMatchers.anyString(),
-            org.mockito.ArgumentMatchers.anyString()
+            anyString(),
+            anyString(),
+            anyString()
         )
     }
 
@@ -85,11 +86,11 @@ class AuthEmailDeliveryConsumerTest {
             consumer.consume(event(template = "PASSWORD_RESET"), now)
         }
 
-        verify(protector, never()).reveal(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString())
+        verify(protector, never()).reveal(anyString(), anyString(), anyString())
         verify(dispatcher, never()).send(
-            org.mockito.ArgumentMatchers.anyString(),
-            org.mockito.ArgumentMatchers.anyString(),
-            org.mockito.ArgumentMatchers.anyString()
+            anyString(),
+            anyString(),
+            anyString()
         )
     }
 
@@ -103,9 +104,9 @@ class AuthEmailDeliveryConsumerTest {
         }
 
         verify(dispatcher, never()).send(
-            org.mockito.ArgumentMatchers.anyString(),
-            org.mockito.ArgumentMatchers.anyString(),
-            org.mockito.ArgumentMatchers.anyString()
+            anyString(),
+            anyString(),
+            anyString()
         )
     }
 

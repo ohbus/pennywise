@@ -1,4 +1,6 @@
 package com.subhrodip.squarewise.db.config
+import com.subhrodip.squarewise.db.health.DbReaderState
+import com.subhrodip.squarewise.db.health.DbReaderHealth
 
 import com.subhrodip.squarewise.db.routing.DbContextHolder
 import com.subhrodip.squarewise.db.routing.DbExecutionContext
@@ -78,7 +80,7 @@ class DbRoutingDataSourceTest {
     fun `reader acquisition rejects unknown and failed pools`() {
         val writer = mock(DataSource::class.java)
         val reader = mock(DataSource::class.java)
-        val health = com.subhrodip.squarewise.db.health.DbReaderHealth(failureThreshold = 1)
+        val health = DbReaderHealth(failureThreshold = 1)
         val routing = DbRoutingDataSource(writer, mapOf("replica" to reader), health)
         val context = DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, true)
 
@@ -87,7 +89,7 @@ class DbRoutingDataSourceTest {
             `when`(reader.connection).thenThrow(SQLException("reader unavailable"))
             assertFailsWith<SQLException> { routing.connection(DbRoute.READER, "replica") }
         }
-        assertEquals(com.subhrodip.squarewise.db.health.DbReaderState.OPEN, health.state("replica"))
+        assertEquals(DbReaderState.OPEN, health.state("replica"))
     }
 
     /** A failed reader circuit prevents implicit query acquisition until recovery. */
@@ -95,7 +97,7 @@ class DbRoutingDataSourceTest {
     fun `implicit query routing fails when reader circuit is open`() {
         val writer = mock(DataSource::class.java)
         val reader = mock(DataSource::class.java)
-        val health = com.subhrodip.squarewise.db.health.DbReaderHealth(failureThreshold = 1)
+        val health = DbReaderHealth(failureThreshold = 1)
         health.markFailure("replica")
         val routing = DbRoutingDataSource(writer, mapOf("replica" to reader), health)
 

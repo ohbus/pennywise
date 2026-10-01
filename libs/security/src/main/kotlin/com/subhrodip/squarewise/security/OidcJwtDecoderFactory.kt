@@ -6,6 +6,12 @@ import org.springframework.security.oauth2.jwt.JwtDecoders
 import org.springframework.security.oauth2.jwt.JwtClaimValidator
 import org.springframework.security.oauth2.jwt.JwtValidators
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.jwk.source.JWKSource
+import com.nimbusds.jose.proc.JWSVerificationKeySelector
+import com.nimbusds.jose.proc.SecurityContext
+import com.nimbusds.jwt.proc.DefaultJWTProcessor
+import java.security.interfaces.RSAPublicKey
 
 /** Builds a standards-based JWT decoder for the configured OIDC issuer. */
 object OidcJwtDecoderFactory {
@@ -52,7 +58,7 @@ object OidcJwtDecoderFactory {
      * @return configured JWT decoder.
      */
     fun createWithPublicKey(
-        publicKey: java.security.interfaces.RSAPublicKey,
+        publicKey: RSAPublicKey,
         issuerUri: String,
         audience: String,
         allowedAlgorithms: Set<String> = setOf(OidcSecurityConstants.DEFAULT_SIGNING_ALGORITHM)
@@ -86,7 +92,7 @@ object OidcJwtDecoderFactory {
      * @return configured JWT decoder.
      */
     fun createWithJwkSource(
-        jwkSource: com.nimbusds.jose.jwk.source.JWKSource<com.nimbusds.jose.proc.SecurityContext>,
+        jwkSource: JWKSource<SecurityContext>,
         issuerUri: String,
         audience: String,
         allowedAlgorithms: Set<String> = setOf(OidcSecurityConstants.DEFAULT_SIGNING_ALGORITHM)
@@ -94,9 +100,9 @@ object OidcJwtDecoderFactory {
         require(issuerUri.isNotBlank()) { OidcSecurityConstants.ISSUER_REQUIRED_MESSAGE }
         require(audience.isNotBlank()) { OidcSecurityConstants.AUDIENCE_REQUIRED_MESSAGE }
 
-        val processor = com.nimbusds.jwt.proc.DefaultJWTProcessor<com.nimbusds.jose.proc.SecurityContext>()
-        val keySelector = com.nimbusds.jose.proc.JWSVerificationKeySelector(
-            com.nimbusds.jose.JWSAlgorithm.RS256,
+        val processor = DefaultJWTProcessor<SecurityContext>()
+        val keySelector = JWSVerificationKeySelector(
+            JWSAlgorithm.RS256,
             jwkSource
         )
         processor.jwsKeySelector = keySelector

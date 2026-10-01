@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.db.health
+import org.mockito.ArgumentMatchers.anyString
 
 import com.subhrodip.squarewise.db.routing.DbWatermark
 import java.sql.Connection
@@ -60,7 +61,7 @@ class DbReaderLagProbeTest {
         val connection = mock(Connection::class.java)
         val statement = mock(PreparedStatement::class.java)
         `when`(dataSource.connection).thenReturn(connection)
-        `when`(connection.prepareStatement(org.mockito.ArgumentMatchers.anyString())).thenReturn(statement)
+        `when`(connection.prepareStatement(anyString())).thenReturn(statement)
         `when`(statement.executeQuery()).thenReturn(result)
         return DbReaderLagProbe().measureResult(dataSource)
     }

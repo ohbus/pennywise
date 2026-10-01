@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.notifications.email
+import java.time.Instant
 import com.subhrodip.squarewise.notifications.email.delivery.AuthEmailDeliveryConsumer
 import com.subhrodip.squarewise.notifications.email.delivery.AuthEmailDeliveryEvent
 import com.subhrodip.squarewise.notifications.email.delivery.AuthEmailRabbitListener
@@ -35,8 +36,8 @@ class AuthEmailRabbitListenerTest {
     @Test
     fun `acknowledges valid auth email after consumer succeeds`() {
         doReturn(EmailDeliveryOutcome.DELIVERED).`when`(consumer).consume(
-            any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("event", "user@example.com", "LOGIN_CODE", "cipher", java.time.Instant.MAX),
-            any(java.time.Instant::class.java) ?: java.time.Instant.EPOCH
+            any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("event", "user@example.com", "LOGIN_CODE", "cipher", Instant.MAX),
+            any(Instant::class.java) ?: Instant.EPOCH
         )
         val channel = TestChannel()
 
@@ -45,8 +46,8 @@ class AuthEmailRabbitListenerTest {
         assertEquals(13L, channel.ackedTag)
         assertNull(channel.rejectedTag)
         verify(consumer, times(1)).consume(
-            any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("event", "user@example.com", "LOGIN_CODE", "cipher", java.time.Instant.MAX),
-            any(java.time.Instant::class.java) ?: java.time.Instant.EPOCH
+            any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("event", "user@example.com", "LOGIN_CODE", "cipher", Instant.MAX),
+            any(Instant::class.java) ?: Instant.EPOCH
         )
     }
 
@@ -55,8 +56,8 @@ class AuthEmailRabbitListenerTest {
         doThrow(IllegalStateException("temporary failure"))
             .`when`(consumer)
             .consume(
-                any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("evt", "user@example.com", "LOGIN_CODE", "cipher", java.time.Instant.MAX),
-                any(java.time.Instant::class.java) ?: java.time.Instant.EPOCH
+                any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("evt", "user@example.com", "LOGIN_CODE", "cipher", Instant.MAX),
+                any(Instant::class.java) ?: Instant.EPOCH
             )
         val channel = TestChannel()
 
@@ -83,8 +84,8 @@ class AuthEmailRabbitListenerTest {
         doThrow(IllegalArgumentException("auth email credential has expired"))
             .`when`(consumer)
             .consume(
-                any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("evt", "user@example.com", "LOGIN_CODE", "cipher", java.time.Instant.MAX),
-                any(java.time.Instant::class.java) ?: java.time.Instant.EPOCH
+                any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("evt", "user@example.com", "LOGIN_CODE", "cipher", Instant.MAX),
+                any(Instant::class.java) ?: Instant.EPOCH
             )
         val channel = TestChannel()
 
@@ -100,8 +101,8 @@ class AuthEmailRabbitListenerTest {
         doThrow(IllegalStateException("temporary failure"))
             .`when`(consumer)
             .consume(
-                any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("evt", "user@example.com", "LOGIN_CODE", "cipher", java.time.Instant.MAX),
-                any(java.time.Instant::class.java) ?: java.time.Instant.EPOCH
+                any(AuthEmailDeliveryEvent::class.java) ?: AuthEmailDeliveryEvent("evt", "user@example.com", "LOGIN_CODE", "cipher", Instant.MAX),
+                any(Instant::class.java) ?: Instant.EPOCH
             )
         val channel = TestChannel()
 

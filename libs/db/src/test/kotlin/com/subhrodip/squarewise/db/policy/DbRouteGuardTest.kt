@@ -44,7 +44,7 @@ class DbRouteGuardTest {
         DbContextHolder.withContext(DbExecutionContext("expense.search", DbOperationKind.QUERY, ReadConsistency.EVENTUAL, readerEligible = true)) {
             assertIs<DbExecutionContext>(DbContextHolder.current())
         }
-        kotlin.test.assertEquals(before, DbContextHolder.current())
+        assertEquals(before, DbContextHolder.current())
     }
 
     @Test

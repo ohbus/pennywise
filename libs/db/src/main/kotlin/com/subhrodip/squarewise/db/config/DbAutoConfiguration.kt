@@ -1,6 +1,7 @@
 package com.subhrodip.squarewise.db.config
 
 import com.zaxxer.hikari.HikariDataSource
+import org.springframework.beans.factory.annotation.Qualifier
 import com.subhrodip.squarewise.db.health.DbReaderHealth
 import com.subhrodip.squarewise.db.health.DbReaderHealthScheduler
 import com.subhrodip.squarewise.db.web.DbCausalWatermarkFilter
@@ -49,7 +50,7 @@ class DbAutoConfiguration {
     @Primary
     fun squarewiseDataSource(
         properties: DbProperties,
-        @org.springframework.beans.factory.annotation.Qualifier("flywayDataSource") writer: HikariDataSource,
+        @Qualifier("flywayDataSource") writer: HikariDataSource,
         readerHealth: DbReaderHealth,
         telemetry: DbTelemetry
     ): DataSource {

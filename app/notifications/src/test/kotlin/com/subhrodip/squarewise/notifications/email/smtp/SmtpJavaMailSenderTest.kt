@@ -1,4 +1,10 @@
 package com.subhrodip.squarewise.notifications.email.smtp
+import java.io.BufferedReader
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.OutputStream
+import java.io.OutputStreamWriter
+import java.io.PrintWriter
 
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
@@ -108,12 +114,12 @@ class SmtpJavaMailSenderTest {
         }
     }
 
-    private class BufferedReaderWithReply(input: java.io.InputStream) : java.io.BufferedReader(
-        java.io.InputStreamReader(input, Charsets.UTF_8)
+    private class BufferedReaderWithReply(input: InputStream) : BufferedReader(
+        InputStreamReader(input, Charsets.UTF_8)
     )
 
-    private class BufferedWriterWithCapture(output: java.io.OutputStream) : java.io.PrintWriter(
-        java.io.OutputStreamWriter(output, Charsets.UTF_8), true
+    private class BufferedWriterWithCapture(output: OutputStream) : PrintWriter(
+        OutputStreamWriter(output, Charsets.UTF_8), true
     ) {
         fun reply(value: String) {
             print(value)

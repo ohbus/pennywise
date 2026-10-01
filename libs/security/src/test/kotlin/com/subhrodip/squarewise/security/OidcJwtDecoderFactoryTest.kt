@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.security.oauth2.jwt.BadJwtException
+import com.nimbusds.jose.proc.SecurityContext
 
 /** Verifies the key-based and JWK-source based OidcJwtDecoderFactory methods. */
 class OidcJwtDecoderFactoryTest {
@@ -80,7 +81,7 @@ class OidcJwtDecoderFactoryTest {
 
     @Test
     fun `createWithJwkSource resolves keys and decodes successfully`() {
-        val jwkSource = ImmutableJWKSet<com.nimbusds.jose.proc.SecurityContext>(JWKSet(rsaJwk))
+        val jwkSource = ImmutableJWKSet<SecurityContext>(JWKSet(rsaJwk))
         val decoder = OidcJwtDecoderFactory.createWithJwkSource(jwkSource, issuerUri, audience)
         val token = mintToken(issuer = issuerUri, audience = audience, subject = "usr-456")
 
@@ -114,7 +115,7 @@ class OidcJwtDecoderFactoryTest {
         assertThrows(IllegalArgumentException::class.java) {
             OidcJwtDecoderFactory.createWithPublicKey(publicKey, issuerUri, "")
         }
-        val jwkSource = ImmutableJWKSet<com.nimbusds.jose.proc.SecurityContext>(JWKSet(rsaJwk))
+        val jwkSource = ImmutableJWKSet<SecurityContext>(JWKSet(rsaJwk))
         assertThrows(IllegalArgumentException::class.java) {
             OidcJwtDecoderFactory.createWithJwkSource(jwkSource, "", audience)
         }

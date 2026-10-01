@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.errors.domain
+import java.util.UUID
 
 /**
  * Enum representing error codes defined in the error catalog.
@@ -30,6 +31,6 @@ fun ApplicationException.toProblemDetails(requestId: String): Map<String, Any> =
     "status" to errorCode.httpStatus,
     "detail" to (message ?: errorCode.safeDetail),
     "instance" to requestId,
-    "errorId" to java.util.UUID.randomUUID().toString(),
+    "errorId" to UUID.randomUUID().toString(),
     "errorCode" to errorCode.code
 )

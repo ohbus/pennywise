@@ -5,6 +5,9 @@ package com.subhrodip.squarewise.security
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter
+import org.springframework.security.web.server.header.ReferrerPolicyServerHttpHeadersWriter
+import org.springframework.security.web.server.header.XFrameOptionsServerHttpHeadersWriter
+import java.time.Duration
 
 /**
  * Centralized, authoritative HTTP response security header configurations for Squarewise.
@@ -59,15 +62,15 @@ object HttpHeadersConfiguration {
         contentSecurityPolicy: String = DEFAULT_BFF_CSP
     ): ServerHttpSecurity = http.headers { headers ->
         headers
-            .frameOptions { frame -> frame.mode(org.springframework.security.web.server.header.XFrameOptionsServerHttpHeadersWriter.Mode.DENY) }
+            .frameOptions { frame -> frame.mode(XFrameOptionsServerHttpHeadersWriter.Mode.DENY) }
             .contentTypeOptions {}
             .xssProtection { xss -> xss.disable() }
             .referrerPolicy { referrer ->
-                referrer.policy(org.springframework.security.web.server.header.ReferrerPolicyServerHttpHeadersWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                referrer.policy(ReferrerPolicyServerHttpHeadersWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
             }
             .hsts { hsts ->
                 hsts.includeSubdomains(true)
-                    .maxAge(java.time.Duration.ofSeconds(HSTS_MAX_AGE_SECONDS))
+                    .maxAge(Duration.ofSeconds(HSTS_MAX_AGE_SECONDS))
                     .preload(true)
             }
             .contentSecurityPolicy { csp -> csp.policyDirectives(contentSecurityPolicy) }

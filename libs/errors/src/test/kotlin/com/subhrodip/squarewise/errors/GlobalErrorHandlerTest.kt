@@ -1,4 +1,6 @@
 package com.subhrodip.squarewise.errors
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
@@ -185,12 +187,12 @@ class GlobalErrorHandlerTest {
         )
         assertEquals("Malformed request payload", blankEverything.body?.detail)
 
-        val mockedException = org.mockito.Mockito.mock(HttpMessageNotReadableException::class.java)
-        org.mockito.Mockito.`when`(mockedException.rootCause).thenReturn(null)
-        org.mockito.Mockito.`when`(mockedException.message).thenReturn("mocked detail")
+        val mockedException = mock(HttpMessageNotReadableException::class.java)
+        `when`(mockedException.rootCause).thenReturn(null)
+        `when`(mockedException.message).thenReturn("mocked detail")
         assertEquals("mocked detail", handler.messageNotReadable(mockedException).body?.detail)
 
-        org.mockito.Mockito.`when`(mockedException.message).thenReturn(null)
+        `when`(mockedException.message).thenReturn(null)
         assertEquals("Malformed request payload", handler.messageNotReadable(mockedException).body?.detail)
     }
 
@@ -225,5 +227,5 @@ class GlobalErrorHandlerTest {
     @Suppress("UNUSED_PARAMETER")
     private fun sample(value: String) = Unit
 
-    private fun inputMessage(): HttpInputMessage = org.mockito.Mockito.mock(HttpInputMessage::class.java)
+    private fun inputMessage(): HttpInputMessage = mock(HttpInputMessage::class.java)
 }

@@ -3,6 +3,7 @@ package com.subhrodip.squarewise.expensecore.search
 import com.subhrodip.squarewise.expensecore.categories.ExpenseCategory
 import com.subhrodip.squarewise.expensecore.search.api.SearchQuery
 import com.subhrodip.squarewise.expensecore.search.model.SearchExpense
+import com.subhrodip.squarewise.expensecore.search.model.ExpenseSearch
 import com.subhrodip.squarewise.expensecore.search.persistence.JpaSearchStore
 import com.subhrodip.squarewise.expensecore.expenses.persistence.entity.ExpenseEntity
 import com.subhrodip.squarewise.expensecore.expenses.persistence.repository.ExpenseRepository
@@ -15,6 +16,7 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -129,5 +131,18 @@ class JpaSearchStoreTest @Autowired constructor(
             emptyList<SearchExpense>(),
             searchStore.findSearchExpenses(SearchQuery(groupId, afterExpenseId = cursor))
         )
+    }
+
+    /** Verifies the persistent adapter enforces both sides of its bounded query contract. */
+    @Test
+    fun `rejects search limits outside the export bounds`() {
+        val groupId = UUID.randomUUID()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            searchStore.findSearchExpenses(SearchQuery(groupId, limit = 0))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            searchStore.findSearchExpenses(SearchQuery(groupId, limit = ExpenseSearch.MAX_EXPORT_ROWS + 1))
+        }
     }
 }

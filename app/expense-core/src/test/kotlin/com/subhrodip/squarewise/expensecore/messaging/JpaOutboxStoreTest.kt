@@ -116,6 +116,40 @@ class JpaOutboxStoreTest @Autowired constructor(
         assertEquals(OutboxStatus.CLAIMED, reclaimed.status)
     }
 
+    /** Verifies claim rejects invalid policies and skips messages that are not yet eligible. */
+    @Test
+    fun `claim validates policy and skips future pending and active leases`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            store.claim(0, Duration.ofMinutes(1))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            store.claim(-1, Duration.ofMinutes(1))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            store.claim(1, Duration.ZERO)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            store.claim(1, Duration.ofSeconds(-1))
+        }
+
+        val future = Instant.now().plusSeconds(60)
+        val pendingId = UUID.randomUUID()
+        val claimedId = UUID.randomUUID()
+        store.append(message(pendingId, Instant.now()).copy(availableAt = future))
+        store.append(
+            message(claimedId, Instant.now()).copy(
+                status = OutboxStatus.CLAIMED,
+                attempts = 1,
+                leaseUntil = future
+            )
+        )
+
+        assertTrue(store.claim(10, Duration.ofMinutes(1)).isEmpty())
+        val snapshot = store.snapshot().associateBy { it.eventId }
+        assertEquals(OutboxStatus.PENDING, snapshot.getValue(pendingId).status)
+        assertEquals(OutboxStatus.CLAIMED, snapshot.getValue(claimedId).status)
+    }
+
     /** Verifies durable retry-policy validation and the harmless unknown-event no-op. */
     @Test
     fun `reject validates retry policy and ignores an unknown event`() {

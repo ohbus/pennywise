@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the latest audited coverage commit `b0e51f7`, whose subject indicates
+(`master`) through the latest audited coverage commit `7887a41`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -241,6 +241,14 @@ removes the `isValidEmail` record and reduces the inventory from 116 methods /
 225 missed branches to 115 methods / 223 missed branches. The dispatcher retry
 loop still has two mapped residual branches, and Mailpit integration remains
 open.
+
+`7887a41` adds broker-envelope parser tests for missing and non-string required
+metadata and for an absent payload object. These cases assert the parser’s
+fail-closed `InvalidEnvelopeException` contract without changing production
+logic. The focused Notifications suite and full Java 25 wrapper run passed; the
+regenerated inventory falls from 82 records / 150 missed branches to 81 records
+/ 148 missed branches. Broker redelivery and deployed notification evidence
+remain open.
 
 `13f6c30` adds GraphQL DateTime literal acceptance and rejection tests. It
 changes no production implementation or GraphQL contract; the regenerated

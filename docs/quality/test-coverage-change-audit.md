@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the current branch tip `69f2d27`, whose subject indicates
+(`master`) through the current branch tip `811bcdd`, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -19,7 +19,7 @@ The audit found no contract-file changes in the test/coverage/QA commit set.
 Most commits were test, tooling, or documentation-only. Four commits had
 production implementation edits:
 
-As a reproducible history check, the subject-matching audit selected **59
+As a reproducible history check, the subject-matching audit selected **63
 commits** from `master..HEAD` whose subjects contain `test`, `coverage`, `QA`,
 `JaCoCo`, or `E2E`. `git diff-tree --diff-filter=D` found **no file deletion**
 in that set, and the same commit set has **no changes under `contracts/`**.
@@ -61,9 +61,12 @@ documentation/tooling increments:
 `8034208`, `bb35873`, `52f270c`, `6ef0803`, and `c4b8852`.
 
 Since that audit checkpoint, `73e111c` fixes a missing JDK exception import in
-a BFF test, and `69f2d27` adds persistence-backed recurring-expense tests plus
-the synchronized QA-10 baseline. Both preserve production behavior and public
-contracts; no implementation file was deleted in either commit.
+a BFF test, `69f2d27` adds persistence-backed recurring-expense tests plus the
+synchronized QA-10 baseline, `4b391a6` adds notification payload-boundary
+tests, `cb02a39` adds in-place expense-update persistence coverage, and
+`811bcdd` adds positive recurring-update coverage. These increments preserve
+production behavior and public contracts; no implementation file was deleted
+in any of them.
 
 The current branch tip was checked separately: the committed changes contain
 test, tooling, CI, and documentation changes, with no production implementation

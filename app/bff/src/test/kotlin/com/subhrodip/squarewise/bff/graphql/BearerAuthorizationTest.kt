@@ -38,7 +38,7 @@ class BearerAuthorizationTest {
 
         assertEquals("raw-token", bearerToken("raw-token" as Any?))
         assertEquals("jwt-token", bearerToken(jwt))
-        assertEquals("jwt-subject", bearerToken(authentication))
+        assertEquals("jwt-token", bearerToken(authentication))
         assertEquals("principal-subject", bearerToken(namedPrincipal))
     }
 

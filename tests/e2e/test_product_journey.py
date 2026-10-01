@@ -594,6 +594,25 @@ def run_e2e_tests() -> int:
             if matching:
                 print(f"  ✓ Verified event delivery to Notifications Inbox: eventType={matching[0]['eventType']}, message='{matching[0]['message']}'")
                 found_notification = True
+                notification_id = matching[0]["notificationId"]
+                status_read, _ = request_json(
+                    f"{NOTIFICATIONS_URL}/notifications/v1/inbox/{notification_id}/read",
+                    method="POST",
+                    bearer=user_a,
+                )
+                assert status_read == 204, f"markAsRead failed: HTTP {status_read}"
+                status_after_read, inbox_after_read = request_json(
+                    f"{NOTIFICATIONS_URL}/notifications/v1/inbox",
+                    bearer=user_a,
+                )
+                assert status_after_read == 200, f"listInbox after markAsRead failed: HTTP {status_after_read}"
+                read_item = next(
+                    (item for item in inbox_after_read.get("items", []) if item.get("notificationId") == notification_id),
+                    None,
+                )
+                assert read_item is not None and read_item.get("read") is True, (
+                    f"markAsRead did not persist read state: {read_item}"
+                )
                 break
         time.sleep(1)
 

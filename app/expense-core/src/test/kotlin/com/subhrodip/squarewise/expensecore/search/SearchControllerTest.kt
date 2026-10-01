@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.expensecore.search
+import com.subhrodip.squarewise.db.routing.DbExecutionContext
 
 import com.subhrodip.squarewise.expensecore.search.api.SearchController
 import com.subhrodip.squarewise.expensecore.search.api.SearchQuery
@@ -240,7 +241,7 @@ class SearchControllerTest {
 }
 
 private class RecordingSearchStore(private val delegate: SearchStore) : SearchStore {
-    var context: com.subhrodip.squarewise.db.routing.DbExecutionContext? = null
+    var context: DbExecutionContext? = null
 
     override fun findSearchExpenses(query: SearchQuery): List<SearchExpense> {
         context = DbContextHolder.current()

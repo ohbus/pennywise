@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 @SpringBootTest
 @Transactional
 class JpaSearchStoreTest @Autowired constructor(
-    private val groupRepository: com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupRepository,
+    private val groupRepository: GroupRepository,
     private val expenseRepository: ExpenseRepository,
     private val searchStore: JpaSearchStore
 ) {
@@ -32,7 +32,7 @@ class JpaSearchStoreTest @Autowired constructor(
     fun `finds active expenses and maps categories while ignoring deleted expenses`() {
         // Create and persist a group to satisfy foreign key constraint
         val groupId = UUID.randomUUID()
-        val group = com.subhrodip.squarewise.expensecore.groups.domain.GroupEntity(
+        val group = GroupEntity(
             groupId = groupId,
             name = "Test Group",
             kind = "HOUSEHOLD",

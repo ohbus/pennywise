@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.expensecore.expenses.api
+import jakarta.validation.constraints.Size
 import com.subhrodip.squarewise.expensecore.expenses.domain.AllocationCalculator
 import com.subhrodip.squarewise.expensecore.expenses.domain.ExpenseAllocation
 import com.subhrodip.squarewise.expensecore.expenses.domain.ExpensePayer
@@ -52,7 +53,7 @@ class ExpenseController(
     fun createExpense(
         @PathVariable groupId: UUID,
         @RequestHeader(ApiEndpoints.Headers.IDEMPOTENCY_KEY)
-        @jakarta.validation.constraints.Size(max = ExpenseRequestLimits.MAX_IDEMPOTENCY_KEY_LENGTH)
+        @Size(max = ExpenseRequestLimits.MAX_IDEMPOTENCY_KEY_LENGTH)
         idempotencyKey: String,
         @Valid @RequestBody request: CreateExpenseRequest,
         principal: Principal?

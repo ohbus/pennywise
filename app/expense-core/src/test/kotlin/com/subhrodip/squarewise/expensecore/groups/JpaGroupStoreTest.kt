@@ -1,4 +1,7 @@
 package com.subhrodip.squarewise.expensecore.groups
+import com.subhrodip.squarewise.expensecore.sync.persistence.SyncChangeRepository
+import java.util.UUID
+import org.junit.jupiter.api.assertThrows
 import com.subhrodip.squarewise.expensecore.groups.api.CreateGroupRequest
 import com.subhrodip.squarewise.expensecore.groups.api.CreateInviteRequest
 import com.subhrodip.squarewise.expensecore.groups.api.CreatePlaceholderRequest
@@ -30,8 +33,8 @@ import tools.jackson.databind.ObjectMapper
 class JpaGroupStoreTest @Autowired constructor(
     private val store: JpaGroupStore,
     private val auditRepository: GroupAuditRepository,
-    private val syncRepository: com.subhrodip.squarewise.expensecore.sync.persistence.SyncChangeRepository,
-    private val outboxRepository: com.subhrodip.squarewise.expensecore.messaging.outbox.persistence.OutboxRepository,
+    private val syncRepository: SyncChangeRepository,
+    private val outboxRepository: OutboxRepository,
     private val groupRepository: GroupRepository,
     private val objectMapper: ObjectMapper
 ) {
@@ -117,7 +120,7 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals(2, membersAfterClaim.size)
         assertEquals(setOf("member-alice", "member-bob"), membersAfterClaim.map { it.subject }.toSet())
 
-        val err = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val err = assertThrows<ApplicationException> {
             store.listMembers(group.groupId, "intruder")
         }
         assertEquals(ErrorCode.ERR_05, err.errorCode)
@@ -140,7 +143,7 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals("After rename", fetched.name)
         assertEquals(1, fetched.revision)
 
-        val updateErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val updateErr = assertThrows<ApplicationException> {
             store.update(group.groupId, "stranger", UpdateGroupRequest("Nope"))
         }
         assertEquals(ErrorCode.ERR_05, updateErr.errorCode)
@@ -235,14 +238,14 @@ class JpaGroupStoreTest @Autowired constructor(
         val initialOutboxCount = outboxRepository.count()
 
         // Non-member attempt
-        val nonMemberErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val nonMemberErr = assertThrows<ApplicationException> {
             store.update(group.groupId, "unauthorized-subject", UpdateGroupRequest("Hacked Name"))
         }
         assertEquals(ErrorCode.ERR_05, nonMemberErr.errorCode)
 
         // Missing group attempt
-        val nonExistentId = java.util.UUID.randomUUID()
-        val missingErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val nonExistentId = UUID.randomUUID()
+        val missingErr = assertThrows<ApplicationException> {
             store.update(nonExistentId, "owner-side-effects", UpdateGroupRequest("Missing Group Name"))
         }
         assertEquals(ErrorCode.ERR_05, missingErr.errorCode)
@@ -278,13 +281,13 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals("group.archived.v1", outbox.eventType)
 
         // Repeat archive fails with 409
-        val archiveErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val archiveErr = assertThrows<ApplicationException> {
             store.archive(group.groupId, "archive-owner")
         }
         assertEquals(ErrorCode.ERR_06, archiveErr.errorCode)
 
         // Update name fails with 409 Conflict
-        val updateErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val updateErr = assertThrows<ApplicationException> {
             store.update(group.groupId, "archive-owner", UpdateGroupRequest("New Name"))
         }
         assertEquals(ErrorCode.ERR_06, updateErr.errorCode)
@@ -337,13 +340,13 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals("remove-owner", membersAfter[0].subject)
 
         // Removed member can no longer list group members
-        val listErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val listErr = assertThrows<ApplicationException> {
             store.listMembers(group.groupId, "member-to-remove")
         }
         assertEquals(ErrorCode.ERR_05, listErr.errorCode)
 
         // Duplicate removal returns 409 Conflict
-        val dupErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val dupErr = assertThrows<ApplicationException> {
             store.removeMember(group.groupId, "remove-owner", removeTarget.membershipId)
         }
         assertEquals(ErrorCode.ERR_06, dupErr.errorCode)
@@ -359,7 +362,7 @@ class JpaGroupStoreTest @Autowired constructor(
 
         store.revokeInvite(group.groupId, "revoke-owner", invite.token)
 
-        val claimErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val claimErr = assertThrows<ApplicationException> {
             store.claim(invite.token, "intruder")
         }
         assertEquals(ErrorCode.ERR_06, claimErr.errorCode)
@@ -379,12 +382,12 @@ class JpaGroupStoreTest @Autowired constructor(
         val auditCount = auditRepository.count()
         val outboxCount = outboxRepository.count()
 
-        val listError = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val listError = assertThrows<ApplicationException> {
             store.listMembers(group.groupId, "archived-members-owner")
         }
         assertEquals(ErrorCode.ERR_05, listError.errorCode)
 
-        val placeholderError = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val placeholderError = assertThrows<ApplicationException> {
             store.addPlaceholder(
                 group.groupId,
                 "archived-members-owner",
@@ -404,27 +407,27 @@ class JpaGroupStoreTest @Autowired constructor(
         val auditCount = auditRepository.count()
         val outboxCount = outboxRepository.count()
 
-        val placeholderError = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val placeholderError = assertThrows<ApplicationException> {
             store.invite(
                 group.groupId,
                 "invalid-invite-owner",
-                CreateInviteRequest(24, java.util.UUID.randomUUID())
+                CreateInviteRequest(24, UUID.randomUUID())
             )
         }
         assertEquals(ErrorCode.ERR_06, placeholderError.errorCode)
 
         val unknownToken = "a".repeat(64)
-        val revokeError = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val revokeError = assertThrows<ApplicationException> {
             store.revokeInvite(group.groupId, "invalid-invite-owner", unknownToken)
         }
         assertEquals(ErrorCode.ERR_06, revokeError.errorCode)
 
-        val malformedClaimError = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val malformedClaimError = assertThrows<ApplicationException> {
             store.claim("not-a-token", "invitee")
         }
         assertEquals(ErrorCode.ERR_06, malformedClaimError.errorCode)
 
-        val unknownClaimError = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val unknownClaimError = assertThrows<ApplicationException> {
             store.claim(unknownToken, "invitee")
         }
         assertEquals(ErrorCode.ERR_06, unknownClaimError.errorCode)
@@ -440,8 +443,8 @@ class JpaGroupStoreTest @Autowired constructor(
         val auditCount = auditRepository.count()
         val outboxCount = outboxRepository.count()
 
-        val error = org.junit.jupiter.api.assertThrows<ApplicationException> {
-            store.removeMember(group.groupId, "missing-member-owner", java.util.UUID.randomUUID())
+        val error = assertThrows<ApplicationException> {
+            store.removeMember(group.groupId, "missing-member-owner", UUID.randomUUID())
         }
 
         assertEquals(ErrorCode.ERR_05, error.errorCode)

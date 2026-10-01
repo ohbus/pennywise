@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.expensecore.expenses
+import java.time.Duration
 import com.subhrodip.squarewise.expensecore.expenses.domain.ExpenseAllocation
 import com.subhrodip.squarewise.expensecore.expenses.domain.ExpensePayer
 import com.subhrodip.squarewise.expensecore.expenses.domain.ExpenseRecord
@@ -72,7 +73,7 @@ class PostgresMembershipMutationRaceTest @Autowired constructor(
                 }
             }
         })
-        assertTimeoutPreemptively(java.time.Duration.ofMillis(500)) {
+        assertTimeoutPreemptively(Duration.ofMillis(500)) {
             Thread.sleep(100)
             assertFalse(mutation.isDone)
         }

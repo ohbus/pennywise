@@ -1,4 +1,6 @@
 package com.subhrodip.squarewise.expensecore.messaging.config
+import org.springframework.amqp.rabbit.core.RabbitTemplate
+import tools.jackson.databind.ObjectMapper
 import com.subhrodip.squarewise.expensecore.messaging.broker.BrokerPublisher
 import com.subhrodip.squarewise.expensecore.messaging.broker.RabbitBrokerPublisher
 import com.subhrodip.squarewise.expensecore.messaging.outbox.service.OutboxPublisher
@@ -18,8 +20,8 @@ class OutboxMessagingConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "squarewise.outbox", name = ["rabbit-enabled"], havingValue = "true")
     fun rabbitBrokerPublisher(
-        rabbitTemplate: org.springframework.amqp.rabbit.core.RabbitTemplate,
-        objectMapper: tools.jackson.databind.ObjectMapper
+        rabbitTemplate: RabbitTemplate,
+        objectMapper: ObjectMapper
     ): BrokerPublisher = RabbitBrokerPublisher(rabbitTemplate, objectMapper)
 
     @Bean
@@ -27,7 +29,7 @@ class OutboxMessagingConfiguration {
     fun outboxPublisher(
         relay: OutboxStore,
         brokerPublisher: BrokerPublisher,
-        objectMapper: tools.jackson.databind.ObjectMapper,
+        objectMapper: ObjectMapper,
         properties: OutboxRelayProperties
     ): OutboxPublisher = OutboxPublisher(
         relay = relay,

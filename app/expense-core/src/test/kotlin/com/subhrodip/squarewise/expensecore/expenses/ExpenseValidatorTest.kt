@@ -1,4 +1,6 @@
 package com.subhrodip.squarewise.expensecore.expenses
+import com.subhrodip.squarewise.expensecore.expenses.domain.ExpenseAllocation
+import com.subhrodip.squarewise.expensecore.expenses.domain.ExpensePayer
 
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
@@ -72,8 +74,8 @@ class ExpenseValidatorTest {
 
         assertEquals(
             listOf(
-                com.subhrodip.squarewise.expensecore.expenses.domain.ExpensePayer(alice, 125L),
-                com.subhrodip.squarewise.expensecore.expenses.domain.ExpensePayer(bob, 75L)
+                ExpensePayer(alice, 125L),
+                ExpensePayer(bob, 75L)
             ),
             ExpenseValidator.mapDomainPayers(payers)
         )
@@ -84,8 +86,8 @@ class ExpenseValidatorTest {
     fun `maps allocation values to domain records`() {
         assertEquals(
             listOf(
-                com.subhrodip.squarewise.expensecore.expenses.domain.ExpenseAllocation(alice, 60L),
-                com.subhrodip.squarewise.expensecore.expenses.domain.ExpenseAllocation(bob, 40L)
+                ExpenseAllocation(alice, 60L),
+                ExpenseAllocation(bob, 40L)
             ),
             ExpenseValidator.mapDomainAllocations(linkedMapOf(alice.toString() to 60L, bob.toString() to 40L))
         )

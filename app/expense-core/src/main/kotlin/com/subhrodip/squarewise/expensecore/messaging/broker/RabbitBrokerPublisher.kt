@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.expensecore.messaging.broker
+import java.util.Date
 import com.subhrodip.squarewise.ids.events.EventConstants
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.AmqpException
@@ -45,7 +46,7 @@ class RabbitBrokerPublisher(
             val properties = MessageProperties().apply {
                 contentType = MessageProperties.CONTENT_TYPE_JSON
                 messageId = message.eventId.toString()
-                timestamp = java.util.Date.from(message.occurredAt)
+                timestamp = Date.from(message.occurredAt)
                 message.headers.forEach { (key, value) -> setHeader(key, value) }
             }
 

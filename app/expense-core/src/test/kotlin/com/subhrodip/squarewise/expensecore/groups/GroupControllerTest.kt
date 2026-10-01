@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.expensecore.groups
+import java.util.UUID
 import com.subhrodip.squarewise.expensecore.groups.api.CreateGroupRequest
 import com.subhrodip.squarewise.expensecore.groups.api.CreateInviteRequest
 import com.subhrodip.squarewise.expensecore.groups.api.GroupController
@@ -278,7 +279,7 @@ class GroupControllerTest {
         val membersRes = testMvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupMembers(groupId)).with(alice))
             .andExpect(status().isOk)
             .andReturn().response.contentAsString
-        val bobMembershipId = store.listMembers(java.util.UUID.fromString(groupId), "alice").find { it.subject == "bob" }!!.membershipId
+        val bobMembershipId = store.listMembers(UUID.fromString(groupId), "alice").find { it.subject == "bob" }!!.membershipId
 
         // Remove Bob
         testMvc.perform(delete(ApiEndpoints.ExpenseCore.V1.groupById(groupId) + "/members/$bobMembershipId").with(alice))

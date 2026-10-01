@@ -1,4 +1,6 @@
 package com.subhrodip.squarewise.expensecore.search
+import com.subhrodip.squarewise.errors.domain.ApplicationException
+import com.subhrodip.squarewise.errors.domain.ErrorCode
 
 import com.subhrodip.squarewise.expensecore.search.model.ExpenseSearch
 import com.subhrodip.squarewise.expensecore.search.model.SearchExpense
@@ -48,10 +50,10 @@ class ExpenseSearchTest {
     @Test
     fun `rejects malformed cursors instead of silently changing the page`() {
         val search = ExpenseSearch()
-        val error = assertThrows(com.subhrodip.squarewise.errors.domain.ApplicationException::class.java) {
+        val error = assertThrows(ApplicationException::class.java) {
             search.page(listOf(SearchExpense("1", "Dinner", "EUR", "100")), cursor = "%%%invalid%%%")
         }
-        assertEquals(com.subhrodip.squarewise.errors.domain.ErrorCode.ERR_02, error.errorCode)
+        assertEquals(ErrorCode.ERR_02, error.errorCode)
     }
 
     @Test
@@ -60,7 +62,7 @@ class ExpenseSearchTest {
         val data = listOf(SearchExpense("1", "Lunch, team", "eur", "200"), SearchExpense("2", "Dinner", "USD", "100"))
         assertEquals(listOf("1"), search.page(data, currency = "EUR").expenses.map { it.expenseId })
         assertEquals("expenseId,description,currency,amountMinor,category\n1,\"Lunch, team\",eur,200,other\n", search.csv(data, currency = "EUR"))
-        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException::class.java) { search.csv(data, maxRows = 1) }
+        assertThrows(IllegalArgumentException::class.java) { search.csv(data, maxRows = 1) }
     }
 
     @Test
@@ -77,8 +79,8 @@ class ExpenseSearchTest {
 
     @Test
     fun `rejects unknown category`() {
-        val err = assertThrows(com.subhrodip.squarewise.errors.domain.ApplicationException::class.java) { ExpenseCategory.fromKey("travel") }
-        assertEquals(com.subhrodip.squarewise.errors.domain.ErrorCode.ERR_02, err.errorCode)
+        val err = assertThrows(ApplicationException::class.java) { ExpenseCategory.fromKey("travel") }
+        assertEquals(ErrorCode.ERR_02, err.errorCode)
     }
 
     @Test
@@ -101,10 +103,10 @@ class ExpenseSearchTest {
         assertEquals("expense-42", decodeSearchCursor(cursor))
 
         listOf("%%%invalid%%%", Base64.getUrlEncoder().withoutPadding().encodeToString(" ".toByteArray())).forEach { value ->
-            val error = assertThrows(com.subhrodip.squarewise.errors.domain.ApplicationException::class.java) {
+            val error = assertThrows(ApplicationException::class.java) {
                 decodeSearchCursor(value)
             }
-            assertEquals(com.subhrodip.squarewise.errors.domain.ErrorCode.ERR_02, error.errorCode)
+            assertEquals(ErrorCode.ERR_02, error.errorCode)
         }
     }
 }

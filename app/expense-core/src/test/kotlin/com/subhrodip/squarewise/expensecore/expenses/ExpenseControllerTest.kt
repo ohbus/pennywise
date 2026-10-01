@@ -1,4 +1,6 @@
 package com.subhrodip.squarewise.expensecore.expenses
+import com.subhrodip.squarewise.errors.domain.ApplicationException
+import com.subhrodip.squarewise.errors.domain.ErrorCode
 import com.subhrodip.squarewise.expensecore.expenses.api.ExpenseController
 import com.subhrodip.squarewise.expensecore.expenses.persistence.store.InMemoryExpenseStore
 import com.subhrodip.squarewise.expensecore.groups.domain.GroupEntity
@@ -62,15 +64,15 @@ class ExpenseControllerTest {
 
     @Test
     fun `rejects missing and blank authenticated subjects before membership lookup`() {
-        val missing = assertThrows<com.subhrodip.squarewise.errors.domain.ApplicationException> {
+        val missing = assertThrows<ApplicationException> {
             controller.getBalances(UUID.randomUUID(), null)
         }
-        assertEquals(com.subhrodip.squarewise.errors.domain.ErrorCode.ERR_03, missing.errorCode)
+        assertEquals(ErrorCode.ERR_03, missing.errorCode)
 
-        val blank = assertThrows<com.subhrodip.squarewise.errors.domain.ApplicationException> {
+        val blank = assertThrows<ApplicationException> {
             controller.getBalances(UUID.randomUUID(), Principal { "   " })
         }
-        assertEquals(com.subhrodip.squarewise.errors.domain.ErrorCode.ERR_03, blank.errorCode)
+        assertEquals(ErrorCode.ERR_03, blank.errorCode)
     }
 
     @Test

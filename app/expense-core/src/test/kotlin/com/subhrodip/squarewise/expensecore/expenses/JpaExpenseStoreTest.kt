@@ -558,4 +558,49 @@ class JpaExpenseStoreTest @Autowired constructor(
         }
         assertEquals(ErrorCode.ERR_06, deleteErr.errorCode)
     }
+
+    /** Verifies delete lookup, null-version, and already-deleted outcomes preserve the soft-delete contract. */
+    @Test
+    fun `rejects missing and repeated deletes without additional ledger effects`() {
+        val missingGroupError = assertThrows(ApplicationException::class.java) {
+            expenseStore.delete(UUID.randomUUID(), UUID.randomUUID(), version = null, actorSubject = "alice")
+        }
+        assertEquals(ErrorCode.ERR_05, missingGroupError.errorCode)
+
+        val group = groupStore.create("alice", CreateGroupRequest("Delete boundaries", "TRIP", "EUR"))
+        val missingExpenseError = assertThrows(ApplicationException::class.java) {
+            expenseStore.delete(group.groupId, UUID.randomUUID(), version = null, actorSubject = "alice")
+        }
+        assertEquals(ErrorCode.ERR_03, missingExpenseError.errorCode)
+
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val record = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Delete boundary",
+            category = "other",
+            currency = "EUR",
+            amountMinor = 100,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(participantId, 100)),
+            allocations = listOf(ExpenseAllocation(participantId, 100))
+        )
+        expenseStore.create(group.groupId, record, "delete-boundary")
+        val revisionBeforeDelete = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        expenseStore.delete(group.groupId, expenseId, version = null, actorSubject = "alice")
+        val revisionAfterDelete = groupRepository.findById(group.groupId).orElseThrow().revision
+        assertEquals(revisionBeforeDelete + 1, revisionAfterDelete)
+        assertEquals(0L, balancePostingRepository.findByExpenseId(expenseId).sumOf { it.amountMinor })
+
+        val repeatedDeleteError = assertThrows(ApplicationException::class.java) {
+            expenseStore.delete(group.groupId, expenseId, version = null, actorSubject = "alice")
+        }
+        assertEquals(ErrorCode.ERR_05, repeatedDeleteError.errorCode)
+        assertEquals(revisionAfterDelete, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertEquals(2, balancePostingRepository.findByExpenseId(expenseId).size)
+    }
 }

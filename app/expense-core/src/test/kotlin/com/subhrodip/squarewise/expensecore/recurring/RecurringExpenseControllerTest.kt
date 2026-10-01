@@ -149,6 +149,35 @@ class RecurringExpenseControllerTest @Autowired constructor(
         }
     }
 
+    /** Verifies recurring transport rejects malformed amounts and unauthorized subjects. */
+    @Test
+    fun `rejects invalid amount and membership inputs before service mutation`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Validation group", "TRIP", "EUR"))
+        val validRequest = CreateRecurringScheduleRequestDto(
+            description = "Validated schedule",
+            amount = MoneyDto("EUR", "100"),
+            frequency = RecurrenceFrequency.WEEKLY,
+            startDate = LocalDate.of(2026, 10, 1)
+        )
+
+        listOf("not-an-integer", "0").forEach { amount ->
+            val error = assertThrows<ApplicationException> {
+                controller.createSchedule(group.groupId, validRequest.copy(amount = MoneyDto("EUR", amount)), alice)
+            }
+            assertEquals(ErrorCode.ERR_02, error.errorCode)
+        }
+
+        val blankSubject = assertThrows<ApplicationException> {
+            controller.createSchedule(group.groupId, validRequest, Principal { "   " })
+        }
+        assertEquals(ErrorCode.ERR_03, blankSubject.errorCode)
+
+        val nonMember = assertThrows<ApplicationException> {
+            controller.createSchedule(group.groupId, validRequest, Principal { "bob" })
+        }
+        assertEquals(ErrorCode.ERR_05, nonMember.errorCode)
+    }
+
     @Test
     fun `rejects missing principal for an existing group`() {
         val group = groupStore.create("alice", CreateGroupRequest("No Anonymous Schedules", "TRIP", "EUR"))

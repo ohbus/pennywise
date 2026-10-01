@@ -9,7 +9,7 @@ test/quality documentation.
 ## Current baseline
 
 As of 2026-10-01, the freshly regenerated JaCoCo XML baseline records **115
-production methods with missed branches** containing **217 missed branches**,
+production methods with missed branches** containing **216 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 41 operations without a literal E2E reference and 49 without a literal
@@ -213,7 +213,7 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 The JSON array is the machine-readable assignment set. Its record count must
 equal the `Methods with missed branches` total above (**115**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**217**). Each object carries the module, production class, source file,
+(**216**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, and assignment basis. The record count and branch-count
 sum are both regression-tested so a changed JaCoCo baseline cannot silently
@@ -278,7 +278,7 @@ Current provisional assignment workload (115 records):
 | QA10-C04 | 9 | Group, invite, membership, expiry, and revocation behavior; archived claims, removed/bound/ordinary-member placeholder targets, repository-missing claim outcomes, and normal/targeted invitation claim races now have explicit assertions. |
 | QA10-C05 | 5 | Settlement, balance, reconciliation, and rollback behavior; duplicate participant/currency balance aggregation and authenticated/blank-subject suggestion boundaries are covered, while three engine mappings and independent corruption/rollback evidence remain open. |
 | QA10-C06 | 4 | Sync revisions, cursors, ordering, and membership boundaries; the durable empty-snapshot contract is now covered, while cursor validation and causal/deployed evidence remain open. |
-| QA10-D01 | 6 | Auth-email broker parsing, retry, deduplication, and delivery; key configuration, envelope framing, and numeric metadata validation are covered, while listener parsing/acknowledgement, broker retry/redelivery, and deployed Mailpit evidence remain open. |
+| QA10-D01 | 6 | Auth-email broker parsing, retry, deduplication, and delivery; key configuration, envelope framing, numeric metadata validation, and invalid expiry rejection are covered, while listener parsing/acknowledgement, broker retry/redelivery, and deployed Mailpit evidence remain open. |
 | QA10-D02 | 2 | Notification event transaction and acknowledgement coupling; envelope conversion fallbacks are covered, while broker acknowledgement/retry and transaction-coupling evidence remain open. |
 | QA10-D03 | 6 | SMTP/Mailpit delivery and retry classification. |
 | QA10-D04 | 2 | Inbox/preferences persistence and subject isolation. |

@@ -156,6 +156,12 @@ class AuthEmailRabbitListenerTest {
         listener.onMessage(message(validEvent(), 26L), null)
     }
 
+    /** Verifies malformed deliveries remain safe when the broker channel is unavailable. */
+    @Test
+    fun `does not require a channel to reject a malformed delivery`() {
+        listener.onMessage(message("{not-json}", 27L), null)
+    }
+
     private fun fieldValue(field: String): String = when (field) {
         "recipient" -> "user@example.com"
         "template" -> "LOGIN_CODE"

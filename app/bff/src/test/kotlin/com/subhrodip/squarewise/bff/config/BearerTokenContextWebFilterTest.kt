@@ -58,6 +58,22 @@ class BearerTokenContextWebFilterTest {
         assertSame(exchange, captured.get().get<ServerWebExchange>(BearerTokenContext.EXCHANGE_KEY))
     }
 
+    /** Verifies a bearer scheme with only whitespace is treated as absent, not as a token. */
+    @Test
+    fun `omits blank bearer token`() {
+        val exchange = MockServerWebExchange.from(
+            MockServerHttpRequest.get("/graphql")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer    ")
+                .build()
+        )
+        val captured = AtomicReference<ContextView>()
+
+        filter.filter(exchange, contextCapturingChain(captured)).block()
+
+        assertFalse(captured.get().hasKey(BearerTokenContext.KEY))
+        assertSame(exchange, captured.get().get<ServerWebExchange>(BearerTokenContext.EXCHANGE_KEY))
+    }
+
     private fun contextCapturingChain(captured: AtomicReference<ContextView>): WebFilterChain =
         WebFilterChain { _: ServerWebExchange ->
             Mono.deferContextual { context ->

@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **37
-production methods with missed branches** containing **76 missed branches**,
+As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **44
+production methods with missed branches** containing **93 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 0 operations without a literal E2E reference and 49 without a literal
@@ -21,12 +21,13 @@ the repository-wide test and JaCoCo tasks. This baseline is local evidence;
 hosted CI, deployed E2E, and environment-owned release gates remain separate
 acceptance requirements.
 
-The current residual review split is **36 candidate structural mappings** and
-**one open-design record** (`ProfileController.problem`/`mapErrorCode`). No
+The current residual review split is **36 candidate structural mappings**,
+**7 open-review observability records**, and **one open-design record**
+(`ProfileController.problem`/`mapErrorCode`). No
 missed method is unaccounted for, but neither category is treated as
 automatically covered or closed.
 The companion [`QA-10 branch-line ledger`](qa10-branch-line-gap-ledger.md)
-records the 50 exact JaCoCo source lines that account for those 76 branches;
+records the 60 exact JaCoCo source lines that account for those 93 branches;
 it is regenerated from the same reports and is not a substitute for behavior
 acceptance.
 The companion [`QA-10 concrete execution-gap ledger`](qa10-execution-gap-ledger.md)
@@ -123,6 +124,11 @@ Accounts, BFF, Expense Core, Notifications, and shared libraries. It excludes
 interfaces and compiler-generated accessors/scaffolding but deliberately keeps
 real domain, transport, security, messaging, and configuration methods visible
 until a focused test or reviewed framework-wiring rationale exists.
+One record, `DbTelemetry.measureQuery`, is marked `INLINE-EXPANDED`: its
+behavior is exercised through inline call-site tests, while JaCoCo cannot mark
+the inline declaration method node executed. This is a reviewed compiler
+classification, not a reason to add reflection-only coverage or alter the
+implementation contract.
 
 ### Current operations without a literal E2E source reference
 
@@ -241,7 +247,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **37 methods with at least one missed
+The regenerated JaCoCo XML contains **44 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -249,16 +255,16 @@ classified as generated/structural with reviewer approval.
 
 | Module | Classes with missed lines | Classes with missed branches | Methods with missed branches |
 | --- | ---: | ---: | ---: |
-| `app/accounts` | 27 | 6 | 6 |
-| `app/bff` | 17 | 3 | 6 |
-| `app/expense-core` | 38 | 11 | 31 |
-| `app/notifications` | 8 | 1 | 1 |
+| `app/accounts` | 25 | 6 | 6 |
+| `app/bff` | 16 | 3 | 5 |
+| `app/expense-core` | 36 | 8 | 22 |
+| `app/notifications` | 7 | 1 | 1 |
 | `libs/db` | 7 | 2 | 2 |
 | `libs/errors` | 1 | 1 | 1 |
 | `libs/ids` | 3 | 0 | 0 |
-| `libs/observability` | 2 | 0 | 0 |
+| `libs/observability` | 2 | 1 | 7 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **107** | **24** | **41** |
+| **Total** | **99** | **22** | **44** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -280,9 +286,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**41**), and the sum of
+equal the `Methods with missed branches` total above (**44**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**84**). Each object carries the module, production class, source file,
+(**93**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, assignment basis, and the row's machine-readable
 `acceptance_criteria`. The record count and branch-count
@@ -317,16 +323,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 37-record JSON discovery inventory and
+The repository currently has the exact 44-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 37 records. The A07 and E02 tables provide supplemental method-level review
+all 44 records. The A07 and E02 tables provide supplemental method-level review
 detail; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (37 records):
+Current provisional assignment workload (44 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -356,7 +362,7 @@ Current provisional assignment workload (37 records):
 | QA10-E02 | 2 | Database routing, reader health, fallback, and operational lifecycle. |
 | QA10-E03 | 0 | Servlet/reactive OIDC decoder construction and key-validation paths are locally covered; deployed issuer/provider behavior remains environment evidence. |
 | QA10-E04 | 0 | IDs/constants have no current missed-branch methods; static contract checks remain required. |
-| QA10-E05 | 0 | Bounded observability labels and metric behavior is branch-complete locally; dashboards/alerts and deployed cardinality remain operational evidence. |
+| QA10-E05 | 7 | Bounded observability labels and metric behavior now has direct local invocation evidence; registry-backed metric assertions, dashboards/alerts, and deployed cardinality remain operational evidence. |
 
 This table is regenerated from the JSON assignment output; it is not a
 coverage claim. A row closes only when its acceptance criteria and required
@@ -401,7 +407,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 37-method inventory is a discovery baseline, not closure evidence. QA-10
+The 44-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 
@@ -751,7 +757,7 @@ The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
 The `qa10-coverage-inventory` job now downloads those module artifacts,
 restores them into their repository paths, and publishes one aggregate JSON
 inventory. It is intentionally discovery-only while the baseline contains
-37 records with missed branches / 76 missed branches; `--fail-on-gaps` remains the eventual
+44 records with missed branches / 93 missed branches; `--fail-on-gaps` remains the eventual
 blocking closure step. A
 single matrix shard is insufficient evidence for a repository-wide
 no-missed-branch claim.

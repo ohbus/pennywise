@@ -71,6 +71,28 @@ def interface_source(root: Path, report: Path, package: str, source_file: str, c
     return re.search(rf"\binterface\s+{re.escape(simple_name)}\b", source) is not None
 
 
+def inline_source(
+    root: Path,
+    report: Path,
+    package: str,
+    source_file: str,
+    method: str,
+    source_line: int | None,
+) -> bool:
+    """Return whether a zero-execution method is a Kotlin inline declaration."""
+
+    if source_line is None:
+        return False
+    path = source_path(root, report, package, source_file)
+    if path is None:
+        return False
+    lines = path.read_text(encoding="utf-8").splitlines()
+    declaration = " ".join(lines[max(0, source_line - 4) : source_line + 1])
+    return re.search(
+        rf"\binline\s+fun\b.*\b{re.escape(method)}\s*\(", declaration
+    ) is not None
+
+
 def all_gaps(root: Path) -> list[ExecutionGap]:
     """Load concrete methods with no covered instructions."""
 
@@ -107,6 +129,15 @@ def all_gaps(root: Path) -> list[ExecutionGap]:
                     ):
                         continue
                     line = method_node.get("line")
+                    source_line = int(line) if line is not None else None
+                    inline = inline_source(
+                        root,
+                        report,
+                        package,
+                        source_file,
+                        method,
+                        source_line,
+                    )
                     qa_row, _ = qa_assignment(module_name(root, report), class_name)
                     gaps.append(
                         ExecutionGap(
@@ -114,13 +145,17 @@ def all_gaps(root: Path) -> list[ExecutionGap]:
                             class_name=class_name,
                             source_file=source_file,
                             method=method,
-                            source_line=int(line) if line is not None else None,
+                            source_line=source_line,
                             missed_instructions=int(instruction.get("missed", "0")),
                             qa_row=qa_row,
                             acceptance_criteria=qa_acceptance(qa_row),
-                            status="NO-INSTRUCTION-EXECUTION",
+                            status=("INLINE-EXPANDED" if inline else "NO-INSTRUCTION-EXECUTION"),
                             next_action=(
-                                "Add a direct unit/integration test for the public behavior, "
+                                "Retain direct behavior tests at call sites; Kotlin inline expansion "
+                                "does not execute this JaCoCo method node, so do not add reflection-only "
+                                "coverage or change the contract."
+                                if inline
+                                else "Add a direct unit/integration test for the public behavior, "
                                 "or document why the method is framework/bootstrap wiring; do not "
                                 "delete it or bypass its contract for coverage."
                             ),

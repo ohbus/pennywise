@@ -39,7 +39,7 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_every_current_branch_gap_has_a_qa_row(self) -> None:
         gaps = all_gaps(ROOT)
 
-        self.assertEqual(37, len(gaps))
+        self.assertEqual(44, len(gaps))
         self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
         self.assertTrue(all(gap.assignment_basis for gap in gaps))
         self.assertTrue(all(gap.acceptance_criteria for gap in gaps))
@@ -76,14 +76,14 @@ class CoverageInventoryTest(unittest.TestCase):
                 "QA10-E02": 2,
                 "QA10-E03": 0,
                 "QA10-E04": 0,
-                "QA10-E05": 0,
+                "QA10-E05": 7,
         }
         actual_counts = Counter(gap.qa_row for gap in gaps)
         self.assertEqual(
             expected_counts,
             {row: actual_counts.get(row, 0) for row in expected_counts},
         )
-        self.assertEqual(76, sum(gap.missed_branches for gap in gaps))
+        self.assertEqual(93, sum(gap.missed_branches for gap in gaps))
 
     def test_operation_inventory_is_complete_and_assigned(self) -> None:
         operations = inventory(ROOT)
@@ -114,7 +114,16 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
         self.assertTrue(all(gap.acceptance_criteria for gap in gaps))
         self.assertTrue(all(gap.next_action for gap in gaps))
-        self.assertTrue(all(gap.status == "NO-INSTRUCTION-EXECUTION" for gap in gaps))
+        self.assertEqual(
+            1,
+            sum(gap.status == "INLINE-EXPANDED" for gap in gaps),
+        )
+        self.assertTrue(
+            all(
+                gap.status in {"INLINE-EXPANDED", "NO-INSTRUCTION-EXECUTION"}
+                for gap in gaps
+            )
+        )
         self.assertEqual(
             {
                 "app/accounts": 3,
@@ -190,7 +199,7 @@ class CoverageInventoryTest(unittest.TestCase):
         rendered = render_branch_gaps(gaps)
         rows = rendered.splitlines()
 
-        self.assertEqual(39, len(rows))
+        self.assertEqual(46, len(rows))
         self.assertEqual(
             "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria | Closure status | Next action |",
             rows[0],
@@ -207,8 +216,8 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_source_line_inventory_accounts_for_every_missed_branch(self) -> None:
         gaps = line_gaps(ROOT)
 
-        self.assertEqual(50, len(gaps))
-        self.assertEqual(76, sum(gap.missed_branches for gap in gaps))
+        self.assertEqual(60, len(gaps))
+        self.assertEqual(93, sum(gap.missed_branches for gap in gaps))
         self.assertTrue(all(gap.package for gap in gaps))
         self.assertTrue(all(gap.source_file for gap in gaps))
         self.assertTrue(all(gap.class_name for gap in gaps))
@@ -514,7 +523,7 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_ci_documentation_uses_current_branch_baseline(self) -> None:
         ci = (ROOT / "docs/operations/ci.md").read_text(encoding="utf-8")
 
-        self.assertIn("37 methods containing 76 missed", ci)
+        self.assertIn("44 methods containing 93 missed", ci)
         self.assertNotIn("220 missed-branch methods", ci)
 
     def test_qa10_audit_documents_current_baseline_and_live_limitations(self) -> None:
@@ -526,17 +535,17 @@ class CoverageInventoryTest(unittest.TestCase):
         )
 
         self.assertIn(
-            "freshly regenerated JaCoCo XML baseline records **37",
+            "freshly regenerated JaCoCo XML baseline records **44",
             audit,
         )
-        self.assertIn("containing **76 missed branches**", audit)
+        self.assertIn("containing **93 missed branches**", audit)
         self.assertIn("Latest recorded execution is **NOT-GREEN**", ledger)
 
     def test_qa10_task_detail_uses_current_baseline_not_historical_counts(self) -> None:
         detail = (ROOT / "docs/tasks/details/QA-10.md").read_text(encoding="utf-8")
 
         self.assertIn(
-            "current regenerated authoritative ledger is\n37 records with 76 missed branches",
+            "current regenerated authoritative ledger is\n44 records with 93 missed branches",
             detail,
         )
         self.assertNotIn(

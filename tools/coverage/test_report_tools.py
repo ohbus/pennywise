@@ -257,6 +257,42 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertEqual(catalog_codes, enum_codes)
         self.assertEqual(len(enum_codes), len(set(enum_codes)))
 
+    def test_event_envelope_fields_have_shared_headers_and_version_floor(self) -> None:
+        """Keep the event schema envelope and AMQP metadata vocabulary aligned."""
+
+        schema = json.loads(
+            (ROOT / "contracts/events/envelope.schema.json").read_text(encoding="utf-8")
+        )
+        event_constants = (
+            ROOT
+            / "libs/ids/src/main/kotlin/com/subhrodip/squarewise/ids/events/EventConstants.kt"
+        ).read_text(encoding="utf-8")
+        header_values = set(
+            re.findall(r'(?m)^        const val [A-Z_]+: String = "([^"]+)"', event_constants)
+        )
+        schema_version_match = re.search(
+            r"CURRENT_SCHEMA_VERSION: Int = ([0-9]+)", event_constants
+        )
+        if schema_version_match is None:
+            raise AssertionError("EventConstants must declare CURRENT_SCHEMA_VERSION")
+        schema_version = int(schema_version_match.group(1))
+        expected_headers = {
+            "event-id",
+            "event-type",
+            "schema-version",
+            "aggregate-id",
+            "group-id",
+            "group-revision",
+            "occurred-at",
+        }
+        self.assertTrue(expected_headers.issubset(header_values))
+        self.assertEqual(1, schema["properties"]["schemaVersion"]["minimum"])
+        self.assertGreaterEqual(schema_version, schema["properties"]["schemaVersion"]["minimum"])
+        self.assertEqual(
+            {"eventId", "eventType", "schemaVersion", "aggregateId", "groupId", "groupRevision", "occurredAt", "payload"},
+            set(schema["required"]),
+        )
+
     def test_auth_email_e2e_destination_is_wired_and_documented(self) -> None:
         """Prevent the passwordless E2E suite from becoming an unexecuted orphan."""
 

@@ -128,6 +128,9 @@ class CoverageInventoryTest(unittest.TestCase):
             )
         )
         self.assertTrue(
+            all(item.e2e_request_status == "REQUEST-SOURCE-REFERENCE-ONLY" for item in operations)
+        )
+        self.assertTrue(
             all(item.execution_status == "NO-EXECUTION-ARTIFACT-INGESTED" for item in operations)
         )
         self.assertEqual(
@@ -208,6 +211,10 @@ class CoverageInventoryTest(unittest.TestCase):
             output.getvalue(),
         )
         self.assertIn(
+            '"e2e_request_status": "REQUEST-SOURCE-REFERENCE-ONLY"',
+            output.getvalue(),
+        )
+        self.assertIn(
             '"execution_status": "NO-EXECUTION-ARTIFACT-INGESTED"',
             output.getvalue(),
         )
@@ -230,6 +237,18 @@ class CoverageInventoryTest(unittest.TestCase):
             ("tests/e2e/journey.py::main",),
             callable_references("group", sources),
         )
+
+    def test_request_signal_is_surface_aware(self) -> None:
+        """Avoid crediting a REST operation from a GraphQL field with the same ID."""
+
+        from tools.coverage.report_operation_test_gaps import OperationEvidence, request_references
+
+        sources = (("tests/e2e/journey.py", 'query = "mutation { createExpense { id } }"\npath = "/expense-core/v1/groups/{group_id}/expenses"'),)
+        graphql = OperationEvidence("GraphQL Mutation", "createExpense", "BFF", None, None, (), (), (), ())
+        rest = OperationEvidence("REST", "createExpense", "Expense Core API", "POST", "/expense-core/v1/groups/{groupId}/expenses", (), (), (), ())
+
+        self.assertEqual(("tests/e2e/journey.py",), request_references(graphql, sources))
+        self.assertEqual(("tests/e2e/journey.py",), request_references(rest, sources))
 
     def test_committed_operation_acceptance_ledger_matches_current_inventory(self) -> None:
         operations = inventory(ROOT)

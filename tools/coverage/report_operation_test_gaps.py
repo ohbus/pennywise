@@ -31,6 +31,7 @@ class OperationEvidence:
     path: str | None
     e2e_references: tuple[str, ...]
     e2e_callable_references: tuple[str, ...]
+    e2e_request_references: tuple[str, ...]
     bruno_references: tuple[str, ...]
     acceptance_row: str = "QA10-E2E01"
 
@@ -57,6 +58,18 @@ class OperationEvidence:
         """Whether a Python callable in an E2E source contains the operation reference."""
 
         return bool(self.e2e_callable_references)
+
+    @property
+    def has_e2e_request_signal(self) -> bool:
+        """Whether source contains a surface-shaped REST path or GraphQL field."""
+
+        return bool(self.e2e_request_references)
+
+    @property
+    def e2e_request_status(self) -> str:
+        """Describe request-shaped source discovery without implying execution."""
+
+        return "REQUEST-SOURCE-REFERENCE-ONLY" if self.has_e2e_request_signal else "NO-REQUEST-SOURCE-SIGNAL"
 
     @property
     def e2e_callable_status(self) -> str:
@@ -245,6 +258,28 @@ def callable_references(
     return tuple(matches)
 
 
+def request_references(
+    item: OperationEvidence, sources: Iterable[tuple[str, str]]
+) -> tuple[str, ...]:
+    """Return E2E files containing a surface-shaped request reference.
+
+    REST matching normalizes path placeholders so ``{accountId}`` and
+    ``{account_id}`` are equivalent. GraphQL matching requires the operation
+    name to be followed by an argument list or selection set. This remains
+    static evidence: it does not prove that a runner discovered, invoked, or
+    asserted the request.
+    """
+
+    if item.surface == "REST" and item.path is not None:
+        expected = re.sub(r"\{[^}]+\}", "{}", item.path)
+        pattern = re.compile(re.escape(expected))
+    elif item.surface.startswith("GraphQL"):
+        pattern = re.compile(rf"(?<![A-Za-z0-9_]){re.escape(item.operation)}\s*(?:\(|\{{)")
+    else:
+        return ()
+    return tuple(path for path, text in sources if pattern.search(re.sub(r"\{[A-Za-z0-9_]+\}", "{}", text)) is not None)
+
+
 def rest_operations(root: Path) -> list[OperationEvidence]:
     """Load REST operation IDs from the OpenAPI contracts."""
 
@@ -265,6 +300,7 @@ def rest_operations(root: Path) -> list[OperationEvidence]:
                         path=str(path),
                         e2e_references=(),
                         e2e_callable_references=(),
+                        e2e_request_references=(),
                         bruno_references=(),
                     )
                 )
@@ -287,6 +323,7 @@ def graphql_operations(root: Path) -> list[OperationEvidence]:
                     path=None,
                     e2e_references=(),
                     e2e_callable_references=(),
+                    e2e_request_references=(),
                     bruno_references=(),
                 )
             )
@@ -306,6 +343,9 @@ def inventory(root: Path) -> list[OperationEvidence]:
                     **asdict(operation),
                         "e2e_references": references(operation.operation, e2e),
                     "e2e_callable_references": callable_references(operation.operation, e2e),
+                    "e2e_request_references": request_references(
+                        operation, e2e
+                    ),
                     "bruno_references": references(operation.operation, bruno),
                 }
             )
@@ -317,20 +357,24 @@ def render_markdown(items: Iterable[OperationEvidence]) -> str:
     """Render operation signals as a review table."""
 
     rows = [
-        "| Surface | Service | Operation | Method | Path | Acceptance row | Required acceptance criteria | E2E source status | E2E callable signal | E2E file signal | Bruno status | Execution artifact status |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Surface | Service | Operation | Method | Path | Acceptance row | Required acceptance criteria | E2E source status | E2E request signal | E2E callable signal | E2E file signal | Bruno status | Execution artifact status |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for item in items:
         e2e = ", ".join(f"`{path}`" for path in item.e2e_references) or "missing"
         callable_e2e = ", ".join(
             f"`{path}`" for path in item.e2e_callable_references
         ) or "missing"
+        request_e2e = ", ".join(
+            f"`{path}`" for path in item.e2e_request_references
+        ) or "missing"
         bruno = ", ".join(f"`{path}`" for path in item.bruno_references) or "missing"
         rows.append(
             f"| {item.surface} | {item.service} | `{item.operation}` | "
             f"{item.method or ''} | `{item.path or ''}` | `{item.acceptance_row}` | "
             f"{acceptance_criteria(item)} | **{item.e2e_callable_status}** | "
-            f"{callable_e2e} | {e2e} | **{item.bruno_status}** ({bruno}) | "
+            f"**{item.e2e_request_status}** ({request_e2e}) | {callable_e2e} | {e2e} | "
+            f"**{item.bruno_status}** ({bruno}) | "
             f"**{item.execution_status}** |"
         )
     return "\n".join(rows)
@@ -356,6 +400,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 **asdict(item),
                 "e2e_status": item.e2e_status,
                 "e2e_callable_status": item.e2e_callable_status,
+                "e2e_request_status": item.e2e_request_status,
                 "bruno_status": item.bruno_status,
                 "execution_status": item.execution_status,
             }

@@ -113,6 +113,10 @@ operations. `CALLABLE-SOURCE-REFERENCE-ONLY` means only that a callable's source
 contains the identifier; it does not prove test discovery, invocation, or
 assertion execution. `FILE-SOURCE-REFERENCE-ONLY` remains the weaker status for
 file-level-only matches.
+The request-shaped scan is surface-aware: REST records use normalized contract
+paths and GraphQL records use field selections, so duplicate operation IDs across
+surfaces are not credited from one another. `REQUEST-SOURCE-REFERENCE-ONLY` is
+still static source evidence, not a runner result.
 The generated operation ledger now also emits `BRUNO-SOURCE-REFERENCE-ONLY` or
 `NO-BRUNO-SOURCE-REFERENCE`, plus `NO-EXECUTION-ARTIFACT-INGESTED` for every
 record. The latter is deliberate: this source inventory does not ingest a

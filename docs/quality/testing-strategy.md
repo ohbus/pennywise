@@ -38,6 +38,13 @@ E2E source signal, but source presence is not complete acceptance evidence. Thes
 permission to delete implementation branches or infer closure from a shared
 journey.
 
+The audit's event-type and routing inventory is also authoritative for
+messaging gaps. It distinguishes local parser/unit evidence from the required
+versioned event registry, producer/consumer mapping, outbox atomicity, real
+RabbitMQ routing/acknowledgement/retry/DLQ, deduplication, and credential
+redaction artifacts. An event literal or mocked listener test does not close
+those integration or deployed criteria.
+
 For the practical test layout, commands, environment prerequisites, CI gates,
 coverage dimensions, and contribution workflow, see the
 [`test-operations-guide.md`](test-operations-guide.md).

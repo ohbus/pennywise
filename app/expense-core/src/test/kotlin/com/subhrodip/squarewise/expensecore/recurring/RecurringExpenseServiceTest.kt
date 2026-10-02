@@ -392,6 +392,33 @@ class RecurringExpenseServiceTest @Autowired constructor(
         assertEquals(5, occurrences.size)
     }
 
+    /** Verifies a zero worker budget leaves due schedule state untouched. */
+    @Test
+    fun `does not process due occurrences when catch-up budget is zero`() {
+        val group = groupStore.create("zero-budget-owner", CreateGroupRequest("Zero budget", "TRIP", "EUR"))
+        val startDate = LocalDate.of(2026, 1, 1)
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Zero budget schedule",
+                amountMinor = 3000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate
+            )
+        )
+
+        assertEquals(
+            0,
+            service.processDueOccurrences(
+                asOfDate = startDate.plusWeeks(4),
+                maxCatchUpOccurrences = 0
+            )
+        )
+        assertTrue(service.getOccurrences(schedule.scheduleId).isEmpty())
+        assertEquals(startDate, service.getSchedule(schedule.scheduleId)?.nextOccurrenceDate)
+    }
+
     @Test
     fun `pauses schedule and emits outbox notification on invalid membership`() {
         val group = groupStore.create("alice", CreateGroupRequest("Private Flat", "HOUSEHOLD", "EUR"))

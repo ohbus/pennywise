@@ -279,6 +279,21 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertIn("37 methods containing 76 missed", ci)
         self.assertNotIn("220 missed-branch methods", ci)
 
+    def test_qa10_audit_documents_current_baseline_and_live_limitations(self) -> None:
+        audit = (ROOT / "docs/quality/test-coverage-gap-audit.md").read_text(
+            encoding="utf-8"
+        )
+        ledger = (ROOT / "docs/quality/qa10-operation-acceptance-ledger.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn(
+            "freshly regenerated JaCoCo XML baseline records **37",
+            audit,
+        )
+        self.assertIn("containing **76 missed branches**", audit)
+        self.assertIn("Latest recorded execution is **NOT-GREEN**", ledger)
+
     def test_ci_python_tooling_is_locked_and_build_hooks_are_disabled(self) -> None:
         workflow = (ROOT / ".github/workflows/_reusable-ci.yml").read_text(
             encoding="utf-8"

@@ -12,13 +12,22 @@ class UpstreamMappingTest {
         val amount = BffMoney("EUR", "1250")
         val allocations = listOf(BffAllocation("alice", BffMoney("EUR", "625")))
 
-        val mapped = UpstreamExpense(
+        val upstream = UpstreamExpense(
             expenseId = "expense-1",
             version = 4,
             amount = amount,
             category = "TRAVEL",
             allocations = allocations
-        ).toBffExpense("Fallback description")
+        )
+
+        assertEquals("expense-1", upstream.expenseId)
+        assertEquals(4, upstream.version)
+        assertEquals(null, upstream.description)
+        assertEquals(amount, upstream.amount)
+        assertEquals("TRAVEL", upstream.category)
+        assertEquals(allocations, upstream.allocations)
+
+        val mapped = upstream.toBffExpense("Fallback description")
 
         assertEquals("expense-1", mapped.expenseId)
         assertEquals(4, mapped.version)
@@ -30,14 +39,23 @@ class UpstreamMappingTest {
 
     @Test
     fun `settlement mapping preserves nullable participants and amount`() {
-        val mapped = UpstreamSettlement(
+        val upstream = UpstreamSettlement(
             id = "settlement-1",
             fromParticipantId = null,
             toParticipantId = "bob",
             amountMinor = 900,
             currency = "EUR",
             status = "REVERSED"
-        ).toBffSettlement()
+        )
+
+        assertEquals("settlement-1", upstream.id)
+        assertEquals(null, upstream.fromParticipantId)
+        assertEquals("bob", upstream.toParticipantId)
+        assertEquals(900, upstream.amountMinor)
+        assertEquals("EUR", upstream.currency)
+        assertEquals("REVERSED", upstream.status)
+
+        val mapped = upstream.toBffSettlement()
 
         assertEquals("settlement-1", mapped.id)
         assertEquals(null, mapped.from)
@@ -45,5 +63,11 @@ class UpstreamMappingTest {
         assertEquals(900, mapped.amountMinor)
         assertEquals("EUR", mapped.currency)
         assertEquals("REVERSED", mapped.status)
+
+        val defaultSettlement = UpstreamSettlement(id = "settlement-2", currency = "USD")
+        assertEquals(null, defaultSettlement.fromParticipantId)
+        assertEquals(null, defaultSettlement.toParticipantId)
+        assertEquals(null, defaultSettlement.amountMinor)
+        assertEquals("RECORDED", defaultSettlement.status)
     }
 }

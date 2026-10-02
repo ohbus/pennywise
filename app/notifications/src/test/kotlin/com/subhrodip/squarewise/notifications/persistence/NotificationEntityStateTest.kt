@@ -20,8 +20,9 @@ class NotificationEntityStateTest {
         preference.emailEnabled = false
         preference.pushEnabled = true
         preference.version = 3
+        preference.subject = "alice-renamed"
 
-        assertEquals("alice", preference.subject)
+        assertEquals("alice-renamed", preference.subject)
         assertEquals(false, preference.emailEnabled)
         assertEquals(true, preference.pushEnabled)
         assertEquals(3, preference.version)

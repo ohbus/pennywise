@@ -12,6 +12,8 @@ import unittest
 
 from tools.coverage.report_branch_gaps import (
     all_gaps,
+    line_gaps,
+    line_markdown,
     main as branch_report_main,
     markdown as render_branch_gaps,
 )
@@ -156,6 +158,26 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertEqual(
             sum(gap.missed_branches for gap in gaps),
             sum(int(row.split("|")[7].strip()) for row in rows[2:]),
+        )
+
+    def test_source_line_inventory_accounts_for_every_missed_branch(self) -> None:
+        gaps = line_gaps(ROOT)
+
+        self.assertEqual(50, len(gaps))
+        self.assertEqual(76, sum(gap.missed_branches for gap in gaps))
+        self.assertTrue(all(gap.package for gap in gaps))
+        self.assertTrue(all(gap.source_file for gap in gaps))
+        self.assertTrue(all(gap.source_line > 0 for gap in gaps))
+
+    def test_committed_source_line_ledger_matches_current_inventory(self) -> None:
+        ledger = (
+            ROOT / "docs/quality/qa10-branch-line-gap-ledger.md"
+        ).read_text(encoding="utf-8")
+        marker = "| Module | Package | Source | Line | Missed | Covered | Report |\n"
+        self.assertIn(marker, ledger)
+        self.assertEqual(
+            line_markdown(line_gaps(ROOT)),
+            ledger[ledger.index(marker) :].strip(),
         )
 
     def test_committed_branch_ledger_matches_current_inventory(self) -> None:

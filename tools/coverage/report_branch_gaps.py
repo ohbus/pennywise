@@ -38,6 +38,19 @@ class BranchGap:
     next_action: str
 
 
+@dataclass(frozen=True)
+class BranchLineGap:
+    """One source line with JaCoCo-reported missed branches."""
+
+    module: str
+    package: str
+    source_file: str
+    source_line: int
+    missed_branches: int
+    covered_branches: int
+    report: str
+
+
 def qa_assignment(module: str, class_name: str) -> tuple[str, str]:
     """Assign a discovered method to the narrowest current QA-10 row.
 
@@ -335,6 +348,42 @@ def all_gaps(root: Path) -> list[BranchGap]:
     )
 
 
+def line_gaps(root: Path) -> list[BranchLineGap]:
+    """Load exact source lines containing JaCoCo-missed branches."""
+
+    gaps: list[BranchLineGap] = []
+    for report in report_paths(root):
+        document = ET.parse(report)
+        for package in document.findall("./package"):
+            package_name = package.get("name", "")
+            for source_file in package.findall("./sourcefile"):
+                source_name = source_file.get("name", "")
+                for line in source_file.findall("./line"):
+                    missed = int(line.get("mb", "0"))
+                    if missed == 0:
+                        continue
+                    gaps.append(
+                        BranchLineGap(
+                            module=module_name(root, report),
+                            package=package_name,
+                            source_file=source_name,
+                            source_line=int(line.get("nr", "0")),
+                            missed_branches=missed,
+                            covered_branches=int(line.get("cb", "0")),
+                            report=str(report.relative_to(root)).replace("\\", "/"),
+                        )
+                    )
+    return sorted(
+        gaps,
+        key=lambda gap: (
+            gap.module,
+            gap.package,
+            gap.source_file,
+            gap.source_line,
+        ),
+    )
+
+
 def markdown(gaps: Iterable[BranchGap]) -> str:
     """Render branch gaps as a review-friendly Markdown table."""
 
@@ -348,6 +397,22 @@ def markdown(gaps: Iterable[BranchGap]) -> str:
             f"`{gap.method}` | {gap.source_line or ''} | {gap.missed_branches} | "
             f"{gap.covered_branches} | {gap.assignment_basis} | `{gap.report}` | "
             f"{gap.acceptance_criteria} | **{gap.closure_status}** | {gap.next_action} |"
+        )
+    return "\n".join(rows)
+
+
+def line_markdown(gaps: Iterable[BranchLineGap]) -> str:
+    """Render exact source-line branch gaps as a review ledger."""
+
+    rows = [
+        "| Module | Package | Source | Line | Missed | Covered | Report |",
+        "| --- | --- | --- | ---: | ---: | ---: | --- |",
+    ]
+    for gap in gaps:
+        rows.append(
+            f"| `{gap.module}` | `{gap.package}` | `{gap.source_file}` | "
+            f"{gap.source_line} | {gap.missed_branches} | {gap.covered_branches} | "
+            f"`{gap.report}` |"
         )
     return "\n".join(rows)
 

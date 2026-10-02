@@ -25,6 +25,10 @@ The current residual review split is **36 candidate structural mappings** and
 **one open-design record** (`ProfileController.problem`/`mapErrorCode`). No
 missed method is unaccounted for, but neither category is treated as
 automatically covered or closed.
+The companion [`QA-10 branch-line ledger`](qa10-branch-line-gap-ledger.md)
+records the 50 exact JaCoCo source lines that account for those 76 branches;
+it is regenerated from the same reports and is not a substitute for behavior
+acceptance.
 
 The Accounts RSA provider boundary is covered by generation, complete and
 partial PEM loading, blank PEM fallback, malformed PEM rejection, rotation,

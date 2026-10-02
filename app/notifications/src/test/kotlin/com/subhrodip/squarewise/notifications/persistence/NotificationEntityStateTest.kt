@@ -2,6 +2,7 @@ package com.subhrodip.squarewise.notifications.persistence
 
 import com.subhrodip.squarewise.notifications.inbox.persistence.NotificationInboxEntity
 import com.subhrodip.squarewise.notifications.preferences.persistence.NotificationPreferenceEntity
+import com.subhrodip.squarewise.notifications.consumer.persistence.ProcessedNotificationEventEntity
 import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -49,5 +50,17 @@ class NotificationEntityStateTest {
         assertEquals("Expense recorded", notification.message)
         assertEquals(occurredAt, notification.occurredAt)
         assertEquals(true, notification.read)
+    }
+
+    @Test
+    fun `processed event state retains event identity and processing timestamp`() {
+        val eventId = UUID.randomUUID()
+        val processedAt = Instant.parse("2026-10-02T12:01:00Z")
+        val processed = ProcessedNotificationEventEntity(eventId, processedAt)
+
+        processed.processedAt = processedAt.plusSeconds(1)
+
+        assertEquals(eventId, processed.eventId)
+        assertEquals(processedAt.plusSeconds(1), processed.processedAt)
     }
 }

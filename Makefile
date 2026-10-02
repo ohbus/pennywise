@@ -138,10 +138,10 @@ e2e: ## Run the contract and deployment E2E smoke checks
 	@tests/e2e/contract-smoke.sh
 
 e2e-rest-edge: ## Run live REST validation, authorization, boundary, and idempotency checks
-	@$(UV_RUN) python3 tests/e2e/test_rest_edge_cases.py
+	@$(UV_RUN) python3 tests/e2e/test_rest_edge_cases.py $(E2E_REST_EDGE_ARGS)
 
 e2e-auth-email: ## Run deployed passwordless auth-email delivery and session-revocation checks
-	@$(UV_RUN) python3 tests/e2e/test_auth_email_delivery.py
+	@$(UV_RUN) python3 tests/e2e/test_auth_email_delivery.py $(E2E_AUTH_EMAIL_ARGS)
 
 e2e-auth-cache: ## Run live Redis eviction, outage, and restart authentication checks
 	@$(UV_RUN) python3 tests/e2e/test_auth_cache_resilience.py

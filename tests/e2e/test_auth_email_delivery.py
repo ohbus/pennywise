@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
+from pathlib import Path
 import re
 import time
 from typing import Any
@@ -11,6 +13,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from tests.http_constants import AUTHORIZATION, CONTENT_TYPE
+from tests.e2e.qa10_evidence import write_execution_evidence
 
 ACCOUNTS_URL = os.environ.get("SQUAREWISE_ACCOUNTS_URL", "http://localhost:8081")
 MAILPIT_URL = os.environ.get("SQUAREWISE_MAILPIT_URL", "http://localhost:8025")
@@ -71,7 +74,7 @@ def wait_for_credential(recipient: str) -> str:
     raise AssertionError("Mailpit did not receive a usable passwordless login code")
 
 
-def main() -> int:
+def main(evidence_output: Path | None = None, source_revision: str = "local-worktree", environment: str = "local-compose-oidc") -> int:
     """Verify login replay rejection, logout revocation, and logout idempotency."""
     recipient = f"qa-e2e-{int(time.time() * 1000)}@example.com"
     start_status, start_response = request_json(
@@ -129,8 +132,62 @@ def main() -> int:
         "  [ok] startLogin delivered, verifyLogin redeemed once, replay was rejected, "
         "logout revoked refresh, and logout replay was idempotent"
     )
+    if evidence_output is not None:
+        artifact = str(evidence_output)
+        write_execution_evidence(
+            evidence_output,
+            source_revision,
+            environment,
+            [
+                {
+                    "surface": "REST",
+                    "operation": "startLogin",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "passwordless login request was accepted",
+                        "one-time credential was delivered through Mailpit without logging its value",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "verifyLogin",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "delivered credential returned access and refresh tokens",
+                        "replayed one-time credential returned HTTP 401",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "logout",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "logout returned 204 and revoked the refresh-token family",
+                        "replayed logout remained idempotent with HTTP 204",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "refreshToken",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": ["refresh after logout returned HTTP 401"],
+                },
+            ],
+        )
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    parser = argparse.ArgumentParser(description="Run passwordless authentication and session revocation checks")
+    parser.add_argument("--evidence-output", type=Path, help="write QA-10 operation evidence after success")
+    parser.add_argument("--source-revision", default=os.environ.get("GITHUB_SHA", "local-worktree"))
+    parser.add_argument(
+        "--environment",
+        default=os.environ.get("QA10_E2E_ENVIRONMENT", "local-compose-oidc"),
+    )
+    arguments = parser.parse_args()
+    raise SystemExit(main(arguments.evidence_output, arguments.source_revision, arguments.environment))

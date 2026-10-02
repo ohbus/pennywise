@@ -432,6 +432,14 @@ def run_e2e_tests() -> int:
     assert group_id, "Expected non-empty groupId"
     print(f"  ✓ Group created: id={group_id}, name='{group_name}'")
 
+    updated_group_response = graphql_query(
+        f'mutation {{ updateGroup(groupId: "{group_id}", name: "{group_name} Updated") {{ id name }} }}',
+        bearer=user_a,
+    )
+    assert updated_group_response["updateGroup"]["id"] == group_id
+    assert updated_group_response["updateGroup"]["name"] == f"{group_name} Updated"
+    print("  ✓ Authorized GraphQL group update persisted the renamed group")
+
     listed_groups_status, listed_groups = request_json(
         f"{EXPENSE_CORE_URL}/expense-core/v1/groups", bearer=user_a
     )

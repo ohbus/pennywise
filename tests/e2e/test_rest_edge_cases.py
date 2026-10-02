@@ -4,14 +4,17 @@
 from __future__ import annotations
 
 import json
+import argparse
 import base64
 import os
 import io
 import sys
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 import uuid
 from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, CONTENT_TYPE, IDEMPOTENCY_KEY, TEXT_CSV
+from tests.e2e.qa10_evidence import write_execution_evidence
 
 
 ACCOUNTS_URL = os.environ.get("ACCOUNTS_URL", "http://localhost:8081")
@@ -89,7 +92,7 @@ def expect(label: str, actual: int, *allowed: int) -> None:
     print(f"  ✓ {label}: HTTP {actual}")
 
 
-def main() -> None:
+def main(evidence_output: Path | None = None, source_revision: str = "local-worktree", environment: str = "local-compose-oidc") -> None:
     """Run live REST edge checks with deterministic UTF-8 console output."""
     if not TOKEN:
         raise RuntimeError("BEARER_TOKEN must contain a signed access token for authenticated checks")
@@ -269,6 +272,14 @@ def main() -> None:
         method="PATCH", body={"name": "Unauthorized rename"}, token="non-member",
     )
     expect("non-member group update is hidden", status, 404)
+
+    status, updated_group = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}",
+        method="PATCH", body={"name": "REST edge updated"},
+    )
+    expect("authorized group update persists", status, 200)
+    if not isinstance(updated_group, dict) or updated_group.get("name") != "REST edge updated":
+        raise AssertionError(f"authorized group update returned unexpected body: {updated_group}")
 
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}",
@@ -688,7 +699,81 @@ def main() -> None:
     expect("archived group rejects new expense", status, 404, 409)
 
     print("REST edge-case checks passed")
+    if evidence_output is not None:
+        artifact = str(evidence_output)
+        write_execution_evidence(
+            evidence_output,
+            source_revision,
+            environment,
+            [
+                {
+                    "surface": "REST",
+                    "operation": "createGroup",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "authorized member created an isolated group",
+                        "invalid-kind and unauthenticated creation were rejected",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "archiveGroup",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "authorized archive returned HTTP 200",
+                        "archived group and members became hidden and archive replay was rejected",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "updateGroup",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "authorized member rename returned HTTP 200",
+                        "updated group name was returned and persisted before archive",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "revokeInvite",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "authorized invite revocation returned HTTP 204",
+                        "revoked invite claim returned HTTP 409",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "getPreferences",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "authenticated defaults were returned",
+                        "updated settings persisted and remained isolated from a second subject",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "updatePreferences",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": ["authenticated preference update returned HTTP 204 and persisted settings"],
+                },
+            ],
+        )
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run live REST edge-case checks")
+    parser.add_argument("--evidence-output", type=Path, help="write QA-10 operation evidence after success")
+    parser.add_argument("--source-revision", default=os.environ.get("GITHUB_SHA", "local-worktree"))
+    parser.add_argument(
+        "--environment",
+        default=os.environ.get("QA10_E2E_ENVIRONMENT", "local-compose-oidc"),
+    )
+    arguments = parser.parse_args()
+    main(arguments.evidence_output, arguments.source_revision, arguments.environment)

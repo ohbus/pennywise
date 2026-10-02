@@ -54,6 +54,8 @@ The end-to-end test suites run against the live local environment (`infra/local/
    - Remaining acceptance work is explicit: LINK delivery, expiry, wrong-subject
      redemption, rate-limit/error redaction, broker retry/DLQ, and log/output
      secret absence.
+   - When invoked with `--evidence-output`, emits success-only QA-10 evidence
+     for `startLogin`, `verifyLogin`, `logout`, and `refreshToken`.
 
 ### Running Test Suites via Makefile
 

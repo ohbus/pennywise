@@ -375,7 +375,19 @@ jobs:
           BEARER_TOKEN="$fresh_token" \
             SQUAREWISE_E2E_TOKEN_B="$fresh_bob" \
             SQUAREWISE_E2E_TOKEN_NONMEMBER="$fresh_nonmember" \
+            E2E_REST_EDGE_ARGS="--evidence-output build/reports/e2e/rest-edge-operation-execution.json --source-revision $GITHUB_SHA --environment ci-compose-oidc" \
             make e2e-rest-edge 2>&1 | tee build/reports/e2e/rest-edge.log
+      - name: Generate REST edge operation inventory
+        if: always()
+        run: |
+          artifact=build/reports/e2e/rest-edge-operation-execution.json
+          if test -f "$artifact"; then
+            uv run --frozen --no-build python tools/coverage/report_operation_test_gaps.py \
+              --format json --execution-artifact "$artifact" \
+              | tee build/reports/e2e/rest-edge-operation-inventory.json
+          else
+            echo 'REST edge execution artifact is unavailable; no REST edge operation inventory was generated.'
+          fi
       - name: Tear down the complete local application stack
         if: always()
         run: docker compose -f infra/local/docker-compose.dev.yml down -v
@@ -446,7 +458,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p build/reports/e2e
-          make e2e-auth-email 2>&1 | tee build/reports/e2e/auth-email.log
+          make e2e-auth-email E2E_AUTH_EMAIL_ARGS="--evidence-output build/reports/e2e/auth-email-operation-execution.json --source-revision $GITHUB_SHA --environment ci-compose-oidc" 2>&1 | tee build/reports/e2e/auth-email.log
           make acceptance-live 2>&1 | tee build/reports/e2e/acceptance-live.log
           BRUNO_REPORT="$GITHUB_WORKSPACE/build/reports/e2e/bruno.json" \
             make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"
@@ -475,6 +487,7 @@ jobs:
               | tee build/reports/e2e/qa10-operation-inventory.json
           else
             echo 'Normalized operation artifact is unavailable; operation inventory remains source-only.'
+          fi
       - name: Generate product journey operation inventory
         if: always()
         run: |
@@ -486,6 +499,16 @@ jobs:
           else
             echo 'Product journey execution artifact is unavailable; no product operation inventory was generated.'
           fi
+      - name: Generate auth-email operation inventory
+        if: always()
+        run: |
+          artifact=build/reports/e2e/auth-email-operation-execution.json
+          if test -f "$artifact"; then
+            uv run --frozen --no-build python tools/coverage/report_operation_test_gaps.py \
+              --format json --execution-artifact "$artifact" \
+              | tee build/reports/e2e/auth-email-operation-inventory.json
+          else
+            echo 'Auth-email execution artifact is unavailable; no auth-email operation inventory was generated.'
           fi
       - name: Tear down the complete local application stack
         if: always()

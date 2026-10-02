@@ -2,6 +2,7 @@
   {"surface":"GraphQL Query","operation":"me","assertions":["signed Bob profile identity and fields were returned"]},
   {"surface":"GraphQL Query","operation":"groups","assertions":["non-member received an empty, error-free group list"]},
   {"surface":"GraphQL Mutation","operation":"createGroup","assertions":["signed owner created a durable group and revision"]},
+  {"surface":"GraphQL Mutation","operation":"updateGroup","assertions":["authorized owner rename persisted and returned the updated group name"]},
   {"surface":"GraphQL Mutation","operation":"createExpense","assertions":["expense amount and equal allocations were returned","identical replay was idempotent","tampered replay returned a GraphQL error"]},
   {"surface":"GraphQL Query","operation":"group","assertions":["member read returned conserved zero-sum balances","non-member read rejected access without leaking group data"]},
   {"surface":"GraphQL Query","operation":"settlementSuggestions","assertions":["member received the exact outstanding settlement suggestion","non-member request was rejected"]},

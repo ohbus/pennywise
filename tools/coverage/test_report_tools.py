@@ -243,6 +243,20 @@ class CoverageInventoryTest(unittest.TestCase):
                     )
                     self.assertTrue(literal_present or constant_present)
 
+    def test_error_catalog_codes_match_the_kotlin_error_enum(self) -> None:
+        """Prevent public error codes from drifting between YAML and Kotlin."""
+
+        catalog = (ROOT / "contracts/errors/error-catalog.yaml").read_text(encoding="utf-8")
+        enum_source = (
+            ROOT
+            / "libs/errors/src/main/kotlin/com/subhrodip/squarewise/errors/domain/ErrorCode.kt"
+        ).read_text(encoding="utf-8")
+        catalog_codes = re.findall(r"(?m)^- code: (ERR-[0-9]{2})$", catalog)
+        enum_codes = re.findall(r'(?m)^    ERR_[0-9]{2}\("(ERR-[0-9]{2})",', enum_source)
+
+        self.assertEqual(catalog_codes, enum_codes)
+        self.assertEqual(len(enum_codes), len(set(enum_codes)))
+
     def test_auth_email_e2e_destination_is_wired_and_documented(self) -> None:
         """Prevent the passwordless E2E suite from becoming an unexecuted orphan."""
 

@@ -34,6 +34,13 @@ contained no E2E evidence artifact, and the job log requires authenticated acces
 not available to this audit, so the underlying product failure and per-operation
 results remain unverified.
 
+The ordered Bruno fixture has since been corrected locally: placeholder removal
+is lifecycle teardown after financial requests, and settlement now includes the
+required currency and dynamic idempotency header. The fixture guard and static
+contract checks pass, but this is not execution evidence; all 54 rows remain
+`NO-EXECUTION-ARTIFACT-INGESTED` until a fresh Docker/hosted run produces a
+normalized artifact.
+
 ## Execution-artifact ingestion
 
 The source inventory does not infer execution from Python/Bruno references. A

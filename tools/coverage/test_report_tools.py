@@ -698,6 +698,20 @@ class CoverageInventoryTest(unittest.TestCase):
             with self.subTest(event_type=event_type):
                 self.assertIn(f"`{event_type}`", section)
 
+    def test_ordered_bruno_financial_fixture_preserves_required_state(self) -> None:
+        """Keep financial requests valid until their dependent lifecycle teardown."""
+
+        settlement = (
+            ROOT / "tools/bruno/expense-core/settlements/record-settlement.bru"
+        ).read_text(encoding="utf-8")
+        self.assertRegex(settlement, r"(?m)^  Idempotency-Key: bruno-settlement-\{\{\$randomUUID\}\}$")
+
+        lifecycle_member_removal = ROOT / "tools/bruno/expense-core/lifecycle/remove-member.bru"
+        self.assertTrue(lifecycle_member_removal.is_file())
+        self.assertFalse(
+            (ROOT / "tools/bruno/expense-core/groups/remove-member.bru").exists()
+        )
+
     def test_auth_email_e2e_destination_is_wired_and_documented(self) -> None:
         """Prevent the passwordless E2E suite from becoming an unexecuted orphan."""
 

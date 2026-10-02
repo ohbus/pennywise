@@ -1,7 +1,7 @@
 # Documentation index
 
 <p align="left">
-  <img src="visuals/logo.svg" alt="Squarewise Logo" width="300">
+  <img src="visuals/squarewise-logo.svg" alt="Squarewise Logo" width="300">
 </p>
 
 This index is the navigation entry point for repository documentation. [`AGENTS.md`](../AGENTS.md) is the working-agreement root; the registry and contracts remain authoritative for task state and externally visible behavior.
@@ -111,7 +111,7 @@ This index is the navigation entry point for repository documentation. [`AGENTS.
 - [DOC-15B build-code drift](reviews/DOC-15B-build-code-drift.md)
 - [Production-readiness audit](reviews/production-readiness-audit.md)
 - [Visuals index](visuals/README.md)
-- [Brand identity and logo assets](visuals/README.md#brand-identity-assets) ([Logo](visuals/logo.svg), [Icon](visuals/icon.svg))
+- [Brand identity and logo assets](visuals/README.md#brand-identity-assets) ([Logo](visuals/squarewise-logo.svg), [Icon](visuals/squarewise-icon.svg))
 
 ## Contracts and task detail conventions
 

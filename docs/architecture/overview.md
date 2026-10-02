@@ -1,7 +1,7 @@
 # Architecture and ownership
 
 <p align="left">
-  <img src="../visuals/logo.svg" alt="Squarewise Logo" width="300">
+  <img src="../visuals/squarewise-logo.svg" alt="Squarewise Logo" width="300">
 </p>
 
 ## Deployables

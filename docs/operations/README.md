@@ -1,7 +1,7 @@
 # Operations plan
 
 <p align="left">
-  <img src="../visuals/logo.svg" alt="Squarewise Logo" width="300">
+  <img src="../visuals/squarewise-logo.svg" alt="Squarewise Logo" width="300">
 </p>
 
 The first environment is a reproducible Docker Compose stack. It contains one

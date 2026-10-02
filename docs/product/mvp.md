@@ -1,7 +1,7 @@
 # MVP product and future experience
 
 <p align="left">
-  <img src="../visuals/logo.svg" alt="Squarewise Logo" width="320">
+  <img src="../visuals/squarewise-logo.svg" alt="Squarewise Logo" width="320">
 </p>
 
 ## Product promise

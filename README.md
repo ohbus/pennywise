@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/visuals/logo.svg">
-    <img src="docs/visuals/logo.svg" alt="Squarewise Logo" width="480">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/visuals/squarewise-logo.svg">
+    <img src="docs/visuals/squarewise-logo.svg" alt="Squarewise Logo" width="480">
   </picture>
 </p>
 

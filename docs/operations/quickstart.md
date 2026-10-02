@@ -1,7 +1,7 @@
 # Clone and run
 
 <p align="left">
-  <img src="../visuals/logo.svg" alt="Squarewise Logo" width="300">
+  <img src="../visuals/squarewise-logo.svg" alt="Squarewise Logo" width="300">
 </p>
 
 Prerequisites for native development are Java 25, Docker with Compose v2,

@@ -24,6 +24,12 @@ passed 65 of 71 requests and failed logout, expense create/update/delete,
 settlement record/reversal; the following `make e2e-live` stopped on the signed
 owner `getProfilesBatch` workload-authority mismatch. These failures remain open
 acceptance evidence even where the affected operation has a source reference.
+Hosted run `36975036809` (head `d7383a9057cc0e5a913fc1d20b4f086c5c10de38`)
+also completed with the product/offline E2E job and aggregate E2E gate failed;
+the edge/security and concurrency/chaos E2E jobs passed. Its artifact inventory
+contained no E2E evidence artifact, and the job log requires authenticated access
+not available to this audit, so the underlying product failure and per-operation
+results remain unverified.
 
 ## Execution-artifact ingestion
 

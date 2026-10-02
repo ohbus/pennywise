@@ -98,6 +98,18 @@ class SmtpJavaMailSenderTest {
         assertEquals(ErrorCode.ERR_02, error.errorCode)
     }
 
+    /** Verifies non-SMTP socket failures are normalized as delivery failures. */
+    @Test
+    fun `wraps invalid socket configuration as MailSendException`() {
+        val error = assertThrows(MailSendException::class.java) {
+            SmtpJavaMailSender(
+                EmailProperties("127.0.0.1", -1, "sender@example.com", true, 1, 0)
+            ).send(SimpleMailMessage(to = arrayOf("alice@example.com")))
+        }
+
+        assertThat(error.message).contains("Failed to send email")
+    }
+
     private fun runSmtpServer(
         script: (BufferedReaderWithReply, BufferedWriterWithCapture, Capture) -> Unit
     ): String = runSmtpServer(

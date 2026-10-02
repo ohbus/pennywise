@@ -1,6 +1,9 @@
 package com.subhrodip.squarewise.bff.messaging.persistence
 
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /** Verifies bounded BFF event deduplication rejects unsafe cache capacities. */
@@ -14,5 +17,22 @@ class BffEventDeduplicatorTest {
         assertThrows(IllegalArgumentException::class.java) {
             BffEventDeduplicator(-1)
         }
+    }
+
+    @Test
+    fun `reports and clears bounded duplicate state`() {
+        val deduplicator = BffEventDeduplicator(2)
+        val first = java.util.UUID.randomUUID()
+        val second = java.util.UUID.randomUUID()
+
+        assertFalse(deduplicator.isDuplicateAndMark(first))
+        assertFalse(deduplicator.isDuplicateAndMark(second))
+        assertTrue(deduplicator.isDuplicateAndMark(first))
+        assertEquals(2, deduplicator.size())
+
+        deduplicator.clear()
+
+        assertEquals(0, deduplicator.size())
+        assertFalse(deduplicator.isDuplicateAndMark(first))
     }
 }

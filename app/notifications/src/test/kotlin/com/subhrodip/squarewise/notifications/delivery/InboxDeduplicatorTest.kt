@@ -11,6 +11,7 @@ import com.subhrodip.squarewise.notifications.delivery.rate.DeliveryRateLimiter
 
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
@@ -21,5 +22,6 @@ class InboxDeduplicatorTest {
         val eventId = UUID.randomUUID()
         assertTrue(inbox.firstDelivery(eventId))
         assertFalse(inbox.firstDelivery(eventId))
+        assertEquals(1, inbox.size())
     }
 }

@@ -116,8 +116,8 @@ class GroupGraphqlControllerTest {
                 )
             ),
             members = listOf(
-                BffMember(membershipId = "mem-1", subject = "alice")
-            )
+            BffMember(membershipId = "mem-1", subject = "alice")
+        )
         )
 
         `when`(gateway.getGroup(groupId, "alice")).thenReturn(Mono.just(expected))
@@ -134,6 +134,7 @@ class GroupGraphqlControllerTest {
         assertEquals(1, result?.members?.size)
         assertEquals("mem-1", result?.members?.get(0)?.membershipId)
         assertEquals("alice", result?.members?.get(0)?.subject)
+        assertEquals(null, result?.members?.get(0)?.isPlaceholder)
     }
 
     @Test

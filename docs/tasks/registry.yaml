@@ -7195,7 +7195,8 @@
       "evidence": [
         "Initial repository-wide source/test inventory and JaCoCo discovery audit documented in docs/quality/test-coverage-gap-audit.md.",
         "Concrete unit, controller, persistence/messaging, deployed E2E, and operations acceptance criteria are grouped by Accounts, BFF, Expense Core, Notifications, and shared libraries.",
-        "No test closure is claimed until the named rows have executable evidence."
+        "No test closure is claimed until the named rows have executable evidence.",
+        "2026-10-02 registry-backed DbTelemetry tests reduced the measured branch inventory to 39 methods / 78 missed branches; the exact ledgers and residual acceptance criteria are synchronized in docs/quality/."
       ],
       "reviewer": "/root",
       "blocker": null

@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **44
-production methods with missed branches** containing **93 missed branches**,
+As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **39
+production methods with missed branches** containing **78 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 0 operations without a literal E2E reference and 49 without a literal
@@ -22,12 +22,12 @@ hosted CI, deployed E2E, and environment-owned release gates remain separate
 acceptance requirements.
 
 The current residual review split is **36 candidate structural mappings**,
-**7 open-review observability records**, and **one open-design record**
+**2 open-review observability records**, and **one open-design record**
 (`ProfileController.problem`/`mapErrorCode`). No
 missed method is unaccounted for, but neither category is treated as
 automatically covered or closed.
 The companion [`QA-10 branch-line ledger`](qa10-branch-line-gap-ledger.md)
-records the 60 exact JaCoCo source lines that account for those 93 branches;
+records the 52 exact JaCoCo source lines that account for those 78 branches;
 it is regenerated from the same reports and is not a substitute for behavior
 acceptance.
 The companion [`QA-10 concrete execution-gap ledger`](qa10-execution-gap-ledger.md)
@@ -247,7 +247,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **44 methods with at least one missed
+The regenerated JaCoCo XML contains **39 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -262,9 +262,9 @@ classified as generated/structural with reviewer approval.
 | `libs/db` | 7 | 2 | 2 |
 | `libs/errors` | 1 | 1 | 1 |
 | `libs/ids` | 3 | 0 | 0 |
-| `libs/observability` | 2 | 1 | 7 |
+| `libs/observability` | 2 | 1 | 2 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **99** | **22** | **44** |
+| **Total** | **99** | **22** | **39** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -286,9 +286,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**44**), and the sum of
+equal the `Methods with missed branches` total above (**39**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**93**). Each object carries the module, production class, source file,
+(**78**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, assignment basis, and the row's machine-readable
 `acceptance_criteria`. The record count and branch-count
@@ -323,16 +323,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 44-record JSON discovery inventory and
+The repository currently has the exact 39-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 44 records. The A07 and E02 tables provide supplemental method-level review
+all 39 records. The A07 and E02 tables provide supplemental method-level review
 detail; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (44 records):
+Current provisional assignment workload (39 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -362,7 +362,7 @@ Current provisional assignment workload (44 records):
 | QA10-E02 | 2 | Database routing, reader health, fallback, and operational lifecycle. |
 | QA10-E03 | 0 | Servlet/reactive OIDC decoder construction and key-validation paths are locally covered; deployed issuer/provider behavior remains environment evidence. |
 | QA10-E04 | 0 | IDs/constants have no current missed-branch methods; static contract checks remain required. |
-| QA10-E05 | 7 | Bounded observability labels and metric behavior now has direct local invocation evidence; registry-backed metric assertions, dashboards/alerts, and deployed cardinality remain operational evidence. |
+| QA10-E05 | 2 | Bounded observability labels and metric behavior now has direct local invocation evidence; negative-duration and slow-query mappings remain under review, while dashboards/alerts and deployed cardinality remain operational evidence. |
 
 This table is regenerated from the JSON assignment output; it is not a
 coverage claim. A row closes only when its acceptance criteria and required
@@ -407,7 +407,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 44-method inventory is a discovery baseline, not closure evidence. QA-10
+The 39-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 
@@ -609,7 +609,7 @@ planned new test. This prevents a broad suite from absorbing an unrelated gap.
 | QA10-E02 | `libs/db/src/test/kotlin/com/subhrodip/squarewise/db/config/DbAutoConfigurationTest.kt`, `libs/db/src/test/kotlin/com/subhrodip/squarewise/db/policy/DbOperationPolicyTest.kt`, and health/routing tests | `DbAutoConfigurationTest` now covers normal reader-pool construction and `DbReaderHealthTest` covers the exact circuit deadline; `DbRouteGuardTest` asserts exception restoration. Extend `tests/e2e/test_causal_watermark.py` and replica failure/recovery suites. |
 | QA10-E03 | `libs/security/src/test/kotlin/com/subhrodip/squarewise/security/OidcJwtDecoderFactoryTest.kt`, `ReactiveOidcJwtDecoderFactoryTest.kt`, and policy tests | Local servlet/reactive discovery, JWKS signature, issuer, audience, temporal, subject, algorithm, and configuration guards are covered. Extend signed invalid-token, key-rotation, missing metadata/JWKS, and security-header E2E across all services. |
 | QA10-E04 | `libs/ids/src/test/kotlin/com/subhrodip/squarewise/ids/UuidGeneratorTest.kt`; add static contract assertions | Contract validator and public-surface validation remain the integration destination. |
-| QA10-E05 | `libs/observability/src/test/kotlin/com/subhrodip/squarewise/observability/db/DbTelemetryTest.kt` and observability tests | Add bounded-label, alert, and capacity evidence under QA10-E2E06/E2E07. |
+| QA10-E05 | `libs/observability/src/test/kotlin/com/subhrodip/squarewise/observability/db/DbTelemetryTest.kt` now asserts registry-backed metric names, bounded labels, negative-duration clamping, slow-query classification, and exact counts; dashboard, alert, capacity, and deployed cardinality evidence remain open. | Add bounded-label, alert, and capacity evidence under QA10-E2E06/E2E07. |
 
 ### Deployed E2E and environment destinations
 
@@ -757,7 +757,7 @@ The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
 The `qa10-coverage-inventory` job now downloads those module artifacts,
 restores them into their repository paths, and publishes one aggregate JSON
 inventory. It is intentionally discovery-only while the baseline contains
-44 records with missed branches / 93 missed branches; `--fail-on-gaps` remains the eventual
+39 records with missed branches / 78 missed branches; `--fail-on-gaps` remains the eventual
 blocking closure step. A
 single matrix shard is insufficient evidence for a repository-wide
 no-missed-branch claim.

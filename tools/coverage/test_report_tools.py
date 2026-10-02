@@ -183,6 +183,28 @@ class CoverageInventoryTest(unittest.TestCase):
             with self.subTest(row=row):
                 self.assertIn(row, audit)
 
+    def test_audit_source_file_counts_match_repository(self) -> None:
+        """Keep the documented source/test inventory synchronized with the tree."""
+
+        kotlin_files = tuple(
+            path
+            for directory in (ROOT / "app", ROOT / "libs")
+            for path in directory.rglob("*.kt")
+        )
+        test_files = tuple(
+            path for path in kotlin_files if "src" in path.parts and "test" in path.parts
+        )
+        production_count = len(kotlin_files) - len(test_files)
+        test_count = len(test_files)
+        audit = (ROOT / "docs/quality/test-coverage-gap-audit.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn(
+            f"{production_count} Kotlin production files and {test_count}",
+            audit,
+        )
+
     def test_audit_requires_per_record_and_operation_evidence(self) -> None:
         audit = (ROOT / "docs/quality/test-coverage-gap-audit.md").read_text(
             encoding="utf-8"

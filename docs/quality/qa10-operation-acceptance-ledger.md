@@ -22,7 +22,7 @@ is surface-aware: it requires an exact `/v1` contract path and HTTP method, whil
 GraphQL matching is restricted to BFF GraphQL request files and standalone root
 fields.
 
-Latest recorded execution is **NOT-GREEN**: `make acceptance-live` on 2026-10-01
+The historical execution was **NOT-GREEN**: `make acceptance-live` on 2026-10-01
 passed 65 of 71 requests and failed logout, expense create/update/delete,
 settlement record/reversal; the following `make e2e-live` stopped on the signed
 owner `getProfilesBatch` workload-authority mismatch. These failures remain open
@@ -34,12 +34,14 @@ contained no E2E evidence artifact, and the job log requires authenticated acces
 not available to this audit, so the underlying product failure and per-operation
 results remain unverified.
 
-The ordered Bruno fixture has since been corrected locally: placeholder removal
-is lifecycle teardown after financial requests, and settlement now includes the
-required currency and dynamic idempotency header. The fixture guard and static
-contract checks pass, but this is not execution evidence; all 54 rows remain
-`NO-EXECUTION-ARTIFACT-INGESTED` until a fresh Docker/hosted run produces a
-normalized artifact.
+Fresh local execution on 2026-10-02 is green on the isolated `qa10` Compose
+stack: the acceptance runner passed all scenarios, the signed Bruno collection
+passed 71/71 requests and 78/78 assertions, and the product lifecycle journey
+passed. The normalized artifact records 18 uniquely attributable operations as
+`EXECUTION-ARTIFACT-PASSED`; the other 36 operations remain
+`NO-EXECUTION-ARTIFACT-INGESTED` because the normalizer deliberately refuses
+ambiguous or shared-fixture credit. This is local evidence, not hosted-CI or
+production evidence.
 
 ## Execution-artifact ingestion
 

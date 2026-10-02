@@ -835,7 +835,7 @@ class CoverageInventoryTest(unittest.TestCase):
             audit,
         )
         self.assertIn("containing **78 missed branches**", audit)
-        self.assertIn("Latest recorded execution is **NOT-GREEN**", ledger)
+        self.assertIn("The historical execution was **NOT-GREEN**", ledger)
 
     def test_qa10_task_detail_uses_current_baseline_not_historical_counts(self) -> None:
         detail = (ROOT / "docs/tasks/details/QA-10.md").read_text(encoding="utf-8")

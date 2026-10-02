@@ -17,7 +17,7 @@ evidence.
 | Concrete execution | 3 zero-instruction methods are recorded separately | ProfileController private helpers need a real caller or reviewed design decision; inline telemetry remains a compiler mapping |
 | Contract operations | 54 operations: 45 REST and 9 GraphQL; 54 request-shaped source signals | Static source is not execution evidence; every operation still needs its required persona, failure, durability, async, concurrency, and isolation artifact |
 | Bruno source | 18 operation references; 36 operations have no Bruno source reference | Bruno is supplementary and cannot substitute for the deployed E2E matrix; surface-aware path/method matching prefers false negatives over cross-operation credit |
-| Runtime E2E | Latest local acceptance evidence was not green: 65/71 requests passed and 6 failed; hosted run `36975036809` also failed the product/offline E2E job and aggregate gate while edge/security and concurrency/chaos jobs passed | Authenticated review of the hosted failure logs plus retained machine-readable reports, followed by a normalized per-operation artifact |
+| Runtime E2E | Fresh isolated `qa10` local-OIDC stack is green: acceptance scenarios passed, signed Bruno passed 71/71 requests and 78/78 assertions, and the product lifecycle journey passed | Hosted-CI rerun and complete operation attribution remain open; the normalized local artifact credits only 18 uniquely attributable operations and leaves 36 source-only |
 
 ## Required closure rule
 
@@ -55,4 +55,6 @@ make e2e-live
 
 The first four commands provide local discovery evidence. The final two are
 environment-owned and must produce retained execution artifacts before QA-10 can
-claim deployed acceptance closure.
+claim deployed acceptance closure. On this Windows workstation GNU Make is not
+installed; use the direct `uv run ...` target-equivalent commands documented in
+the QA-10 progress ledger when reproducing the local evidence.

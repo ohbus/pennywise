@@ -300,7 +300,7 @@ def run_e2e_tests() -> int:
     update_status, updated_profile = request_json(
         f"{ACCOUNTS_URL}/accounts/v1/me",
         method="PATCH",
-        body={"timezone": "Europe/Vienna"},
+        body={"displayName": "Alice", "timezone": "Europe/Vienna"},
         bearer=user_a,
     )
     assert update_status == 200, (

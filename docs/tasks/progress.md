@@ -3,6 +3,8 @@
 The registry is the authoritative state machine. This ledger records meaningful
 execution checkpoints and evidence; it does not replace task acceptance criteria.
 
+| 2026-10-02 | QA-10 BFF configuration increment | Added a focused BFF configuration contract suite covering GraphQL abuse limits, browser cookie settings, allowed origins, and RabbitMQ messaging properties, including mutable binding values and safe defaults. | `./gradlew.bat :app:bff:test --tests '*BffConfigurationPropertiesTest' --no-daemon` passed; `git diff --check` passed. | current increment |
+
 | 2026-10-02 | QA-10 deletion lookup increment | Added coverage for the JPA deletion-request read contract, asserting existing entities map to domain records while unknown subjects return `null`. | `./gradlew.bat :app:accounts:test --tests '*JpaDeletionRequestStoreTest' --no-daemon` passed; `git diff --check` passed. | current increment |
 
 | 2026-10-02 | QA-10 login delivery failure increment | Added a regression test for the passwordless login-start delivery boundary: credential issuance succeeds, email delivery throws, and the endpoint remains generic/accepted without leaking provider failure details. | `./gradlew.bat :app:accounts:test --tests '*LoginStartServiceTest' --no-daemon` passed; `git diff --check` passed. | current increment |

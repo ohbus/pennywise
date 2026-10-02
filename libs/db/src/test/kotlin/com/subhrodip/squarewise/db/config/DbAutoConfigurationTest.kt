@@ -10,10 +10,40 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import org.mockito.Mockito.mock
+import org.springframework.beans.factory.ObjectProvider
+import io.micrometer.core.instrument.MeterRegistry
 
 /** Verifies fail-fast validation for the scheduled reader-health configuration. */
 class DbAutoConfigurationTest {
     private val configuration = DbAutoConfiguration()
+
+    @Test
+    fun `creates telemetry and reader health beans`() {
+        @Suppress("UNCHECKED_CAST")
+        val registryProvider = mock(ObjectProvider::class.java) as ObjectProvider<MeterRegistry>
+
+        assertEquals(DbTelemetry::class, configuration.squarewiseDbTelemetry(registryProvider)::class)
+        assertEquals(DbReaderHealth::class, configuration.squarewiseReaderHealth()::class)
+    }
+
+    @Test
+    fun `builds validated writer pool and causal filter registration`() {
+        val properties = DbProperties(
+            writer = PoolProperties(
+                url = "jdbc:postgresql://writer/db",
+                username = "app"
+            )
+        )
+        val writer = configuration.squarewiseWriterDataSource(properties)
+        try {
+            assertEquals("squarewise-writer", writer.poolName)
+            assertEquals("jdbc:postgresql://writer/db", writer.jdbcUrl)
+            val registration = configuration.squarewiseCausalWatermarkFilter(mock(DataSource::class.java))
+            assertEquals(-100, registration.order)
+        } finally {
+            writer.close()
+        }
+    }
 
     @Test
     fun `returns a valid health probe interval`() {

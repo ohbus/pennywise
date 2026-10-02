@@ -453,6 +453,18 @@ jobs:
           tests/e2e/acquire_local_tokens.sh
           make e2e-live 2>&1 | tee build/reports/e2e/product-journey.log
           make e2e-offline 2>&1 | tee build/reports/e2e/offline-replay.log
+      - name: Normalize unique Bruno operation evidence
+        if: always()
+        run: |
+          if test -f build/reports/e2e/bruno.json; then
+            uv run --frozen --no-build python tools/coverage/normalize_bruno_execution.py \
+              --report build/reports/e2e/bruno.json \
+              --output build/reports/e2e/qa10-operation-execution.json \
+              --source-revision "$GITHUB_SHA" \
+              --environment ci-compose-oidc
+          else
+            echo 'Bruno report is unavailable; no normalized operation artifact was generated.'
+          fi
       - name: Tear down the complete local application stack
         if: always()
         run: docker compose -f infra/local/docker-compose.dev.yml down -v

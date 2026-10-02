@@ -32,6 +32,7 @@ from tools.coverage.report_operation_test_gaps import (
     references,
     render_markdown as render_operation_markdown,
 )
+from tools.coverage.normalize_bruno_execution import normalize as normalize_bruno
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -196,6 +197,62 @@ class CoverageInventoryTest(unittest.TestCase):
             49,
             sum(not item.has_bruno_signal for item in operations),
         )
+
+    def test_bruno_normalizer_records_unique_graphql_execution(self) -> None:
+        """Credit only a uniquely mapped, assertion-backed Bruno request."""
+
+        report = [
+            {
+                "path": "bff/graphql-me",
+                "status": "passed",
+                "testResults": [{"name": "GraphQL response has no errors"}],
+                "assertionResults": [],
+            }
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            report_path = Path(directory) / "bruno.json"
+            report_path.write_text(json.dumps(report), encoding="utf-8")
+            artifact = normalize_bruno(
+                ROOT,
+                report_path,
+                "source-sha",
+                "ci-compose-oidc",
+                "build/reports/e2e/bruno.json",
+            )
+
+        self.assertEqual("qa10-operation-execution-v1", artifact["schema"])
+        self.assertEqual(
+            [{
+                "surface": "GraphQL Query",
+                "operation": "me",
+                "status": "passed",
+                "artifact": "build/reports/e2e/bruno.json",
+                "assertions": ["GraphQL response has no errors"],
+            }],
+            artifact["operations"],
+        )
+
+    def test_bruno_normalizer_rejects_ambiguous_or_mismatched_source(self) -> None:
+        """Do not credit a REST request from a misclassified or shared fixture."""
+
+        report = [
+            {
+                "path": "accounts/get-my-profile",
+                "status": "passed",
+                "testResults": [{"name": "profile response is successful"}],
+            }
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            report_path = Path(directory) / "bruno.json"
+            report_path.write_text(json.dumps(report), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "no unique"):
+                normalize_bruno(
+                    ROOT,
+                    report_path,
+                    "source-sha",
+                    "ci-compose-oidc",
+                    "build/reports/e2e/bruno.json",
+                )
 
     def test_concrete_zero_execution_inventory_is_complete_and_assigned(self) -> None:
         gaps = execution_gaps(ROOT)

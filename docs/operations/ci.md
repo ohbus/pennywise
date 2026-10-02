@@ -136,6 +136,11 @@ artifacts with `if: always()`, including when a suite or service startup fails.
 The product job writes Bruno output to `build/reports/e2e/bruno.json`; the
 other retained files identify the suite and execution order. These raw files
 are evidence inputs, not automatic pass claims. To close QA-10 operation rows,
-normalize reviewed per-operation results into the documented
-`qa10-operation-execution-v1` artifact and run the operation-gap reporter with
-`--execution-artifact`.
+the product job also attempts to write
+`build/reports/e2e/qa10-operation-execution.json` using
+`tools/coverage/normalize_bruno_execution.py`. The normalizer credits only
+unique collection-path-to-contract mappings with assertion-backed checks; it
+preserves failed/blocked results and skips ambiguous or surface-mismatched
+fixtures. The artifact is therefore partial evidence, not blanket closure of
+the 54-operation matrix. Review it and run the operation-gap reporter with
+`--execution-artifact` before crediting any operation.

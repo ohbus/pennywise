@@ -58,6 +58,7 @@ This index is the navigation entry point for repository documentation. [`AGENTS.
 - [Repository-wide test coverage gap audit](quality/test-coverage-gap-audit.md)
 - [Current QA-10 branch-gap ledger](quality/qa10-current-branch-gap-ledger.md)
 - [Current QA-10 branch-line gap ledger](quality/qa10-branch-line-gap-ledger.md)
+- [Current QA-10 concrete execution-gap ledger](quality/qa10-execution-gap-ledger.md)
 - [QA-10 operation acceptance ledger](quality/qa10-operation-acceptance-ledger.md)
 - [Test-coverage change audit](quality/test-coverage-change-audit.md)
 - [Qodana audit](quality/qodana-audit.md)

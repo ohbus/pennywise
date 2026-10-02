@@ -29,6 +29,14 @@ The companion [`QA-10 branch-line ledger`](qa10-branch-line-gap-ledger.md)
 records the 50 exact JaCoCo source lines that account for those 76 branches;
 it is regenerated from the same reports and is not a substitute for behavior
 acceptance.
+The companion [`QA-10 concrete execution-gap ledger`](qa10-execution-gap-ledger.md)
+also records 57 production methods with zero covered instructions after
+excluding compiler-generated methods, accessors, application entry points, and
+interface declarations. These records catch method-level execution gaps that
+branch-only discovery cannot represent. Framework/bootstrap entries require
+configuration or integration evidence; domain and transport entries require
+direct behavior tests. This ledger is a backlog and review aid, never a reason
+to delete implementation or weaken a public contract.
 
 The Accounts RSA provider boundary is covered by generation, complete and
 partial PEM loading, blank PEM fallback, malformed PEM rejection, rotation,
@@ -107,6 +115,14 @@ Each signal must therefore be reconciled against the operation matrix and the
 QA10-E2E acceptance rows before closure. Every record is assigned to
 `QA10-E2E01`, whose acceptance criterion is the complete signed-persona
 per-operation authorization and side-effect matrix.
+
+For repeatable concrete execution-gap discovery, run
+`uv run --frozen --no-build python tools/coverage/report_execution_gaps.py --format markdown`.
+The current report contains 57 zero-instruction concrete methods across
+Accounts, BFF, Expense Core, Notifications, and shared libraries. It excludes
+interfaces and compiler-generated accessors/scaffolding but deliberately keeps
+real domain, transport, security, messaging, and configuration methods visible
+until a focused test or reviewed framework-wiring rationale exists.
 
 ### Current operations without a literal E2E source reference
 

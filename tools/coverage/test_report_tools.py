@@ -17,6 +17,10 @@ from tools.coverage.report_branch_gaps import (
     main as branch_report_main,
     markdown as render_branch_gaps,
 )
+from tools.coverage.report_execution_gaps import (
+    all_gaps as execution_gaps,
+    markdown as render_execution_gaps,
+)
 from tools.coverage.report_operation_test_gaps import (
     acceptance_criteria,
     inventory,
@@ -101,6 +105,42 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertEqual(
             49,
             sum(not item.has_bruno_signal for item in operations),
+        )
+
+    def test_concrete_zero_execution_inventory_is_complete_and_assigned(self) -> None:
+        gaps = execution_gaps(ROOT)
+
+        self.assertEqual(57, len(gaps))
+        self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
+        self.assertTrue(all(gap.acceptance_criteria for gap in gaps))
+        self.assertTrue(all(gap.next_action for gap in gaps))
+        self.assertTrue(all(gap.status == "NO-INSTRUCTION-EXECUTION" for gap in gaps))
+        self.assertEqual(
+            {
+                "app/accounts": 6,
+                "app/bff": 15,
+                "app/expense-core": 7,
+                "app/notifications": 4,
+                "libs/db": 6,
+                "libs/ids": 16,
+                "libs/observability": 1,
+                "libs/security": 2,
+            },
+            Counter(gap.module for gap in gaps),
+        )
+        self.assertNotIn("AccountIdentityStore", {gap.class_name for gap in gaps})
+        self.assertNotIn("<init>", {gap.method for gap in gaps})
+        self.assertNotIn("$default", " ".join(gap.method for gap in gaps))
+
+    def test_committed_execution_gap_ledger_matches_current_inventory(self) -> None:
+        gaps = execution_gaps(ROOT)
+        ledger = (ROOT / "docs/quality/qa10-execution-gap-ledger.md").read_text(
+            encoding="utf-8"
+        )
+        marker = "## Exact current records\n\n"
+        self.assertIn(marker, ledger)
+        self.assertEqual(
+            render_execution_gaps(gaps), ledger.split(marker, maxsplit=1)[1].strip()
         )
 
     def test_operation_json_exposes_e2e_status(self) -> None:

@@ -17,12 +17,14 @@ import com.rabbitmq.client.Channel
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageProperties
 import tools.jackson.databind.ObjectMapper
 import java.time.Instant
+import java.io.IOException
 import java.util.UUID
 
 class RabbitBffEventListenerTest {
@@ -111,5 +113,42 @@ class RabbitBffEventListenerTest {
         val message = Message("{ not-valid-json }".toByteArray(Charsets.UTF_8), MessageProperties())
 
         listener.onMessage(message, null)
+    }
+
+    @Test
+    fun `rejects a valid message when acknowledging fails`() {
+        val groupId = UUID.randomUUID()
+        val json = """
+            {
+              "eventId": "${UUID.randomUUID()}",
+              "eventType": "group.updated",
+              "schemaVersion": 1,
+              "aggregateId": "${UUID.randomUUID()}",
+              "groupId": "$groupId",
+              "groupRevision": 12,
+              "occurredAt": "${Instant.now()}",
+              "payload": {"name": "Ack failure"}
+            }
+        """.trimIndent()
+        val message = Message(json.toByteArray(Charsets.UTF_8), MessageProperties().apply { deliveryTag = 7L })
+        doThrow(IOException("ack failed"))
+            .`when`(channel)
+            .basicAck(7L, false)
+
+        listener.onMessage(message, channel)
+
+        verify(channel).basicReject(7L, false)
+    }
+
+    @Test
+    fun `does not throw when poison-pill rejection also fails`() {
+        val message = Message("{ not-valid-json }".toByteArray(Charsets.UTF_8), MessageProperties().apply { deliveryTag = 8L })
+        doThrow(IOException("reject failed"))
+            .`when`(channel)
+            .basicReject(8L, false)
+
+        listener.onMessage(message, channel)
+
+        verify(channel).basicReject(8L, false)
     }
 }

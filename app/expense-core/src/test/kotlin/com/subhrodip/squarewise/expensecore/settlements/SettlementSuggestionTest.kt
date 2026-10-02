@@ -133,6 +133,26 @@ class SettlementSuggestionTest {
         assertTrue(suggestions.isEmpty())
     }
 
+    /** Verifies an imbalanced snapshot with only debtors cannot invent a recipient. */
+    @Test
+    fun `one-sided debtor balances produce no suggestions`() {
+        val suggestions = engine.calculateSuggestions(
+            listOf(GroupBalanceItem(UUID.randomUUID().toString(), MoneyDto("EUR", "-100")))
+        )
+
+        assertTrue(suggestions.isEmpty())
+    }
+
+    /** Verifies an imbalanced snapshot with only creditors cannot invent a payer. */
+    @Test
+    fun `one-sided creditor balances produce no suggestions`() {
+        val suggestions = engine.calculateSuggestions(
+            listOf(GroupBalanceItem(UUID.randomUUID().toString(), MoneyDto("EUR", "100")))
+        )
+
+        assertTrue(suggestions.isEmpty())
+    }
+
     @Test
     fun `greedy largest debtor pays largest creditor matching`() {
         val d1 = UUID.randomUUID()

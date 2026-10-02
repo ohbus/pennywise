@@ -12,8 +12,8 @@ For a concise evidence-state overview, see the [QA-10 test-gap summary](qa10-gap
 
 As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **39
 production methods with missed branches** containing **78 missed branches**,
-**54 contract operations** (45 REST and 9 GraphQL), and **seven
-environment-owned E2E/operations rows**. Operation source discovery
+**54 contract operations** (45 REST and 9 GraphQL), and **three concrete
+execution-gap records**. Operation source discovery
 finds 0 operations without a literal E2E reference and 49 without a literal
 Bruno reference. These numbers are backlog signals, not passing-test claims;
 the hard branch gate remains red until the production reports are regenerated
@@ -23,9 +23,9 @@ the repository-wide test and JaCoCo tasks. This baseline is local evidence;
 hosted CI, deployed E2E, and environment-owned release gates remain separate
 acceptance requirements.
 
-The current residual review split is **36 candidate structural mappings**,
-**2 behavior-covered instrumentation mappings**, and **one open-design record**
-(`ProfileController.problem`/`mapErrorCode`). No
+The current residual review split is **8 candidate structural mappings**,
+**30 behavior-covered boundary/instrumentation mappings**, and **one open-design
+record** (`ProfileController.problem`/`mapErrorCode`). No
 missed method is unaccounted for; behavior-covered mappings are explicitly
 linked to tests, while structural and open-design records remain review work.
 The companion [`QA-10 branch-line ledger`](qa10-branch-line-gap-ledger.md)

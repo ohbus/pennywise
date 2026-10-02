@@ -105,7 +105,7 @@ class CoverageInventoryTest(unittest.TestCase):
         """Keep generated targets actionable without treating them as coverage."""
 
         self.assertIn("ProfileControllerTest.kt", evidence_target("app/accounts", "ProfileController"))
-        self.assertIn("RecurringExpenseServiceTest.kt (constructor boundary)", evidence_target("app/expense-core", "RecurrenceSchedule"))
+        self.assertIn("RecurrencePolicyTest.kt (constructor boundary)", evidence_target("app/expense-core", "RecurrenceSchedule"))
         self.assertIn("DbTelemetryTest.kt", evidence_target("libs/observability", "DbTelemetry"))
 
     def test_operation_inventory_is_complete_and_assigned(self) -> None:

@@ -3,6 +3,8 @@
 The registry is the authoritative state machine. This ledger records meaningful
 execution checkpoints and evidence; it does not replace task acceptance criteria.
 
+| 2026-10-02 | QA-10 notification configuration increment | Added notification configuration contract tests for SMTP binding, queue defaults, and dead-letter routing values. | `./gradlew.bat :app:notifications:test --tests '*NotificationConfigurationPropertiesTest' --no-daemon` passed; `git diff --check` passed. | current increment |
+
 | 2026-10-02 | QA-10 recurring UUID subject increment | Added an integration regression test proving recurring-expense allocation generation preserves UUID-shaped member subjects, complementing the legacy subject fallback test. | `./gradlew.bat :app:expense-core:test --tests '*RecurringExpenseServiceTest' --no-daemon` passed; `git diff --check` passed. | current increment |
 
 | 2026-10-02 | QA-10 BFF configuration increment | Added a focused BFF configuration contract suite covering GraphQL abuse limits, browser cookie settings, allowed origins, and RabbitMQ messaging properties, including mutable binding values and safe defaults. | `./gradlew.bat :app:bff:test --tests '*BffConfigurationPropertiesTest' --no-daemon` passed; `git diff --check` passed. | current increment |

@@ -690,7 +690,8 @@ The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
 The `qa10-coverage-inventory` job now downloads those module artifacts,
 restores them into their repository paths, and publishes one aggregate JSON
 inventory. It is intentionally discovery-only while the baseline contains
-51 gaps; `--fail-on-gaps` remains the eventual blocking closure step. A
+46 records with missed branches; `--fail-on-gaps` remains the eventual
+blocking closure step. A
 single matrix shard is insufficient evidence for a repository-wide
 no-missed-branch claim.
 

@@ -37,4 +37,29 @@ class AccountIdentityStoreTest {
 
         assertEquals("Account not found", error.message)
     }
+
+    @Test
+    fun `default lookups fail closed and enrollment builds durable identity`() {
+        val accountId = UUID.randomUUID()
+        val store = object : AccountIdentityStore {
+            override fun findByAccountId(requestedAccountId: UUID): AccountIdentity? = null
+        }
+
+        assertEquals(null, store.findByIssuerAndSubject("issuer", "subject"))
+        assertEquals(null, store.findByEmail("person@example.test"))
+
+        val enrolled = store.enrollIdentity(
+            accountId = accountId,
+            issuer = "https://issuer.example.test",
+            providerSubject = "subject",
+            email = "person@example.test",
+            verified = true
+        )
+
+        assertEquals(accountId, enrolled.accountId)
+        assertEquals("subject", enrolled.subject)
+        assertEquals("person@example.test", enrolled.email)
+        assertEquals("https://issuer.example.test", enrolled.issuer)
+        assertEquals(false, enrolled.deletionRequested)
+    }
 }

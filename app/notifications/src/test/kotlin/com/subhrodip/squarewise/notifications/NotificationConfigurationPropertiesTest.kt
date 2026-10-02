@@ -2,8 +2,8 @@ package com.subhrodip.squarewise.notifications
 
 import com.subhrodip.squarewise.notifications.consumer.config.NotificationMessagingProperties
 import com.subhrodip.squarewise.notifications.email.config.EmailProperties
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 /** Verifies notification broker and SMTP properties retain values supplied by binding. */
 class NotificationConfigurationPropertiesTest {

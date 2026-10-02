@@ -104,10 +104,20 @@ class LoginStartServiceTest {
     @Test
     fun `delivery failure remains generic after credential issuance`() {
         val credential = deliveryCredential(LoginCredentialService.CredentialKind.LINK)
-        `when`(credentialService.issue(any(), any(), any())).thenReturn(credential)
+        `when`(rateLimitService.tryAcquire("person@example.test", "network", now)).thenReturn(true)
+        `when`(
+            credentialService.issue(
+                "person@example.test",
+                LoginCredentialService.CredentialKind.LINK,
+                now
+            )
+        ).thenReturn(credential)
         doThrow(IllegalStateException("mail provider unavailable"))
             .`when`(emailSender)
-            .send(any())
+            .send(
+                any(AuthEmailMessage::class.java)
+                    ?: AuthEmailMessage("ignored@example.com", AuthEmailTemplate.LOGIN_LINK, "", now)
+            )
 
         val result = service.start(
             "person@example.test",
@@ -117,7 +127,10 @@ class LoginStartServiceTest {
         )
 
         assertEquals(LoginStartResult.ACCEPTED, result)
-        verify(emailSender).send(any())
+        verify(emailSender).send(
+            any(AuthEmailMessage::class.java)
+                ?: AuthEmailMessage("ignored@example.com", AuthEmailTemplate.LOGIN_LINK, "", now)
+        )
     }
 
     @Test

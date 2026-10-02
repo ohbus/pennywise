@@ -36,19 +36,32 @@ class AuthSessionEntityStateTest {
         session.lastUsedAt = revokedAt
         session.revokedAt = revokedAt
         session.replacedBySessionId = replacementId
+        val updatedSessionId = UUID.randomUUID()
+        val updatedAccountId = UUID.randomUUID()
+        val updatedFamilyId = UUID.randomUUID()
+        session.sessionId = updatedSessionId
+        session.accountId = updatedAccountId
+        session.subject = "subject-2"
+        session.familyId = updatedFamilyId
+        session.refreshTokenDigest = byteArrayOf(4, 5, 6)
+        session.createdAt = createdAt.minusSeconds(30)
+        session.expiresAt = expiresAt.plusSeconds(30)
+        session.absoluteExpiresAt = absoluteExpiresAt.plusSeconds(30)
+        session.deviceLabel = "phone"
+        session.clientKind = "NATIVE"
 
-        assertEquals(sessionId, session.sessionId)
-        assertEquals(accountId, session.accountId)
-        assertEquals("subject-1", session.subject)
-        assertEquals(familyId, session.familyId)
-        assertArrayEquals(digest, session.refreshTokenDigest)
-        assertEquals(createdAt, session.createdAt)
+        assertEquals(updatedSessionId, session.sessionId)
+        assertEquals(updatedAccountId, session.accountId)
+        assertEquals("subject-2", session.subject)
+        assertEquals(updatedFamilyId, session.familyId)
+        assertArrayEquals(byteArrayOf(4, 5, 6), session.refreshTokenDigest)
+        assertEquals(createdAt.minusSeconds(30), session.createdAt)
         assertEquals(revokedAt, session.lastUsedAt)
-        assertEquals(expiresAt, session.expiresAt)
-        assertEquals(absoluteExpiresAt, session.absoluteExpiresAt)
+        assertEquals(expiresAt.plusSeconds(30), session.expiresAt)
+        assertEquals(absoluteExpiresAt.plusSeconds(30), session.absoluteExpiresAt)
         assertEquals(revokedAt, session.revokedAt)
         assertEquals(replacementId, session.replacedBySessionId)
-        assertEquals("laptop", session.deviceLabel)
-        assertEquals("WEB", session.clientKind)
+        assertEquals("phone", session.deviceLabel)
+        assertEquals("NATIVE", session.clientKind)
     }
 }

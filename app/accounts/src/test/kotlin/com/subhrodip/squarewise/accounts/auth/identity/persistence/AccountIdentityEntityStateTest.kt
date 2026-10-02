@@ -23,7 +23,8 @@ class AccountIdentityEntityStateTest {
             updatedAt = enrolledAt
         )
 
-        identity.identityId = UUID.randomUUID()
+        val updatedIdentityId = UUID.randomUUID()
+        identity.identityId = updatedIdentityId
         identity.accountId = accountId
         identity.issuer = "https://issuer.example/v2"
         identity.providerSubject = "provider-subject-2"
@@ -33,6 +34,7 @@ class AccountIdentityEntityStateTest {
         identity.createdAt = enrolledAt.minusSeconds(60)
         identity.updatedAt = enrolledAt
 
+        assertEquals(updatedIdentityId, identity.identityId)
         assertEquals(accountId, identity.accountId)
         assertEquals("https://issuer.example/v2", identity.issuer)
         assertEquals("provider-subject-2", identity.providerSubject)

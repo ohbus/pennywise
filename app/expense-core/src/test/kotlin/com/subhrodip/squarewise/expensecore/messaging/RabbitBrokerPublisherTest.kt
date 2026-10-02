@@ -126,4 +126,21 @@ class RabbitBrokerPublisherTest {
         val rejection = result as PublishResult.Rejected
         assertTrue(rejection.reason.contains("Connection refused"))
     }
+
+    /** Verifies malformed event payloads are rejected without invoking the broker. */
+    @Test
+    fun `returns Rejected when event payload cannot be deserialized`() {
+        val brokerMessage = BrokerMessage(
+            eventId = UUID.randomUUID(),
+            eventType = "group.invalid",
+            payload = "not-json".toByteArray(),
+            occurredAt = Instant.now()
+        )
+
+        val result = publisher.publish(brokerMessage)
+
+        assertTrue(result is PublishResult.Rejected)
+        val rejection = result as PublishResult.Rejected
+        assertTrue(rejection.reason.startsWith("Publish error:"))
+    }
 }

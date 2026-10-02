@@ -232,7 +232,7 @@ class LiveUpdateFanoutTest {
         fanout.revocationSignal(otherGroup.id).doOnTerminate { tOtherGroup = true }.subscribe()
         fanout.revocationSignal(otherUser.id).doOnTerminate { tOtherUser = true }.subscribe()
 
-        fanout.revokeUserFromGroup("user-1", "group-1")
+        assertThat(fanout.revokeUserFromGroup("user-1", "group-1")).isEqualTo(1)
 
         assertThat(tTarget).isTrue()
         assertThat(tOtherGroup).isFalse()

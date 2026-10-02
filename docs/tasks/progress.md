@@ -3,6 +3,8 @@
 The registry is the authoritative state machine. This ledger records meaningful
 execution checkpoints and evidence; it does not replace task acceptance criteria.
 
+| 2026-10-02 | QA-10 deletion lookup increment | Added coverage for the JPA deletion-request read contract, asserting existing entities map to domain records while unknown subjects return `null`. | `./gradlew.bat :app:accounts:test --tests '*JpaDeletionRequestStoreTest' --no-daemon` passed; `git diff --check` passed. | current increment |
+
 | 2026-10-02 | QA-10 login delivery failure increment | Added a regression test for the passwordless login-start delivery boundary: credential issuance succeeds, email delivery throws, and the endpoint remains generic/accepted without leaking provider failure details. | `./gradlew.bat :app:accounts:test --tests '*LoginStartServiceTest' --no-daemon` passed; `git diff --check` passed. | current increment |
 
 | 2026-10-02 | QA-10 coverage defaults increment | Added contract-level tests for the default and explicitly bound Accounts session-policy properties, plus the public `TokenResponse` Bearer-scheme default. The tests preserve the documented configuration and response contracts; no production implementation or public behavior was weakened. | `./gradlew.bat :app:accounts:test --tests '*SessionPolicyPropertiesTest' --tests '*AuthControllerTest' --no-daemon` passed; `./gradlew.bat test jacocoTestReport --no-daemon --parallel` passed with 62 actionable tasks. Aggregate JaCoCo remains 5,648/5,709 lines (98.93%), 37,498/39,473 instructions (95.00%), and 2,675/2,741 branches (97.59%); residual misses include compiler/default-parameter mappings and reviewed structural invariants. | current increment |

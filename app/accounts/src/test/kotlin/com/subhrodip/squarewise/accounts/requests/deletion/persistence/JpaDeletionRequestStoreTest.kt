@@ -50,6 +50,26 @@ class JpaDeletionRequestStoreTest {
         verifyNoInteractions(authSessionRepository)
     }
 
+    @Test
+    fun `get maps an existing request and returns null for an unknown subject`() {
+        val existingSubject = "oidc|existing-${UUID.randomUUID()}"
+        val missingSubject = "oidc|missing-get-${UUID.randomUUID()}"
+        val entity = AccountDeletionRequestEntity(
+            subject = existingSubject,
+            status = DeletionStatus.REQUESTED,
+            requestedAt = Instant.EPOCH
+        )
+        `when`(repository.findById(existingSubject)).thenReturn(Optional.of(entity))
+        `when`(repository.findById(missingSubject)).thenReturn(Optional.empty())
+
+        val result = store.get(existingSubject)
+
+        assertEquals(existingSubject, result?.subject)
+        assertEquals(DeletionStatus.REQUESTED, result?.status)
+        assertEquals(Instant.EPOCH, result?.requestedAt)
+        assertEquals(null, store.get(missingSubject))
+    }
+
     /** Verifies cancellation and completion return null without creating missing requests. */
     @Test
     fun `cancel and complete return null for unknown subjects`() {

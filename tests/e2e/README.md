@@ -21,12 +21,17 @@ The end-to-end test suites run against the live local environment (`infra/local/
    - Retransmission idempotency: identical retries succeed with 0 balance changes and 0 duplicate postings.
    - Conflicting idempotency reuse: modified payload with existing key correctly rejected with HTTP 409 (`ERR_06` / `CONFLICT`).
    - Offline sync cursor gap recovery via `/sync/changes?cursor=...`.
+   - When invoked with `--evidence-output`, emits retained QA-10 evidence only
+     after the suite passes for `createGroup`, `createExpense`, `getBalances`,
+     `getSnapshot`, and `getChanges`.
 
 3. **Concurrent Member Edit Conflicts & Real-Time Invalidation (`test_concurrency_subscriptions.py`)**:
    - Real-time WebSocket connection to GraphQL BFF via RFC 6455 and `graphql-transport-ws`.
    - Subscription to `groupChanged(groupId: ID!)` with immediate delivery of revision and `changeId` invalidation events.
    - Concurrent race testing: simultaneous PUT updates to the same expense version. Exactly 1 succeeds (version increments to 2), competing update receives HTTP 409 Conflict (`ERR_06`).
    - Conflict resolution: stale client fetches latest state and reapplies cleanly.
+   - When invoked with `--evidence-output`, emits retained QA-10 evidence only
+     after all subscription and concurrency assertions pass.
 
 4. **Message Broker Outage Chaos & Transactional Outbox Recovery (`test_chaos_recovery.py`)**:
    - Fault injection: pauses Expense Core and verifies GraphQL `groups` returns a

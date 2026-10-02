@@ -30,32 +30,21 @@ def write_execution_evidence(
     path: Path,
     source_revision: str,
     environment: str,
-    surface: str,
-    operation_name: str,
-    assertions: list[str],
+    operations: list[ExecutionOperation],
 ) -> None:
     """Persist attributable evidence after the associated suite succeeds.
 
     :param path: Destination for the versioned QA-10 JSON artifact.
     :param source_revision: Revision whose test code produced the evidence.
     :param environment: Runtime environment used by the test.
-    :param surface: Public interface surface exercised by the suite.
-    :param operation_name: Exact operation name from the public contract.
-    :param assertions: Non-empty list of assertions completed by the suite.
+    :param operations: Exact public operations and assertions completed by the suite.
     """
 
-    operation: ExecutionOperation = {
-        "surface": surface,
-        "operation": operation_name,
-        "status": "passed",
-        "artifact": str(path),
-        "assertions": assertions,
-    }
     evidence: ExecutionEvidence = {
         "schema": "qa10-operation-execution-v1",
         "source_revision": source_revision,
         "environment": environment,
-        "operations": [operation],
+        "operations": operations,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")

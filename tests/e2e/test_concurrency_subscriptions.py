@@ -519,14 +519,18 @@ if __name__ == "__main__":
                 arguments.evidence_output,
                 arguments.source_revision,
                 arguments.environment,
-                "GraphQL Subscription",
-                "groupChanged",
-                [
-                    "authenticated graphql-transport-ws subscription received a matching group invalidation",
-                    "malformed and non-member subscriptions were rejected",
-                    "disconnect, resubscribe, and completed-subscription filtering were verified",
-                    "concurrent stale-version conflict and subsequent recovery were verified",
-                ],
+                [{
+                    "surface": "GraphQL Subscription",
+                    "operation": "groupChanged",
+                    "status": "passed",
+                    "artifact": str(arguments.evidence_output),
+                    "assertions": [
+                        "authenticated graphql-transport-ws subscription received a matching group invalidation",
+                        "malformed and non-member subscriptions were rejected",
+                        "disconnect, resubscribe, and completed-subscription filtering were verified",
+                        "concurrent stale-version conflict and subsequent recovery were verified",
+                    ],
+                }],
             )
     except Exception as e:
         print(f"\n❌ TEST SUITE FAILED: {e}", file=sys.stderr)

@@ -51,9 +51,13 @@ class CoverageInventoryTest(unittest.TestCase):
                 path,
                 "abc123",
                 "ci-compose-oidc",
-                "GraphQL Subscription",
-                "groupChanged",
-                ["subscription delivery was verified"],
+                [{
+                    "surface": "GraphQL Subscription",
+                    "operation": "groupChanged",
+                    "status": "passed",
+                    "artifact": str(path),
+                    "assertions": ["subscription delivery was verified"],
+                }],
             )
 
             document = json.loads(path.read_text(encoding="utf-8"))

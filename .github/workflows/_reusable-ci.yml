@@ -452,7 +452,7 @@ jobs:
             make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"
           tests/e2e/acquire_local_tokens.sh
           make e2e-live 2>&1 | tee build/reports/e2e/product-journey.log
-          make e2e-offline 2>&1 | tee build/reports/e2e/offline-replay.log
+          make e2e-offline E2E_OFFLINE_ARGS="--evidence-output build/reports/e2e/offline-operation-execution.json --source-revision $GITHUB_SHA --environment ci-compose-oidc" 2>&1 | tee build/reports/e2e/offline-replay.log
       - name: Normalize unique Bruno operation evidence
         if: always()
         run: |
@@ -544,6 +544,19 @@ jobs:
           mkdir -p build/reports/e2e
           make e2e-concurrency E2E_CONCURRENCY_ARGS="--evidence-output build/reports/e2e/concurrency-operation-execution.json --source-revision $GITHUB_SHA --environment ci-compose-oidc" 2>&1 | tee build/reports/e2e/concurrency-websocket.log
           make e2e-chaos 2>&1 | tee build/reports/e2e/chaos-recovery.log
+      - name: Generate concurrency and offline operation inventories
+        if: always()
+        run: |
+          for artifact in concurrency offline; do
+            path="build/reports/e2e/${artifact}-operation-execution.json"
+            if test -f "$path"; then
+              uv run --frozen --no-build python tools/coverage/report_operation_test_gaps.py \
+                --format json --execution-artifact "$path" \
+                | tee "build/reports/e2e/${artifact}-operation-inventory.json"
+            else
+              echo "${artifact} execution artifact is unavailable; no operation inventory generated."
+            fi
+          done
       - name: Tear down the complete local application stack
         if: always()
         run: docker compose -f infra/local/docker-compose.dev.yml down -v

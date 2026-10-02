@@ -150,7 +150,7 @@ e2e-live: ## Run the comprehensive multi-service product journey E2E test agains
 	@$(UV_RUN) python3 tests/e2e/test_product_journey.py
 
 e2e-offline: ## Run offline client simulation, sync cursor, and replay resilience tests
-	@$(UV_RUN) python3 tests/e2e/test_offline_resilience.py
+	@$(UV_RUN) python3 tests/e2e/test_offline_resilience.py $(E2E_OFFLINE_ARGS)
 
 e2e-concurrency: ## Run concurrent member edit conflict resolution and GraphQL subscription invalidation tests
 	@$(UV_RUN) python3 tests/e2e/test_concurrency_subscriptions.py $(E2E_CONCURRENCY_ARGS)

@@ -43,6 +43,30 @@ passed. The normalized artifact records 18 uniquely attributable operations as
 ambiguous or shared-fixture credit. This is local evidence, not hosted-CI or
 production evidence.
 
+The currently uncredited operations are:
+
+- GraphQL: `createExpense`, `createGroup`, `recordRepayment`, `updateGroup`,
+  `group`, `settlementSuggestions`, and `groupChanged`.
+- Accounts REST: `getProfileById`.
+- Expense Core REST: `archiveGroup`, `claimInvite`, `createExpense`,
+  `createInvite`, `createPlaceholder`, `createRecurringSchedule`,
+  `deleteExpense`, `exportExpenses`, `getBalances`, `getChanges`, `getGroup`,
+  `getRecurringSchedule`, `getSettlementSuggestions`, `getSnapshot`,
+  `listExpenses`, `listGroupMembers`, `listRecurringSchedules`,
+  `pauseRecurringSchedule`, `recordSettlement`, `removeGroupMember`,
+  `resumeRecurringSchedule`, `reverseSettlement`, `revokeInvite`,
+  `searchExpenses`, `updateExpense`, `updateGroup`, and
+  `updateRecurringSchedule`.
+- Notifications REST: `markAsRead`.
+
+These rows are not all claims that no source test exists: the operation matrix
+contains Python request/callable references for them. They specifically lack a
+retained, uniquely attributable normalized execution artifact. Closure requires
+an executed persona-specific request with the row's exact status/error,
+authorization/isolation, durable or asynchronous side effect, and replay or
+concurrency assertion where listed; a shared journey name or source reference
+does not substitute for that evidence.
+
 ## Execution-artifact ingestion
 
 The source inventory does not infer execution from Python/Bruno references. A

@@ -38,7 +38,7 @@ class BffEventConsumer(
         val changeIdStr = envelope.eventId.toString()
         val revision = envelope.groupRevision
 
-        if (envelope.eventType == "member.removed") {
+        if (envelope.eventType == "member.removed.v1") {
             val removedSubject = envelope.payload["targetSubject"]?.toString()?.trim()
             if (!removedSubject.isNullOrBlank()) {
                 fanout.revokeUserFromGroup(removedSubject, groupIdStr)

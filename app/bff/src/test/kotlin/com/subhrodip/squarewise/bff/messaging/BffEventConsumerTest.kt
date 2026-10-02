@@ -114,7 +114,7 @@ class BffEventConsumerTest {
         val retained = fanout.subscribe("retained-user", groupId.toString())
         val envelope = BffEventEnvelope(
             eventId = UUID.randomUUID(),
-            eventType = "member.removed",
+            eventType = "member.removed.v1",
             schemaVersion = 1,
             aggregateId = UUID.randomUUID(),
             groupId = groupId,
@@ -140,7 +140,7 @@ class BffEventConsumerTest {
                 val subscriber = fanout.subscribe("retained-user", groupId.toString())
                 val envelope = BffEventEnvelope(
                     eventId = UUID.randomUUID(),
-                    eventType = "member.removed",
+                    eventType = "member.removed.v1",
                     schemaVersion = 1,
                     aggregateId = UUID.randomUUID(),
                     groupId = groupId,

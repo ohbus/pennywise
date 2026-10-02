@@ -116,6 +116,20 @@ class JpaExpenseStoreTest @Autowired constructor(
         }
         assertEquals(ErrorCode.ERR_02, duplicateError.errorCode)
 
+        val duplicateAllocationId = UUID.randomUUID()
+        val duplicateAllocation = duplicateParticipant.copy(
+            expenseId = duplicateAllocationId,
+            payers = listOf(ExpensePayer(activeMembershipId, 1000)),
+            allocations = listOf(
+                ExpenseAllocation(activeMembershipId, 500),
+                ExpenseAllocation(activeMembershipId, 500)
+            )
+        )
+        val duplicateAllocationError = assertThrows(ApplicationException::class.java) {
+            expenseStore.create(group.groupId, duplicateAllocation, "duplicate-allocation-key", "alice")
+        }
+        assertEquals(ErrorCode.ERR_02, duplicateAllocationError.errorCode)
+
         val inactiveId = UUID.randomUUID()
         val inactiveParticipant = duplicateParticipant.copy(
             expenseId = UUID.randomUUID(),

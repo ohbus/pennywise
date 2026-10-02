@@ -119,7 +119,7 @@ per-operation authorization and side-effect matrix.
 
 For repeatable concrete execution-gap discovery, run
 `uv run --frozen --no-build python tools/coverage/report_execution_gaps.py --format markdown`.
-The current report contains 4 zero-instruction concrete methods across
+The current report contains 3 zero-instruction concrete methods across
 Accounts and shared libraries. It excludes
 interfaces and compiler-generated accessors/scaffolding but deliberately keeps
 real domain, transport, security, messaging, and configuration methods visible

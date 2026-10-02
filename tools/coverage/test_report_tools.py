@@ -110,7 +110,7 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_concrete_zero_execution_inventory_is_complete_and_assigned(self) -> None:
         gaps = execution_gaps(ROOT)
 
-        self.assertEqual(4, len(gaps))
+        self.assertEqual(3, len(gaps))
         self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
         self.assertTrue(all(gap.acceptance_criteria for gap in gaps))
         self.assertTrue(all(gap.next_action for gap in gaps))
@@ -127,7 +127,6 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertEqual(
             {
                 "app/accounts": 2,
-                "libs/db": 1,
                 "libs/observability": 1,
             },
             Counter(gap.module for gap in gaps),

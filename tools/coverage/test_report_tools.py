@@ -293,6 +293,37 @@ class CoverageInventoryTest(unittest.TestCase):
             set(schema["required"]),
         )
 
+    def test_event_inventory_and_broker_acceptance_are_documented(self) -> None:
+        """Keep the discovered event backlog tied to explicit acceptance criteria."""
+
+        audit = (ROOT / "docs/quality/test-coverage-gap-audit.md").read_text(
+            encoding="utf-8"
+        )
+        section = audit.split("### Event-type and routing inventory still requiring closure", 1)[1]
+        for event_type in (
+            "auth.email.requested.v1",
+            "group.renamed.v1",
+            "group.archived.v1",
+            "member.placeholder_added.v1",
+            "member.removed.v1",
+            "invitation.revoked.v1",
+            "invitation.claimed.v1",
+            "expense.created",
+            "expense.updated",
+            "expense.deleted",
+            "recurring.schedule.paused",
+        ):
+            with self.subTest(event_type=event_type):
+                self.assertIn(f"`{event_type}`", section)
+        for criterion in (
+            "versioned registry",
+            "RabbitMQ integration evidence",
+            "acknowledgement, retry, deduplication, and dead-letter",
+            "encrypted credentials never",
+        ):
+            with self.subTest(criterion=criterion):
+                self.assertIn(criterion, section)
+
     def test_auth_email_e2e_destination_is_wired_and_documented(self) -> None:
         """Prevent the passwordless E2E suite from becoming an unexecuted orphan."""
 

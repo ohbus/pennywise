@@ -9,6 +9,7 @@ required evidence standard.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import sys
@@ -29,6 +30,7 @@ class OperationEvidence:
     method: str | None
     path: str | None
     e2e_references: tuple[str, ...]
+    e2e_callable_references: tuple[str, ...]
     bruno_references: tuple[str, ...]
     acceptance_row: str = "QA10-E2E01"
 
@@ -43,6 +45,22 @@ class OperationEvidence:
         """Whether any Bruno source contains the operation name."""
 
         return bool(self.bruno_references)
+
+    @property
+    def has_e2e_callable_signal(self) -> bool:
+        """Whether a Python callable in an E2E source contains the operation reference."""
+
+        return bool(self.e2e_callable_references)
+
+    @property
+    def e2e_callable_status(self) -> str:
+        """Describe callable discovery without implying that the callable executed."""
+
+        if self.has_e2e_callable_signal:
+            return "CALLABLE-SOURCE-REFERENCE-ONLY"
+        if self.has_e2e_signal:
+            return "FILE-SOURCE-REFERENCE-ONLY"
+        return "MISSING-SOURCE-SIGNAL"
 
     @property
     def e2e_status(self) -> str:
@@ -159,6 +177,62 @@ def references(operation: str, sources: Iterable[tuple[str, str]]) -> tuple[str,
     return tuple(path for path, text in sources if pattern.search(text) is not None)
 
 
+def callable_references(
+    operation: str, sources: Iterable[tuple[str, str]]
+) -> tuple[str, ...]:
+    """Return Python callable locations containing a standalone operation reference.
+
+    This is still static source evidence: it does not prove that a callable was
+    discovered by a test runner, invoked, or asserted the required behavior.
+    Non-Python E2E sources remain represented by the file-level reference scan.
+    """
+
+    pattern = re.compile(rf"(?<![A-Za-z0-9_]){re.escape(operation)}(?![A-Za-z0-9_])")
+    matches: list[str] = []
+
+    for path, text in sources:
+        if not path.endswith(".py"):
+            continue
+        try:
+            tree = ast.parse(text, filename=path)
+        except SyntaxError:
+            continue
+
+        class CallableVisitor(ast.NodeVisitor):
+            """Collect operation references from nested Python callables."""
+
+            def __init__(self) -> None:
+                self.names: list[str] = []
+                self.stack: list[str] = []
+
+            def visit_ClassDef(self, node: ast.ClassDef) -> None:
+                self.stack.append(node.name)
+                self.generic_visit(node)
+                self.stack.pop()
+
+            def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+                self.stack.append(node.name)
+                segment = ast.get_source_segment(text, node) or ""
+                if pattern.search(segment) is not None:
+                    self.names.append(f"{path}::{'/'.join(self.stack)}")
+                self.generic_visit(node)
+                self.stack.pop()
+
+            def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+                self.stack.append(node.name)
+                segment = ast.get_source_segment(text, node) or ""
+                if pattern.search(segment) is not None:
+                    self.names.append(f"{path}::{'/'.join(self.stack)}")
+                self.generic_visit(node)
+                self.stack.pop()
+
+        visitor = CallableVisitor()
+        visitor.visit(tree)
+        matches.extend(visitor.names)
+
+    return tuple(matches)
+
+
 def rest_operations(root: Path) -> list[OperationEvidence]:
     """Load REST operation IDs from the OpenAPI contracts."""
 
@@ -178,6 +252,7 @@ def rest_operations(root: Path) -> list[OperationEvidence]:
                         method=method.upper(),
                         path=str(path),
                         e2e_references=(),
+                        e2e_callable_references=(),
                         bruno_references=(),
                     )
                 )
@@ -199,6 +274,7 @@ def graphql_operations(root: Path) -> list[OperationEvidence]:
                     method=None,
                     path=None,
                     e2e_references=(),
+                    e2e_callable_references=(),
                     bruno_references=(),
                 )
             )
@@ -216,7 +292,8 @@ def inventory(root: Path) -> list[OperationEvidence]:
             OperationEvidence(
                 **{
                     **asdict(operation),
-                    "e2e_references": references(operation.operation, e2e),
+                        "e2e_references": references(operation.operation, e2e),
+                    "e2e_callable_references": callable_references(operation.operation, e2e),
                     "bruno_references": references(operation.operation, bruno),
                 }
             )
@@ -228,16 +305,20 @@ def render_markdown(items: Iterable[OperationEvidence]) -> str:
     """Render operation signals as a review table."""
 
     rows = [
-        "| Surface | Service | Operation | Method | Path | Acceptance row | Required acceptance criteria | E2E evidence status | E2E signal | Bruno signal |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Surface | Service | Operation | Method | Path | Acceptance row | Required acceptance criteria | E2E evidence status | E2E callable signal | E2E file signal | Bruno signal |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for item in items:
         e2e = ", ".join(f"`{path}`" for path in item.e2e_references) or "missing"
+        callable_e2e = ", ".join(
+            f"`{path}`" for path in item.e2e_callable_references
+        ) or "missing"
         bruno = ", ".join(f"`{path}`" for path in item.bruno_references) or "missing"
         rows.append(
             f"| {item.surface} | {item.service} | `{item.operation}` | "
             f"{item.method or ''} | `{item.path or ''}` | `{item.acceptance_row}` | "
-            f"{acceptance_criteria(item)} | **{item.e2e_status}** | {e2e} | {bruno} |"
+            f"{acceptance_criteria(item)} | **{item.e2e_callable_status}** | "
+            f"{callable_e2e} | {e2e} | {bruno} |"
         )
     return "\n".join(rows)
 
@@ -258,7 +339,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     items = inventory(options.root.resolve())
     if options.format == "json":
         records: list[dict[str, object]] = [
-            {**asdict(item), "e2e_status": item.e2e_status} for item in items
+            {
+                **asdict(item),
+                "e2e_status": item.e2e_status,
+                "e2e_callable_status": item.e2e_callable_status,
+            }
+            for item in items
         ]
         print(json.dumps(records, indent=2))
     else:

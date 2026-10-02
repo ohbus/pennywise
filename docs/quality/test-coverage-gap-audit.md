@@ -108,6 +108,11 @@ inventory contains 54 operations; 0 have no E2E source signal and 49 have no
 Bruno source signal. These are discovery signals only: a missing string can be
 a naming mismatch, while a present string does not prove authorization,
 negative behavior, persistence, messaging, replay, or deployed side effects.
+The AST callable scan finds a named Python callable reference for all 54
+operations. `CALLABLE-SOURCE-REFERENCE-ONLY` means only that a callable's source
+contains the identifier; it does not prove test discovery, invocation, or
+assertion execution. `FILE-SOURCE-REFERENCE-ONLY` remains the weaker status for
+file-level-only matches.
 References are matched as standalone identifiers rather than arbitrary
 substrings, so `group` cannot be falsely credited by an unrelated `groups` or
 `groupId` occurrence. The matcher intentionally favors a reviewable false
@@ -138,7 +143,7 @@ instrumentation mapping, not a missing duration behavior test.
 
 ### Current operations without a literal E2E source reference
 
-The current scan identifies no operations without a literal E2E source
+The current scan identifies no operations without a literal E2E source or
 reference. The complete signed-persona operation inventory still requires
 acceptance-dimension evidence below; source presence is not closure.
 The current scan previously identified the following operations for explicit E2E

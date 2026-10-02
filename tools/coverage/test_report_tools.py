@@ -23,6 +23,7 @@ from tools.coverage.report_execution_gaps import (
 )
 from tools.coverage.report_operation_test_gaps import (
     acceptance_criteria,
+    callable_references,
     inventory,
     main as operation_report_main,
     references,
@@ -102,6 +103,12 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertTrue(
             all(item.e2e_status == "SOURCE-REFERENCE-ONLY" for item in operations)
         )
+        self.assertTrue(
+            all(
+                item.e2e_callable_status == "CALLABLE-SOURCE-REFERENCE-ONLY"
+                for item in operations
+            )
+        )
         self.assertEqual(
             0,
             sum(not item.has_e2e_signal for item in operations),
@@ -167,6 +174,10 @@ class CoverageInventoryTest(unittest.TestCase):
 
         self.assertEqual(0, result)
         self.assertIn('"e2e_status": "SOURCE-REFERENCE-ONLY"', output.getvalue())
+        self.assertIn(
+            '"e2e_callable_status": "CALLABLE-SOURCE-REFERENCE-ONLY"',
+            output.getvalue(),
+        )
 
     def test_operation_references_do_not_accept_identifier_substrings(self) -> None:
         sources = (
@@ -175,6 +186,17 @@ class CoverageInventoryTest(unittest.TestCase):
         )
 
         self.assertEqual(("tests/e2e/actual.py",), references("group", sources))
+
+    def test_callable_operation_references_require_a_named_python_callable(self) -> None:
+        sources = (
+            ("tests/e2e/module_only.py", "query = '{ group }'"),
+            ("tests/e2e/journey.py", "def main():\n    return '{ group }'"),
+        )
+
+        self.assertEqual(
+            ("tests/e2e/journey.py::main",),
+            callable_references("group", sources),
+        )
 
     def test_committed_operation_acceptance_ledger_matches_current_inventory(self) -> None:
         operations = inventory(ROOT)

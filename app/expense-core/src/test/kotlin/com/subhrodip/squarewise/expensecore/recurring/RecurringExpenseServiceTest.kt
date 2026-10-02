@@ -877,4 +877,28 @@ class RecurringExpenseServiceTest @Autowired constructor(
 
         assertEquals(0, scheduleRepository.count())
     }
+
+    @Test
+    fun `generates recurring allocations for legacy non-UUID subjects`() {
+        val legacySubject = "legacy-user"
+        val group = groupStore.create(legacySubject, CreateGroupRequest("Legacy members", "HOUSEHOLD", "EUR"))
+        val startDate = LocalDate.of(2026, 10, 1)
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Legacy subscription",
+                amountMinor = 1200,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.MONTHLY,
+                startDate = startDate
+            )
+        )
+
+        assertEquals(1, service.processDueOccurrences(asOfDate = startDate))
+
+        val expenseId = service.getOccurrences(schedule.scheduleId).single().expenseId
+        val expense = expenseStore.findById(expenseId!!)
+        val expectedParticipant = UUID.nameUUIDFromBytes(legacySubject.toByteArray(StandardCharsets.UTF_8))
+        assertEquals(listOf(expectedParticipant), expense?.allocations?.map { it.participantId })
+    }
 }

@@ -4,6 +4,7 @@ import com.subhrodip.squarewise.expensecore.messaging.broker.PublishResult
 import com.subhrodip.squarewise.expensecore.messaging.broker.RabbitBrokerPublisher
 import com.subhrodip.squarewise.ids.events.EventConstants
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
@@ -37,6 +38,14 @@ class RabbitBrokerPublisherTest {
             @Suppress("UNCHECKED_CAST")
             (invocation.getArgument<Any>(0) as RabbitOperations.OperationsCallback<Any?>)
                 .doInRabbit(rabbitTemplate)
+        }
+    }
+
+    /** Verifies broker confirmation cannot be configured with a non-positive timeout. */
+    @Test
+    fun `rejects a non-positive confirmation timeout`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            RabbitBrokerPublisher(rabbitTemplate, objectMapper, confirmTimeoutMs = 0)
         }
     }
 

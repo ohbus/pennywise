@@ -7,7 +7,7 @@ a reviewed structural/invariant classification with exact source evidence. Regen
 after every test increment; the locked tooling tests assert that the record count and
 missed-branch total stay synchronized with the audit and CI documentation.
 
-Current baseline: **41 production methods with missed branches / 82 missed branches**.
+Current baseline: **40 production methods with missed branches / 80 missed branches**.
 
 ## Exact current records
 
@@ -38,7 +38,6 @@ Current baseline: **41 production methods with missed branches / 82 missed branc
 | `app/expense-core` | `QA10-C04` | `com/subhrodip/squarewise/expensecore/groups/persistence/store/JpaGroupStore` | `JpaGroupStore.kt` | `revokeInvite` | 225 | 1 | 3 | group and membership lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects. |
 | `app/expense-core` | `QA10-C04` | `com/subhrodip/squarewise/expensecore/groups/persistence/store/JpaGroupStore` | `JpaGroupStore.kt` | `claim` | 248 | 3 | 23 | group and membership lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects. |
 | `app/expense-core` | `QA10-C04` | `com/subhrodip/squarewise/expensecore/groups/persistence/store/JpaGroupStore` | `JpaGroupStore.kt` | `addMembership` | 303 | 1 | 1 | group and membership lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects. |
-| `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/messaging/broker/RabbitBrokerPublisher` | `RabbitBrokerPublisher.kt` | `<init>` | 18 | 2 | 2 | Expense Core persistence and financial behavior | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
 | `app/expense-core` | `QA10-C03` | `com/subhrodip/squarewise/expensecore/recurring/domain/RecurrenceSchedule` | `RecurrenceSchedule.kt` | `<init>` | 4 | 1 | 19 | recurring expense lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Recurring date/catch-up/locking/membership/duplicate/failure behavior and notification/outbox effects. |
 | `app/expense-core` | `QA10-C03` | `com/subhrodip/squarewise/expensecore/recurring/service/RecurringExpenseService` | `RecurringExpenseService.kt` | `createSchedule` | 52 | 1 | 67 | recurring expense lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Recurring date/catch-up/locking/membership/duplicate/failure behavior and notification/outbox effects. |
 | `app/expense-core` | `QA10-C03` | `com/subhrodip/squarewise/expensecore/recurring/service/RecurringExpenseService` | `RecurringExpenseService.kt` | `updateSchedule` | 113 | 1 | 65 | recurring expense lifecycle | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Recurring date/catch-up/locking/membership/duplicate/failure behavior and notification/outbox effects. |

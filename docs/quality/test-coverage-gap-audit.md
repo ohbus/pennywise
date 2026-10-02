@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **41
-production methods with missed branches** containing **82 missed branches**,
+As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **40
+production methods with missed branches** containing **80 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 0 operations without a literal E2E reference and 49 without a literal
@@ -210,7 +210,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **41 methods with at least one missed
+The regenerated JaCoCo XML contains **40 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -295,7 +295,7 @@ persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (41 records):
+Current provisional assignment workload (40 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -311,7 +311,7 @@ Current provisional assignment workload (41 records):
 | QA10-B02 | 0 | GraphQL resolver, error, scalar, and limit behavior; resolver classification, DateTime and MoneyMinor literal acceptance/rejection including nullable AST values, blank-bearer context omission, empty mutation invalidation behavior, required messaging startup validation, bounded deduplicator capacity validation, acceptance-fault filter boundary, empty settlement amount fallback, and subscription admission validation are covered. |
 | QA10-B03 | 3 | Realtime fanout and broker consumer behavior; fanout configuration, input, queue, delivery, expiry, and nullable broker-channel listener boundaries are now covered, while generated revocation predicates, broker acknowledgement, reconnect/replay, and deployed WebSocket evidence remain open. |
 | QA10-B04 | 1 | Browser origin, CSRF, cookie, and session filters; canonical parsing and malformed-origin behavior are covered, while the constructor's residual collection mapping is structurally reviewed. |
-| QA10-C01 | 8 | Expense persistence, transaction, ledger, idempotency, and outbox behavior; allocation-preview malformed/negative totals, overlong category validation, multi-group lookup selection, missing/repeated delete boundaries, update lookup/participant replacement, durable duplicate-event append preservation, broker-message value semantics, in-memory/durable outbox retry/state validation, publisher delivery-policy validation, durable claim eligibility, cleanup retention/batch boundaries, blank/unknown-category defaulting, explicit-null category handling, single and simultaneous payer/allocation-count bounds, custom recurring request mapping, missing/foreign schedule lookup boundaries, recurring membership authorization, amount parsing, JPA search filtering for blank, matching, and non-matching queries, persistent adapter limit bounds, filtered CSV export mapping including formula-prefix, comma, quote, newline, and carriage-return escaping, blank cursor and non-positive CSV-bound validation, unknown-event acknowledgement no-op behavior, group-controller rollback/fanout acceptance faults, missing-group creation, and duplicate payer/allocation participant rejection now have persistence or transport assertions. The recurring controller now covers both one-sided request mappings; null-principal forwarding mappings remain invariant-governed because membership validation rejects the request first. |
+| QA10-C01 | 7 | Expense persistence, transaction, ledger, idempotency, and outbox behavior; allocation-preview malformed/negative totals, overlong category validation, multi-group lookup selection, missing/repeated delete boundaries, update lookup/participant replacement, durable duplicate-event append preservation, broker-message value semantics, in-memory/durable outbox retry/state validation, publisher delivery-policy and confirmation-timeout validation, durable claim eligibility, cleanup retention/batch boundaries, blank/unknown-category defaulting, explicit-null category handling, single and simultaneous payer/allocation-count bounds, custom recurring request mapping, missing/foreign schedule lookup boundaries, recurring membership authorization, amount parsing, JPA search filtering for blank, matching, and non-matching queries, persistent adapter limit bounds, filtered CSV export mapping including formula-prefix, comma, quote, newline, and carriage-return escaping, blank cursor and non-positive CSV-bound validation, unknown-event acknowledgement no-op behavior, group-controller rollback/fanout acceptance faults, missing-group creation, and duplicate payer/allocation participant rejection now have persistence or transport assertions. The recurring controller now covers both one-sided request mappings; null-principal forwarding mappings remain invariant-governed because membership validation rejects the request first. |
 | QA10-C02 | 0 | Pure calculator/validator slice is branch-complete; property tests remain required. |
 | QA10-C03 | 7 | Recurring schedules, claims, locking, and occurrence failures; creation now covers explicit IDs and valid day-of-month boundaries, monthly fallback to the source day, both payer/allocation membership rejection directions, service update mapping covers both one-sided custom specifications, occurrence-date deduplication is proven independently of occurrence-ID equality, the worker zero-budget boundary leaves due state untouched, and expense-store generation failure now proves schedule pause plus `generation_error` notification. One compiler-generated range branch and remaining date/membership/build fallbacks remain retained for review. |
 | QA10-C04 | 9 | Group, invite, membership, expiry, and revocation behavior; archived claims, removed/bound/ordinary-member placeholder targets, already-bound placeholder invitation rejection, removed-placeholder invitation rejection, repository-missing claim outcomes, and normal/targeted invitation claim races now have explicit assertions. |
@@ -698,7 +698,7 @@ The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
 The `qa10-coverage-inventory` job now downloads those module artifacts,
 restores them into their repository paths, and publishes one aggregate JSON
 inventory. It is intentionally discovery-only while the baseline contains
-41 records with missed branches / 82 missed branches; `--fail-on-gaps` remains the eventual
+40 records with missed branches / 80 missed branches; `--fail-on-gaps` remains the eventual
 blocking closure step. A
 single matrix shard is insufficient evidence for a repository-wide
 no-missed-branch claim.

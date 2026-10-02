@@ -40,6 +40,10 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertTrue(all(gap.assignment_basis for gap in gaps))
         self.assertTrue(all(gap.acceptance_criteria for gap in gaps))
         self.assertTrue(all(gap.closure_status for gap in gaps))
+        line_inventory = line_gaps(ROOT)
+        ownership = {(gap.source_file, gap.source_line): gap.method for gap in line_inventory}
+        self.assertEqual("<init>", ownership[("RecurrenceSchedule.kt", 11)])
+        self.assertEqual("<init>", ownership[("DbOperationPolicy.kt", 28)])
         self.assertTrue(all(gap.next_action for gap in gaps))
         expected_counts = {
             "QA10-A01": 0,

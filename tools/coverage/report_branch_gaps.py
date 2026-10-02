@@ -357,6 +357,20 @@ def all_gaps(root: Path) -> list[BranchGap]:
 def line_gaps(root: Path) -> list[BranchLineGap]:
     """Load exact source lines containing JaCoCo-missed branches."""
 
+    def is_generated_accessor(method_name: str) -> bool:
+        """Exclude Kotlin data/property accessors from source-line ownership."""
+
+        return (
+            method_name.startswith("get")
+            and len(method_name) > 3
+            and method_name[3].isupper()
+        ) or method_name.startswith("set") or method_name.startswith("component") or method_name in {
+            "copy",
+            "equals",
+            "hashCode",
+            "toString",
+        }
+
     gaps: list[BranchLineGap] = []
     for report in report_paths(root):
         document = ET.parse(report)
@@ -369,7 +383,7 @@ def line_gaps(root: Path) -> list[BranchLineGap]:
                 methods = classes_by_source.setdefault(source_name, [])
                 for method in clazz.findall("./method"):
                     method_line = method.get("line")
-                    if method_line is not None:
+                    if method_line is not None and not is_generated_accessor(method.get("name", "")):
                         methods.append((int(method_line), class_name, method.get("name", "")))
             for source_file in package.findall("./sourcefile"):
                 source_name = source_file.get("name", "")

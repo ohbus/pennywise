@@ -431,7 +431,11 @@ deployed export behavior or durable query isolation is covered.
 
 Search pagination now also rejects zero/over-limit pages and malformed
 currency filters at the domain boundary; controller validation and authorized
-PostgreSQL query behavior remain separate evidence layers.
+PostgreSQL query behavior remain separate evidence layers. The export suite
+also covers a valid zero-match request and asserts the header-only CSV response.
+The JaCoCo `csv` residual remains in the exact inventory because this
+acceptance case did not change the compiler mapping; it is not a reason to
+remove or restructure the export implementation.
 
 ### Closure increment: QA10-E01 error/correlation boundary
 

@@ -96,6 +96,17 @@ class ExpenseSearchTest {
         }
     }
 
+    /** Verifies an empty result still produces a valid header-only CSV export. */
+    @Test
+    fun `exports a header when no expenses match`() {
+        val csv = ExpenseSearch().csv(
+            listOf(SearchExpense("1", "Dinner", "EUR", "100")),
+            query = "breakfast"
+        )
+
+        assertEquals("expenseId,description,currency,amountMinor,category\n", csv)
+    }
+
     @Test
     fun `filters by category and defaults legacy records to other`() {
         val search = ExpenseSearch()

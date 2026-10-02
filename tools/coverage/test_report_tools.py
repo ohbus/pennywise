@@ -330,6 +330,22 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertIn("containing **76 missed branches**", audit)
         self.assertIn("Latest recorded execution is **NOT-GREEN**", ledger)
 
+    def test_qa10_task_detail_uses_current_baseline_not_historical_counts(self) -> None:
+        detail = (ROOT / "docs/tasks/details/QA-10.md").read_text(encoding="utf-8")
+
+        self.assertIn(
+            "current regenerated authoritative ledger is\n37 records with 76 missed branches",
+            detail,
+        )
+        self.assertNotIn(
+            "The regenerated inventory now\nreports 86 records and 158 missed branches",
+            detail,
+        )
+        self.assertNotIn(
+            "The full wrapper run moved the current\ninventory from 41 records / 84 missed branches",
+            detail,
+        )
+
     def test_ci_python_tooling_is_locked_and_build_hooks_are_disabled(self) -> None:
         workflow = (ROOT / ".github/workflows/_reusable-ci.yml").read_text(
             encoding="utf-8"

@@ -127,6 +127,17 @@ class CoverageInventoryTest(unittest.TestCase):
                 for item in operations
             )
         )
+        self.assertTrue(
+            all(item.execution_status == "NO-EXECUTION-ARTIFACT-INGESTED" for item in operations)
+        )
+        self.assertEqual(
+            5,
+            sum(item.bruno_status == "BRUNO-SOURCE-REFERENCE-ONLY" for item in operations),
+        )
+        self.assertEqual(
+            49,
+            sum(item.bruno_status == "NO-BRUNO-SOURCE-REFERENCE" for item in operations),
+        )
         self.assertEqual(
             0,
             sum(not item.has_e2e_signal for item in operations),
@@ -194,6 +205,10 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertIn('"e2e_status": "SOURCE-REFERENCE-ONLY"', output.getvalue())
         self.assertIn(
             '"e2e_callable_status": "CALLABLE-SOURCE-REFERENCE-ONLY"',
+            output.getvalue(),
+        )
+        self.assertIn(
+            '"execution_status": "NO-EXECUTION-ARTIFACT-INGESTED"',
             output.getvalue(),
         )
 

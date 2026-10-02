@@ -113,6 +113,10 @@ operations. `CALLABLE-SOURCE-REFERENCE-ONLY` means only that a callable's source
 contains the identifier; it does not prove test discovery, invocation, or
 assertion execution. `FILE-SOURCE-REFERENCE-ONLY` remains the weaker status for
 file-level-only matches.
+The generated operation ledger now also emits `BRUNO-SOURCE-REFERENCE-ONLY` or
+`NO-BRUNO-SOURCE-REFERENCE`, plus `NO-EXECUTION-ARTIFACT-INGESTED` for every
+record. The latter is deliberate: this source inventory does not ingest a
+runner result, so no operation is represented as executed acceptance evidence.
 References are matched as standalone identifiers rather than arbitrary
 substrings, so `group` cannot be falsely credited by an unrelated `groups` or
 `groupId` occurrence. The matcher intentionally favors a reviewable false

@@ -47,6 +47,12 @@ class OperationEvidence:
         return bool(self.bruno_references)
 
     @property
+    def bruno_status(self) -> str:
+        """Describe Bruno discovery without implying that a request ran."""
+
+        return "BRUNO-SOURCE-REFERENCE-ONLY" if self.has_bruno_signal else "NO-BRUNO-SOURCE-REFERENCE"
+
+    @property
     def has_e2e_callable_signal(self) -> bool:
         """Whether a Python callable in an E2E source contains the operation reference."""
 
@@ -67,6 +73,12 @@ class OperationEvidence:
         """Describe source discovery without implying executed acceptance."""
 
         return "SOURCE-REFERENCE-ONLY" if self.has_e2e_signal else "MISSING-SOURCE-SIGNAL"
+
+    @property
+    def execution_status(self) -> str:
+        """State that this source inventory has no execution-result input."""
+
+        return "NO-EXECUTION-ARTIFACT-INGESTED"
 
 
 def acceptance_criteria(item: OperationEvidence) -> str:
@@ -305,8 +317,8 @@ def render_markdown(items: Iterable[OperationEvidence]) -> str:
     """Render operation signals as a review table."""
 
     rows = [
-        "| Surface | Service | Operation | Method | Path | Acceptance row | Required acceptance criteria | E2E evidence status | E2E callable signal | E2E file signal | Bruno signal |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Surface | Service | Operation | Method | Path | Acceptance row | Required acceptance criteria | E2E source status | E2E callable signal | E2E file signal | Bruno status | Execution artifact status |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for item in items:
         e2e = ", ".join(f"`{path}`" for path in item.e2e_references) or "missing"
@@ -318,7 +330,8 @@ def render_markdown(items: Iterable[OperationEvidence]) -> str:
             f"| {item.surface} | {item.service} | `{item.operation}` | "
             f"{item.method or ''} | `{item.path or ''}` | `{item.acceptance_row}` | "
             f"{acceptance_criteria(item)} | **{item.e2e_callable_status}** | "
-            f"{callable_e2e} | {e2e} | {bruno} |"
+            f"{callable_e2e} | {e2e} | **{item.bruno_status}** ({bruno}) | "
+            f"**{item.execution_status}** |"
         )
     return "\n".join(rows)
 
@@ -343,6 +356,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 **asdict(item),
                 "e2e_status": item.e2e_status,
                 "e2e_callable_status": item.e2e_callable_status,
+                "bruno_status": item.bruno_status,
+                "execution_status": item.execution_status,
             }
             for item in items
         ]

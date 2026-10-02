@@ -108,4 +108,18 @@ class DbTelemetryTest {
         telemetry.lag("reader", 0)
         assertEquals(0, telemetry.snapshot().queries)
     }
+
+    @Test
+    fun `snapshot defaults every optional counter to zero`() {
+        val snapshot = DbTelemetrySnapshot(failures = 2)
+
+        assertEquals(2, snapshot.failures)
+        assertEquals(0, snapshot.acquisitions)
+        assertEquals(0, snapshot.acquisitionTotalMs)
+        assertEquals(0, snapshot.lockWaits)
+        assertEquals(0, snapshot.deadlocks)
+        assertEquals(0, snapshot.queries)
+        assertEquals(0, snapshot.queryTotalMs)
+        assertEquals(0, snapshot.slowQueries)
+    }
 }

@@ -28,6 +28,13 @@ class GlobalErrorHandlerTest {
     private val handler = GlobalErrorHandler("test-service")
 
     @Test
+    fun `handler defaults the service name when no application name is supplied`() {
+        val defaultHandler = GlobalErrorHandler()
+
+        assertEquals("unknown", defaultHandler.unexpected(IllegalStateException()).body?.source)
+    }
+
+    @Test
     fun `applicationException maps correctly to ApiProblem`() {
         val ex = ApplicationException(ErrorCode.ERR_05, "Group 123 not found")
         val response = handler.applicationException(ex)

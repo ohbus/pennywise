@@ -83,6 +83,9 @@ class CoverageInventoryTest(unittest.TestCase):
         )
         self.assertTrue(all(item.acceptance_row == "QA10-E2E01" for item in operations))
         self.assertTrue(all(acceptance_criteria(item) for item in operations))
+        self.assertTrue(
+            all(item.e2e_status == "SOURCE-REFERENCE-ONLY" for item in operations)
+        )
         self.assertEqual(
             0,
             sum(not item.has_e2e_signal for item in operations),

@@ -44,6 +44,12 @@ class OperationEvidence:
 
         return bool(self.bruno_references)
 
+    @property
+    def e2e_status(self) -> str:
+        """Describe source discovery without implying executed acceptance."""
+
+        return "SOURCE-REFERENCE-ONLY" if self.has_e2e_signal else "MISSING-SOURCE-SIGNAL"
+
 
 def acceptance_criteria(item: OperationEvidence) -> str:
     """Return the minimum per-operation deployed acceptance contract.
@@ -222,8 +228,8 @@ def render_markdown(items: Iterable[OperationEvidence]) -> str:
     """Render operation signals as a review table."""
 
     rows = [
-        "| Surface | Service | Operation | Method | Path | Acceptance row | Required acceptance criteria | E2E signal | Bruno signal |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Surface | Service | Operation | Method | Path | Acceptance row | Required acceptance criteria | E2E evidence status | E2E signal | Bruno signal |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for item in items:
         e2e = ", ".join(f"`{path}`" for path in item.e2e_references) or "missing"
@@ -231,7 +237,7 @@ def render_markdown(items: Iterable[OperationEvidence]) -> str:
         rows.append(
             f"| {item.surface} | {item.service} | `{item.operation}` | "
             f"{item.method or ''} | `{item.path or ''}` | `{item.acceptance_row}` | "
-            f"{acceptance_criteria(item)} | {e2e} | {bruno} |"
+            f"{acceptance_criteria(item)} | **{item.e2e_status}** | {e2e} | {bruno} |"
         )
     return "\n".join(rows)
 

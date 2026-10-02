@@ -1,20 +1,9 @@
-# QA-10 concrete execution-gap ledger
+# QA-10 Concrete Execution-Gap Ledger
 
-This generated ledger complements the branch and operation ledgers. It inventories
-production methods whose JaCoCo XML reports zero covered instructions after
-excluding compiler-generated methods, accessors, application entry points, and
-interface declarations. A zero-execution record is a test/documentation
-backlog item, not permission to delete implementation or weaken a contract.
-
-The current inventory contains **30 concrete methods**. Framework/bootstrap
-methods require focused configuration or integration evidence; domain and
-transport methods require direct behavior tests. One inline declaration is
-classified as INLINE-EXPANDED because its behavior is covered at call sites
-but its declaration method node is not executed by JaCoCo. Regenerate with:
-
-```text
-uv run --frozen --no-build python tools/coverage/report_execution_gaps.py --format markdown
-```
+Generated from the current JaCoCo reports. This inventory contains concrete
+production methods with zero covered instructions after excluding interfaces,
+compiler-generated methods, accessors, and application entry points. It is a
+review backlog, not permission to delete implementation or weaken contracts.
 
 ## Exact current records
 
@@ -31,10 +20,6 @@ uv run --frozen --no-build python tools/coverage/report_execution_gaps.py --form
 | `app/bff` | `com/subhrodip/squarewise/bff/messaging/config/BffMessagingConfiguration` | `BffMessagingConfiguration.kt` | `bffReplicaBinding` | 56 | 11 | `QA10-B02` | GraphQL resolver/scalar/error/limit behavior, admission validation, and exact public extensions. | **NO-INSTRUCTION-EXECUTION** | Add a direct unit/integration test for the public behavior, or document why the method is framework/bootstrap wiring; do not delete it or bypass its contract for coverage. | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` |
 | `app/bff` | `com/subhrodip/squarewise/bff/messaging/config/BffMessagingConfiguration` | `BffMessagingConfiguration.kt` | `rabbitBffEventListener` | 65 | 6 | `QA10-B02` | GraphQL resolver/scalar/error/limit behavior, admission validation, and exact public extensions. | **NO-INSTRUCTION-EXECUTION** | Add a direct unit/integration test for the public behavior, or document why the method is framework/bootstrap wiring; do not delete it or bypass its contract for coverage. | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` |
 | `app/bff` | `com/subhrodip/squarewise/bff/messaging/config/BffMessagingConfiguration` | `BffMessagingConfiguration.kt` | `bffMessageListenerContainer` | 73 | 34 | `QA10-B02` | GraphQL resolver/scalar/error/limit behavior, admission validation, and exact public extensions. | **NO-INSTRUCTION-EXECUTION** | Add a direct unit/integration test for the public behavior, or document why the method is framework/bootstrap wiring; do not delete it or bypass its contract for coverage. | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` |
-| `app/bff` | `com/subhrodip/squarewise/bff/transport/AccountsGateway` | `AccountsGateway.kt` | `startBrowserLogin` | 37 | 23 | `QA10-B01` | Bearer/watermark propagation, transport failure mapping, redaction, and deployed gateway behavior. | **NO-INSTRUCTION-EXECUTION** | Add a direct unit/integration test for the public behavior, or document why the method is framework/bootstrap wiring; do not delete it or bypass its contract for coverage. | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` |
-| `app/bff` | `com/subhrodip/squarewise/bff/transport/AccountsGateway` | `AccountsGateway.kt` | `verifyBrowserLogin` | 46 | 39 | `QA10-B01` | Bearer/watermark propagation, transport failure mapping, redaction, and deployed gateway behavior. | **NO-INSTRUCTION-EXECUTION** | Add a direct unit/integration test for the public behavior, or document why the method is framework/bootstrap wiring; do not delete it or bypass its contract for coverage. | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` |
-| `app/bff` | `com/subhrodip/squarewise/bff/transport/AccountsGateway` | `AccountsGateway.kt` | `refreshBrowserSession` | 55 | 26 | `QA10-B01` | Bearer/watermark propagation, transport failure mapping, redaction, and deployed gateway behavior. | **NO-INSTRUCTION-EXECUTION** | Add a direct unit/integration test for the public behavior, or document why the method is framework/bootstrap wiring; do not delete it or bypass its contract for coverage. | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` |
-| `app/bff` | `com/subhrodip/squarewise/bff/transport/AccountsGateway` | `AccountsGateway.kt` | `logoutBrowserSession` | 64 | 27 | `QA10-B01` | Bearer/watermark propagation, transport failure mapping, redaction, and deployed gateway behavior. | **NO-INSTRUCTION-EXECUTION** | Add a direct unit/integration test for the public behavior, or document why the method is framework/bootstrap wiring; do not delete it or bypass its contract for coverage. | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` |
 | `app/expense-core` | `com/subhrodip/squarewise/expensecore/messaging/config/OutboxMessagingConfiguration` | `OutboxMessagingConfiguration.kt` | `rabbitBrokerPublisher` | 25 | 11 | `QA10-C01` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. | **NO-INSTRUCTION-EXECUTION** | Add a direct unit/integration test for the public behavior, or document why the method is framework/bootstrap wiring; do not delete it or bypass its contract for coverage. | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` |
 | `app/expense-core` | `com/subhrodip/squarewise/expensecore/recurring/service/RecurringExpenseService` | `RecurringExpenseService.kt` | `processDueOccurrences` | 183 | 8 | `QA10-C03` | Recurring date/catch-up/locking/membership/duplicate/failure behavior and notification/outbox effects. | **NO-INSTRUCTION-EXECUTION** | Add a direct unit/integration test for the public behavior, or document why the method is framework/bootstrap wiring; do not delete it or bypass its contract for coverage. | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` |
 | `app/expense-core` | `com/subhrodip/squarewise/expensecore/security/ProductionSecurityConfig` | `ProductionSecurityConfig.kt` | `jwtDecoder` | 30 | 11 | `QA10-C01` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. | **NO-INSTRUCTION-EXECUTION** | Add a direct unit/integration test for the public behavior, or document why the method is framework/bootstrap wiring; do not delete it or bypass its contract for coverage. | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` |

@@ -3,6 +3,7 @@ package com.subhrodip.squarewise.bff.transport
 import com.subhrodip.squarewise.ids.contracts.ApiEndpoints
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
+import com.subhrodip.squarewise.bff.transport.model.auth.BrowserLoginStartRequest
 import java.net.InetSocketAddress
 import java.time.Duration
 import java.util.concurrent.ExecutorService
@@ -74,6 +75,48 @@ class AccountsGatewayTest {
         assertThat((cause as UpstreamServiceException).status).isEqualTo(503)
         assertThat(cause.message).doesNotContain("internal account details")
     }
+
+    @Test
+    fun `forwards browser login lifecycle calls with stable payloads`() {
+        val requests = mutableListOf<Pair<String, String>>()
+        server.createContext(ApiEndpoints.Accounts.V1.PATH_LOGIN_START) { exchange ->
+            requests += exchange.requestMethod to readBody(exchange)
+            respond(exchange, 202, """{"status":"ACCEPTED","retryAfterSeconds":30}""")
+        }
+        server.createContext(ApiEndpoints.Accounts.V1.PATH_LOGIN_VERIFY) { exchange ->
+            requests += exchange.requestMethod to readBody(exchange)
+            respond(exchange, 200, """{"accessToken":"access","tokenType":"Bearer","expiresIn":600,"refreshToken":"refresh"}""")
+        }
+        server.createContext(ApiEndpoints.Accounts.V1.PATH_TOKEN_REFRESH) { exchange ->
+            requests += exchange.requestMethod to readBody(exchange)
+            respond(exchange, 200, """{"accessToken":"access-2","tokenType":"Bearer","expiresIn":600,"refreshToken":"refresh-2"}""")
+        }
+        var logoutAuthorization: String? = null
+        server.createContext(ApiEndpoints.Accounts.V1.PATH_LOGOUT) { exchange ->
+            logoutAuthorization = exchange.requestHeaders.getFirst(ApiEndpoints.Headers.AUTHORIZATION)
+            requests += exchange.requestMethod to readBody(exchange)
+            respond(exchange, 204, "")
+        }
+
+        val started = gateway.startBrowserLogin(BrowserLoginStartRequest("alice@example.com", "EMAIL")).block()
+        val verified = gateway.verifyBrowserLogin("credential").block()
+        val refreshed = gateway.refreshBrowserSession("refresh").block()
+        gateway.logoutBrowserSession("access-2", "refresh-2").block()
+
+        assertThat(started?.status).isEqualTo("ACCEPTED")
+        assertThat(started?.retryAfterSeconds).isEqualTo(30)
+        assertThat(verified?.refreshToken).isEqualTo("refresh")
+        assertThat(refreshed?.accessToken).isEqualTo("access-2")
+        assertThat(logoutAuthorization).isEqualTo("Bearer access-2")
+        assertThat(requests.map { it.first }).containsExactly("POST", "POST", "POST", "POST")
+        assertThat(requests[0].second).contains("alice@example.com")
+        assertThat(requests[1].second).contains("credential").contains("BROWSER")
+        assertThat(requests[2].second).contains("refresh")
+        assertThat(requests[3].second).contains("refresh-2")
+    }
+
+    private fun readBody(exchange: HttpExchange): String =
+        exchange.requestBody.bufferedReader().use { it.readText() }
 
     private fun respond(exchange: HttpExchange, status: Int, body: String) {
         val bytes = body.toByteArray(Charsets.UTF_8)

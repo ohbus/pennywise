@@ -7205,7 +7205,8 @@
         "2026-10-02 QA-10 added evidence-target metadata to all 39 JaCoCo method records and exact source-line records; target existence is tested separately from branch execution, and no production implementation or contract changed.",
         "2026-10-02 QA-10 added record-level acceptance criteria to the branch and source-line ledgers, requiring exact invariant/input/durable/deployed proof rather than a test-file reference alone.",
         "2026-10-02 QA10-E2E01 made source, Bruno, and execution-artifact statuses explicit for all 54 operations; every row remains NO-EXECUTION-ARTIFACT-INGESTED until a runner result is recorded.",
-        "2026-10-02 QA10-E2E01 added surface-aware REST-path and GraphQL-field request signals so duplicate operation IDs cannot be credited across protocols; all 54 remain source-only."
+        "2026-10-02 QA10-E2E01 added surface-aware REST-path and GraphQL-field request signals so duplicate operation IDs cannot be credited across protocols; all 54 remain source-only.",
+        "2026-10-02 QA-10 added docs/quality/qa10-gap-summary.md as the reviewer entry point for branch, unit/integration, E2E-source, and runtime evidence, with explicit closure rules and reproduction commands."
       ],
       "reviewer": "/root",
       "blocker": null

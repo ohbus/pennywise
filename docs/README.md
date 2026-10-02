@@ -56,6 +56,7 @@ This index is the navigation entry point for repository documentation. [`AGENTS.
 - [Public-interface operation matrix](quality/public-interface-operation-matrix.md)
 - [Test operations guide](quality/test-operations-guide.md)
 - [Repository-wide test coverage gap audit](quality/test-coverage-gap-audit.md)
+- [QA-10 test-gap summary](quality/qa10-gap-summary.md)
 - [Current QA-10 branch-gap ledger](quality/qa10-current-branch-gap-ledger.md)
 - [Current QA-10 branch-line gap ledger](quality/qa10-branch-line-gap-ledger.md)
 - [Current QA-10 concrete execution-gap ledger](quality/qa10-execution-gap-ledger.md)

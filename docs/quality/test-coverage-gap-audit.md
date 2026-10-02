@@ -6,6 +6,8 @@
 **Scope:** `app/`, `libs/`, `tests/`, `tools/bruno/`, contracts, and the
 test/quality documentation.
 
+For a concise evidence-state overview, see the [QA-10 test-gap summary](qa10-gap-summary.md).
+
 ## Current baseline
 
 As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **39

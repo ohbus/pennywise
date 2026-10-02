@@ -14,6 +14,12 @@ Current inventory: **54 operations** (45 REST and 9 GraphQL). The source scan fi
 an E2E reference for all 54 and a Bruno reference for 5; the remaining 49 Bruno
 signals are not required substitutes for the deployed E2E matrix.
 
+Latest recorded execution is **NOT-GREEN**: `make acceptance-live` on 2026-10-01
+passed 65 of 71 requests and failed logout, expense create/update/delete,
+settlement record/reversal; the following `make e2e-live` stopped on the signed
+owner `getProfilesBatch` workload-authority mismatch. These failures remain open
+acceptance evidence even where the affected operation has a source reference.
+
 ## Per-operation records
 
 | Surface | Service | Operation | Method | Path | Acceptance row | Required acceptance criteria | E2E evidence status | E2E signal | Bruno signal |

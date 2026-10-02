@@ -62,8 +62,16 @@ class CoverageInventoryTest(unittest.TestCase):
             else:
                 self.assertIn(": identify a focused", target)
         self.assertEqual(
-            2,
+            11,
             sum(gap.closure_status == "BEHAVIOR-COVERED-MAPPING" for gap in gaps),
+        )
+        group_store_gaps = [gap for gap in gaps if "JpaGroupStore" in gap.class_name]
+        self.assertEqual(9, len(group_store_gaps))
+        self.assertTrue(
+            all(gap.closure_status == "BEHAVIOR-COVERED-MAPPING" for gap in group_store_gaps)
+        )
+        self.assertTrue(
+            all("JpaGroupStoreClaimTest" in gap.record_acceptance for gap in group_store_gaps)
         )
         expected_counts = {
             "QA10-A01": 0,
@@ -673,7 +681,7 @@ class CoverageInventoryTest(unittest.TestCase):
         )
 
         for marker in (
-            "through the current audited coverage commit `aaa34fd`",
+            "through the current audited branch tip",
             "`2110ffd` is the explicit restoration/audit commit",
             "`3b3a3da` changes only `libs/security/build.gradle.kts`",
             "`cff7f76`\nchanges CI/Makefile Python execution",

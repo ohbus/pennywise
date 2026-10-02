@@ -7206,7 +7206,8 @@
         "2026-10-02 QA-10 added record-level acceptance criteria to the branch and source-line ledgers, requiring exact invariant/input/durable/deployed proof rather than a test-file reference alone.",
         "2026-10-02 QA10-E2E01 made source, Bruno, and execution-artifact statuses explicit for all 54 operations; every row remains NO-EXECUTION-ARTIFACT-INGESTED until a runner result is recorded.",
         "2026-10-02 QA10-E2E01 added surface-aware REST-path and GraphQL-field request signals so duplicate operation IDs cannot be credited across protocols; all 54 remain source-only.",
-        "2026-10-02 QA-10 added docs/quality/qa10-gap-summary.md as the reviewer entry point for branch, unit/integration, E2E-source, and runtime evidence, with explicit closure rules and reproduction commands."
+        "2026-10-02 QA-10 added docs/quality/qa10-gap-summary.md as the reviewer entry point for branch, unit/integration, E2E-source, and runtime evidence, with explicit closure rules and reproduction commands.",
+        "2026-10-02 QA10-C04 reviewed the nine JpaGroupStore residual mappings against JpaGroupStoreTest and JpaGroupStoreClaimTest; normal/rejection lifecycle, race, rollback, revision, audit, sync, and outbox behavior is covered, while JaCoCo line mappings remain visible. The review split is 27 candidate structural, 11 behavior-covered mappings, and 1 open-design record; no implementation or contract changed."
       ],
       "reviewer": "/root",
       "blocker": null

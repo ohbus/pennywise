@@ -219,6 +219,8 @@ def record_acceptance(class_name: str, method: str) -> str:
         return "Assert validity immediately before idle and absolute deadlines, expiry at each deadline, and clock-skew behavior; preserve the constructor invariant that idle expiry cannot exceed absolute expiry."
     if "profilecontroller" in qualified:
         return "Route a real public profile/deletion/export failure through the helper and assert the exact problem envelope, or record a separately reviewed design decision; reflection-only invocation is insufficient."
+    if "jpagroupstore" in qualified:
+        return "Assert the lifecycle behavior through JpaGroupStoreTest and JpaGroupStoreClaimTest: missing and archived groups, membership authorization, duplicate removal, placeholder binding, invite validation/revocation, claim expiry/races, durable revision, audit, sync, outbox, and rollback invariants. Treat only the remaining JaCoCo mappings as instrumentation after confirming both normal and rejection paths."
     if "fallbackjwtdecoder" in qualified:
         return "Assert first-decoder success, later-decoder success, and final validation failure; retain the non-empty decoder-list invariant that makes the terminal null guard unreachable."
     if "browseroriginpolicy" in qualified:
@@ -275,8 +277,8 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
         )
     if "jpagroupstore" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Reconfirm foreign-key/membership invariants and retain lifecycle tests; classify only the exact defensive mapping after reviewer sign-off.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "JpaGroupStoreTest and JpaGroupStoreClaimTest exercise the normal and rejection paths for every residual lifecycle mapping, including missing/archived groups, placeholder/invite guards, duplicate removal, expiry, claim races, and durable side effects. Keep the implementation guards; classify only the remaining JaCoCo line mapping as behavior-covered after preserving the integration evidence.",
         )
     if "expensecontroller" in qualified:
         return (

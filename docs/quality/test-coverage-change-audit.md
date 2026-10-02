@@ -1,7 +1,7 @@
 # Test-coverage change audit
 
 **Scope:** every branch commit from merge-base `65b2fb66d61d90b4d92e4e23a55e06f43cd89270`
-(`master`) through the current audited coverage commit `aaa34fd`, whose subject indicates
+(`master`) through the current audited branch tip, whose subject indicates
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
@@ -18,6 +18,20 @@ documentation, and a separately reviewable commit.
 The audit found no contract-file changes in the test/coverage/QA commit set.
 Most commits were test, tooling, or documentation-only. Four commits had
 production implementation edits:
+
+## Current residual review increment
+
+The current regenerated ledger keeps all 39 methods and 78 missed JaCoCo
+branches visible. It reclassifies the nine `JpaGroupStore` records as
+`BEHAVIOR-COVERED-MAPPING` after reviewing `JpaGroupStoreTest` and
+`JpaGroupStoreClaimTest`: normal and rejection lifecycle paths, archived and
+missing groups, placeholder/invite validation, duplicate removal, expiry,
+claim races, rollback, revisions, audit, synchronization, and outbox effects
+are exercised without changing the store. The residual JaCoCo counters remain
+in the ledger and are treated as line/instrumentation mappings, not removed
+coverage gaps. The resulting review split is 27 candidate structural mappings,
+11 behavior-covered mappings, and one open-design helper. No implementation,
+contract, guard, or JaCoCo exclusion was added or removed.
 
 As a reproducible history check, the subject-matching audit selected **240
 commits** from `master..HEAD` whose subjects contain `test`, `coverage`, `QA`,

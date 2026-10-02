@@ -12,7 +12,7 @@ evidence.
 
 | Area | Current evidence | Still missing |
 | --- | --- | --- |
-| JaCoCo branches | 39 production methods / 78 missed branches; all assigned to a QA row, record-level acceptance criterion, and test boundary | 36 structural mappings require source/invariant review; 2 instrumentation mappings are behavior-covered; 1 ProfileController helper is open design |
+| JaCoCo branches | 39 production methods / 78 missed branches; all assigned to a QA row, record-level acceptance criterion, and test boundary | 27 structural mappings require source/invariant review; 11 JpaGroupStore/telemetry mappings are behavior-covered at tested boundaries; 1 ProfileController helper is open design |
 | Exact branch lines | 52 source-line records account for all 78 missed branches | Each line remains open until behavior proof or an evidence-backed structural classification is recorded |
 | Concrete execution | 3 zero-instruction methods are recorded separately | ProfileController private helpers need a real caller or reviewed design decision; inline telemetry remains a compiler mapping |
 | Contract operations | 54 operations: 45 REST and 9 GraphQL; 54 request-shaped source signals | Static source is not execution evidence; every operation still needs its required persona, failure, durability, async, concurrency, and isolation artifact |

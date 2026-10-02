@@ -3,6 +3,8 @@
 The registry is the authoritative state machine. This ledger records meaningful
 execution checkpoints and evidence; it does not replace task acceptance criteria.
 
+| 2026-10-03 | QA-10 persistence state increment | Extended the Expense Core persistence state suite across expense, group, membership, and outbox entities, verifying ORM-style mutable state updates and reads for identifiers, lifecycle flags, timestamps, payloads, and retry state. | `./gradlew.bat test --no-daemon --console=plain` passed (53 actionable tasks); `./gradlew.bat jacocoTestReport --rerun-tasks --no-daemon --console=plain` passed (36 actionable tasks). Aggregate is 5,652/5,709 lines (99.00%), 37,805/39,473 instructions (95.77%), and 2,675/2,741 branches (97.59%). | current increment |
+
 | 2026-10-02 | QA-10 sequential coverage verification | Corrected the login-delivery regression test setup and regenerated JaCoCo only after the complete test task finished; the earlier parallel invocation could race report generation. The full suite now passes and the current aggregate is 99.00% line, 95.47% instruction, and 97.59% branch coverage. | `./gradlew.bat test --no-daemon --console=plain` passed (53 actionable tasks); then `./gradlew.bat jacocoTestReport --rerun-tasks --no-daemon --console=plain` passed (36 actionable tasks). | current increment |
 
 | 2026-10-02 | QA-10 notification configuration increment | Added notification configuration contract tests for SMTP binding, queue defaults, and dead-letter routing values. | `./gradlew.bat :app:notifications:test --tests '*NotificationConfigurationPropertiesTest' --no-daemon` passed; `git diff --check` passed. | current increment |

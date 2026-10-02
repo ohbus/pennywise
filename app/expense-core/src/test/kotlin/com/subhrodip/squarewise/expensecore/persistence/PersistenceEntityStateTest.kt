@@ -7,7 +7,11 @@ import com.subhrodip.squarewise.expensecore.expenses.persistence.entity.ExpenseE
 import com.subhrodip.squarewise.expensecore.expenses.persistence.entity.ExpensePayerEntity
 import com.subhrodip.squarewise.expensecore.groups.domain.GroupAuditEntity
 import com.subhrodip.squarewise.expensecore.groups.domain.GroupInvitationEntity
+import com.subhrodip.squarewise.expensecore.groups.domain.GroupEntity
+import com.subhrodip.squarewise.expensecore.groups.domain.GroupMembershipEntity
 import com.subhrodip.squarewise.expensecore.recurring.domain.RecurringExpenseOccurrence
+import com.subhrodip.squarewise.expensecore.messaging.outbox.model.OutboxStatus
+import com.subhrodip.squarewise.expensecore.messaging.outbox.persistence.OutboxEntity
 import com.subhrodip.squarewise.expensecore.settlements.domain.SettlementStatus
 import com.subhrodip.squarewise.expensecore.settlements.persistence.SettlementEntity
 import com.subhrodip.squarewise.expensecore.sync.persistence.SyncChangeEntity
@@ -181,5 +185,103 @@ class PersistenceEntityStateTest {
         assertEquals(4, audit.revision)
         assertEquals("{\"name\":\"Holiday\"}", audit.payload)
         assertEquals(createdAt, audit.occurredAt)
+    }
+
+    @Test
+    fun `mutable persistence entities retain ORM-updated state`() {
+        val replacementGroupId = UUID.randomUUID()
+        val replacementExpenseId = UUID.randomUUID()
+        val replacementTime = Instant.parse("2026-10-03T12:00:00Z")
+
+        val expense = ExpenseEntity(
+            expenseId = UUID.randomUUID(),
+            groupId = UUID.randomUUID(),
+            description = "Original",
+            currency = "EUR",
+            amountMinor = 100,
+            allocationMode = "EQUAL"
+        )
+        expense.expenseId = replacementExpenseId
+        expense.groupId = replacementGroupId
+        expense.description = "Updated"
+        expense.category = "travel"
+        expense.currency = "USD"
+        expense.amountMinor = 250
+        expense.version = 2
+        expense.allocationMode = "CUSTOM"
+        expense.createdAt = replacementTime
+        expense.deleted = true
+        expense.updatedAt = replacementTime
+        expense.payers = mutableListOf()
+        expense.allocations = mutableListOf()
+
+        val membership = GroupMembershipEntity(UUID.randomUUID(), UUID.randomUUID())
+        membership.membershipId = UUID.randomUUID()
+        membership.groupId = replacementGroupId
+        membership.subject = "updated-subject"
+        membership.displayName = "Updated member"
+        membership.isPlaceholder = true
+        membership.status = "REMOVED"
+
+        val group = GroupEntity(UUID.randomUUID(), "Original", "TRIP", "EUR")
+        group.groupId = replacementGroupId
+        group.name = "Updated group"
+        group.kind = "HOUSEHOLD"
+        group.currency = "USD"
+        group.status = "ARCHIVED"
+        group.revision = 4
+
+        val outbox = OutboxEntity(
+            eventId = UUID.randomUUID(),
+            eventType = "group.created",
+            aggregateId = UUID.randomUUID(),
+            groupId = UUID.randomUUID(),
+            groupRevision = 1,
+            occurredAt = Instant.EPOCH,
+            payload = "{}"
+        )
+        outbox.eventId = UUID.randomUUID()
+        outbox.eventType = "group.updated"
+        outbox.aggregateId = replacementExpenseId
+        outbox.groupId = replacementGroupId
+        outbox.groupRevision = 4
+        outbox.occurredAt = replacementTime
+        outbox.payload = "{\"name\":\"Updated group\"}"
+        outbox.status = OutboxStatus.PARKED
+        outbox.attempts = 2
+        outbox.leaseUntil = replacementTime
+        outbox.availableAt = replacementTime
+
+        assertEquals(replacementExpenseId, expense.expenseId)
+        assertEquals(replacementGroupId, expense.groupId)
+        assertEquals("Updated", expense.description)
+        assertEquals("travel", expense.category)
+        assertEquals("USD", expense.currency)
+        assertEquals(250, expense.amountMinor)
+        assertEquals(2, expense.version)
+        assertEquals("CUSTOM", expense.allocationMode)
+        assertEquals(replacementTime, expense.createdAt)
+        assertEquals(true, expense.deleted)
+        assertEquals(replacementTime, expense.updatedAt)
+        assertEquals(replacementGroupId, membership.groupId)
+        assertEquals("updated-subject", membership.subject)
+        assertEquals("Updated member", membership.displayName)
+        assertEquals(true, membership.isPlaceholder)
+        assertEquals("REMOVED", membership.status)
+        assertEquals("Updated group", group.name)
+        assertEquals("HOUSEHOLD", group.kind)
+        assertEquals("USD", group.currency)
+        assertEquals("ARCHIVED", group.status)
+        assertEquals(4, group.revision)
+        assertEquals("group.updated", outbox.eventType)
+        assertEquals(replacementExpenseId, outbox.aggregateId)
+        assertEquals(replacementGroupId, outbox.groupId)
+        assertEquals(4, outbox.groupRevision)
+        assertEquals(replacementTime, outbox.occurredAt)
+        assertEquals("{\"name\":\"Updated group\"}", outbox.payload)
+        assertEquals(OutboxStatus.PARKED, outbox.status)
+        assertEquals(2, outbox.attempts)
+        assertEquals(replacementTime, outbox.leaseUntil)
+        assertEquals(replacementTime, outbox.availableAt)
     }
 }

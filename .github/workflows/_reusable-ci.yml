@@ -430,6 +430,7 @@ jobs:
           SQUAREWISE_E2E_TOKEN_B: ${{ steps.oidc-token.outputs.e2e_bob_token }}
           SQUAREWISE_E2E_TOKEN_NONMEMBER: ${{ steps.oidc-token.outputs.e2e_nonmember_token }}
         run: |
+          make e2e-auth-email
           make acceptance-live
           make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"
           tests/e2e/acquire_local_tokens.sh

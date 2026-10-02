@@ -38,6 +38,14 @@ The end-to-end test suites run against the live local environment (`infra/local/
    - Fault healing: unpauses RabbitMQ; verifies outbox relay daemon drains `PENDING` records to `PUBLISHED`.
    - End-to-end verification: Notifications service receives and confirms delivered events.
 
+5. **Passwordless Auth-Email Delivery (`test_auth_email_delivery.py`)**:
+   - Real Accounts outbox/RabbitMQ/Notifications/Mailpit CODE delivery.
+   - One-time credential redemption and replay rejection.
+   - Refresh-family revocation after logout and idempotent logout replay.
+   - Remaining acceptance work is explicit: LINK delivery, expiry, wrong-subject
+     redemption, rate-limit/error redaction, broker retry/DLQ, and log/output
+     secret absence.
+
 ### Running Test Suites via Makefile
 
 ```sh

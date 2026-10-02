@@ -15,4 +15,15 @@ class DeletionRequestServiceTest {
         assertEquals(service.request("alice"), service.request("alice"))
         assertEquals(DeletionStatus.REQUESTED, service.get("alice")!!.status)
     }
+
+    @Test
+    fun `cancel and complete expose terminal store transitions`() {
+        val service = DeletionRequestService(InMemoryDeletionRequestStore { Instant.EPOCH })
+
+        service.request("cancelled")
+        service.request("completed")
+
+        assertEquals(DeletionStatus.CANCELLED, service.cancel("cancelled")?.status)
+        assertEquals(DeletionStatus.COMPLETED, service.complete("completed")?.status)
+    }
 }

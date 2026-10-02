@@ -321,6 +321,33 @@ class TokenSessionServiceTest @Autowired constructor(
     }
 
     @Test
+    fun `direct family revocation persists for every session in the family`() {
+        val now = Instant.now()
+        val initial = service.createSession(
+            accountId = UUID.randomUUID(),
+            subject = currentSubject,
+            email = "family-revoke@example.com",
+            clientKind = "BROWSER",
+            deviceLabel = "test",
+            now = now,
+        )
+        val rotated = service.rotateSession(
+            rawRefreshToken = initial.refreshToken,
+            deviceLabel = "test-2",
+            now = now.plusSeconds(1),
+        )
+        val familyId = sessionRepository
+            .findByRefreshTokenDigest(digest.digest(rotated.refreshToken))
+            ?.familyId
+
+        requireNotNull(familyId)
+        service.revokeFamily(familyId, now.plusSeconds(2))
+
+        assertNotNull(sessionRepository.findByRefreshTokenDigest(digest.digest(initial.refreshToken))?.revokedAt)
+        assertNotNull(sessionRepository.findByRefreshTokenDigest(digest.digest(rotated.refreshToken))?.revokedAt)
+    }
+
+    @Test
     fun `logout ignores blank and unknown refresh tokens`() {
         service.revokeSessionByRefreshToken("   ", now = Instant.now())
         service.revokeSessionByRefreshToken("unknown-refresh-token", now = Instant.now())

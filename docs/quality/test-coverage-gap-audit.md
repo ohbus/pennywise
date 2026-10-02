@@ -30,7 +30,7 @@ records the 50 exact JaCoCo source lines that account for those 76 branches;
 it is regenerated from the same reports and is not a substitute for behavior
 acceptance.
 The companion [`QA-10 concrete execution-gap ledger`](qa10-execution-gap-ledger.md)
-also records 54 production methods with zero covered instructions after
+also records 51 production methods with zero covered instructions after
 excluding compiler-generated methods, accessors, application entry points, and
 interface declarations. These records catch method-level execution gaps that
 branch-only discovery cannot represent. Framework/bootstrap entries require
@@ -118,7 +118,7 @@ per-operation authorization and side-effect matrix.
 
 For repeatable concrete execution-gap discovery, run
 `uv run --frozen --no-build python tools/coverage/report_execution_gaps.py --format markdown`.
-The current report contains 54 zero-instruction concrete methods across
+The current report contains 51 zero-instruction concrete methods across
 Accounts, BFF, Expense Core, Notifications, and shared libraries. It excludes
 interfaces and compiler-generated accessors/scaffolding but deliberately keeps
 real domain, transport, security, messaging, and configuration methods visible

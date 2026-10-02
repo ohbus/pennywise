@@ -210,13 +210,13 @@ def record_acceptance(class_name: str, method: str) -> str:
 
     qualified = class_name.lower()
     if "clientaddressresolver" in qualified:
-        return "Exercise direct, trusted-proxy, IPv4, IPv6, malformed, and unsupported-address-family inputs; assert a stable non-empty partition and document the JDK address-family invariant for any unreachable fallback."
+        return "Exercise direct, trusted-proxy, IPv4, IPv6, malformed, missing, multi-hop, and unsupported-address-family inputs through ClientAddressResolverTest; assert a stable non-empty partition and document the JDK address-family invariant for any unreachable fallback."
     if "emailaddress" in qualified:
-        return "Exercise canonical, whitespace, malformed, length, IDN, and label-boundary inputs; assert normalized output or the documented validation error without weakening parser guards."
+        return "Exercise canonical, whitespace, malformed, local/domain length, IDN, control, separator, and label-boundary inputs through EmailAddressTest; assert normalized output or the documented validation error without weakening parser guards."
     if "loginverificationservice" in qualified:
         return "Verify canonical-email enrollment/reuse and display-name derivation through the public verification flow; prove the fallback arm is unreachable after EmailAddress validation."
     if "sessionpolicy" in qualified:
-        return "Assert validity immediately before idle and absolute deadlines, expiry at each deadline, and clock-skew behavior; preserve the constructor invariant that idle expiry cannot exceed absolute expiry."
+        return "Assert validity immediately before idle and absolute deadlines, expiry at each deadline, capped refresh, and clock-skew behavior through SessionPolicyTest; preserve the constructor invariant that idle expiry cannot exceed absolute expiry."
     if "profilecontroller" in qualified:
         return "Route a real public profile/deletion/export failure through the helper and assert the exact problem envelope, or record a separately reviewed design decision; reflection-only invocation is insufficient."
     if "jpagroupstore" in qualified:
@@ -292,13 +292,13 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
         )
     if "clientaddressresolver" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain IPv4/IPv6/malformed boundary tests and classify only the unsupported-address-family defensive mapping under the JDK family invariant.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "ClientAddressResolverTest covers direct/trusted proxy extraction, multi-hop and spoofed headers, IPv4/IPv6 normalization, missing and malformed addresses, and proxy-property parsing. Keep the non-empty fallback and classify only the residual address-family mapping under the JDK invariant.",
         )
     if "emailaddress" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain canonicalization and malformed/length/IDN tests; review the residual parser short-circuit mapping without weakening validation.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "EmailAddressTest covers canonicalization, whitespace, malformed input, local/complete length limits, IDN conversion failure, control characters, separators, and label boundaries. Keep all parser guards and classify only residual JaCoCo short-circuit mappings.",
         )
     if "loginverificationservice" in qualified:
         return (
@@ -307,8 +307,8 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
         )
     if "sessionpolicy" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain idle, absolute, and skew boundary tests; classify only the unreachable short-circuit under SessionExpiry ordering.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "SessionPolicyTest covers validity immediately before idle and absolute deadlines, expiry at each boundary, capped refresh, clock skew, and constructor invariants. Keep the expiry predicate and classify only the residual short-circuit mapping.",
         )
     if "fallbackjwtdecoder" in qualified:
         return (

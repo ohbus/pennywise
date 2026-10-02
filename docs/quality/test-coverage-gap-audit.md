@@ -49,8 +49,8 @@ delivery, identity-provider behavior, or cross-service side effects.
 
 ## Audit evidence and limits
 
-The current source inventory contains 498 Kotlin production files and 122
-Kotlin test files under applications and libraries. The generated local JaCoCo
+The current source inventory contains 400 Kotlin production files and 173
+Kotlin test files under `app/` and `libs/`. The generated local JaCoCo
 reports currently report these line-coverage signals:
 
 The exact method-level branch records are maintained in the generated

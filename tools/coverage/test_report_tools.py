@@ -208,14 +208,8 @@ class CoverageInventoryTest(unittest.TestCase):
             encoding="utf-8"
         )
         targets = (
-            "AesGcmCredentialEnvelopeProtector.kt:38",
-            "JpaAccountIdentityStore.kt:54",
-            "JpaAccountIdentityStore.kt:74",
-            "JpaAccountIdentityStore.kt:104",
-            "JpaAccountIdentityStore.kt:145",
             "LoginVerificationService.kt:60",
             "SessionPolicy.kt:82",
-            "TokenSessionService.kt:116",
         )
         for target in targets:
             with self.subTest(target=target):

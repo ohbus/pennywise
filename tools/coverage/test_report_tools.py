@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from contextlib import redirect_stdout
 from io import StringIO
+import json
 from pathlib import Path
 import re
 import unittest
@@ -204,6 +205,43 @@ class CoverageInventoryTest(unittest.TestCase):
             f"{production_count} Kotlin production files and {test_count}",
             audit,
         )
+
+    def test_every_openapi_rest_path_has_a_central_endpoint_literal(self) -> None:
+        """Prevent contract paths from bypassing the shared endpoint vocabulary."""
+
+        endpoint_source = (
+            ROOT
+            / "libs/ids/src/main/kotlin/com/subhrodip/squarewise/ids/contracts/ApiEndpoints.kt"
+        ).read_text(encoding="utf-8")
+        composed_paths = {
+            "/allocations/preview": "PATH_ALLOCATION_PREVIEW",
+            "/groups/{groupId}/expenses": "PATH_GROUP_EXPENSES",
+            "/groups/{groupId}/expenses/{expenseId}": "PATH_GROUP_EXPENSE_BY_ID",
+            "/groups/{groupId}/balances": "PATH_GROUP_BALANCES",
+            "/groups/{groupId}/settlements": "PATH_GROUP_SETTLEMENTS",
+            "/groups/{groupId}/settlements/{settlementId}/reversal": "PATH_GROUP_SETTLEMENT_REVERSAL",
+            "/groups/{groupId}/settlements/suggestions": "PATH_GROUP_SETTLEMENT_SUGGESTIONS",
+            "/groups/{groupId}/sync/changes": "PATH_GROUP_SYNC_CHANGES",
+            "/groups/{groupId}/sync/snapshot": "PATH_GROUP_SYNC_SNAPSHOT",
+            "/groups/{groupId}/search": "PATH_GROUP_SEARCH",
+            "/groups/{groupId}/export": "PATH_GROUP_EXPORT",
+            "/groups/{groupId}/schedules": "PATH_GROUP_SCHEDULES",
+            "/groups/{groupId}/schedules/{scheduleId}": "PATH_GROUP_SCHEDULE_BY_ID",
+            "/groups/{groupId}/schedules/{scheduleId}/pause": "PATH_GROUP_SCHEDULE_PAUSE",
+            "/groups/{groupId}/schedules/{scheduleId}/resume": "PATH_GROUP_SCHEDULE_RESUME",
+            "/groups/{groupId}/invites/{token}/revoke": "PATH_GROUP_INVITE_REVOKE",
+            "/inbox/{notificationId}/read": "PATH_INBOX_MARK_READ",
+        }
+        for contract_path in sorted((ROOT / "contracts/rest").glob("*.openapi.json")):
+            document = json.loads(contract_path.read_text(encoding="utf-8"))
+            for path in document["paths"]:
+                with self.subTest(contract=contract_path.name, path=path):
+                    literal_present = f'"{path}"' in endpoint_source
+                    constant_name = composed_paths.get(path)
+                    constant_present = constant_name is not None and (
+                        f"const val {constant_name}" in endpoint_source
+                    )
+                    self.assertTrue(literal_present or constant_present)
 
     def test_auth_email_e2e_destination_is_wired_and_documented(self) -> None:
         """Prevent the passwordless E2E suite from becoming an unexecuted orphan."""

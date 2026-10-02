@@ -30,6 +30,10 @@ class ApiEndpointsTest {
             ApiEndpoints.ExpenseCore.V1.groupPlaceholders("group-1")
         )
         assertEquals(
+            "/expense-core/v1/groups/group-1/invites/token-1/revoke",
+            ApiEndpoints.ExpenseCore.V1.groupInviteRevoke("group-1", "token-1")
+        )
+        assertEquals(
             "/expense-core/v1/groups/group-1/schedules/schedule-1/pause",
             ApiEndpoints.ExpenseCore.V1.groupSchedulePause("group-1", "schedule-1")
         )

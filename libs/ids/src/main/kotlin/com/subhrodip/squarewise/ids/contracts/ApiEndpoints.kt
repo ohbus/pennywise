@@ -95,6 +95,7 @@ object ApiEndpoints {
             const val GROUP_MEMBER_BY_ID: String = "/groups/{groupId}/members/{membershipId}"
             const val GROUP_PLACEHOLDERS: String = "/groups/{groupId}/placeholders"
             const val GROUP_INVITES: String = "/groups/{groupId}/invites"
+            const val GROUP_INVITE_REVOKE: String = "/groups/{groupId}/invites/{token}/revoke"
             const val INVITES: String = "/invites"
             const val INVITE_CLAIM: String = "/invites/{token}/claim"
 
@@ -150,6 +151,7 @@ object ApiEndpoints {
             const val PATH_GROUP_MEMBER_BY_ID: String = "$BASE$GROUP_MEMBER_BY_ID"
             const val PATH_GROUP_PLACEHOLDERS: String = "$BASE$GROUP_PLACEHOLDERS"
             const val PATH_GROUP_INVITES: String = "$BASE$GROUP_INVITES"
+            const val PATH_GROUP_INVITE_REVOKE: String = "$BASE$GROUP_INVITE_REVOKE"
             const val PATH_INVITES: String = "$BASE$INVITES"
             const val PATH_INVITE_CLAIM: String = "$BASE$INVITE_CLAIM"
             const val PATH_GROUP_EXPENSES: String = "$BASE$GROUP_EXPENSES"
@@ -174,6 +176,8 @@ object ApiEndpoints {
                 "$BASE/groups/$groupId/members/$membershipId"
             fun groupPlaceholders(groupId: Any): String = "$BASE/groups/$groupId/placeholders"
             fun groupInvites(groupId: Any): String = "$BASE/groups/$groupId/invites"
+            fun groupInviteRevoke(groupId: Any, token: String): String =
+                "$BASE/groups/$groupId/invites/$token/revoke"
             fun inviteClaim(token: String): String = "$BASE/invites/$token/claim"
             fun groupExpenses(groupId: Any): String = "$BASE/groups/$groupId/expenses"
             fun groupExpenseById(groupId: Any, expenseId: Any): String = "$BASE/groups/$groupId/expenses/$expenseId"

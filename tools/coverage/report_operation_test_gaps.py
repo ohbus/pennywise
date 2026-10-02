@@ -15,7 +15,7 @@ import re
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Iterable, Literal, Sequence
+from typing import Iterable, Literal, Mapping, Sequence
 
 OutputFormat = Literal["json", "markdown"]
 
@@ -34,6 +34,7 @@ class OperationEvidence:
     e2e_request_references: tuple[str, ...]
     bruno_references: tuple[str, ...]
     acceptance_row: str = "QA10-E2E01"
+    execution_status: str = "NO-EXECUTION-ARTIFACT-INGESTED"
 
     @property
     def has_e2e_signal(self) -> bool:
@@ -86,13 +87,6 @@ class OperationEvidence:
         """Describe source discovery without implying executed acceptance."""
 
         return "SOURCE-REFERENCE-ONLY" if self.has_e2e_signal else "MISSING-SOURCE-SIGNAL"
-
-    @property
-    def execution_status(self) -> str:
-        """State that this source inventory has no execution-result input."""
-
-        return "NO-EXECUTION-ARTIFACT-INGESTED"
-
 
 def acceptance_criteria(item: OperationEvidence) -> str:
     """Return the minimum per-operation deployed acceptance contract.
@@ -280,6 +274,60 @@ def request_references(
     return tuple(path for path, text in sources if pattern.search(re.sub(r"\{[A-Za-z0-9_]+\}", "{}", text)) is not None)
 
 
+def _required_string(record: Mapping[str, object], field: str) -> str:
+    """Read a required non-blank string from an execution artifact record."""
+
+    value = record.get(field)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"execution artifact field {field!r} must be a non-blank string")
+    return value
+
+
+def load_execution_artifact(path: Path) -> dict[tuple[str, str], str]:
+    """Load strict per-operation execution evidence without inferring results.
+
+    The artifact must identify the source revision, environment, exact surface
+    and operation, a durable report path, and at least one named assertion.
+    Source references alone never enter this mapping.
+    """
+
+    raw: object = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError("execution artifact root must be an object")
+    document: Mapping[str, object] = raw
+    if document.get("schema") != "qa10-operation-execution-v1":
+        raise ValueError("unsupported QA-10 execution artifact schema")
+    _required_string(document, "source_revision")
+    _required_string(document, "environment")
+    operations = document.get("operations")
+    if not isinstance(operations, list):
+        raise ValueError("execution artifact operations must be an array")
+
+    results: dict[tuple[str, str], str] = {}
+    for raw_record in operations:
+        if not isinstance(raw_record, dict):
+            raise ValueError("each execution operation record must be an object")
+        record: Mapping[str, object] = raw_record
+        surface = _required_string(record, "surface")
+        operation = _required_string(record, "operation")
+        status = _required_string(record, "status")
+        if status not in {"passed", "failed", "blocked"}:
+            raise ValueError(f"unsupported execution status {status!r}")
+        _required_string(record, "artifact")
+        assertions = record.get("assertions")
+        if (
+            not isinstance(assertions, list)
+            or not assertions
+            or not all(isinstance(assertion, str) and assertion.strip() for assertion in assertions)
+        ):
+            raise ValueError("execution artifact assertions must contain at least one non-blank string")
+        key = (surface, operation)
+        if key in results:
+            raise ValueError(f"duplicate execution artifact record for {surface}/{operation}")
+        results[key] = f"EXECUTION-ARTIFACT-{status.upper()}"
+    return results
+
+
 def rest_operations(root: Path) -> list[OperationEvidence]:
     """Load REST operation IDs from the OpenAPI contracts."""
 
@@ -330,13 +378,15 @@ def graphql_operations(root: Path) -> list[OperationEvidence]:
     return operations
 
 
-def inventory(root: Path) -> list[OperationEvidence]:
+def inventory(root: Path, execution_artifact: Path | None = None) -> list[OperationEvidence]:
     """Build stable REST and GraphQL source-reference evidence."""
 
     e2e = text_files(root / "tests/e2e", root)
     bruno = text_files(root / "tools/bruno", root)
+    execution = load_execution_artifact(execution_artifact) if execution_artifact else {}
     result: list[OperationEvidence] = []
     for operation in [*rest_operations(root), *graphql_operations(root)]:
+        key = (operation.surface, operation.operation)
         result.append(
             OperationEvidence(
                 **{
@@ -347,9 +397,13 @@ def inventory(root: Path) -> list[OperationEvidence]:
                         operation, e2e
                     ),
                     "bruno_references": references(operation.operation, bruno),
+                    "execution_status": execution.get(key, "NO-EXECUTION-ARTIFACT-INGESTED"),
                 }
             )
         )
+    unknown = set(execution) - {(item.surface, item.operation) for item in result}
+    if unknown:
+        raise ValueError(f"execution artifact contains unknown operations: {sorted(unknown)}")
     return sorted(result, key=lambda item: (item.surface, item.service, item.operation))
 
 
@@ -386,6 +440,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--format", choices=("json", "markdown"), default="markdown")
+    parser.add_argument("--execution-artifact", type=Path, default=None)
     return parser.parse_args(argv)
 
 
@@ -393,7 +448,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Emit the operation reference inventory."""
 
     options = parse_args(sys.argv[1:] if argv is None else argv)
-    items = inventory(options.root.resolve())
+    items = inventory(
+        options.root.resolve(),
+        options.execution_artifact.resolve() if options.execution_artifact else None,
+    )
     if options.format == "json":
         records: list[dict[str, object]] = [
             {

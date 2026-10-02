@@ -25,6 +25,41 @@ settlement record/reversal; the following `make e2e-live` stopped on the signed
 owner `getProfilesBatch` workload-authority mismatch. These failures remain open
 acceptance evidence even where the affected operation has a source reference.
 
+## Execution-artifact ingestion
+
+The source inventory does not infer execution from Python/Bruno references. A
+real runner may provide an optional normalized artifact with this shape:
+
+```json
+{
+  "schema": "qa10-operation-execution-v1",
+  "source_revision": "<git-sha>",
+  "environment": "ci-compose-oidc",
+  "operations": [
+    {
+      "surface": "REST",
+      "operation": "getMe",
+      "status": "passed",
+      "artifact": "artifacts/e2e/get-me.json",
+      "assertions": ["profile identity, ownership, and redaction"]
+    }
+  ]
+}
+```
+
+Every record must identify an inventory operation exactly, use `passed`,
+`failed`, or `blocked`, point to a retained artifact, and name at least one
+assertion. Duplicate or unknown operations and empty assertion lists are
+rejected. Ingest it with:
+
+```text
+uv run --frozen --no-build python tools/coverage/report_operation_test_gaps.py \
+  --format json --execution-artifact artifacts/qa10-operation-execution.json
+```
+
+The resulting `EXECUTION-ARTIFACT-*` status is evidence of the supplied report,
+not a replacement for reviewing the operation-specific acceptance criteria.
+
 ## Per-operation records
 
 | Surface | Service | Operation | Method | Path | Acceptance row | Required acceptance criteria | E2E source status | E2E request signal | E2E callable signal | E2E file signal | Bruno status | Execution artifact status |

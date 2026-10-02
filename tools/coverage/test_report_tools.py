@@ -8,6 +8,7 @@ from io import StringIO
 import json
 from pathlib import Path
 import re
+import tempfile
 import unittest
 
 from tools.coverage.report_branch_gaps import (
@@ -26,6 +27,7 @@ from tools.coverage.report_operation_test_gaps import (
     acceptance_criteria,
     callable_references,
     inventory,
+    load_execution_artifact,
     main as operation_report_main,
     references,
     render_markdown as render_operation_markdown,
@@ -263,6 +265,54 @@ class CoverageInventoryTest(unittest.TestCase):
             '"execution_status": "NO-EXECUTION-ARTIFACT-INGESTED"',
             output.getvalue(),
         )
+
+    def test_execution_artifact_marks_only_declared_operation(self) -> None:
+        artifact = {
+            "schema": "qa10-operation-execution-v1",
+            "source_revision": "abc123",
+            "environment": "ci-compose",
+            "operations": [
+                {
+                    "surface": "REST",
+                    "operation": "getMe",
+                    "status": "passed",
+                    "artifact": "reports/get-me.json",
+                    "assertions": ["profile identity and ownership"],
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "qa10-execution.json"
+            path.write_text(json.dumps(artifact), encoding="utf-8")
+
+            items = inventory(ROOT, path)
+
+        get_me = next(item for item in items if item.operation == "getMe")
+        get_group = next(item for item in items if item.operation == "getGroup")
+        self.assertEqual("EXECUTION-ARTIFACT-PASSED", get_me.execution_status)
+        self.assertEqual("NO-EXECUTION-ARTIFACT-INGESTED", get_group.execution_status)
+
+    def test_execution_artifact_requires_traceable_assertions(self) -> None:
+        artifact = {
+            "schema": "qa10-operation-execution-v1",
+            "source_revision": "abc123",
+            "environment": "ci-compose",
+            "operations": [
+                {
+                    "surface": "REST",
+                    "operation": "getMe",
+                    "status": "passed",
+                    "artifact": "reports/get-me.json",
+                    "assertions": [],
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "invalid-qa10-execution.json"
+            path.write_text(json.dumps(artifact), encoding="utf-8")
+
+            with self.assertRaises(ValueError):
+                load_execution_artifact(path)
 
     def test_operation_references_do_not_accept_identifier_substrings(self) -> None:
         sources = (

@@ -68,16 +68,17 @@ class ProfileController(
             code = error.errorCode,
             status = status,
             title = error.message ?: error.errorCode.safeDetail,
-            detail = error.message ?: error.errorCode.safeDetail
+            detail = error.message ?: error.errorCode.safeDetail,
+            violations = emptyList()
         )
     }
 
     private fun problem(
         code: ErrorCode,
         status: HttpStatusCode,
-        title: String = "Internal server error",
-        detail: String = "An unexpected error occurred",
-        violations: List<FieldViolation> = emptyList()
+        title: String,
+        detail: String,
+        violations: List<FieldViolation>
     ): ResponseEntity<ApiProblem> =
         ResponseEntity.status(status)
             .contentType(MediaType.APPLICATION_PROBLEM_JSON)

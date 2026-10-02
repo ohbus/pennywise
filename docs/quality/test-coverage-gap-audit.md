@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **51
-production methods with missed branches** containing **101 missed branches**,
+As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **47
+production methods with missed branches** containing **95 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 0 operations without a literal E2E reference and 49 without a literal
@@ -210,7 +210,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **51 methods with at least one missed
+The regenerated JaCoCo XML contains **47 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -218,13 +218,16 @@ classified as generated/structural with reviewer approval.
 
 | Module | Classes with missed lines | Classes with missed branches | Methods with missed branches |
 | --- | ---: | ---: | ---: |
-| `app/accounts` | 3 | 7 | 10 |
-| `app/bff` | 2 | 3 | 6 |
-| `app/expense-core` | 5 | 11 | 31 |
-| `app/notifications` | 1 | 1 | 1 |
-| `libs/db` | 1 | 2 | 2 |
+| `app/accounts` | 27 | 6 | 6 |
+| `app/bff` | 17 | 3 | 6 |
+| `app/expense-core` | 40 | 11 | 31 |
+| `app/notifications` | 8 | 1 | 1 |
+| `libs/db` | 7 | 2 | 2 |
 | `libs/errors` | 1 | 1 | 1 |
-| **Total** | **13** | **25** | **51** |
+| `libs/ids` | 3 | 0 | 0 |
+| `libs/observability` | 2 | 0 | 0 |
+| `libs/security` | 2 | 0 | 0 |
+| **Total** | **107** | **24** | **47** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -246,9 +249,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**51**), and the sum of
+equal the `Methods with missed branches` total above (**47**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**101**). Each object carries the module, production class, source file,
+(**95**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, assignment basis, and the row's machine-readable
 `acceptance_criteria`. The record count and branch-count
@@ -283,16 +286,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 51-record JSON discovery inventory and
+The repository currently has the exact 47-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 51 records. The A07 and E02 tables provide supplemental method-level review
+all 47 records. The A07 and E02 tables provide supplemental method-level review
 detail; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (51 records):
+Current provisional assignment workload (47 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -302,7 +305,7 @@ Current provisional assignment workload (51 records):
 | QA10-A04 | 0 | Explicit external identity-provider path; constructor and unsupported-delegation behavior are locally covered, deployed provider exchange remains required. |
 | QA10-A05 | 1 | Local and non-local OIDC decoder selection, discovery, and algorithm wiring; the original decoder terminal branch is retained and needs explicit test evidence. |
 | QA10-A06 | 1 | Profile controller and JPA persistence authorization boundary; restored private mapper requires classification or direct evidence. |
-| QA10-A07 | 6 | Session, credential, identity, replay, and cleanup behavior; blank and unknown refresh-token rotation, revoked-only/replaced-only/accountless refresh-session rejection, unmapped-account email-update rejection, and invalid credential-envelope encoding rejection now fail closed, while database-invariant profile branches, concurrent database race, and deployed session evidence remain open. |
+| QA10-A07 | 2 | Session, credential, replay, and cleanup behavior; database-backed identity projections are now covered by integration and defensive unit tests, while session-policy/database-invariant branches, concurrent database race, and deployed session evidence remain open. |
 | QA10-A08 | 1 | Email canonicalization and malformed-input boundaries; restored explicit domain checks require direct boundary evidence. |
 | QA10-B01 | 1 | BFF upstream transport and gateway failure behavior; nullable bearer omission is covered across gateway operations, while timeout, partial-response, malformed-body, and deployed failure evidence remain open. |
 | QA10-B02 | 0 | GraphQL resolver, error, scalar, and limit behavior; resolver classification, DateTime and MoneyMinor literal acceptance/rejection including nullable AST values, blank-bearer context omission, empty mutation invalidation behavior, required messaging startup validation, bounded deduplicator capacity validation, acceptance-fault filter boundary, empty settlement amount fallback, and subscription admission validation are covered. |

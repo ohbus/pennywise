@@ -26,7 +26,7 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_every_current_branch_gap_has_a_qa_row(self) -> None:
         gaps = all_gaps(ROOT)
 
-        self.assertEqual(51, len(gaps))
+        self.assertEqual(47, len(gaps))
         self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
         self.assertTrue(all(gap.assignment_basis for gap in gaps))
         self.assertTrue(all(gap.acceptance_criteria for gap in gaps))
@@ -37,7 +37,7 @@ class CoverageInventoryTest(unittest.TestCase):
                 "QA10-A04": 0,
                 "QA10-A05": 1,
                 "QA10-A06": 1,
-                "QA10-A07": 6,
+                "QA10-A07": 2,
                 "QA10-A08": 1,
                 "QA10-B01": 1,
                 "QA10-B02": 0,
@@ -64,7 +64,7 @@ class CoverageInventoryTest(unittest.TestCase):
             expected_counts,
             {row: actual_counts.get(row, 0) for row in expected_counts},
         )
-        self.assertEqual(101, sum(gap.missed_branches for gap in gaps))
+        self.assertEqual(95, sum(gap.missed_branches for gap in gaps))
 
     def test_operation_inventory_is_complete_and_assigned(self) -> None:
         operations = inventory(ROOT)
@@ -108,7 +108,7 @@ class CoverageInventoryTest(unittest.TestCase):
         rendered = render_branch_gaps(gaps)
         rows = rendered.splitlines()
 
-        self.assertEqual(53, len(rows))
+        self.assertEqual(49, len(rows))
         self.assertEqual(
             "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria |",
             rows[0],
@@ -247,7 +247,7 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_ci_documentation_uses_current_branch_baseline(self) -> None:
         ci = (ROOT / "docs/operations/ci.md").read_text(encoding="utf-8")
 
-        self.assertIn("51 methods containing 101 missed", ci)
+        self.assertIn("47 methods containing 95 missed", ci)
         self.assertNotIn("220 missed-branch methods", ci)
 
     def test_ci_python_tooling_is_locked_and_build_hooks_are_disabled(self) -> None:

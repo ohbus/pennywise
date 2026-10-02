@@ -205,6 +205,20 @@ class CoverageInventoryTest(unittest.TestCase):
             audit,
         )
 
+    def test_auth_email_e2e_destination_is_wired_and_documented(self) -> None:
+        """Prevent the passwordless E2E suite from becoming an unexecuted orphan."""
+
+        makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/_reusable-ci.yml").read_text(
+            encoding="utf-8"
+        )
+        readme = (ROOT / "tests/e2e/README.md").read_text(encoding="utf-8")
+
+        self.assertIn("e2e-auth-email:", makefile)
+        self.assertIn("e2e-all: e2e-auth-email", makefile)
+        self.assertIn("make e2e-auth-email", workflow)
+        self.assertIn("test_auth_email_delivery.py", readme)
+
     def test_audit_requires_per_record_and_operation_evidence(self) -> None:
         audit = (ROOT / "docs/quality/test-coverage-gap-audit.md").read_text(
             encoding="utf-8"

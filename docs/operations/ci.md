@@ -19,7 +19,10 @@ Workflows declare `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'` in their top-leve
 Node 24 ahead of runner deprecation deadlines.
 
 Each verification-matrix job receives isolated PostgreSQL 17 and RabbitMQ 4.3
-service containers. Docker health checks (`pg_isready` and
+service containers. The CI-only RabbitMQ service uses the protocol image rather
+than the management variant because verification and Sonar do not use the
+management UI; the local Compose topology retains management for operator
+inspection. Docker health checks (`pg_isready` and
 `rabbitmq-diagnostics ping`) must pass before job steps begin. RabbitMQ receives
 a 60-second health-check start period, 10-second health-check timeout, and 24
 five-second retries to accommodate slow hosted-runner startup without weakening

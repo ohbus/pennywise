@@ -1076,7 +1076,8 @@
       ],
       "evidence": [
         "Ruby YAML parser loaded all four workflows; python3 tools/contracts/validate.py and ./gradlew test passed on 2026-09-17; git diff --check passed.",
-        "Main-only image publishing is gated by reusable workflow input and packages:write permission; PR and branch wrappers grant contents:read only."
+        "Main-only image publishing is gated by reusable workflow input and packages:write permission; PR and branch wrappers grant contents:read only.",
+        "2026-10-02 reduced hosted verification and Sonar RabbitMQ service startup work to the rabbitmq:4.3 protocol image; management remains in local Compose. Workflow yamllint, security hygiene, mypy, public-surface validation, and diff checks passed; hosted rerun remains unverified."
       ],
       "reviewer": "/root",
       "blocker": null

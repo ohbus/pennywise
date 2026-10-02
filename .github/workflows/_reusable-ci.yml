@@ -109,7 +109,9 @@ jobs:
           --health-cmd="pg_isready -U squarewise -d squarewise"
           --health-interval=5s --health-timeout=5s --health-retries=12
       rabbitmq:
-        image: rabbitmq:4.3-management
+        # Verification only needs the broker protocol and diagnostics; omit the
+        # management plugin to reduce hosted service-container startup cost.
+        image: rabbitmq:4.3
         ports: ['5672:5672']
         options: >-
           --health-cmd="rabbitmq-diagnostics -q ping"
@@ -242,7 +244,9 @@ jobs:
           --health-cmd="pg_isready -U squarewise -d squarewise"
           --health-interval=5s --health-timeout=5s --health-retries=12
       rabbitmq:
-        image: rabbitmq:4.3-management
+        # Sonar only needs the broker protocol and diagnostics; omit the
+        # management plugin to reduce hosted service-container startup cost.
+        image: rabbitmq:4.3
         ports: ['5672:5672']
         options: >-
           --health-cmd="rabbitmq-diagnostics -q ping"

@@ -122,6 +122,7 @@ class JpaSynchronizationStoreTest @Autowired constructor(
         assertThrows(IllegalArgumentException::class.java) { store.append("group", " ", null) }
         assertThrows(IllegalArgumentException::class.java) { store.delete(" ", "entity") }
         assertThrows(IllegalArgumentException::class.java) { store.delete("group", " ") }
+        assertThrows(IllegalArgumentException::class.java) { store.snapshot(" ", null, 10) }
         assertThrows(IllegalArgumentException::class.java) { store.snapshot("group", null, 0) }
         assertThrows(IllegalArgumentException::class.java) { store.snapshot("group", null, 101) }
     }

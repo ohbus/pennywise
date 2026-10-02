@@ -8,6 +8,7 @@ import com.subhrodip.squarewise.expensecore.search.persistence.decodeSearchCurso
 import com.subhrodip.squarewise.expensecore.categories.ExpenseCategory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.Base64
 
@@ -17,6 +18,8 @@ class ExpenseSearchTest {
         val search = ExpenseSearch()
         val data = listOf(SearchExpense("2", "Dinner", "EUR", "1000"), SearchExpense("1", "dinner taxi", "EUR", "2000"))
         assertEquals(listOf("1", "2"), search.filter(data, "DINNER").map { it.expenseId })
+        assertEquals(listOf("1", "2"), search.filter(data, "   ").map { it.expenseId })
+        assertTrue(search.filter(data, "breakfast").isEmpty())
         assertEquals("'=SUM(A1)", search.csvCell("=SUM(A1)"))
     }
 

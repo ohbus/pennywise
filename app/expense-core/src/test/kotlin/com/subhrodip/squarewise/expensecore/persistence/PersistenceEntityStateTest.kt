@@ -37,8 +37,10 @@ class PersistenceEntityStateTest {
             placeholderId = placeholderId
         )
         val claimedAt = Instant.parse("2026-10-02T12:00:00Z")
+        val revokedAt = Instant.parse("2026-10-02T13:00:00Z")
         invitation.claimedAt = claimedAt
         invitation.claimedBy = "alice"
+        invitation.revokedAt = revokedAt
 
         assertEquals(groupId, settlement.groupId)
         assertEquals(from, settlement.fromParticipantId)
@@ -46,11 +48,13 @@ class PersistenceEntityStateTest {
         assertEquals(1250, settlement.amountMinor)
         assertEquals(SettlementStatus.REVERSED, settlement.status)
         assertEquals("Duplicate external payment", settlement.reversalReason)
+        assertEquals("a".repeat(64), invitation.token)
         assertEquals(groupId, invitation.groupId)
+        assertEquals(Instant.parse("2026-10-03T12:00:00Z"), invitation.expiresAt)
         assertEquals(placeholderId, invitation.placeholderId)
         assertEquals(claimedAt, invitation.claimedAt)
         assertEquals("alice", invitation.claimedBy)
-        assertEquals(null, invitation.revokedAt)
+        assertEquals(revokedAt, invitation.revokedAt)
     }
 
     @Test
@@ -118,15 +122,19 @@ class PersistenceEntityStateTest {
     fun `payer and allocation records retain expense participant amounts`() {
         val expense = mock(ExpenseEntity::class.java)
         val participantId = UUID.randomUUID()
-        val payer = ExpensePayerEntity(UUID.randomUUID(), expense, participantId, 900)
-        val allocation = ExpenseAllocationEntity(UUID.randomUUID(), expense, participantId, 900)
+        val payerId = UUID.randomUUID()
+        val allocationId = UUID.randomUUID()
+        val payer = ExpensePayerEntity(payerId, expense, participantId, 900)
+        val allocation = ExpenseAllocationEntity(allocationId, expense, participantId, 900)
         payer.amountMinor = 1000
         allocation.allocatedMinor = 1000
 
         assertEquals(expense, payer.expense)
+        assertEquals(payerId, payer.payerId)
         assertEquals(participantId, payer.participantId)
         assertEquals(1000, payer.amountMinor)
         assertEquals(expense, allocation.expense)
+        assertEquals(allocationId, allocation.allocationId)
         assertEquals(participantId, allocation.participantId)
         assertEquals(1000, allocation.allocatedMinor)
     }
@@ -143,9 +151,11 @@ class PersistenceEntityStateTest {
             payload = null,
             createdAt = createdAt
         )
+        val auditId = UUID.randomUUID()
+        val auditGroupId = UUID.randomUUID()
         val audit = GroupAuditEntity(
-            auditId = UUID.randomUUID(),
-            groupId = UUID.randomUUID(),
+            auditId = auditId,
+            groupId = auditGroupId,
             subject = "alice",
             action = "group.renamed",
             revision = 4,
@@ -165,6 +175,8 @@ class PersistenceEntityStateTest {
         assertEquals("{\"kind\":\"updated\"}", change.payload)
         assertEquals(createdAt, change.createdAt)
         assertEquals("bob", audit.subject)
+        assertEquals(auditId, audit.auditId)
+        assertEquals(auditGroupId, audit.groupId)
         assertEquals("group.updated", audit.action)
         assertEquals(4, audit.revision)
         assertEquals("{\"name\":\"Holiday\"}", audit.payload)

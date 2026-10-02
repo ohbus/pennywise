@@ -41,6 +41,11 @@ class RecurringExpenseServiceTest @Autowired constructor(
 ) {
 
     @Test
+    fun `default due-occurrence entrypoint uses current date and bounded catch-up`() {
+        assertEquals(0, service.processDueOccurrences())
+    }
+
+    @Test
     fun `creates schedule successfully with weekly frequency and initial next occurrence date`() {
         val group = groupStore.create("alice", CreateGroupRequest("Apartment 4B", "HOUSEHOLD", "EUR"))
         val startDate = LocalDate.of(2026, 9, 1)

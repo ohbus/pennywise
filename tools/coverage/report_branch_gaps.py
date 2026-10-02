@@ -45,10 +45,16 @@ class BranchLineGap:
     module: str
     package: str
     source_file: str
+    class_name: str
+    method: str
     source_line: int
     missed_branches: int
     covered_branches: int
     report: str
+    qa_row: str
+    acceptance_criteria: str
+    closure_status: str
+    next_action: str
 
 
 def qa_assignment(module: str, class_name: str) -> tuple[str, str]:
@@ -356,21 +362,42 @@ def line_gaps(root: Path) -> list[BranchLineGap]:
         document = ET.parse(report)
         for package in document.findall("./package"):
             package_name = package.get("name", "")
+            classes_by_source: dict[str, list[tuple[int, str, str]]] = {}
+            for clazz in package.findall("./class"):
+                source_name = clazz.get("sourcefilename", "")
+                class_name = clazz.get("name", "")
+                methods = classes_by_source.setdefault(source_name, [])
+                for method in clazz.findall("./method"):
+                    method_line = method.get("line")
+                    if method_line is not None:
+                        methods.append((int(method_line), class_name, method.get("name", "")))
             for source_file in package.findall("./sourcefile"):
                 source_name = source_file.get("name", "")
+                methods = sorted(classes_by_source.get(source_name, []))
                 for line in source_file.findall("./line"):
                     missed = int(line.get("mb", "0"))
                     if missed == 0:
                         continue
+                    source_line = int(line.get("nr", "0"))
+                    owners = [item for item in methods if item[0] <= source_line]
+                    _, class_name, method_name = owners[-1] if owners else (0, "", "")
+                    qa_row, _ = qa_assignment(module_name(root, report), class_name)
+                    closure_status, next_action = closure_review(class_name, method_name)
                     gaps.append(
                         BranchLineGap(
                             module=module_name(root, report),
                             package=package_name,
                             source_file=source_name,
-                            source_line=int(line.get("nr", "0")),
+                            class_name=class_name,
+                            method=method_name,
+                            source_line=source_line,
                             missed_branches=missed,
                             covered_branches=int(line.get("cb", "0")),
                             report=str(report.relative_to(root)).replace("\\", "/"),
+                            qa_row=qa_row,
+                            acceptance_criteria=qa_acceptance(qa_row),
+                            closure_status=closure_status,
+                            next_action=next_action,
                         )
                     )
     return sorted(
@@ -380,6 +407,8 @@ def line_gaps(root: Path) -> list[BranchLineGap]:
             gap.package,
             gap.source_file,
             gap.source_line,
+            gap.class_name,
+            gap.method,
         ),
     )
 
@@ -405,14 +434,15 @@ def line_markdown(gaps: Iterable[BranchLineGap]) -> str:
     """Render exact source-line branch gaps as a review ledger."""
 
     rows = [
-        "| Module | Package | Source | Line | Missed | Covered | Report |",
-        "| --- | --- | --- | ---: | ---: | ---: | --- |",
+        "| Module | Package | Source | Class | Method | Line | Missed | Covered | QA row | Acceptance criteria | Closure status | Next action | Report |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- |",
     ]
     for gap in gaps:
         rows.append(
-            f"| `{gap.module}` | `{gap.package}` | `{gap.source_file}` | "
-            f"{gap.source_line} | {gap.missed_branches} | {gap.covered_branches} | "
-            f"`{gap.report}` |"
+            f"| `{gap.module}` | `{gap.package}` | `{gap.source_file}` | `{gap.class_name}` | "
+            f"`{gap.method}` | {gap.source_line} | {gap.missed_branches} | "
+            f"{gap.covered_branches} | `{gap.qa_row}` | {gap.acceptance_criteria} | "
+            f"**{gap.closure_status}** | {gap.next_action} | `{gap.report}` |"
         )
     return "\n".join(rows)
 

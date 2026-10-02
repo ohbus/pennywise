@@ -167,13 +167,18 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertEqual(76, sum(gap.missed_branches for gap in gaps))
         self.assertTrue(all(gap.package for gap in gaps))
         self.assertTrue(all(gap.source_file for gap in gaps))
+        self.assertTrue(all(gap.class_name for gap in gaps))
+        self.assertTrue(all(gap.method for gap in gaps))
+        self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
+        self.assertTrue(all(gap.acceptance_criteria for gap in gaps))
+        self.assertTrue(all(gap.closure_status for gap in gaps))
         self.assertTrue(all(gap.source_line > 0 for gap in gaps))
 
     def test_committed_source_line_ledger_matches_current_inventory(self) -> None:
         ledger = (
             ROOT / "docs/quality/qa10-branch-line-gap-ledger.md"
         ).read_text(encoding="utf-8")
-        marker = "| Module | Package | Source | Line | Missed | Covered | Report |\n"
+        marker = "| Module | Package | Source | Class | Method | Line | Missed | Covered | QA row | Acceptance criteria | Closure status | Next action | Report |\n"
         self.assertIn(marker, ledger)
         self.assertEqual(
             line_markdown(line_gaps(ROOT)),

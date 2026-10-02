@@ -322,13 +322,13 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
         )
     if "bffgatewayfilters" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain origin/watermark boundary tests and classify only the Kotlin collection or short-circuit mapping after source/bytecode review.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "BffGatewayFiltersTest covers present, blank, and missing context values, absent and malformed downstream watermarks, monotonic propagation, and missing exchange context. Keep credential and watermark propagation unchanged; classify only the generated collection/short-circuit mapping while deployed upstream evidence remains a separate E2E requirement.",
         )
     if "liveupdatefanout" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain revocation, expiry, and membership tests; classify generated predicate/iterator mappings separately from the still-open broker/WebSocket E2E evidence.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "LiveUpdateFanoutTest covers expiry, matching and non-matching user/group revocation, queue membership, signal completion, and invalid inputs. Keep fanout and revocation behavior unchanged; classify only generated predicate/iterator mappings while deployed broker/WebSocket evidence remains a separate E2E requirement.",
         )
     if "recurrenceschedule" in qualified:
         return (

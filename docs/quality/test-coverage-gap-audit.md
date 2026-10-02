@@ -23,8 +23,8 @@ the repository-wide test and JaCoCo tasks. This baseline is local evidence;
 hosted CI, deployed E2E, and environment-owned release gates remain separate
 acceptance requirements.
 
-The current residual review split is **8 candidate structural mappings**,
-**30 behavior-covered boundary/instrumentation mappings**, and **one open-design
+The current residual review split is **4 candidate structural mappings**,
+**34 behavior-covered boundary/instrumentation mappings**, and **one open-design
 record** (`ProfileController.problem`/`mapErrorCode`). No
 missed method is unaccounted for; behavior-covered mappings are explicitly
 linked to tests, while structural and open-design records remain review work.

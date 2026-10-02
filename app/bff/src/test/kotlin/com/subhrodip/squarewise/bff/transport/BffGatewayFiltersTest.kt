@@ -79,6 +79,30 @@ class BffGatewayFiltersTest {
             .isEqualTo(DbWatermark.fromPosition(30).asLsn())
     }
 
+    /** Verifies a valid downstream watermark advances a lower response watermark. */
+    @Test
+    fun `advances a lower existing downstream watermark`() {
+        val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/").build())
+        exchange.response.headers.set(DbWatermarkHeaders.WRITER_WATERMARK, DbWatermark.fromPosition(10).asLsn())
+        val downstream = DbWatermark.fromPosition(20).asLsn()
+        val next = ExchangeFunction {
+            Mono.just(
+                ClientResponse.create(HttpStatus.OK)
+                    .header(DbWatermarkHeaders.WRITER_WATERMARK, downstream)
+                    .build()
+            )
+        }
+
+        BffGatewayFilters.bearerPropagation.filter(
+            ClientRequest.create(HttpMethod.GET, URI.create("http://expense-core/groups")).build(),
+            next
+        ).contextWrite(Context.of(BearerTokenContext.EXCHANGE_KEY, exchange)).block()
+
+        assertThat(exchange.response.headers.getFirst(DbWatermarkHeaders.WRITER_WATERMARK))
+            .withFailMessage("expected %s but was %s", downstream, exchange.response.headers.getFirst(DbWatermarkHeaders.WRITER_WATERMARK))
+            .isEqualTo(downstream)
+    }
+
     @Test
     fun `ignores malformed downstream watermark without mutating response`() {
         val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/").build())

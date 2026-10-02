@@ -34,6 +34,7 @@ class BranchGap:
     qa_row: str
     assignment_basis: str
     acceptance_criteria: str
+    evidence_target: str
     closure_status: str
     next_action: str
 
@@ -53,6 +54,7 @@ class BranchLineGap:
     report: str
     qa_row: str
     acceptance_criteria: str
+    evidence_target: str
     closure_status: str
     next_action: str
 
@@ -159,6 +161,46 @@ def qa_acceptance(qa_row: str) -> str:
         "QA10-E05": "Bounded observability labels and exact success/failure/slow/fallback metric behavior.",
     }
     return criteria.get(qa_row, "Exact behavior test or reviewed structural rationale linked to this production branch.")
+
+
+def evidence_target(module: str, class_name: str) -> str:
+    """Return the concrete test boundary that must supply residual evidence.
+
+    The result is a review target, not proof that the target currently executes
+    the exact branch. In particular, compiler-generated methods must be
+    evaluated through their public/service boundary, and open design rows must
+    not be closed with reflection-only tests.
+    """
+
+    qualified = class_name.lower()
+    targets = (
+        ("clientaddressresolver", "app/accounts/src/test/.../ClientAddressResolverTest.kt"),
+        ("emailaddress", "app/accounts/src/test/.../EmailAddressTest.kt"),
+        ("loginverificationservice", "app/accounts/src/test/.../LoginVerificationServiceTest.kt"),
+        ("sessionpolicy", "app/accounts/src/test/.../SessionPolicyBoundaryTest.kt"),
+        ("fallbackjwtdecoder", "app/accounts/src/test/.../FallbackJwtDecoderTest.kt"),
+        ("profilecontroller", "app/accounts/src/test/.../ProfileControllerTest.kt"),
+        ("browseroriginpolicy", "app/bff/src/test/.../BrowserOriginPolicyTest.kt"),
+        ("liveupdatefanout", "app/bff/src/test/.../LiveUpdateFanoutTest.kt"),
+        ("bffgatewayfilters", "app/bff/src/test/.../BffGatewayFiltersTest.kt"),
+        ("expensecontroller", "app/expense-core/src/test/.../ExpenseControllerTest.kt"),
+        ("jpagroupstore", "app/expense-core/src/test/.../JpaGroupStoreTest.kt"),
+        ("recurrenceschedule", "app/expense-core/src/test/.../RecurringExpenseServiceTest.kt (constructor boundary)"),
+        ("recurringexpenseservice", "app/expense-core/src/test/.../RecurringExpenseServiceTest.kt"),
+        ("searchcontroller", "app/expense-core/src/test/.../SearchControllerTest.kt"),
+        ("expensesearch", "app/expense-core/src/test/.../ExpenseSearchTest.kt"),
+        ("settlementsuggestionengine", "app/expense-core/src/test/.../SettlementSuggestionTest.kt"),
+        ("synccontroller", "app/expense-core/src/test/.../SyncControllerTest.kt"),
+        ("emaildispatcher", "app/notifications/src/test/.../EmailDispatcherTest.kt"),
+        ("dbreaderhealth", "libs/db/src/test/.../DbReaderHealthTest.kt"),
+        ("dboperationpolicy", "libs/db/src/test/.../DbOperationPolicyTest.kt"),
+        ("globalerrorhandler", "libs/errors/src/test/.../GlobalErrorHandlerTest.kt"),
+        ("dbtelemetry", "libs/observability/src/test/.../DbTelemetryTest.kt"),
+    )
+    for expression, target in targets:
+        if expression in qualified:
+            return target
+    return f"{module}: identify a focused unit/integration test boundary"
 
 
 def closure_review(class_name: str, method: str) -> tuple[str, str]:
@@ -337,6 +379,7 @@ def parse_report(root: Path, report: Path) -> list[BranchGap]:
                         qa_row=qa_row,
                         assignment_basis=assignment_basis,
                         acceptance_criteria=qa_acceptance(qa_row),
+                        evidence_target=evidence_target(module_name(root, report), class_name),
                         closure_status=closure_status,
                         next_action=next_action,
                     )
@@ -415,6 +458,7 @@ def line_gaps(root: Path) -> list[BranchLineGap]:
                             report=str(report.relative_to(root)).replace("\\", "/"),
                             qa_row=qa_row,
                             acceptance_criteria=qa_acceptance(qa_row),
+                            evidence_target=evidence_target(module_name(root, report), class_name),
                             closure_status=closure_status,
                             next_action=next_action,
                         )
@@ -436,15 +480,15 @@ def markdown(gaps: Iterable[BranchGap]) -> str:
     """Render branch gaps as a review-friendly Markdown table."""
 
     rows = [
-        "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria | Closure status | Next action |",
-        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- |",
+        "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria | Evidence target | Closure status | Next action |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- |",
     ]
     for gap in gaps:
         rows.append(
             f"| `{gap.module}` | `{gap.qa_row}` | `{gap.class_name}` | `{gap.source_file}` | "
             f"`{gap.method}` | {gap.source_line or ''} | {gap.missed_branches} | "
             f"{gap.covered_branches} | {gap.assignment_basis} | `{gap.report}` | "
-            f"{gap.acceptance_criteria} | **{gap.closure_status}** | {gap.next_action} |"
+            f"{gap.acceptance_criteria} | `{gap.evidence_target}` | **{gap.closure_status}** | {gap.next_action} |"
         )
     return "\n".join(rows)
 
@@ -453,15 +497,15 @@ def line_markdown(gaps: Iterable[BranchLineGap]) -> str:
     """Render exact source-line branch gaps as a review ledger."""
 
     rows = [
-        "| Module | Package | Source | Class | Method | Line | Missed | Covered | QA row | Acceptance criteria | Closure status | Next action | Report |",
-        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- |",
+        "| Module | Package | Source | Class | Method | Line | Missed | Covered | QA row | Acceptance criteria | Evidence target | Closure status | Next action | Report |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- |",
     ]
     for gap in gaps:
         rows.append(
             f"| `{gap.module}` | `{gap.package}` | `{gap.source_file}` | `{gap.class_name}` | "
             f"`{gap.method}` | {gap.source_line} | {gap.missed_branches} | "
             f"{gap.covered_branches} | `{gap.qa_row}` | {gap.acceptance_criteria} | "
-            f"**{gap.closure_status}** | {gap.next_action} | `{gap.report}` |"
+            f"`{gap.evidence_target}` | **{gap.closure_status}** | {gap.next_action} | `{gap.report}` |"
         )
     return "\n".join(rows)
 

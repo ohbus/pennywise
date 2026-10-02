@@ -343,6 +343,15 @@ persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
+The generated branch and source-line ledgers now include an explicit evidence
+target for every record. These targets identify the existing unit, controller,
+service, persistence, or integration boundary that must supply the proof; they
+are not assertions that the named test currently executes the exact JaCoCo
+branch. `RecurrenceSchedule` intentionally targets the recurring-service test
+boundary because compiler-generated constructor paths must not be covered by
+reflection-only tests. The ProfileController target remains open design because
+source search found no production caller for the private helper.
+
 Current provisional assignment workload (39 records):
 
 | QA row | Branch-gap records | Primary missing evidence |

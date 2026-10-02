@@ -12,6 +12,7 @@ import unittest
 
 from tools.coverage.report_branch_gaps import (
     all_gaps,
+    evidence_target,
     line_gaps,
     line_markdown,
     main as branch_report_main,
@@ -50,6 +51,15 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertEqual("<init>", ownership[("RecurrenceSchedule.kt", 11)])
         self.assertEqual("<init>", ownership[("DbOperationPolicy.kt", 28)])
         self.assertTrue(all(gap.next_action for gap in gaps))
+        self.assertTrue(all(gap.evidence_target for gap in gaps))
+        for gap in gaps:
+            target = gap.evidence_target.split(" (")[0]
+            if ".../" in target:
+                module_root, suffix = target.split("/src/test/.../", maxsplit=1)
+                matches = list((ROOT / module_root / "src/test").rglob(suffix))
+                self.assertTrue(matches, f"missing evidence target for {gap.class_name}")
+            else:
+                self.assertIn(": identify a focused", target)
         self.assertEqual(
             2,
             sum(gap.closure_status == "BEHAVIOR-COVERED-MAPPING" for gap in gaps),
@@ -89,6 +99,13 @@ class CoverageInventoryTest(unittest.TestCase):
             {row: actual_counts.get(row, 0) for row in expected_counts},
         )
         self.assertEqual(78, sum(gap.missed_branches for gap in gaps))
+
+    def test_evidence_targets_follow_public_or_service_boundaries(self) -> None:
+        """Keep generated targets actionable without treating them as coverage."""
+
+        self.assertIn("ProfileControllerTest.kt", evidence_target("app/accounts", "ProfileController"))
+        self.assertIn("RecurringExpenseServiceTest.kt (constructor boundary)", evidence_target("app/expense-core", "RecurrenceSchedule"))
+        self.assertIn("DbTelemetryTest.kt", evidence_target("libs/observability", "DbTelemetry"))
 
     def test_operation_inventory_is_complete_and_assigned(self) -> None:
         operations = inventory(ROOT)
@@ -228,11 +245,11 @@ class CoverageInventoryTest(unittest.TestCase):
 
         self.assertEqual(41, len(rows))
         self.assertEqual(
-            "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria | Closure status | Next action |",
+            "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria | Evidence target | Closure status | Next action |",
             rows[0],
         )
         self.assertEqual(
-            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- |",
+            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- |",
             rows[1],
         )
         self.assertEqual(
@@ -270,7 +287,7 @@ class CoverageInventoryTest(unittest.TestCase):
         ledger = (
             ROOT / "docs/quality/qa10-branch-line-gap-ledger.md"
         ).read_text(encoding="utf-8")
-        marker = "| Module | Package | Source | Class | Method | Line | Missed | Covered | QA row | Acceptance criteria | Closure status | Next action | Report |\n"
+        marker = "| Module | Package | Source | Class | Method | Line | Missed | Covered | QA row | Acceptance criteria | Evidence target | Closure status | Next action | Report |\n"
         self.assertIn(marker, ledger)
         self.assertEqual(
             line_markdown(line_gaps(ROOT)),

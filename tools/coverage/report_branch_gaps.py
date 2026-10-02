@@ -224,7 +224,7 @@ def record_acceptance(class_name: str, method: str) -> str:
     if "fallbackjwtdecoder" in qualified:
         return "Assert empty-list construction rejection, first-decoder success, later-decoder success, and final validation failure through FallbackJwtDecoderTest; retain the non-empty decoder-list invariant and classify only the unreachable terminal null guard."
     if "browseroriginpolicy" in qualified:
-        return "Build the policy with valid, blank, and malformed origin configuration and assert fail-closed browser/CSRF behavior; classify only compiler/collection short-circuits after source review."
+        return "Build the policy with valid, blank, malformed, wildcard, default-port, explicit-port, and native-only configuration through BrowserOriginPolicyTest; assert exact-origin fail-closed behavior and classify only compiler/collection short-circuits after source review."
     if "liveupdatefanout" in qualified:
         return "Assert fanout membership, expiry, revocation, ordering, and deduplication through public methods, plus broker acknowledgement/reconnect behavior in deployed E2E; generated iterator mappings require source review."
     if "bffgatewayfilters" in qualified:
@@ -234,7 +234,7 @@ def record_acceptance(class_name: str, method: str) -> str:
     if "jpagroupstore" in qualified:
         return "Assert each lifecycle mutation's durable state, membership/foreign-key invariant, revision, and failure result with persistence-backed tests; classify only proven defensive mappings."
     if "recurrenceschedule" in qualified:
-        return "Exercise constructor/date/frequency invariants through the recurring-service boundary; do not use reflection to target compiler-generated validation branches."
+        return "Exercise constructor identity, day-range, frequency-compatibility, monthly, and weekly invariants through RecurrencePolicyTest; do not use reflection to target compiler-generated validation branches."
     if "recurringexpenseservice" in qualified:
         return "Assert create/update optional-specification branches, date/end-date and catch-up limits, paused and duplicate occurrence paths, empty/foreign membership rejection, successful expense construction, generation failure pause, and outbox-present/absent notification behavior through RecurringExpenseServiceTest, RecurringExpenseFailureTest, and RecurringExpenseOptionalOutboxTest."
     if "searchcontroller" in qualified or "expensesearch" in qualified:
@@ -315,7 +315,12 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
             "BEHAVIOR-COVERED-MAPPING",
             "FallbackJwtDecoderTest covers empty-list construction rejection, first-success, later-success, and final-failure behavior. Keep the non-empty decoder-list invariant and fail-closed final exception; classify only the residual terminal null-guard mapping.",
         )
-    if "browseroriginpolicy" in qualified or "bffgatewayfilters" in qualified:
+    if "browseroriginpolicy" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "BrowserOriginPolicyTest covers valid and empty configurations, wildcard and malformed rejection, default and explicit ports, exact-origin matching, and native-only requests. Keep fail-closed origin validation and classify only the residual constructor/collection mapping.",
+        )
+    if "bffgatewayfilters" in qualified:
         return (
             "CANDIDATE-STRUCTURAL",
             "Retain origin/watermark boundary tests and classify only the Kotlin collection or short-circuit mapping after source/bytecode review.",
@@ -325,10 +330,10 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
             "CANDIDATE-STRUCTURAL",
             "Retain revocation, expiry, and membership tests; classify generated predicate/iterator mappings separately from the still-open broker/WebSocket E2E evidence.",
         )
-    if "recurrencedomain" in qualified or "recurrenceschedule" in qualified:
+    if "recurrenceschedule" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain constructor/date/frequency boundary tests and review only compiler-generated validation short-circuits.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "RecurrencePolicyTest covers valid monthly/weekly construction, blank identity, day bounds, and frequency compatibility. Keep constructor invariants and classify only compiler-generated validation short-circuits.",
         )
     if "recurringexpenseservice" in qualified:
         return (

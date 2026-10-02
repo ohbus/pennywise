@@ -334,6 +334,39 @@ class JpaExpenseStoreTest @Autowired constructor(
     }
 
     @Test
+    fun `idempotency key reuse with a different payload throws conflict`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Idempotency conflict", "TRIP", "EUR"))
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val original = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Original expense",
+            category = "travel",
+            currency = "EUR",
+            amountMinor = 1000,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(participantId, 1000)),
+            allocations = listOf(ExpenseAllocation(participantId, 1000))
+        )
+
+        expenseStore.create(group.groupId, original, "same-idempotency-key")
+
+        val error = assertThrows(ApplicationException::class.java) {
+            expenseStore.create(
+                group.groupId,
+                original.copy(description = "Changed expense"),
+                "same-idempotency-key"
+            )
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+        assertEquals("Original expense", expenseStore.findById(expenseId)?.description)
+    }
+
+    @Test
     fun `creation with duplicate expense ID but different payload throws conflict`() {
         val group = groupStore.create("alice", CreateGroupRequest("Road Trip", "TRIP", "EUR"))
         val groupId = group.groupId
@@ -362,6 +395,33 @@ class JpaExpenseStoreTest @Autowired constructor(
             expenseStore.create(groupId, record2, "idemp-2")
         }
         assertEquals(ErrorCode.ERR_06, err.errorCode)
+    }
+
+    @Test
+    fun `creation with duplicate expense ID and identical payload returns existing record`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Duplicate identity", "TRIP", "EUR"))
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val record = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Same expense",
+            category = "other",
+            currency = "EUR",
+            amountMinor = 700,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(participantId, 700)),
+            allocations = listOf(ExpenseAllocation(participantId, 700))
+        )
+
+        val first = expenseStore.create(group.groupId, record, "first-key")
+        val second = expenseStore.create(group.groupId, record.copy(createdAt = Instant.now()), "second-key")
+
+        assertEquals(first.expenseId, second.expenseId)
+        assertEquals(first.description, second.description)
+        assertEquals(2, balancePostingRepository.findByExpenseId(expenseId).size)
     }
 
     @Test
@@ -512,6 +572,50 @@ class JpaExpenseStoreTest @Autowired constructor(
         assertEquals(listOf(ExpensePayer(participantId, 3000)), updated.payers)
         assertEquals(listOf(ExpenseAllocation(participantId, 3000)), updated.allocations)
         assertEquals(0L, balancePostingRepository.findByExpenseId(expenseId).sumOf { it.amountMinor })
+    }
+
+    @Test
+    fun `updates mixed existing and new participants without violating unique rows`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Mixed participants", "TRIP", "EUR"))
+        val expenseId = UUID.randomUUID()
+        val existingParticipant = UUID.randomUUID()
+        val removedParticipant = UUID.randomUUID()
+        val newParticipant = UUID.randomUUID()
+        val initial = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Initial split",
+            category = "other",
+            currency = "EUR",
+            amountMinor = 2000,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(existingParticipant, 1000), ExpensePayer(removedParticipant, 1000)),
+            allocations = listOf(ExpenseAllocation(existingParticipant, 1000), ExpenseAllocation(removedParticipant, 1000))
+        )
+        expenseStore.create(group.groupId, initial, "mixed-initial")
+
+        val updated = expenseStore.update(
+            group.groupId,
+            expenseId,
+            initial.copy(
+                description = "Updated split",
+                amountMinor = 2000,
+                payers = listOf(ExpensePayer(existingParticipant, 1200), ExpensePayer(newParticipant, 800)),
+                allocations = listOf(ExpenseAllocation(existingParticipant, 1200), ExpenseAllocation(newParticipant, 800))
+            )
+        )
+
+        assertEquals(2, updated.version)
+        assertEquals(
+            setOf(existingParticipant, newParticipant),
+            updated.payers.map { it.participantId }.toSet()
+        )
+        assertEquals(
+            setOf(existingParticipant, newParticipant),
+            updated.allocations.map { it.participantId }.toSet()
+        )
     }
 
     /** Verifies update lookup and soft-deleted rejection outcomes do not mutate group state. */

@@ -97,4 +97,15 @@ class DbTelemetryTest {
             DbTelemetry(slowQueryThresholdMs = 0)
         }
     }
+
+    @Test
+    fun `default telemetry starts with empty counters without a registry`() {
+        val telemetry = DbTelemetry()
+
+        assertEquals(0, telemetry.snapshot().failures)
+        assertEquals(0, telemetry.snapshot().queries)
+        telemetry.route("groups", "writer")
+        telemetry.lag("reader", 0)
+        assertEquals(0, telemetry.snapshot().queries)
+    }
 }

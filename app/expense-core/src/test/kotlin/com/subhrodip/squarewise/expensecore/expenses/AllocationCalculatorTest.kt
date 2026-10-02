@@ -6,7 +6,9 @@ import com.subhrodip.squarewise.expensecore.expenses.api.request.AllocationItemD
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.random.Random
 
 class AllocationCalculatorTest {
     @Test
@@ -172,6 +174,44 @@ class AllocationCalculatorTest {
             assertEquals(true, equal.values.all { it >= 0L })
             assertEquals(true, weighted.values.all { it >= 0L })
             assertEquals(true, percentage.values.all { it >= 0L })
+        }
+    }
+
+    /**
+     * Exercises allocation invariants over reproducible generated inputs.
+     * A fixed seed makes failures replayable while covering more combinations
+     * than a short hand-written table.
+     */
+    @Test
+    fun `generated allocation cases conserve totals and remain deterministic`() {
+        val random = Random(0x5A17E)
+
+        repeat(200) {
+            val participantIds = (0 until random.nextInt(1, 6)).map { "participant-$it" }
+            val shuffledIds = participantIds.shuffled(random)
+            val total = random.nextLong(0, 100_000)
+            val weights = participantIds.associateWith { random.nextLong(1, 1_000) }
+            val percentageValues = mutableMapOf<String, Long>()
+            var remainingBasisPoints = 10_000L
+            participantIds.dropLast(1).forEach { participant ->
+                val basisPoints = random.nextLong(0, remainingBasisPoints + 1)
+                percentageValues[participant] = basisPoints
+                remainingBasisPoints -= basisPoints
+            }
+            percentageValues[participantIds.last()] = remainingBasisPoints
+
+            val equal = AllocationCalculator.equal(total, shuffledIds)
+            val weighted = AllocationCalculator.weightedShares(total, weights)
+            val percentage = AllocationCalculator.percentage(total, percentageValues)
+
+            listOf(equal, weighted, percentage).forEach { allocation ->
+                assertEquals(total, allocation.values.sum())
+                assertTrue(allocation.values.all { it >= 0L })
+            }
+            assertEquals(equal, AllocationCalculator.equal(total, participantIds.reversed()))
+            assertEquals(weighted, AllocationCalculator.weightedShares(total, weights.entries.reversed().associate { it.key to it.value }))
+            assertEquals(percentage, AllocationCalculator.percentage(total, percentageValues.entries.reversed().associate { it.key to it.value }))
+            assertEquals(equal, AllocationCalculator.exact(total, equal))
         }
     }
 }

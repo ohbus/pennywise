@@ -588,6 +588,12 @@ def main() -> None:
 
     update_payload = dict(payload)
     update_payload["description"] = "Unauthorized update"
+    status, before_rejected_mutations = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}"
+    )
+    expect("member expense state is readable before rejected update/delete", status, 200)
+    if not isinstance(before_rejected_mutations, list):
+        raise AssertionError("expense state before rejected update/delete must be a JSON list")
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}/{expense_id}",
         method="PUT", body={"version": 1, **{key: value for key, value in update_payload.items() if key != "expenseId"}},
@@ -613,6 +619,14 @@ def main() -> None:
         method="DELETE", token="non-member",
     )
     expect("non-member expense deletion is hidden", status, 404)
+    status, after_rejected_mutations = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}"
+    )
+    expect("member expense state remains readable after rejected update/delete", status, 200)
+    if not isinstance(after_rejected_mutations, list):
+        raise AssertionError("expense state after rejected update/delete must be a JSON list")
+    if after_rejected_mutations != before_rejected_mutations:
+        raise AssertionError("rejected expense update/delete must not mutate durable expense state")
 
     status, replay = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",

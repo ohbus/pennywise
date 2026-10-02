@@ -60,6 +60,15 @@ class EmailDispatcherTest {
         assertThat(sentMessage.text).isEqualTo("You owe $25.00 for Dinner.")
     }
 
+    /** Verifies the public send alias preserves the same delivery and message contract as dispatch. */
+    @Test
+    fun `send delivers through the public compatibility entry point`() {
+        val outcome = dispatcher.send("alice@example.com", "Subject", "Body")
+
+        assertThat(outcome).isEqualTo(EmailDeliveryOutcome.DELIVERED)
+        verify(mailSender, times(1)).send(anyMessage())
+    }
+
     @Test
     fun `transient mail send exception returns RETRYABLE_FAILURE after exhausting retries`() {
         val recipient = "bob@example.com"

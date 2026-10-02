@@ -81,6 +81,50 @@ class ExpenseControllerTest {
         assertEquals(ErrorCode.ERR_03, blank.errorCode)
     }
 
+    /** Verifies every financial mutation rejects a missing principal before validation or persistence. */
+    @Test
+    fun `rejects missing principal for create update and delete mutations`() {
+        val groupId = UUID.randomUUID()
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID().toString()
+        val createRequest = CreateExpenseRequest(
+            expenseId = expenseId,
+            description = "Unauthenticated",
+            amount = MoneyDto("EUR", "100"),
+            payers = listOf(PayerDto(participantId, MoneyDto("EUR", "100"))),
+            allocation = AllocationInputDto(
+                "EXACT",
+                listOf(AllocationItemDto(participantId, "100"))
+            )
+        )
+        val updateRequest = UpdateExpenseRequest(
+            version = 1,
+            description = "Unauthenticated update",
+            amount = MoneyDto("EUR", "100"),
+            payers = createRequest.payers,
+            allocation = createRequest.allocation
+        )
+
+        assertEquals(
+            ErrorCode.ERR_03,
+            assertThrows<ApplicationException> {
+                controller.createExpense(groupId, "unauthenticated-create", createRequest, null)
+            }.errorCode
+        )
+        assertEquals(
+            ErrorCode.ERR_03,
+            assertThrows<ApplicationException> {
+                controller.updateExpense(groupId, expenseId, updateRequest, null)
+            }.errorCode
+        )
+        assertEquals(
+            ErrorCode.ERR_03,
+            assertThrows<ApplicationException> {
+                controller.deleteExpense(groupId, expenseId, null, null)
+            }.errorCode
+        )
+    }
+
     @Test
     fun `rejects expense creation for non-member`() {
         val groupId = UUID.randomUUID()

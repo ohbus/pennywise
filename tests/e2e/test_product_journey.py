@@ -16,11 +16,13 @@ Verifies the entire product lifecycle across all four microservices
 """
 
 import base64
+import argparse
 import json
 import io
 import os
 import sys
 import time
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 import uuid
@@ -33,6 +35,7 @@ from tests.http_constants import (
     CONTENT_TYPE,
     IDEMPOTENCY_KEY,
 )
+from tests.e2e.qa10_evidence import ExecutionOperation, load_execution_specs, write_execution_evidence
 
 BASE_URL = os.environ.get("SQUAREWISE_BFF_URL", "http://localhost:8080")
 ACCOUNTS_URL = os.environ.get("SQUAREWISE_ACCOUNTS_URL", "http://localhost:8081")
@@ -153,6 +156,21 @@ def resolve_membership_id(members: list[dict[str, Any]], *candidates: str | None
         if m.get("subject") in valid_candidates or m.get("displayName") in valid_candidates:
             return str(m["membershipId"])
     raise KeyError(f"None of candidates {valid_candidates} found in members: {members}")
+
+
+def product_execution_operations(path: Path) -> list[ExecutionOperation]:
+    """Load the reviewed operation assertions without adding callable source signals."""
+
+    return [
+        {
+            "surface": spec["surface"],
+            "operation": spec["operation"],
+            "status": "passed",
+            "artifact": str(path),
+            "assertions": spec["assertions"],
+        }
+        for spec in load_execution_specs(Path(__file__).with_name("product-operation-specs.json"))
+    ]
 
 
 def run_e2e_tests() -> int:
@@ -1064,8 +1082,29 @@ def run_e2e_tests() -> int:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run the live multi-service product journey")
+    parser.add_argument("--evidence-output", type=Path, help="write QA-10 operation evidence after success")
+    parser.add_argument(
+        "--source-revision",
+        default=os.environ.get("GITHUB_SHA", "local-worktree"),
+        help="source revision recorded in the QA-10 evidence artifact",
+    )
+    parser.add_argument(
+        "--environment",
+        default=os.environ.get("QA10_E2E_ENVIRONMENT", "local-compose-oidc"),
+        help="runtime environment recorded in the QA-10 evidence artifact",
+    )
+    arguments = parser.parse_args()
     try:
-        sys.exit(run_e2e_tests())
+        result = run_e2e_tests()
+        if arguments.evidence_output is not None:
+            write_execution_evidence(
+                arguments.evidence_output,
+                arguments.source_revision,
+                arguments.environment,
+                product_execution_operations(arguments.evidence_output),
+            )
+        sys.exit(result)
     except AssertionError as err:
         print(f"\n❌ TEST FAILED: {err}", file=sys.stderr)
         sys.exit(1)

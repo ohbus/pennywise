@@ -34,6 +34,7 @@ from tools.coverage.report_operation_test_gaps import (
 )
 from tools.coverage.normalize_bruno_execution import normalize as normalize_bruno
 from tests.e2e.test_concurrency_subscriptions import write_execution_evidence
+from tests.e2e.qa10_evidence import load_execution_specs
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -67,6 +68,16 @@ class CoverageInventoryTest(unittest.TestCase):
                 {("GraphQL Subscription", "groupChanged"): "EXECUTION-ARTIFACT-PASSED"},
                 load_execution_artifact(path),
             )
+
+    def test_product_evidence_specs_name_contract_operations(self) -> None:
+        """Prevent product evidence metadata from silently drifting from contracts."""
+
+        specifications = load_execution_specs(ROOT / "tests/e2e/product-operation-specs.json")
+        contract_operations = {(item.surface, item.operation) for item in inventory(ROOT)}
+        self.assertTrue(specifications)
+        self.assertTrue(
+            all((spec["surface"], spec["operation"]) in contract_operations for spec in specifications)
+        )
 
     def test_every_current_branch_gap_has_a_qa_row(self) -> None:
         gaps = all_gaps(ROOT)

@@ -147,7 +147,7 @@ e2e-auth-cache: ## Run live Redis eviction, outage, and restart authentication c
 	@$(UV_RUN) python3 tests/e2e/test_auth_cache_resilience.py
 
 e2e-live: ## Run the comprehensive multi-service product journey E2E test against live stack
-	@$(UV_RUN) python3 tests/e2e/test_product_journey.py
+	@$(UV_RUN) python3 tests/e2e/test_product_journey.py $(E2E_PRODUCT_ARGS)
 
 e2e-offline: ## Run offline client simulation, sync cursor, and replay resilience tests
 	@$(UV_RUN) python3 tests/e2e/test_offline_resilience.py $(E2E_OFFLINE_ARGS)

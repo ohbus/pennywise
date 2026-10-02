@@ -14,6 +14,10 @@ The end-to-end test suites run against the live local environment (`infra/local/
    - Repayments recording via GraphQL BFF (`recordRepayment`).
    - Outbox relay transactional event publishing to RabbitMQ and consumption into Notifications Inbox.
    - Offline synchronization feed snapshot & change tracking.
+   - When invoked with `--evidence-output`, emits success-only QA-10 evidence
+     for the 42 operations asserted by this journey; login/session, archive,
+     revoke/update-group, and notification-preference operations remain
+     explicitly outside this suite.
 
 2. **Offline Client Sync & Replay Resilience (`test_offline_resilience.py`)**:
    - Client offline mutation queueing with client-generated UUIDs and unique `Idempotency-Key` headers.

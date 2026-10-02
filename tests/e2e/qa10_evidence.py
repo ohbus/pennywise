@@ -26,6 +26,46 @@ class ExecutionEvidence(TypedDict):
     operations: list[ExecutionOperation]
 
 
+class ExecutionSpec(TypedDict):
+    """Reviewed operation assertion metadata used by a live suite."""
+
+    surface: str
+    operation: str
+    assertions: list[str]
+
+
+def load_execution_specs(path: Path) -> list[ExecutionSpec]:
+    """Load and validate operation metadata without inferring execution.
+
+    :param path: Version-controlled suite metadata file.
+    :return: Typed operation specifications for a later success-only report.
+    :raises ValueError: If the metadata is not a non-empty typed list.
+    """
+
+    raw: object = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, list) or not raw:
+        raise ValueError("execution specifications must be a non-empty array")
+    specifications: list[ExecutionSpec] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            raise ValueError("each execution specification must be an object")
+        surface = item.get("surface")
+        operation = item.get("operation")
+        assertions = item.get("assertions")
+        if (
+            not isinstance(surface, str)
+            or not surface.strip()
+            or not isinstance(operation, str)
+            or not operation.strip()
+            or not isinstance(assertions, list)
+            or not assertions
+            or not all(isinstance(assertion, str) and assertion.strip() for assertion in assertions)
+        ):
+            raise ValueError("execution specification fields must be non-empty typed values")
+        specifications.append({"surface": surface, "operation": operation, "assertions": assertions})
+    return specifications
+
+
 def write_execution_evidence(
     path: Path,
     source_revision: str,

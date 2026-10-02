@@ -90,7 +90,10 @@ object ApiEndpoints {
             const val BASE: String = "/expense-core/v1"
             const val GROUPS: String = "/groups"
             const val GROUP_BY_ID: String = "/groups/{groupId}"
+            const val GROUP_ARCHIVE: String = "/groups/{groupId}/archive"
             const val GROUP_MEMBERS: String = "/groups/{groupId}/members"
+            const val GROUP_MEMBER_BY_ID: String = "/groups/{groupId}/members/{membershipId}"
+            const val GROUP_PLACEHOLDERS: String = "/groups/{groupId}/placeholders"
             const val GROUP_INVITES: String = "/groups/{groupId}/invites"
             const val INVITES: String = "/invites"
             const val INVITE_CLAIM: String = "/invites/{token}/claim"
@@ -142,7 +145,10 @@ object ApiEndpoints {
             // Absolute application paths starting with BASE
             const val PATH_GROUPS: String = "$BASE$GROUPS"
             const val PATH_GROUP_BY_ID: String = "$BASE$GROUP_BY_ID"
+            const val PATH_GROUP_ARCHIVE: String = "$BASE$GROUP_ARCHIVE"
             const val PATH_GROUP_MEMBERS: String = "$BASE$GROUP_MEMBERS"
+            const val PATH_GROUP_MEMBER_BY_ID: String = "$BASE$GROUP_MEMBER_BY_ID"
+            const val PATH_GROUP_PLACEHOLDERS: String = "$BASE$GROUP_PLACEHOLDERS"
             const val PATH_GROUP_INVITES: String = "$BASE$GROUP_INVITES"
             const val PATH_INVITES: String = "$BASE$INVITES"
             const val PATH_INVITE_CLAIM: String = "$BASE$INVITE_CLAIM"
@@ -162,7 +168,11 @@ object ApiEndpoints {
             const val PATH_GROUP_SCHEDULE_RESUME: String = "$BASE$GROUP_SCHEDULE_RESUME"
 
             fun groupById(groupId: Any): String = "$BASE/groups/$groupId"
+            fun groupArchive(groupId: Any): String = "$BASE/groups/$groupId/archive"
             fun groupMembers(groupId: Any): String = "$BASE/groups/$groupId/members"
+            fun groupMemberById(groupId: Any, membershipId: Any): String =
+                "$BASE/groups/$groupId/members/$membershipId"
+            fun groupPlaceholders(groupId: Any): String = "$BASE/groups/$groupId/placeholders"
             fun groupInvites(groupId: Any): String = "$BASE/groups/$groupId/invites"
             fun inviteClaim(token: String): String = "$BASE/invites/$token/claim"
             fun groupExpenses(groupId: Any): String = "$BASE/groups/$groupId/expenses"

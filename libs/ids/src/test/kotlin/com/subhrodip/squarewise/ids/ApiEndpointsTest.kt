@@ -18,6 +18,18 @@ class ApiEndpointsTest {
             ApiEndpoints.ExpenseCore.V1.groupExpenseById("group-1", "expense-1")
         )
         assertEquals(
+            "/expense-core/v1/groups/group-1/archive",
+            ApiEndpoints.ExpenseCore.V1.groupArchive("group-1")
+        )
+        assertEquals(
+            "/expense-core/v1/groups/group-1/members/membership-1",
+            ApiEndpoints.ExpenseCore.V1.groupMemberById("group-1", "membership-1")
+        )
+        assertEquals(
+            "/expense-core/v1/groups/group-1/placeholders",
+            ApiEndpoints.ExpenseCore.V1.groupPlaceholders("group-1")
+        )
+        assertEquals(
             "/expense-core/v1/groups/group-1/schedules/schedule-1/pause",
             ApiEndpoints.ExpenseCore.V1.groupSchedulePause("group-1", "schedule-1")
         )

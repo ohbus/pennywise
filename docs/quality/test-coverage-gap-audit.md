@@ -8,7 +8,7 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **38
+As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **37
 production methods with missed branches** containing **76 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery

@@ -7,7 +7,7 @@ a reviewed structural/invariant classification with exact source evidence. Regen
 after every test increment; the locked tooling tests assert that the record count and
 missed-branch total stay synchronized with the audit and CI documentation.
 
-Current baseline: **43 production methods with missed branches / 87 missed branches**.
+Current baseline: **42 production methods with missed branches / 85 missed branches**.
 
 ## Exact current records
 
@@ -49,7 +49,6 @@ Current baseline: **43 production methods with missed branches / 87 missed branc
 | `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/search/api/SearchController` | `SearchController.kt` | `search$lambda$0$0` | 73 | 2 | 6 | Expense Core persistence and financial behavior | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
 | `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/search/model/ExpenseSearch` | `ExpenseSearch.kt` | `page$lambda$1` | 60 | 1 | 5 | Expense Core persistence and financial behavior | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
 | `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/search/model/ExpenseSearch` | `ExpenseSearch.kt` | `csv` | 93 | 1 | 9 | Expense Core persistence and financial behavior | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
-| `app/expense-core` | `QA10-C01` | `com/subhrodip/squarewise/expensecore/search/model/ExpenseSearch` | `ExpenseSearch.kt` | `csvCell` | 117 | 2 | 10 | Expense Core persistence and financial behavior | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation. |
 | `app/expense-core` | `QA10-C05` | `com/subhrodip/squarewise/expensecore/settlements/service/SettlementSuggestionEngine` | `SettlementSuggestion.kt` | `calculateSuggestions` | 20 | 3 | 23 | settlement and balance invariants | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Settlement/reversal validation, idempotency, balances, corruption detection, concurrency, and zero-sum state. |
 | `app/expense-core` | `QA10-C06` | `com/subhrodip/squarewise/expensecore/sync/api/SyncController` | `SyncController.kt` | `page` | 31 | 1 | 11 | synchronization and cursor behavior | `app/expense-core/build/reports/jacoco/test/jacocoTestReport.xml` | Sync ordering, cursor ownership/expiry/limits, tombstones, membership loss, and revision invariants. |
 | `app/notifications` | `QA10-D03` | `com/subhrodip/squarewise/notifications/email/delivery/EmailDispatcher` | `EmailDispatcher.kt` | `dispatch` | 22 | 2 | 16 | mail delivery adapter | `app/notifications/build/reports/jacoco/test/jacocoTestReport.xml` | SMTP mapping, validation, failure classification, retry/parking, metrics, and redaction. |

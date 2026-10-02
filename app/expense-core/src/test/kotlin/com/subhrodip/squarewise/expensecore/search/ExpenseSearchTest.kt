@@ -28,7 +28,9 @@ class ExpenseSearchTest {
         assertEquals("'-value", search.csvCell("-value"))
         assertEquals("'@value", search.csvCell("@value"))
         assertEquals("\"'@a,\"\"b\"\"\"", search.csvCell("@a,\"b\""))
+        assertEquals("\"a\"\"b\"", search.csvCell("a\"b"))
         assertEquals("\"line\nvalue\"", search.csvCell("line\nvalue"))
+        assertEquals("\"line\rvalue\"", search.csvCell("line\rvalue"))
     }
 
     @Test

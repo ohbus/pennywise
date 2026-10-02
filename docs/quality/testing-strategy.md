@@ -32,7 +32,7 @@ authentication, authorization, input/failure behavior, durable state,
 asynchronous state, replay/concurrency, isolation, and redaction. A source
 reference or line-coverage increase is discovery evidence only; it is not a
 substitute for the required test layer. The current QA-10 discovery baseline
-contains 43 branch-gap method records and 87 missed branches, while the
+contains 42 branch-gap method records and 85 missed branches, while the
 operation inventory contains 54 operations. Every operation now has a literal
 E2E source signal, but source presence is not complete acceptance evidence. These are tracked acceptance work, not
 permission to delete implementation branches or infer closure from a shared

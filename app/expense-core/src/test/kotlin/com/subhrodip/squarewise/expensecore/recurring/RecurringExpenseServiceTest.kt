@@ -906,4 +906,27 @@ class RecurringExpenseServiceTest @Autowired constructor(
         val expectedParticipant = UUID.nameUUIDFromBytes(legacySubject.toByteArray(StandardCharsets.UTF_8))
         assertEquals(listOf(expectedParticipant), expense?.allocations?.map { it.participantId })
     }
+
+    @Test
+    fun `preserves UUID-shaped member subjects when generating recurring allocations`() {
+        val memberId = UUID.randomUUID()
+        val group = groupStore.create(memberId.toString(), CreateGroupRequest("UUID members", "HOUSEHOLD", "EUR"))
+        val startDate = LocalDate.of(2026, 11, 1)
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "UUID subscription",
+                amountMinor = 1200,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.MONTHLY,
+                startDate = startDate
+            )
+        )
+
+        assertEquals(1, service.processDueOccurrences(asOfDate = startDate))
+
+        val expenseId = service.getOccurrences(schedule.scheduleId).single().expenseId
+        val expense = expenseStore.findById(expenseId!!)
+        assertEquals(listOf(memberId), expense?.allocations?.map { it.participantId })
+    }
 }

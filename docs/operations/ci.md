@@ -130,3 +130,12 @@ baseline.
 
 Use `make workflow-validate` to parse all workflow files and `make acceptance`
 to produce `build/reports/acceptance/qa-01.json`.
+
+The hosted E2E jobs retain raw acceptance JSON, Bruno JSON, and suite logs as
+artifacts with `if: always()`, including when a suite or service startup fails.
+The product job writes Bruno output to `build/reports/e2e/bruno.json`; the
+other retained files identify the suite and execution order. These raw files
+are evidence inputs, not automatic pass claims. To close QA-10 operation rows,
+normalize reviewed per-operation results into the documented
+`qa10-operation-execution-v1` artifact and run the operation-gap reporter with
+`--execution-artifact`.

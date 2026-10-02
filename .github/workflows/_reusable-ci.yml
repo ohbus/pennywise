@@ -343,6 +343,8 @@ jobs:
           WRONG_ISSUER_TOKEN: ${{ steps.oidc-token.outputs.wrong_issuer_token }}
           EXPIRED_TOKEN: ${{ steps.oidc-token.outputs.expired_token }}
         run: |
+          set -o pipefail
+          mkdir -p build/reports/e2e
           uv run --frozen --no-build python3 tests/e2e/test_auth_cache_resilience.py
           uv run --frozen --no-build python3 tests/e2e/test_oidc_negative.py --variant forged-signature &
           forged_pid=$!
@@ -373,10 +375,18 @@ jobs:
           BEARER_TOKEN="$fresh_token" \
             SQUAREWISE_E2E_TOKEN_B="$fresh_bob" \
             SQUAREWISE_E2E_TOKEN_NONMEMBER="$fresh_nonmember" \
-            make e2e-rest-edge
+            make e2e-rest-edge 2>&1 | tee build/reports/e2e/rest-edge.log
       - name: Tear down the complete local application stack
         if: always()
         run: docker compose -f infra/local/docker-compose.dev.yml down -v
+      - name: Upload edge and security E2E evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-edge-security-evidence
+          path: build/reports/e2e/
+          if-no-files-found: warn
+          retention-days: 14
 
   e2e-product-and-offline:
     name: E2E acceptance, Bruno, product journey, and offline sync
@@ -434,15 +444,28 @@ jobs:
           SQUAREWISE_E2E_TOKEN_B: ${{ steps.oidc-token.outputs.e2e_bob_token }}
           SQUAREWISE_E2E_TOKEN_NONMEMBER: ${{ steps.oidc-token.outputs.e2e_nonmember_token }}
         run: |
-          make e2e-auth-email
-          make acceptance-live
-          make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"
+          set -o pipefail
+          mkdir -p build/reports/e2e
+          make e2e-auth-email 2>&1 | tee build/reports/e2e/auth-email.log
+          make acceptance-live 2>&1 | tee build/reports/e2e/acceptance-live.log
+          BRUNO_REPORT="$GITHUB_WORKSPACE/build/reports/e2e/bruno.json" \
+            make bruno-run BRUNO_ENV="$BRUNO_ENV" BRUNO_TOKEN="$BRUNO_TOKEN"
           tests/e2e/acquire_local_tokens.sh
-          make e2e-live
-          make e2e-offline
+          make e2e-live 2>&1 | tee build/reports/e2e/product-journey.log
+          make e2e-offline 2>&1 | tee build/reports/e2e/offline-replay.log
       - name: Tear down the complete local application stack
         if: always()
         run: docker compose -f infra/local/docker-compose.dev.yml down -v
+      - name: Upload product and offline E2E evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-product-offline-evidence
+          path: |
+            build/reports/acceptance/
+            build/reports/e2e/
+          if-no-files-found: warn
+          retention-days: 14
 
   e2e-concurrency-and-chaos:
     name: E2E concurrency, WebSocket subscriptions, and broker chaos
@@ -494,11 +517,21 @@ jobs:
           SQUAREWISE_E2E_TOKEN_B: ${{ steps.oidc-token.outputs.e2e_bob_token }}
           SQUAREWISE_E2E_TOKEN_NONMEMBER: ${{ steps.oidc-token.outputs.e2e_nonmember_token }}
         run: |
-          make e2e-concurrency
-          make e2e-chaos
+          set -o pipefail
+          mkdir -p build/reports/e2e
+          make e2e-concurrency 2>&1 | tee build/reports/e2e/concurrency-websocket.log
+          make e2e-chaos 2>&1 | tee build/reports/e2e/chaos-recovery.log
       - name: Tear down the complete local application stack
         if: always()
         run: docker compose -f infra/local/docker-compose.dev.yml down -v
+      - name: Upload concurrency and chaos E2E evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-concurrency-chaos-evidence
+          path: build/reports/e2e/
+          if-no-files-found: warn
+          retention-days: 14
 
   e2e-gate:
     name: E2E verification gate

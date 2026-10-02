@@ -366,7 +366,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 47-method inventory is a discovery baseline, not closure evidence. QA-10
+The 46-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 
@@ -498,21 +498,21 @@ explicitly open until the following evidence is attached:
 | --- | --- | --- |
 | `DbReaderHealth.state` | Open-circuit before-expiry, exact-deadline, and after-expiry behavior are now directly asserted; residual JaCoCo branches require source/bytecode classification. | Preserve all three timing boundaries and classify only compiler/nullability-generated paths after reviewing the report mapping, or add a behavior test if a reachable state is identified. |
 | `DbOperationPolicy::<init>` | All policy invariants and valid writer/reader routes are asserted in `DbOperationPolicyTest`. | Review the constructor branch mapping; retain the invariant tests and classify only generated short-circuit/data-class instrumentation, never remove a policy guard to change the count. |
-| `DbContextHolder.withContext` | Nested restoration, exception restoration, request-watermark inheritance, and explicit-watermark precedence are asserted. | Review the remaining JaCoCo branch against the nullable ThreadLocal/causal-context paths; add only a reachable restoration/inheritance case, otherwise record a structural rationale with the exact source branch. |
 
 ### Current QA10-A07 method-level residual ledger
 
-The following records are the exact A07 assignment from the current JaCoCo
+The following two records are the exact A07 assignment from the current JaCoCo
 inventory. Counts are discovery values, not closure claims. Each row must be
 rechecked after the corresponding tests run; a test specification does not
-remove a record until a regenerated report does so.
+remove a record until a regenerated report does so. Previously listed
+`AesGcmCredentialEnvelopeProtector` and `TokenSessionService` records are no
+longer present in the regenerated inventory and are retained only in earlier
+progress history.
 
 | Production target and source line | Method | Missed branches | Required evidence or classification |
 | --- | --- | ---: | --- |
-| `AesGcmCredentialEnvelopeProtector.kt:38` | `reveal` | 1 | Existing `CredentialEnvelopeProtectorTest` covers round trip, context mismatch, tampering, malformed Base64, truncation, and unsupported version; map the remaining defensive `GeneralSecurityException` catch before classifying it as structural. |
 | `LoginVerificationService.kt:60` | `verify` | 1 | Execute invalid/replayed credential and existing-identity reuse versus new enrollment with durable session state. |
 | `SessionPolicy.kt:82` | `isExpired` | 1 | Existing `SessionPolicyTest` covers exact idle/absolute expiry and clock-skew boundaries; classify only the remaining short-circuit path if the regenerated mapping proves it unreachable under the constructor invariant. |
-| `TokenSessionService.kt:116` | `rotateSession` | 2 | `TokenSessionServiceRaceTest` now specifies `rotateIfActive == 0` fail-closed family revocation with no token mint; integration/E2E evidence must still exercise a real concurrent race, plus missing account/identity, subject mismatch, deletion, and expiry. |
 
 ## Required evidence ladder
 

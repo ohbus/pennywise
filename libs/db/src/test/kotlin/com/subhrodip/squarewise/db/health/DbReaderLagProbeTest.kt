@@ -56,6 +56,17 @@ class DbReaderLagProbeTest {
         assertEquals(DbWatermark.parse("0/20"), probeResult.replayedWatermark)
     }
 
+    @Test
+    fun `measure exposes the replay lag from the probe result`() {
+        val result = mock(ResultSet::class.java)
+        `when`(result.next()).thenReturn(true)
+        `when`(result.getLong(1)).thenReturn(125L)
+        `when`(result.wasNull()).thenReturn(false)
+        `when`(result.getString(2)).thenReturn("0/20")
+
+        assertEquals(125L, measure(result))
+    }
+
     private fun probeResult(result: ResultSet): DbReaderProbeResult {
         val dataSource = mock(DataSource::class.java)
         val connection = mock(Connection::class.java)
@@ -64,5 +75,15 @@ class DbReaderLagProbeTest {
         `when`(connection.prepareStatement(anyString())).thenReturn(statement)
         `when`(statement.executeQuery()).thenReturn(result)
         return DbReaderLagProbe().measureResult(dataSource)
+    }
+
+    private fun measure(result: ResultSet): Long? {
+        val dataSource = mock(DataSource::class.java)
+        val connection = mock(Connection::class.java)
+        val statement = mock(PreparedStatement::class.java)
+        `when`(dataSource.connection).thenReturn(connection)
+        `when`(connection.prepareStatement(anyString())).thenReturn(statement)
+        `when`(statement.executeQuery()).thenReturn(result)
+        return DbReaderLagProbe().measure(dataSource)
     }
 }

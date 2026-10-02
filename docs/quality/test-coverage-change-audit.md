@@ -829,3 +829,13 @@ surface-aware Bruno source matcher. The current audit still reports 39 branch
 records / 78 missed JaCoCo branches, three concrete execution-gap records, and
 54 contract operations without a local execution artifact. These remain
 documented acceptance gaps rather than reasons to delete or weaken code.
+
+Follow-up review found one real event-boundary defect after this checkpoint:
+Expense Core publishes `member.removed.v1`, while the BFF consumer recognized
+only `member.removed`. Commit `f4c537d` aligns the consumer with the producer;
+the focused `BffEventConsumerTest` was changed to the producer value, failed
+before the correction, and passed afterward. This is a contract-alignment fix
+with direct regression evidence, not a coverage-only implementation change.
+The coverage tooling also now asserts that the eleven documented production
+event values remain present in source; RabbitMQ routing/retry/DLQ and deployed
+WebSocket evidence remain open.

@@ -691,7 +691,7 @@ test cannot close a row by merely executing a line.
 | --- | --- | --- | --- |
 | QA10-B01 | `AccountsGateway`, `ExpenseCoreGateway`, `RestGateway`, `BffGatewayFilters` | `AccountsGatewayTest` now exercises optional bearer omission/presence, profile decoding, and upstream status redaction; `BffFanoutTest` covers the main Expense Core HTTP-double paths; `BffGatewayFiltersTest` covers bearer/watermark forwarding, numeric advancement over a lower LSN, greatest-valid watermark retention, blank values, malformed and absent downstream watermarks, and missing exchange context. Running-BFF timeout/connection and complete operation failure evidence remain open. | `U+T+E`: bearer token and request ID propagate, required watermark is forwarded and greatest valid downstream watermark is returned, no-context requests remain credential-free, an absent or malformed downstream watermark leaves response state unchanged, 2-second timeout/connection/malformed JSON/non-2xx/empty body/partial result map to stable GraphQL extensions, and sensitive upstream details are redacted. |
 | QA10-B02 | `BearerTokenContextWebFilter`, `BearerAuthorization`, `GraphQlExceptionResolver`, `GraphQlLimitErrorInstrumentation`, scalar configuration | `BearerTokenContextWebFilterTest` covers bearer/watermark context capture and malformed-input omission; `GraphQlExceptionResolverTest` now covers every catalog code, all upstream status mappings, and fallback exception classes; `GraphQlScalarConfigurationTest` covers DateTime and MoneyMinor string-literal acceptance/rejection, including nullable AST values. GraphQL HTTP/WebSocket transport and subscription-limit evidence remain open. | `U+T+E`: bearer extraction accepts only a non-blank case-insensitive Bearer value, supported principal forms normalize to one non-blank subject, reactive context retains the exchange and only valid causal watermarks, every catalog error preserves public code, safe detail, classification, and request metadata; depth/complexity, per-subject query, mutation, and subscription caps reject deterministically; cancellation releases admission; scalar invalid/null/overflow values are rejected without resolver execution. |
-| QA10-B03 | `LiveUpdateFanout`, `BffEventConsumer`, `RabbitBffEventListener` | Fanout configuration, input, bounded queue, expiry, membership revocation, and malformed removal payload unit boundaries are covered. Generated predicate mappings, duplicate/poison/transient broker outcomes, reconnect replay, and deployed WebSocket behavior remain open. | `U+M+E`: duplicate event IDs produce one invalidation, unrelated groups/subjects receive nothing, membership removal terminates active subscriptions, malformed/poison/transient messages are acked/rejected/requeued according to policy, and reconnect requires explicit cursor recovery with no duplicate financial event. The unit evidence must retain exact subscription counts, queue ordering/drop behavior, revocation completion, expiry cleanup, broker acknowledgement/requeue assertions, and deployed signed-persona WebSocket artifacts. |
+| QA10-B03 | `LiveUpdateFanout`, `BffEventConsumer`, `RabbitBffEventListener` | Fanout configuration, input, bounded queue, expiry, membership revocation, and malformed removal payload unit boundaries are covered. The producer/consumer event-name mismatch was corrected: Expense Core publishes `member.removed.v1`, and the BFF regression test now exercises that exact value. Generated predicate mappings, duplicate/poison/transient broker outcomes, reconnect replay, and deployed WebSocket behavior remain open. | `U+M+E`: duplicate event IDs produce one invalidation, unrelated groups/subjects receive nothing, membership removal terminates active subscriptions, malformed/poison/transient messages are acked/rejected/requeued according to policy, and reconnect requires explicit cursor recovery with no duplicate financial event. The unit evidence must retain exact subscription counts, queue ordering/drop behavior, revocation completion, expiry cleanup, broker acknowledgement/requeue assertions, and deployed signed-persona WebSocket artifacts. |
 | QA10-B04 | `BrowserOriginPolicy`, `BrowserOriginWebFilter`, `BrowserCsrfWebFilter`, cookie/session filters | `BrowserOriginPolicyTest` explicitly covers absent origin, case normalization, default and non-default ports, malformed values, credentials, paths, queries, fragments, unsupported schemes, and wildcard rejection. In-process filter tests still do not prove the complete browser-cookie mutation chain. | `T+E`: allowed origin plus matching CSRF succeeds; missing/mismatched token, disallowed origin, unsafe method, access-cookie mutation, bearer-only native client, preflight, and WebSocket upgrade follow the documented policy; no cookie/token is leaked in logs or responses. |
 
 ### Expense Core financial, scheduling, and sync logic
@@ -732,8 +732,10 @@ producer/consumer tests: `auth.email.requested.v1`, `group.renamed.v1`,
 `invitation.revoked.v1`, `invitation.claimed.v1`, `expense.created`,
 `expense.updated`, `expense.deleted`, and `recurring.schedule.paused`.
 `EventConstants` centrally defines the exchange, wildcard subscriptions, and
-the auth-email routing key, but the complete event-type registry and producer /
-consumer mapping are not yet centralized or mechanically enumerated.
+the auth-email routing key. The production source inventory is now protected by
+a static regression guard that enumerates the eleven documented event values;
+the complete event-type registry and producer/consumer mapping are not yet
+centralized.
 
 This remains an open QA10-E04/D01/D02 acceptance item. Closure requires a
 versioned registry that maps every producer event to its schema, routing key,
@@ -743,8 +745,11 @@ assertions for envelope and payload shape; PostgreSQL/outbox assertions for
 atomic audit, sync, and publication state; and RabbitMQ integration evidence
 for routing, acknowledgement, retry, deduplication, and dead-letter behavior.
 The auth-email path additionally requires proof that encrypted credentials never
-appear in logs or parked messages. The current source scan and local listener
-tests do not satisfy those deployed broker criteria.
+appear in logs or parked messages. The source inventory guard and local listener
+tests do not satisfy those deployed broker criteria. The BFF member-removal path
+now consumes the versioned `member.removed.v1` value emitted by Expense Core;
+the focused regression test does not replace RabbitMQ or deployed WebSocket
+evidence.
 
 ## Missing deployed E2E and environment tests
 

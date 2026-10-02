@@ -647,6 +647,57 @@ class CoverageInventoryTest(unittest.TestCase):
             with self.subTest(criterion=criterion):
                 self.assertIn(criterion, section)
 
+    def test_production_event_inventory_matches_documented_event_values(self) -> None:
+        """Detect event-type additions or omissions before broker integration tests."""
+
+        production_sources = [
+            path.read_text(encoding="utf-8")
+            for source_root in (ROOT / "app", ROOT / "libs")
+            for path in source_root.rglob("*.kt")
+            if "src" in path.parts and "main" in path.parts
+        ]
+        event_like_prefixes = (
+            "auth.email.",
+            "group.",
+            "member.",
+            "invitation.",
+            "expense.",
+            "recurring.",
+            "settlement.",
+        )
+        source_literals = {
+            value
+            for source in production_sources
+            for value in re.findall(r'"([a-z][a-z0-9_.-]+)"', source)
+            if value.startswith(event_like_prefixes)
+        }
+        expected_versioned = {
+            "auth.email.requested.v1",
+            "group.renamed.v1",
+            "group.archived.v1",
+            "member.placeholder_added.v1",
+            "member.removed.v1",
+            "invitation.revoked.v1",
+            "invitation.claimed.v1",
+        }
+        expected_unversioned = {
+            "expense.created",
+            "expense.updated",
+            "expense.deleted",
+            "recurring.schedule.paused",
+        }
+        versioned = {value for value in source_literals if value.endswith(".v1")}
+        self.assertEqual(expected_versioned, versioned)
+        self.assertTrue(expected_unversioned.issubset(source_literals))
+
+        audit = (ROOT / "docs/quality/test-coverage-gap-audit.md").read_text(
+            encoding="utf-8"
+        )
+        section = audit.split("### Event-type and routing inventory still requiring closure", 1)[1]
+        for event_type in sorted(expected_versioned | expected_unversioned):
+            with self.subTest(event_type=event_type):
+                self.assertIn(f"`{event_type}`", section)
+
     def test_auth_email_e2e_destination_is_wired_and_documented(self) -> None:
         """Prevent the passwordless E2E suite from becoming an unexecuted orphan."""
 

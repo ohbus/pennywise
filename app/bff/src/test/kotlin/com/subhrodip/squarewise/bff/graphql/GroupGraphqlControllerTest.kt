@@ -50,6 +50,16 @@ class GroupGraphqlControllerTest {
     private val controller = GroupGraphqlController(gateway, LiveUpdateFanout())
     private val principal = Principal { "alice" }
 
+    /** Verifies explicit change identifiers survive the controller invalidation boundary. */
+    @Test
+    fun `emitInvalidation preserves explicit change identifier`() {
+        val invalidation = controller.emitInvalidation("group-1", 7L, "change-7")
+
+        assertEquals("group-1", invalidation.groupId)
+        assertEquals(7L, invalidation.revision)
+        assertEquals("change-7", invalidation.changeId)
+    }
+
     @Test
     fun `groupChanged rejects blank group identifiers before admission`() {
         val error = assertThrows(ApplicationException::class.java) {

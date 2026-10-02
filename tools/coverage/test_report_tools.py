@@ -62,7 +62,7 @@ class CoverageInventoryTest(unittest.TestCase):
             else:
                 self.assertIn(": identify a focused", target)
         self.assertEqual(
-            11,
+            16,
             sum(gap.closure_status == "BEHAVIOR-COVERED-MAPPING" for gap in gaps),
         )
         group_store_gaps = [gap for gap in gaps if "JpaGroupStore" in gap.class_name]
@@ -72,6 +72,14 @@ class CoverageInventoryTest(unittest.TestCase):
         )
         self.assertTrue(
             all("JpaGroupStoreClaimTest" in gap.record_acceptance for gap in group_store_gaps)
+        )
+        recurring_gaps = [gap for gap in gaps if "RecurringExpenseService" in gap.class_name]
+        self.assertEqual(5, len(recurring_gaps))
+        self.assertTrue(
+            all(gap.closure_status == "BEHAVIOR-COVERED-MAPPING" for gap in recurring_gaps)
+        )
+        self.assertTrue(
+            all("RecurringExpenseOptionalOutboxTest" in gap.record_acceptance for gap in recurring_gaps)
         )
         expected_counts = {
             "QA10-A01": 0,

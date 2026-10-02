@@ -29,9 +29,17 @@ missing groups, placeholder/invite validation, duplicate removal, expiry,
 claim races, rollback, revisions, audit, synchronization, and outbox effects
 are exercised without changing the store. The residual JaCoCo counters remain
 in the ledger and are treated as line/instrumentation mappings, not removed
-coverage gaps. The resulting review split is 27 candidate structural mappings,
-11 behavior-covered mappings, and one open-design helper. No implementation,
+coverage gaps. The resulting review split is 22 candidate structural mappings,
+16 behavior-covered mappings, and one open-design helper. No implementation,
 contract, guard, or JaCoCo exclusion was added or removed.
+
+The same review covers the five `RecurringExpenseService` records through
+`RecurringExpenseServiceTest`, `RecurringExpenseFailureTest`, and
+`RecurringExpenseOptionalOutboxTest`. These tests exercise optional custom
+participants, catch-up/end-date/paused/duplicate paths, membership and
+generation failures, durable schedule/expense state, and notification behavior
+with and without an outbox. The residual JaCoCo lines remain visible as tested
+service-boundary mappings; no fallback, guard, or contract was removed.
 
 As a reproducible history check, the subject-matching audit selected **240
 commits** from `master..HEAD` whose subjects contain `test`, `coverage`, `QA`,

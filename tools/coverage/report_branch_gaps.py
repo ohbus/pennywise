@@ -236,7 +236,7 @@ def record_acceptance(class_name: str, method: str) -> str:
     if "recurrenceschedule" in qualified:
         return "Exercise constructor/date/frequency invariants through the recurring-service boundary; do not use reflection to target compiler-generated validation branches."
     if "recurringexpenseservice" in qualified:
-        return "Assert create/update membership, date/catch-up, duplicate, failure pause, expense-record construction, and optional-outbox outcomes with durable state and notification evidence."
+        return "Assert create/update optional-specification branches, date/end-date and catch-up limits, paused and duplicate occurrence paths, empty/foreign membership rejection, successful expense construction, generation failure pause, and outbox-present/absent notification behavior through RecurringExpenseServiceTest, RecurringExpenseFailureTest, and RecurringExpenseOptionalOutboxTest."
     if "searchcontroller" in qualified or "expensesearch" in qualified:
         return "Assert authorization, filters, pagination, empty/populated results, and CSV header/value escaping through the public search boundary; classify generated iteration/telemetry mappings separately."
     if "settlementsuggestionengine" in qualified:
@@ -279,6 +279,11 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
         return (
             "BEHAVIOR-COVERED-MAPPING",
             "JpaGroupStoreTest and JpaGroupStoreClaimTest exercise the normal and rejection paths for every residual lifecycle mapping, including missing/archived groups, placeholder/invite guards, duplicate removal, expiry, claim races, and durable side effects. Keep the implementation guards; classify only the remaining JaCoCo line mapping as behavior-covered after preserving the integration evidence.",
+        )
+    if "recurringexpenseservice" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "RecurringExpenseServiceTest, RecurringExpenseFailureTest, and RecurringExpenseOptionalOutboxTest exercise the normal and rejection paths for every residual schedule mapping: optional custom payer/allocation specifications, date and catch-up limits, paused/duplicate occurrences, membership failure, expense-generation failure, and outbox presence or absence. Keep the service fallbacks and guards; classify only the remaining JaCoCo line mapping as behavior-covered after preserving these durable-state and notification assertions.",
         )
     if "expensecontroller" in qualified:
         return (

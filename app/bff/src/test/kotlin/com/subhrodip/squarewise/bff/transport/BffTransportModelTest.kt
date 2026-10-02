@@ -24,6 +24,7 @@ import com.subhrodip.squarewise.bff.transport.model.upstream.UpstreamSettlement
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.ObjectMapper
 
 /** Verifies BFF transport models preserve upstream mapping and public response shape. */
 class BffTransportModelTest {
@@ -73,5 +74,17 @@ class BffTransportModelTest {
         assertEquals("EUR", repayment.amount.currency)
         assertEquals("Dinner", repayment.reason)
         assertEquals(3, invalidation.revision)
+    }
+
+    @Test
+    fun `upstream group serialization preserves its wire properties`() {
+        val group = UpstreamGroup("group-1", "Trip", "TRIP", "ACTIVE", 3)
+        val json = ObjectMapper().writeValueAsString(group)
+
+        assertEquals(true, json.contains("\"groupId\":\"group-1\""))
+        assertEquals(true, json.contains("\"name\":\"Trip\""))
+        assertEquals(true, json.contains("\"kind\":\"TRIP\""))
+        assertEquals(true, json.contains("\"status\":\"ACTIVE\""))
+        assertEquals(true, json.contains("\"revision\":3"))
     }
 }

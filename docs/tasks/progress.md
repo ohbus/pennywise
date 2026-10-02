@@ -3,6 +3,8 @@
 The registry is the authoritative state machine. This ledger records meaningful
 execution checkpoints and evidence; it does not replace task acceptance criteria.
 
+| 2026-10-03 | QA-10 wire serialization increment | Added a real Jackson wire-shape test for the BFF upstream group model, exercising serialization of its configured fields rather than invoking generated accessors reflectively. | `./gradlew.bat :app:bff:test --tests '*BffTransportModelTest' --no-daemon --console=plain` passed; `./gradlew.bat :app:bff:jacocoTestReport --rerun-tasks --no-daemon --console=plain` passed. | current increment |
+
 | 2026-10-03 | QA-10 post-transport coverage verification | Regenerated the full aggregate after the BFF transport-model tests. All modules pass; line coverage remains 5,652/5,709 (99.00%) while instruction coverage rises to 37,824/39,473 (95.82%) and branch coverage remains 2,675/2,741 (97.59%). The remaining line records are predominantly Kotlin-generated accessors/default bridges, framework bootstrap methods, and reviewed invariant mappings. | `./gradlew.bat test --no-daemon --console=plain` passed (53 actionable tasks); `./gradlew.bat jacocoTestReport --rerun-tasks --no-daemon --console=plain` passed (36 actionable tasks). | current increment |
 
 | 2026-10-03 | QA-10 BFF transport model increment | Added transport contract tests for upstream-to-BFF mapping, money aliases, browser authentication payloads, GraphQL inputs, and realtime invalidations. | `./gradlew.bat :app:bff:test --tests '*BffTransportModelTest' --no-daemon --console=plain` passed; `git diff --check` passed. | current increment |

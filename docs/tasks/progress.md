@@ -3,6 +3,8 @@
 The registry is the authoritative state machine. This ledger records meaningful
 execution checkpoints and evidence; it does not replace task acceptance criteria.
 
+| 2026-10-03 | QA-10 post-Accounts bean verification | Regenerated the complete aggregate after the Accounts JVM bean compatibility test. Full tests and JaCoCo pass; coverage is now 5,653/5,709 lines (99.02%), 37,854/39,473 instructions (95.90%), and 2,675/2,741 branches (97.59%). | `./gradlew.bat test --no-daemon --console=plain` passed (55 actionable tasks); `./gradlew.bat jacocoTestReport --rerun-tasks --no-daemon --console=plain` passed (36 actionable tasks). | current increment |
+
 | 2026-10-03 | QA-10 Accounts JPA bean increment | Added a direct Java-side persistence-bean test for identity, credential, session, auth-email outbox, and profile entities, exercising the getter/setter surface used by JPA and Java-bound infrastructure. | `./gradlew.bat :app:accounts:test --tests '*AccountsJavaBeanCompatibilityTest' --no-daemon --console=plain` passed; `git diff --check` passed. | current increment |
 
 | 2026-10-03 | QA-10 JVM bean compatibility increment | Added a direct Java-side BFF transport test for the JVM getter surface consumed by Spring/Jackson, covering upstream, output, and browser-auth models. This validates generated accessors through the public bean boundary rather than reflection. | `./gradlew.bat :app:bff:test --tests '*BffJavaBeanCompatibilityTest' --no-daemon --console=plain` passed; `git diff --check` passed. | current increment |

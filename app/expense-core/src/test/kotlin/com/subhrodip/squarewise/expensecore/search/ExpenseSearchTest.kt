@@ -61,6 +61,19 @@ class ExpenseSearchTest {
         assertEquals(ErrorCode.ERR_02, error.errorCode)
     }
 
+    /** Verifies a syntactically valid cursor cannot decode to a blank continuation key. */
+    @Test
+    fun `rejects cursors that decode to blank values`() {
+        val blankCursor = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(" ".toByteArray())
+
+        val error = assertThrows(ApplicationException::class.java) {
+            ExpenseSearch().page(listOf(SearchExpense("1", "Dinner", "EUR", "100")), cursor = blankCursor)
+        }
+
+        assertEquals(ErrorCode.ERR_02, error.errorCode)
+    }
+
     @Test
     fun `filters currency and quotes csv fields while bounding export`() {
         val search = ExpenseSearch()
@@ -68,6 +81,14 @@ class ExpenseSearchTest {
         assertEquals(listOf("1"), search.page(data, currency = "EUR").expenses.map { it.expenseId })
         assertEquals("expenseId,description,currency,amountMinor,category\n1,\"Lunch, team\",eur,200,other\n", search.csv(data, currency = "EUR"))
         assertThrows(IllegalArgumentException::class.java) { search.csv(data, maxRows = 1) }
+    }
+
+    /** Verifies CSV export rejects a non-positive row bound before reading expense data. */
+    @Test
+    fun `rejects non-positive csv row bounds`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            ExpenseSearch().csv(emptyList(), maxRows = 0)
+        }
     }
 
     @Test

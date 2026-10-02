@@ -364,7 +364,7 @@ class JpaGroupStore(
     private fun invitationToken(): String =
         UuidGenerator.next().toString().replace("-", "") + UuidGenerator.next().toString().replace("-", "")
 
-    private fun conflict(message: String = "Invite is invalid, expired, or already claimed"): Nothing =
+    private fun conflict(message: String): Nothing =
         throw ApplicationException(ErrorCode.ERR_06, message)
 
     private fun notFound(): Nothing =

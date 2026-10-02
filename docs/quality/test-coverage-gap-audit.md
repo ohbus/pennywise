@@ -22,16 +22,16 @@ hosted CI, deployed E2E, and environment-owned release gates remain separate
 acceptance requirements.
 
 The current residual review split is **36 candidate structural mappings**,
-**2 open-review observability records**, and **one open-design record**
+**2 behavior-covered instrumentation mappings**, and **one open-design record**
 (`ProfileController.problem`/`mapErrorCode`). No
-missed method is unaccounted for, but neither category is treated as
-automatically covered or closed.
+missed method is unaccounted for; behavior-covered mappings are explicitly
+linked to tests, while structural and open-design records remain review work.
 The companion [`QA-10 branch-line ledger`](qa10-branch-line-gap-ledger.md)
 records the 52 exact JaCoCo source lines that account for those 78 branches;
 it is regenerated from the same reports and is not a substitute for behavior
 acceptance.
 The companion [`QA-10 concrete execution-gap ledger`](qa10-execution-gap-ledger.md)
-also records 4 production methods with zero covered instructions after
+also records 3 production methods with zero covered instructions after
 excluding compiler-generated methods, accessors, application entry points, and
 interface declarations. These records catch method-level execution gaps that
 branch-only discovery cannot represent. Framework/bootstrap entries require
@@ -129,6 +129,12 @@ behavior is exercised through inline call-site tests, while JaCoCo cannot mark
 the inline declaration method node executed. This is a reviewed compiler
 classification, not a reason to add reflection-only coverage or alter the
 implementation contract.
+The two residual `DbTelemetry.acquisition` and `queryDuration` branch records
+are behavior-covered by `DbTelemetryTest` for positive and negative durations
+with both null and registry-backed telemetry. Their remaining JaCoCo arm is
+the defensive nullable `Timer?.record` mapping; Micrometer's
+`MeterRegistry.timer` contract returns a non-null timer. This is a documented
+instrumentation mapping, not a missing duration behavior test.
 
 ### Current operations without a literal E2E source reference
 

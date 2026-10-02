@@ -49,6 +49,10 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertEqual("<init>", ownership[("RecurrenceSchedule.kt", 11)])
         self.assertEqual("<init>", ownership[("DbOperationPolicy.kt", 28)])
         self.assertTrue(all(gap.next_action for gap in gaps))
+        self.assertEqual(
+            2,
+            sum(gap.closure_status == "BEHAVIOR-COVERED-MAPPING" for gap in gaps),
+        )
         expected_counts = {
             "QA10-A01": 0,
                 "QA10-A02": 0,

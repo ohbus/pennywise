@@ -7199,7 +7199,8 @@
         "2026-10-02 registry-backed DbTelemetry tests reduced the measured branch inventory to 39 methods / 78 missed branches; the exact ledgers and residual acceptance criteria are synchronized in docs/quality/.",
         "2026-10-02 DbWatermark public round-trip coverage removed its value-class method from the concrete zero-instruction inventory; three concrete execution records remain, including the documented inline telemetry node.",
         "2026-10-02 QA10-C02 fixed-seed generated allocation tests cover 200 varied domain cases for conservation, non-negativity, and permutation determinism; no implementation or contract changed.",
-        "2026-10-02 QA10-E2E01 corrected Bruno fixture ordering so placeholder removal occurs after financial requests and added the required settlement currency; public-surface validation and the Java 25 Gradle wrapper test build passed, while Docker-backed live rerun remains open."
+        "2026-10-02 QA10-E2E01 corrected Bruno fixture ordering so placeholder removal occurs after financial requests and added the required settlement currency; public-surface validation and the Java 25 Gradle wrapper test build passed, while Docker-backed live rerun remains open.",
+        "2026-10-02 QA10-E05 reviewed DbTelemetry acquisition/queryDuration JaCoCo residuals against bytecode and DbTelemetryTest; positive/negative and null/registry-backed behavior is covered, while the remaining nullable Timer?.record arms are documented instrumentation mappings."
       ],
       "reviewer": "/root",
       "blocker": null

@@ -265,6 +265,11 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
             "CANDIDATE-STRUCTURAL",
             "Retain exhaustive catalog and invalid-status fallback tests; the remaining arms are defensive against impossible enum/status combinations.",
         )
+    if "dbtelemetry" in qualified and method in {"acquisition", "queryDuration"}:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "DbTelemetryTest covers positive and negative durations with null and registry-backed telemetry; the remaining JaCoCo arm is the defensive nullable Timer?.record mapping, while MeterRegistry.timer returns a non-null Timer by contract.",
+        )
     return (
         "OPEN-REVIEW",
         "Inspect the exact source/bytecode mapping and add a behavior test or a reviewed invariant classification; do not alter implementation for JaCoCo.",

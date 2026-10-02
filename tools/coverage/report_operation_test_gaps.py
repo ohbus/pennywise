@@ -257,7 +257,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     options = parse_args(sys.argv[1:] if argv is None else argv)
     items = inventory(options.root.resolve())
     if options.format == "json":
-        print(json.dumps([asdict(item) for item in items], indent=2))
+        records: list[dict[str, object]] = [
+            {**asdict(item), "e2e_status": item.e2e_status} for item in items
+        ]
+        print(json.dumps(records, indent=2))
     else:
         print(render_markdown(items))
     return 0

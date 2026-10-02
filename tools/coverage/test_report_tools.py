@@ -17,6 +17,7 @@ from tools.coverage.report_branch_gaps import (
 from tools.coverage.report_operation_test_gaps import (
     acceptance_criteria,
     inventory,
+    main as operation_report_main,
     references,
     render_markdown as render_operation_markdown,
 )
@@ -94,6 +95,17 @@ class CoverageInventoryTest(unittest.TestCase):
             49,
             sum(not item.has_bruno_signal for item in operations),
         )
+
+    def test_operation_json_exposes_e2e_status(self) -> None:
+        output = StringIO()
+
+        with redirect_stdout(output):
+            result = operation_report_main(
+                ["--root", str(ROOT), "--format", "json"]
+            )
+
+        self.assertEqual(0, result)
+        self.assertIn('"e2e_status": "SOURCE-REFERENCE-ONLY"', output.getvalue())
 
     def test_operation_references_do_not_accept_identifier_substrings(self) -> None:
         sources = (

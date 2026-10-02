@@ -21,6 +21,23 @@ class RecurringExpenseWorkerTest @Autowired constructor(
 ) {
 
     @Test
+    fun `service convenience method processes schedules due today`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Apartment 100", "HOUSEHOLD", "EUR"))
+        service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Daily Paper",
+                amountMinor = 300,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = LocalDate.now()
+            )
+        )
+
+        assertEquals(1, service.processDueOccurrences())
+    }
+
+    @Test
     fun `worker executes due occurrences when enabled`() {
         val group = groupStore.create("alice", CreateGroupRequest("Apartment 101", "HOUSEHOLD", "EUR"))
         val today = LocalDate.now()

@@ -2,6 +2,7 @@ package com.subhrodip.squarewise.expensecore.messaging
 import com.subhrodip.squarewise.expensecore.messaging.broker.BrokerMessage
 import com.subhrodip.squarewise.expensecore.messaging.broker.PublishResult
 import com.subhrodip.squarewise.expensecore.messaging.broker.RabbitBrokerPublisher
+import com.subhrodip.squarewise.expensecore.messaging.config.OutboxMessagingConfiguration
 import com.subhrodip.squarewise.ids.events.EventConstants
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -39,6 +40,14 @@ class RabbitBrokerPublisherTest {
             (invocation.getArgument<Any>(0) as RabbitOperations.OperationsCallback<Any?>)
                 .doInRabbit(rabbitTemplate)
         }
+    }
+
+    /** Verifies the production bean factory exposes the Rabbit publisher adapter unchanged. */
+    @Test
+    fun `configuration creates rabbit broker publisher`() {
+        val publisher = OutboxMessagingConfiguration().rabbitBrokerPublisher(rabbitTemplate, objectMapper)
+
+        assertTrue(publisher is RabbitBrokerPublisher)
     }
 
     /** Verifies broker confirmation cannot be configured with a non-positive timeout. */

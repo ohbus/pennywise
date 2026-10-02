@@ -33,6 +33,7 @@ from tools.coverage.report_operation_test_gaps import (
     render_markdown as render_operation_markdown,
 )
 from tools.coverage.normalize_bruno_execution import normalize as normalize_bruno
+from tests.e2e.test_concurrency_subscriptions import write_execution_evidence
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -40,6 +41,28 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class CoverageInventoryTest(unittest.TestCase):
     """Protect the exhaustive branch and operation discovery invariants."""
+
+    def test_subscription_evidence_writer_emits_strict_operation_record(self) -> None:
+        """Ensure the live subscription reporter cannot omit required attribution."""
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "nested" / "subscription.json"
+            write_execution_evidence(
+                path,
+                "abc123",
+                "ci-compose-oidc",
+                "GraphQL Subscription",
+                "groupChanged",
+                ["subscription delivery was verified"],
+            )
+
+            document = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual("qa10-operation-execution-v1", document["schema"])
+            self.assertEqual("abc123", document["source_revision"])
+            self.assertEqual(
+                {("GraphQL Subscription", "groupChanged"): "EXECUTION-ARTIFACT-PASSED"},
+                load_execution_artifact(path),
+            )
 
     def test_every_current_branch_gap_has_a_qa_row(self) -> None:
         gaps = all_gaps(ROOT)

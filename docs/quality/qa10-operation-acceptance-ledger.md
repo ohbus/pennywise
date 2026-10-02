@@ -22,6 +22,10 @@ is surface-aware: it requires an exact `/v1` contract path and HTTP method, whil
 GraphQL matching is restricted to BFF GraphQL request files and standalone root
 fields.
 
+The `groupChanged` WebSocket suite now emits a schema-valid execution record
+only after all of its runtime assertions pass. Until a retained CI artifact is
+ingested, its committed status remains `NO-EXECUTION-ARTIFACT-INGESTED`.
+
 The historical execution was **NOT-GREEN**: `make acceptance-live` on 2026-10-01
 passed 65 of 71 requests and failed logout, expense create/update/delete,
 settlement record/reversal; the following `make e2e-live` stopped on the signed

@@ -15,9 +15,11 @@ Verifies:
 """
 
 import base64
+import argparse
 import json
 import io
 import os
+from pathlib import Path
 import socket
 import struct
 import sys
@@ -29,6 +31,7 @@ import uuid
 from tests.http_constants import APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE, GRAPHQL_PATH
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
+from tests.e2e.qa10_evidence import write_execution_evidence
 
 BFF_URL = "http://localhost:8080"
 EXPENSE_CORE_URL = "http://localhost:8082"
@@ -36,6 +39,8 @@ HTTP_TIMEOUT_SECONDS = 10
 SOCKET_SETUP_TIMEOUT_SECONDS = 10
 WS_HOST = "localhost"
 WS_PORT = 8080
+
+
 
 
 def request_json(url: str, method: str = "GET", body: Any = None,
@@ -490,8 +495,39 @@ def run_concurrency_and_subscriptions_test() -> None:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run live concurrency and GraphQL subscription checks")
+    parser.add_argument(
+        "--evidence-output",
+        type=Path,
+        help="write QA-10 operation evidence after all assertions pass",
+    )
+    parser.add_argument(
+        "--source-revision",
+        default=os.environ.get("GITHUB_SHA", "local-worktree"),
+        help="source revision recorded in the QA-10 evidence artifact",
+    )
+    parser.add_argument(
+        "--environment",
+        default=os.environ.get("QA10_E2E_ENVIRONMENT", "local-compose-oidc"),
+        help="runtime environment recorded in the QA-10 evidence artifact",
+    )
+    arguments = parser.parse_args()
     try:
         run_concurrency_and_subscriptions_test()
+        if arguments.evidence_output is not None:
+            write_execution_evidence(
+                arguments.evidence_output,
+                arguments.source_revision,
+                arguments.environment,
+                "GraphQL Subscription",
+                "groupChanged",
+                [
+                    "authenticated graphql-transport-ws subscription received a matching group invalidation",
+                    "malformed and non-member subscriptions were rejected",
+                    "disconnect, resubscribe, and completed-subscription filtering were verified",
+                    "concurrent stale-version conflict and subsequent recovery were verified",
+                ],
+            )
     except Exception as e:
         print(f"\n❌ TEST SUITE FAILED: {e}", file=sys.stderr)
         import traceback

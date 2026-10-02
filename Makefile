@@ -153,7 +153,7 @@ e2e-offline: ## Run offline client simulation, sync cursor, and replay resilienc
 	@$(UV_RUN) python3 tests/e2e/test_offline_resilience.py
 
 e2e-concurrency: ## Run concurrent member edit conflict resolution and GraphQL subscription invalidation tests
-	@$(UV_RUN) python3 tests/e2e/test_concurrency_subscriptions.py
+	@$(UV_RUN) python3 tests/e2e/test_concurrency_subscriptions.py $(E2E_CONCURRENCY_ARGS)
 
 e2e-chaos: ## Run message broker outage chaos and transactional outbox recovery tests
 	@$(UV_RUN) python3 tests/e2e/test_chaos_recovery.py

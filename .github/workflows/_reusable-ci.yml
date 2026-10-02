@@ -542,7 +542,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p build/reports/e2e
-          make e2e-concurrency 2>&1 | tee build/reports/e2e/concurrency-websocket.log
+          make e2e-concurrency E2E_CONCURRENCY_ARGS="--evidence-output build/reports/e2e/concurrency-operation-execution.json --source-revision $GITHUB_SHA --environment ci-compose-oidc" 2>&1 | tee build/reports/e2e/concurrency-websocket.log
           make e2e-chaos 2>&1 | tee build/reports/e2e/chaos-recovery.log
       - name: Tear down the complete local application stack
         if: always()

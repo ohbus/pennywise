@@ -801,3 +801,31 @@ branches to 55 methods / 108 missed branches. The related commits are
 already-bound-placeholder invitation test; the remaining residuals
 are still open evidence work, not permission to delete implementation branches
 or weaken public behavior.
+
+## Audit update through `34afd01`
+
+The branch was re-audited from `aaa34fd` through the current head
+`34afd01` (138 commits). The range contains no deleted files and no public
+REST, GraphQL, event, or error-contract changes. The test, coverage, CI, and
+documentation commits add evidence or synchronize the ledgers; they do not
+remove production logic to improve a metric.
+
+Three commits in this range touch production-source paths and require an
+explicit disposition:
+
+| Commit | Production change | Justification and evidence |
+| --- | --- | --- |
+| `ff2f382` | `BffGatewayFilters` compares parsed `DbWatermark` values numerically, then serializes the selected watermark back to its header. | This corrects a real ordering defect that could compare LSN strings lexicographically and retain a smaller watermark. `BffGatewayFiltersTest` adds the numeric-ordering regression case; the change preserves the public header contract and is not a coverage-only simplification. |
+| `3850505`, `00f2ac8` | Added missing `ApiEndpoints` constants and builders for archive, member-removal, placeholder, and invite-revocation paths. | These are additive contract-alignment helpers for paths already present in the REST surface. `ApiEndpointsTest` and the locked Python surface audit verify exact path parity; no existing endpoint or behavior was removed or rewritten. |
+| `a2e339d` | Added `contracts/qa10/operation-execution.schema.json`. | This is a versioned QA evidence schema, not an application behavior change. It makes retained per-operation E2E evidence machine-checkable and is validated by the contract gate. |
+
+The remaining commits through `34afd01` are implementation-preserving tests,
+fixture corrections, CI/artifact retention, coverage inventory tooling, and
+documentation. Notable evidence increments include event/envelope and error
+catalog parity guards, endpoint-surface drift checks, OIDC servlet/reactive
+parity tests, rejected-mutation immutability tests, persistence and recurring
+boundary tests, operation execution-artifact ingestion, and the final
+surface-aware Bruno source matcher. The current audit still reports 39 branch
+records / 78 missed JaCoCo branches, three concrete execution-gap records, and
+54 contract operations without a local execution artifact. These remain
+documented acceptance gaps rather than reasons to delete or weaken code.

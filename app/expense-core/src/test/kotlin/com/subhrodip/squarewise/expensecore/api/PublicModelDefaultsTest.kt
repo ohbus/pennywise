@@ -1,6 +1,7 @@
 package com.subhrodip.squarewise.expensecore.api
 
 import com.subhrodip.squarewise.expensecore.groups.api.GroupMemberResponse
+import com.subhrodip.squarewise.expensecore.groups.api.GroupResponse
 import com.subhrodip.squarewise.expensecore.groups.api.InviteResponse
 import com.subhrodip.squarewise.expensecore.recurring.domain.RecurringExpenseOccurrence
 import java.time.Instant
@@ -16,12 +17,14 @@ class PublicModelDefaultsTest {
         val membershipId = UUID.randomUUID()
         val groupId = UUID.randomUUID()
         val member = GroupMemberResponse(membershipId, groupId)
+        val group = GroupResponse(groupId, "Trip", "TRIP", 1)
         val invite = InviteResponse("invite-token", Instant.parse("2026-01-01T00:00:00Z"))
 
         assertEquals(null, member.subject)
         assertEquals(null, member.displayName)
         assertEquals(false, member.isPlaceholder)
         assertEquals("ACTIVE", member.status)
+        assertEquals("ACTIVE", group.status)
         assertEquals(null, invite.placeholderId)
     }
 

@@ -81,10 +81,14 @@ class BffTransportModelTest {
         val start = BrowserLoginStartRequest("alice@example.test")
         val accepted = BrowserLoginStartResponse("ACCEPTED")
         val session = BrowserSessionResponse(expiresIn = 600)
+        val group = UpstreamGroup("group-1", "Trip").toBffGroup()
 
         assertEquals(null, start.channel)
         assertEquals(null, accepted.retryAfterSeconds)
         assertEquals("AUTHENTICATED", session.status)
+        assertEquals(null, group.kind)
+        assertEquals(null, group.status)
+        assertEquals(0, group.revision)
     }
 
     @Test

@@ -67,6 +67,33 @@ class JpaAccountIdentityStoreTest @Autowired constructor(
     }
 
     @Test
+    fun `repository email lookup defaults to active identities`() {
+        val accountId = UUID.randomUUID()
+        profileRepository.save(
+            ProfileEntity(
+                accountId = accountId,
+                subject = "sqw:$accountId",
+                displayName = "Default Status",
+                timezone = "UTC",
+                defaultCurrency = "EUR"
+            )
+        )
+        val identity = AccountIdentityEntity(
+            identityId = UUID.randomUUID(),
+            accountId = accountId,
+            issuer = "https://accounts.squarewise.test",
+            providerSubject = "sqw:$accountId",
+            email = "default-status@example.com",
+            status = "ACTIVE"
+        )
+        identityRepository.save(identity)
+
+        val resolved = identityRepository.findFirstByEmailIgnoreCaseAndStatus("DEFAULT-STATUS@EXAMPLE.COM")
+
+        assertEquals(identity.identityId, resolved?.identityId)
+    }
+
+    @Test
     fun `updates email without modifying account subject or issuer`() {
         val accountId = UUID.randomUUID()
         val issuer = "https://accounts.squarewise.test"

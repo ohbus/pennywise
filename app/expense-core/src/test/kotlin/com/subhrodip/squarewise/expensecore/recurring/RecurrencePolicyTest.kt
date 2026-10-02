@@ -2,10 +2,13 @@ package com.subhrodip.squarewise.expensecore.recurring
 import com.subhrodip.squarewise.expensecore.recurring.domain.RecurrenceFrequency
 import com.subhrodip.squarewise.expensecore.recurring.domain.RecurrencePolicy
 import com.subhrodip.squarewise.expensecore.recurring.domain.RecurrenceSchedule
+import com.subhrodip.squarewise.expensecore.recurring.domain.RecurringExpenseSchedule
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.Instant
+import java.util.UUID
 
 class RecurrencePolicyTest {
     private val policy = RecurrencePolicy()
@@ -25,6 +28,27 @@ class RecurrencePolicyTest {
     @Test
     fun `advances weekly occurrence`() {
         assertEquals(LocalDate.of(2026, 9, 24), policy.nextAfter(LocalDate.of(2026, 9, 17), RecurrenceSchedule("s", RecurrenceFrequency.WEEKLY)))
+    }
+
+    @Test
+    fun `calculates the next date for a persisted schedule`() {
+        val schedule = RecurringExpenseSchedule(
+            scheduleId = UUID.randomUUID(),
+            groupId = UUID.randomUUID(),
+            description = "Rent",
+            amountMinor = 1000,
+            currency = "EUR",
+            frequency = RecurrenceFrequency.MONTHLY,
+            dayOfMonth = 31,
+            startDate = LocalDate.of(2026, 1, 31),
+            nextOccurrenceDate = LocalDate.of(2026, 1, 31),
+            createdAt = Instant.parse("2026-01-01T00:00:00Z"),
+        )
+
+        assertEquals(
+            LocalDate.of(2026, 2, 28),
+            policy.nextAfter(LocalDate.of(2026, 1, 31), schedule),
+        )
     }
 
     @Test

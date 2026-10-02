@@ -75,6 +75,18 @@ class DbRoutingDataSourceTest {
         }
     }
 
+    @Test
+    fun `credentialed connection acquisition follows the current route`() {
+        val writer = mock(DataSource::class.java)
+        val connection = mock(Connection::class.java)
+        `when`(writer.connection).thenReturn(connection)
+        val routing = DbRoutingDataSource(writer, emptyMap())
+
+        DbContextHolder.withContext(DbExecutionContext("expense.create", DbOperationKind.COMMAND)) {
+            assertSame(connection, routing.getConnection("user", "password"))
+        }
+    }
+
     /** Missing reader names and reader JDBC failures fail closed with observable diagnostics. */
     @Test
     fun `reader acquisition rejects unknown and failed pools`() {

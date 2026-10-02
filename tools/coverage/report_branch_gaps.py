@@ -238,13 +238,13 @@ def record_acceptance(class_name: str, method: str) -> str:
     if "recurringexpenseservice" in qualified:
         return "Assert create/update optional-specification branches, date/end-date and catch-up limits, paused and duplicate occurrence paths, empty/foreign membership rejection, successful expense construction, generation failure pause, and outbox-present/absent notification behavior through RecurringExpenseServiceTest, RecurringExpenseFailureTest, and RecurringExpenseOptionalOutboxTest."
     if "searchcontroller" in qualified or "expensesearch" in qualified:
-        return "Assert authorization, filters, pagination, empty/populated results, and CSV header/value escaping through the public search boundary; classify generated iteration/telemetry mappings separately."
+        return "Assert authorization, filters, pagination, empty/populated results, cursor/limit validation, CSV header/value escaping, and reader-policy context through SearchControllerTest and ExpenseSearchTest; classify only generated iteration/telemetry mappings."
     if "settlementsuggestionengine" in qualified:
         return "Assert zero-sum, duplicate aggregation, one-sided/corrupt snapshots, multi-currency isolation, and deterministic positive settlements through SettlementSuggestionTest; retain the strictly-positive transfer invariant and classify only the defensive transfer guard."
     if "synccontroller" in qualified:
-        return "Assert blank, malformed, cross-group, expired, and valid cursor behavior with ordering and membership checks; classify only the non-null exception-message fallback after source review."
+        return "Assert blank, malformed, cross-group, expired, and valid cursor behavior with ordering, limits, and membership checks through SyncControllerTest; classify only the non-null exception-message fallback after source review."
     if "emaildispatcher" in qualified:
-        return "Assert disabled/invalid input, success, transient retry/exhaustion, interruption, permanent failure, redaction, and metrics; classify only the defensive loop-exit mapping."
+        return "Assert disabled/invalid input, success, transient retry/exhaustion, interruption, permanent failure, recipient trimming, and retry bounds through EmailDispatcherTest; classify only the defensive loop-exit mapping."
     if "dbreaderhealth" in qualified:
         return "Assert healthy, lagging, disconnected, open, exact-timeout, recovery, causal-watermark, and unknown-reader routing through DbReaderHealthTest; retain nullability guards and prove state transitions with a controlled clock."
     if "dboperationpolicy" in qualified:
@@ -342,8 +342,8 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
         )
     if "searchcontroller" in qualified or "expensesearch" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain authorization/filter/pagination and populated/header-only CSV tests; classify only generated telemetry/iteration mappings.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "SearchControllerTest and ExpenseSearchTest cover authorization, filtering, pagination, cursor/limit validation, empty/header-only exports, CSV escaping, and reader-policy context. Keep the search and export contracts; classify only generated telemetry/iteration mappings.",
         )
     if "settlementsuggestionengine" in qualified:
         return (
@@ -352,13 +352,13 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
         )
     if "synccontroller" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain malformed, cross-group, expired, and blank-cursor public tests; classify only the non-null exception-message fallback.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "SyncControllerTest covers valid ordering, membership isolation, malformed/cross-group/expired cursors, blank subjects, and limit bounds. Keep the structured cursor error contract and classify only the residual exception-message mapping.",
         )
     if "emaildispatcher" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain first/subsequent success, retry exhaustion, permanent failure, interruption, and zero-attempt tests; classify only the defensive loop-exit mapping.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "EmailDispatcherTest covers disabled/invalid input, successful delivery, transient retry/success/exhaustion, interruption, permanent and unknown failures, trimming, and zero-attempt normalization. Keep retry and failure outcomes; classify only the defensive loop-exit mapping.",
         )
     if "dbreaderhealth" in qualified:
         return (

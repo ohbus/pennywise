@@ -62,7 +62,7 @@ class CoverageInventoryTest(unittest.TestCase):
             else:
                 self.assertIn(": identify a focused", target)
         self.assertEqual(
-            26,
+            30,
             sum(gap.closure_status == "BEHAVIOR-COVERED-MAPPING" for gap in gaps),
         )
         group_store_gaps = [gap for gap in gaps if "JpaGroupStore" in gap.class_name]
@@ -95,6 +95,10 @@ class CoverageInventoryTest(unittest.TestCase):
             "SessionPolicy": "SessionPolicyTest",
             "BrowserOriginPolicy": "BrowserOriginPolicyTest",
             "RecurrenceSchedule": "RecurrencePolicyTest",
+            "SearchController": "SearchControllerTest",
+            "ExpenseSearch": "ExpenseSearchTest",
+            "SyncController": "SyncControllerTest",
+            "EmailDispatcher": "EmailDispatcherTest",
             "FallbackJwtDecoder": "FallbackJwtDecoderTest",
             "SettlementSuggestionEngine": "SettlementSuggestionTest",
             "DbReaderHealth": "DbReaderHealthTest",

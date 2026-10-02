@@ -29,8 +29,8 @@ missing groups, placeholder/invite validation, duplicate removal, expiry,
 claim races, rollback, revisions, audit, synchronization, and outbox effects
 are exercised without changing the store. The residual JaCoCo counters remain
 in the ledger and are treated as line/instrumentation mappings, not removed
-coverage gaps. The resulting review split is 12 candidate structural mappings,
-26 behavior-covered mappings, and one open-design helper. No implementation,
+coverage gaps. The resulting review split is 8 candidate structural mappings,
+30 behavior-covered mappings, and one open-design helper. No implementation,
 contract, guard, or JaCoCo exclusion was added or removed.
 
 The same review covers the five `RecurringExpenseService` records through
@@ -66,6 +66,13 @@ The follow-up also covers `BrowserOriginPolicy` and `RecurrenceSchedule` through
 their existing tests. Exact-origin/default-port/native-only/malformed/wildcard
 cases and schedule identity/day/frequency cases pass without changing the
 fail-closed guards or recurrence contract.
+
+The search, sync, and notification follow-up similarly classifies only residual
+test-backed mappings. Search tests cover authorization, filtering, pagination,
+cursor/limit validation, CSV safety, and reader routing; sync tests cover
+membership and cursor failure modes; email tests cover delivery, retry,
+interruption, and permanent failure outcomes. No implementation or public
+contract was deleted or weakened.
 
 As a reproducible history check, the subject-matching audit selected **240
 commits** from `master..HEAD` whose subjects contain `test`, `coverage`, `QA`,

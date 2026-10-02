@@ -28,7 +28,8 @@ acceptance evidence even where the affected operation has a source reference.
 ## Execution-artifact ingestion
 
 The source inventory does not infer execution from Python/Bruno references. A
-real runner may provide an optional normalized artifact with this shape:
+real runner may provide an optional normalized artifact conforming to
+[`contracts/qa10/operation-execution.schema.json`](../../contracts/qa10/operation-execution.schema.json):
 
 ```json
 {

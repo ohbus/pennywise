@@ -309,6 +309,8 @@ def load_execution_artifact(path: Path) -> dict[tuple[str, str], str]:
             raise ValueError("each execution operation record must be an object")
         record: Mapping[str, object] = raw_record
         surface = _required_string(record, "surface")
+        if surface not in {"REST", "GraphQL Query", "GraphQL Mutation", "GraphQL Subscription"}:
+            raise ValueError(f"unsupported execution surface {surface!r}")
         operation = _required_string(record, "operation")
         status = _required_string(record, "status")
         if status not in {"passed", "failed", "blocked"}:

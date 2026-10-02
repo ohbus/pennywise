@@ -124,7 +124,8 @@ The generated operation ledger now also emits `BRUNO-SOURCE-REFERENCE-ONLY` or
 record. The latter is deliberate: this source inventory does not ingest a
 runner result, so no operation is represented as executed acceptance evidence.
 When a deployed runner supplies a normalized `qa10-operation-execution-v1`
-artifact, `report_operation_test_gaps.py --execution-artifact` validates its
+artifact (schema: `contracts/qa10/operation-execution.schema.json`),
+`report_operation_test_gaps.py --execution-artifact` validates its
 source revision, environment, operation identity, retained artifact path, and
 non-empty assertion list before emitting `EXECUTION-ARTIFACT-PASSED`,
 `EXECUTION-ARTIFACT-FAILED`, or `EXECUTION-ARTIFACT-BLOCKED`. Invalid, duplicate,

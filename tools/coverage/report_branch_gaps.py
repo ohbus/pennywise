@@ -34,6 +34,8 @@ class BranchGap:
     qa_row: str
     assignment_basis: str
     acceptance_criteria: str
+    closure_status: str
+    next_action: str
 
 
 def qa_assignment(module: str, class_name: str) -> tuple[str, str]:
@@ -140,6 +142,116 @@ def qa_acceptance(qa_row: str) -> str:
     return criteria.get(qa_row, "Exact behavior test or reviewed structural rationale linked to this production branch.")
 
 
+def closure_review(class_name: str, method: str) -> tuple[str, str]:
+    """Assign an explicit review status and next action to a residual branch.
+
+    These statuses never close a branch automatically. They make the residual
+    inventory auditable: structural candidates still require reviewer sign-off,
+    while reachable or unreferenced behavior remains an open test/design item.
+    """
+
+    qualified = class_name.lower()
+    if qualified.endswith("profilecontroller") and method == "mapErrorCode":
+        return (
+            "OPEN-DESIGN",
+            "Route a real controller failure through problem() and assert its public envelope, or record a separately reviewed cleanup decision; do not use reflection-only coverage.",
+        )
+    if qualified.endswith("recurringexpenseservice") and method == "emitSchedulePausedNotification":
+        return (
+            "OPEN-BEHAVIOR",
+            "Add a focused service test proving the optional outbox absence is a safe no-op while configured outbox delivery remains asserted.",
+        )
+    if "jpagroupstore" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Reconfirm foreign-key/membership invariants and retain lifecycle tests; classify only the exact defensive mapping after reviewer sign-off.",
+        )
+    if "expensecontroller" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain the public ensureActiveMember rejection tests; the nullable principal forwarding arm is unreachable after authentication and must not be exercised by bypassing the guard.",
+        )
+    if "clientaddressresolver" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain IPv4/IPv6/malformed boundary tests and classify only the unsupported-address-family defensive mapping under the JDK family invariant.",
+        )
+    if "emailaddress" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain canonicalization and malformed/length/IDN tests; review the residual parser short-circuit mapping without weakening validation.",
+        )
+    if "loginverificationservice" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain canonical-email enrollment/reuse tests; the fallback display name is unreachable after EmailAddress local-part validation.",
+        )
+    if "sessionpolicy" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain idle, absolute, and skew boundary tests; classify only the unreachable short-circuit under SessionExpiry ordering.",
+        )
+    if "fallbackjwtdecoder" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain first-success, later-success, and final-failure tests; the terminal failure guard follows the non-empty decoder-list invariant.",
+        )
+    if "browseroriginpolicy" in qualified or "bffgatewayfilters" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain origin/watermark boundary tests and classify only the Kotlin collection or short-circuit mapping after source/bytecode review.",
+        )
+    if "liveupdatefanout" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain revocation, expiry, and membership tests; classify generated predicate/iterator mappings separately from the still-open broker/WebSocket E2E evidence.",
+        )
+    if "recurrencedomain" in qualified or "recurrenceschedule" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain constructor/date/frequency boundary tests and review only compiler-generated validation short-circuits.",
+        )
+    if "recurringexpenseservice" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain date, catch-up, membership, custom participant, duplicate, and failure tests; classify only impossible empty-member/fallback mappings after invariant review.",
+        )
+    if "searchcontroller" in qualified or "expensesearch" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain authorization/filter/pagination and populated/header-only CSV tests; classify only generated telemetry/iteration mappings.",
+        )
+    if "settlementsuggestionengine" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain zero-sum, duplicate-row, one-sided, and multi-currency tests; classify only the strictly-positive transfer guard under queue invariants.",
+        )
+    if "synccontroller" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain malformed, cross-group, expired, and blank-cursor public tests; classify only the non-null exception-message fallback.",
+        )
+    if "emaildispatcher" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain first/subsequent success, retry exhaustion, permanent failure, interruption, and zero-attempt tests; classify only the defensive loop-exit mapping.",
+        )
+    if "dbreaderhealth" in qualified or "dboperationpolicy" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain timing, routing, and all policy invariant tests; review the residual nullability/redundant short-circuit mapping without removing a guard.",
+        )
+    if "globalerrorhandler" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain exhaustive catalog and invalid-status fallback tests; the remaining arms are defensive against impossible enum/status combinations.",
+        )
+    return (
+        "OPEN-REVIEW",
+        "Inspect the exact source/bytecode mapping and add a behavior test or a reviewed invariant classification; do not alter implementation for JaCoCo.",
+    )
+
+
 def report_paths(root: Path) -> list[Path]:
     """Return application and library JaCoCo XML reports in stable order."""
 
@@ -185,6 +297,9 @@ def parse_report(root: Path, report: Path) -> list[BranchGap]:
                 covered = int(branch_counter.get("covered", "0")) if branch_counter is not None else 0
                 line_text = method.get("line")
                 qa_row, assignment_basis = qa_assignment(module_name(root, report), class_name)
+                closure_status, next_action = closure_review(
+                    class_name, method.get("name", "")
+                )
                 gaps.append(
                     BranchGap(
                         module=module_name(root, report),
@@ -198,6 +313,8 @@ def parse_report(root: Path, report: Path) -> list[BranchGap]:
                         qa_row=qa_row,
                         assignment_basis=assignment_basis,
                         acceptance_criteria=qa_acceptance(qa_row),
+                        closure_status=closure_status,
+                        next_action=next_action,
                     )
                 )
     return gaps
@@ -222,15 +339,15 @@ def markdown(gaps: Iterable[BranchGap]) -> str:
     """Render branch gaps as a review-friendly Markdown table."""
 
     rows = [
-        "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria |",
-        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |",
+        "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria | Closure status | Next action |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- |",
     ]
     for gap in gaps:
         rows.append(
             f"| `{gap.module}` | `{gap.qa_row}` | `{gap.class_name}` | `{gap.source_file}` | "
             f"`{gap.method}` | {gap.source_line or ''} | {gap.missed_branches} | "
             f"{gap.covered_branches} | {gap.assignment_basis} | `{gap.report}` | "
-            f"{gap.acceptance_criteria} |"
+            f"{gap.acceptance_criteria} | **{gap.closure_status}** | {gap.next_action} |"
         )
     return "\n".join(rows)
 

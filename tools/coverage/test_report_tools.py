@@ -31,10 +31,12 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_every_current_branch_gap_has_a_qa_row(self) -> None:
         gaps = all_gaps(ROOT)
 
-        self.assertEqual(38, len(gaps))
+        self.assertEqual(37, len(gaps))
         self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
         self.assertTrue(all(gap.assignment_basis for gap in gaps))
         self.assertTrue(all(gap.acceptance_criteria for gap in gaps))
+        self.assertTrue(all(gap.closure_status for gap in gaps))
+        self.assertTrue(all(gap.next_action for gap in gaps))
         expected_counts = {
             "QA10-A01": 0,
                 "QA10-A02": 0,
@@ -50,7 +52,7 @@ class CoverageInventoryTest(unittest.TestCase):
                 "QA10-B04": 1,
                 "QA10-C01": 5,
                 "QA10-C02": 0,
-                "QA10-C03": 7,
+                "QA10-C03": 6,
                 "QA10-C04": 9,
                 "QA10-C05": 1,
                 "QA10-C06": 1,
@@ -69,7 +71,7 @@ class CoverageInventoryTest(unittest.TestCase):
             expected_counts,
             {row: actual_counts.get(row, 0) for row in expected_counts},
         )
-        self.assertEqual(77, sum(gap.missed_branches for gap in gaps))
+        self.assertEqual(76, sum(gap.missed_branches for gap in gaps))
 
     def test_operation_inventory_is_complete_and_assigned(self) -> None:
         operations = inventory(ROOT)
@@ -126,13 +128,13 @@ class CoverageInventoryTest(unittest.TestCase):
         rendered = render_branch_gaps(gaps)
         rows = rendered.splitlines()
 
-        self.assertEqual(40, len(rows))
+        self.assertEqual(39, len(rows))
         self.assertEqual(
-            "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria |",
+            "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria | Closure status | Next action |",
             rows[0],
         )
         self.assertEqual(
-            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |",
+            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- |",
             rows[1],
         )
         self.assertEqual(
@@ -259,7 +261,7 @@ class CoverageInventoryTest(unittest.TestCase):
     def test_ci_documentation_uses_current_branch_baseline(self) -> None:
         ci = (ROOT / "docs/operations/ci.md").read_text(encoding="utf-8")
 
-        self.assertIn("38 methods containing 77 missed", ci)
+        self.assertIn("37 methods containing 76 missed", ci)
         self.assertNotIn("220 missed-branch methods", ci)
 
     def test_ci_python_tooling_is_locked_and_build_hooks_are_disabled(self) -> None:

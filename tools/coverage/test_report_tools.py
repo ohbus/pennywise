@@ -14,7 +14,12 @@ from tools.coverage.report_branch_gaps import (
     main as branch_report_main,
     markdown as render_branch_gaps,
 )
-from tools.coverage.report_operation_test_gaps import inventory, references
+from tools.coverage.report_operation_test_gaps import (
+    acceptance_criteria,
+    inventory,
+    references,
+    render_markdown as render_operation_markdown,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -75,6 +80,7 @@ class CoverageInventoryTest(unittest.TestCase):
             Counter(item.surface for item in operations),
         )
         self.assertTrue(all(item.acceptance_row == "QA10-E2E01" for item in operations))
+        self.assertTrue(all(acceptance_criteria(item) for item in operations))
         self.assertEqual(
             0,
             sum(not item.has_e2e_signal for item in operations),
@@ -91,6 +97,18 @@ class CoverageInventoryTest(unittest.TestCase):
         )
 
         self.assertEqual(("tests/e2e/actual.py",), references("group", sources))
+
+    def test_committed_operation_acceptance_ledger_matches_current_inventory(self) -> None:
+        operations = inventory(ROOT)
+        ledger = (ROOT / "docs/quality/qa10-operation-acceptance-ledger.md").read_text(
+            encoding="utf-8"
+        )
+        marker = "## Per-operation records\n\n"
+        self.assertIn(marker, ledger)
+        self.assertEqual(
+            render_operation_markdown(operations),
+            ledger.split(marker, maxsplit=1)[1].strip(),
+        )
 
     def test_branch_closure_gate_rejects_current_gaps(self) -> None:
         output = StringIO()

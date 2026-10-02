@@ -45,6 +45,88 @@ class OperationEvidence:
         return bool(self.bruno_references)
 
 
+def acceptance_criteria(item: OperationEvidence) -> str:
+    """Return the minimum per-operation deployed acceptance contract.
+
+    Source references are only discovery signals. This mapping makes the
+    required signed-persona, failure, replay/concurrency, side-effect, and
+    isolation assertions reviewable for every operation in the inventory.
+    """
+
+    operation = item.operation.lower()
+    if operation in {"startlogin", "verifylogin", "refreshtoken", "logout"}:
+        return (
+            "Signed credential/session fixture; exact success and rejection status; "
+            "single-use/replay and family ownership; durable session/outbox state; "
+            "redacted credential evidence."
+        )
+    if operation in {"getme", "getprofilebyid", "getprofilesbatch", "updateme"}:
+        return (
+            "Owner, foreign-subject, missing-profile, malformed, and workload cases; "
+            "exact status/code; no cross-subject leakage; persisted profile state and "
+            "query isolation asserted."
+        )
+    if operation in {"requestdeletion", "requestexport", "listexportrequests"}:
+        return (
+            "Signed owner and foreign-subject cases; exact accepted/rejected status; "
+            "durable request ownership, idempotent/repeated transition, and no "
+            "unauthorized row or event."
+        )
+    if operation in {"creategroup", "getgroup", "listgroups", "updategroup", "archivegroup", "listgroupmembers"}:
+        return (
+            "Owner/member/non-member/removed-member personas; exact allow/deny and "
+            "object-hiding behavior; persisted group/revision/membership state; "
+            "no forbidden side effect."
+        )
+    if operation in {"createinvite", "revokeinvite", "claiminvite", "createplaceholder", "removegroupmember"}:
+        return (
+            "Signed owner/member/outsider and concurrent/replayed personas; expiry, "
+            "revocation, duplicate, and malformed inputs; exact status/code; durable "
+            "membership/invite/notification state and atomic no-mutation failures."
+        )
+    if operation in {"createexpense", "updateexpense", "deleteexpense", "listexpenses", "searchexpenses", "exportexpenses", "previewallocation"}:
+        return (
+            "Authorized member and outsider cases; validation, stale-version, replay, "
+            "pagination/filter, and malformed-input outcomes; exact status/code; "
+            "expense, postings, revision, sync, outbox, and zero-sum side effects "
+            "asserted with no cross-group leakage."
+        )
+    if operation in {"recordsettlement", "reversesettlement", "getsettlementsuggestions"}:
+        return (
+            "Authenticated participant and unauthorized/invalid cases; currency, "
+            "ownership, replay, reversal, and corruption handling; exact status/code; "
+            "settlement postings, balances, revisions, and zero-sum state asserted."
+        )
+    if operation in {"getsnapshot", "getchanges", "getbalances"}:
+        return (
+            "Authorized member and removed/non-member cases; cursor ownership, expiry, "
+            "ordering, limits, tombstones, and malformed cursor outcomes; exact "
+            "status/code and revision-consistent durable snapshot asserted."
+        )
+    if "schedule" in operation:
+        return (
+            "Authorized member and outsider cases; date/frequency/day, pause/resume, "
+            "missing schedule, duplicate/lock, catch-up, and failure behavior; exact "
+            "status/code plus durable schedule, expense, notification, and revision state."
+        )
+    if item.surface.startswith("GraphQL"):
+        return (
+            "Signed transport/persona case for the root field; exact GraphQL data/errors "
+            "and public extensions; authorization/isolation, upstream failure, and "
+            "required durable or subscription side effects asserted."
+        )
+    if item.service == "Notifications API":
+        return (
+            "Signed subject and foreign-subject cases; exact status/code and validation "
+            "errors; durable inbox/preferences isolation, duplicate behavior, and "
+            "notification side effects asserted."
+        )
+    return (
+        "Signed owner/member/workload personas; exact success and rejection status/code; "
+        "validation, replay/concurrency, durable side effects, and isolation asserted."
+    )
+
+
 def text_files(directory: Path, root: Path) -> list[tuple[str, str]]:
     """Read supported source files and return relative path/text pairs."""
 
@@ -140,8 +222,8 @@ def render_markdown(items: Iterable[OperationEvidence]) -> str:
     """Render operation signals as a review table."""
 
     rows = [
-        "| Surface | Service | Operation | Method | Path | Acceptance row | E2E signal | Bruno signal |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Surface | Service | Operation | Method | Path | Acceptance row | Required acceptance criteria | E2E signal | Bruno signal |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for item in items:
         e2e = ", ".join(f"`{path}`" for path in item.e2e_references) or "missing"
@@ -149,7 +231,7 @@ def render_markdown(items: Iterable[OperationEvidence]) -> str:
         rows.append(
             f"| {item.surface} | {item.service} | `{item.operation}` | "
             f"{item.method or ''} | `{item.path or ''}` | `{item.acceptance_row}` | "
-            f"{e2e} | {bruno} |"
+            f"{acceptance_criteria(item)} | {e2e} | {bruno} |"
         )
     return "\n".join(rows)
 

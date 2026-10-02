@@ -77,7 +77,9 @@ main functions, DTO constructors, and constants may explain some missed lines;
 they still require an explicit classification rather than silent exclusion.
 
 The operation matrix currently inventories 45 REST operations and 9 GraphQL
-root operations. That proves inventory completeness, not complete validation,
+root operations. The generated [`QA-10 operation acceptance ledger`](qa10-operation-acceptance-ledger.md)
+now records every operation's required acceptance dimensions. That proves
+inventory and criteria completeness, not complete validation,
 authorization, failure, replay, concurrency, or side-effect coverage.
 
 For repeatable operation-level discovery, run
@@ -286,9 +288,9 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 41-record JSON discovery inventory and
+The repository currently has the exact 38-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 41 records. The A07 and E02 tables provide supplemental method-level review
+all 38 records. The A07 and E02 tables provide supplemental method-level review
 detail; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
@@ -370,7 +372,7 @@ For example, testing a data class's equality behavior is valid; excluding all
 transport, persistence, messaging, security, or configuration behavior must
 receive a normal QA10 row even when JaCoCo reports partial coverage.
 
-The 41-method inventory is a discovery baseline, not closure evidence. QA-10
+The 38-method inventory is a discovery baseline, not closure evidence. QA-10
 cannot move to done until the inventory is rerun after each test increment and
 the count is zero or every residual entry has a reviewed structural rationale.
 
@@ -578,7 +580,7 @@ planned new test. This prevents a broad suite from absorbing an unrelated gap.
 
 | Row | Existing suite to extend | Dedicated destination or artifact still required |
 | --- | --- | --- |
-| QA10-E2E01 | `tests/e2e/test_product_journey.py`, `test_rest_edge_cases.py`, and `test_oidc_negative.py` provide partial signed-persona and negative-path evidence. | No dedicated operation matrix exists yet. Add `tests/e2e/test_operation_authorization_matrix.py` covering every REST/GraphQL operation and signed persona; a source reference alone does not close an operation. |
+| QA10-E2E01 | `tests/e2e/test_product_journey.py`, `test_rest_edge_cases.py`, and `test_oidc_negative.py` provide partial signed-persona and negative-path evidence. | `docs/quality/qa10-operation-acceptance-ledger.md` now names all 54 operations and their required assertions. Add/extend `tests/e2e/test_operation_authorization_matrix.py` to execute every row for signed personas; a source reference alone does not close an operation. |
 | QA10-E2E02 | `tests/e2e/test_auth_email_delivery.py` proves CODE delivery, one-time verification, replay rejection, refresh-family rejection, and logout revocation through Mailpit. | Extend the existing suite for LINK delivery, expiry, wrong-subject redemption, rate-limit/error redaction, broker retry/DLQ, and log/output secret absence. Do not describe this as a missing file. |
 | QA10-E2E03 | `tests/e2e/test_auth_cache_resilience.py` provides limited local cache/rate-limit resilience evidence; `test_rest_edge_cases.py` covers public error behavior. | No distributed rate-limit suite exists. Add `tests/e2e/test_distributed_rate_limit.py` for multiple replicas, normalized proxy identity, atomic same-subject concurrency, Redis outage/recovery, and bounded `Retry-After`. |
 | QA10-E2E04 | `tests/e2e/test_concurrency_subscriptions.py` and `test_oidc_websocket_negative.py` provide authenticated subscription, malformed-operation, reconnect, and invalid-token evidence. | Extend protocol coverage for malformed RFC frames, duplicate subscription IDs, heartbeat timeout, sustained backpressure, reconnect cursor recovery, membership revocation, and no duplicate/lost invalidation. |

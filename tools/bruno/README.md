@@ -32,7 +32,8 @@ Base URLs are likewise environment variables (`baseUrlBff`,
 `baseUrlAccounts`, `baseUrlExpenseCore`, and `baseUrlNotifications`). Requests
 that create groups, expenses, memberships, or invites save response identifiers
 into scoped Bruno variables for subsequent requests. Dynamic UUIDs make repeat
-runs safe; the ordered lifecycle folder archives generated groups last.
+runs safe; the ordered lifecycle folder removes the placeholder after financial
+requests and archives generated groups last.
 The expense and settlement requests also consume the membership IDs returned by
 the live group fixture rather than assuming seed UUIDs, so they remain valid for
 fresh databases and signed OIDC personas.

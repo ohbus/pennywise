@@ -300,6 +300,17 @@ class AuthControllerTest @Autowired constructor(
     }
 
     @Test
+    fun `token response defaults the authorization scheme to bearer`() {
+        val response = TokenResponse(
+            accessToken = "access",
+            expiresIn = 600,
+            refreshToken = "refresh"
+        )
+
+        assertEquals("Bearer", response.tokenType)
+    }
+
+    @Test
     fun `logout returns 401 Unauthorized when principal name is blank`() {
         val blankPrincipal = RequestPostProcessor { request ->
             request.userPrincipal = Principal { " " }

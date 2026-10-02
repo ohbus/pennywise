@@ -48,7 +48,7 @@ the `DbTelemetry` test, and `64df963` subsequently restored explicit
 registry-backed metric assertions; the current test retains those assertions.
 The E2E assertion-line removals were message renames or journey extraction, not
 production-logic deletion, and the current suites retain the relevant checks.
-Therefore the audit does not treat a lower historical test count as coverage
+Therefore, the audit does not treat a lower historical test count as coverage
 closure; current behavior evidence is judged from the tests present at `HEAD`.
 
 ## Rule applied

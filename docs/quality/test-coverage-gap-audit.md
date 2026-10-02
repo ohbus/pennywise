@@ -646,6 +646,28 @@ test cannot close a row by merely executing a line.
 | QA10-E04 | `ApiEndpoints`, event constants, IDs, error catalog | `UuidGeneratorTest` covers UUIDv7 generation, `EventConstantsTest` covers non-blank/versioned event metadata and unique routing keys, `ApiEndpointsTest` covers the previously unrepresented archive, placeholder, member-removal, and invite-revocation path builders, the locked Python audit verifies every OpenAPI REST path has a literal or named composed constant in `ApiEndpoints.kt`, a second audit assertion requires exact error-code parity between `error-catalog.yaml` and `ErrorCode.kt`, and a third assertion checks envelope required fields/header vocabulary/version floor. Full event-type/routing enumeration and duplicate/drift validation remain missing. | `U`: contract/static tests enumerate every endpoint/event/error code exactly once, detect duplicate or drifted paths/routing keys, validate UUID/ID generation invariants, and document generated/accessor-only classes as excluded only with evidence. |
 | QA10-E05 | `DbTelemetry`, observability adapters | Missed metric branches can hide unbounded labels or incorrect timing. | `U+T+O`: success/failure/slow query, pool acquisition, fallback, lock-wait, deadlock, and subscription metrics use bounded labels only; counters/timers increment exactly once and dashboards/alerts consume the same names. |
 
+### Event-type and routing inventory still requiring closure
+
+The source scan found these event values in production or their direct
+producer/consumer tests: `auth.email.requested.v1`, `group.renamed.v1`,
+`group.archived.v1`, `member.placeholder_added.v1`, `member.removed.v1`,
+`invitation.revoked.v1`, `invitation.claimed.v1`, `expense.created`,
+`expense.updated`, `expense.deleted`, and `recurring.schedule.paused`.
+`EventConstants` centrally defines the exchange, wildcard subscriptions, and
+the auth-email routing key, but the complete event-type registry and producer /
+consumer mapping are not yet centralized or mechanically enumerated.
+
+This remains an open QA10-E04/D01/D02 acceptance item. Closure requires a
+versioned registry that maps every producer event to its schema, routing key,
+consumer, compatibility policy, and redaction rule; static validation that every
+literal producer/consumer value appears exactly once in that registry; unit
+assertions for envelope and payload shape; PostgreSQL/outbox assertions for
+atomic audit, sync, and publication state; and RabbitMQ integration evidence
+for routing, acknowledgement, retry, deduplication, and dead-letter behavior.
+The auth-email path additionally requires proof that encrypted credentials never
+appear in logs or parked messages. The current source scan and local listener
+tests do not satisfy those deployed broker criteria.
+
 ## Missing deployed E2E and environment tests
 
 These cannot be closed by adding more in-process tests:

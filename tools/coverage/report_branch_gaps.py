@@ -222,7 +222,7 @@ def record_acceptance(class_name: str, method: str) -> str:
     if "jpagroupstore" in qualified:
         return "Assert the lifecycle behavior through JpaGroupStoreTest and JpaGroupStoreClaimTest: missing and archived groups, membership authorization, duplicate removal, placeholder binding, invite validation/revocation, claim expiry/races, durable revision, audit, sync, outbox, and rollback invariants. Treat only the remaining JaCoCo mappings as instrumentation after confirming both normal and rejection paths."
     if "fallbackjwtdecoder" in qualified:
-        return "Assert first-decoder success, later-decoder success, and final validation failure; retain the non-empty decoder-list invariant that makes the terminal null guard unreachable."
+        return "Assert empty-list construction rejection, first-decoder success, later-decoder success, and final validation failure through FallbackJwtDecoderTest; retain the non-empty decoder-list invariant and classify only the unreachable terminal null guard."
     if "browseroriginpolicy" in qualified:
         return "Build the policy with valid, blank, and malformed origin configuration and assert fail-closed browser/CSRF behavior; classify only compiler/collection short-circuits after source review."
     if "liveupdatefanout" in qualified:
@@ -240,15 +240,15 @@ def record_acceptance(class_name: str, method: str) -> str:
     if "searchcontroller" in qualified or "expensesearch" in qualified:
         return "Assert authorization, filters, pagination, empty/populated results, and CSV header/value escaping through the public search boundary; classify generated iteration/telemetry mappings separately."
     if "settlementsuggestionengine" in qualified:
-        return "Assert zero-sum, duplicate aggregation, one-sided/corrupt snapshots, multi-currency isolation, and deterministic positive settlements; retain the strictly-positive transfer invariant."
+        return "Assert zero-sum, duplicate aggregation, one-sided/corrupt snapshots, multi-currency isolation, and deterministic positive settlements through SettlementSuggestionTest; retain the strictly-positive transfer invariant and classify only the defensive transfer guard."
     if "synccontroller" in qualified:
         return "Assert blank, malformed, cross-group, expired, and valid cursor behavior with ordering and membership checks; classify only the non-null exception-message fallback after source review."
     if "emaildispatcher" in qualified:
         return "Assert disabled/invalid input, success, transient retry/exhaustion, interruption, permanent failure, redaction, and metrics; classify only the defensive loop-exit mapping."
     if "dbreaderhealth" in qualified:
-        return "Assert healthy, lagging, disconnected, open, exact-timeout, recovery, causal-watermark, and unknown-reader routing; retain nullability guards and prove state transitions with a controlled clock."
+        return "Assert healthy, lagging, disconnected, open, exact-timeout, recovery, causal-watermark, and unknown-reader routing through DbReaderHealthTest; retain nullability guards and prove state transitions with a controlled clock."
     if "dboperationpolicy" in qualified:
-        return "Assert valid writer/reader policies and every invalid name, kind, eligibility, and consistency combination; preserve fail-closed routing invariants."
+        return "Assert valid writer/reader policies and every invalid name, kind, eligibility, and consistency combination through DbOperationPolicyTest; preserve fail-closed routing invariants and classify only constructor short-circuit mappings."
     if "globalerrorhandler" in qualified:
         return "Assert every ErrorCode mapping and HTTP status, invalid status fallback, null-message detail fallback, Retry-After metadata, correlation/request ID, negotiation, headers, and redaction through GlobalErrorHandlerTest; retain exhaustive enum-governed defensive arms and classify only JaCoCo mapping residue."
     if "dbtelemetry" in qualified:
@@ -312,8 +312,8 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
         )
     if "fallbackjwtdecoder" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain first-success, later-success, and final-failure tests; the terminal failure guard follows the non-empty decoder-list invariant.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "FallbackJwtDecoderTest covers empty-list construction rejection, first-success, later-success, and final-failure behavior. Keep the non-empty decoder-list invariant and fail-closed final exception; classify only the residual terminal null-guard mapping.",
         )
     if "browseroriginpolicy" in qualified or "bffgatewayfilters" in qualified:
         return (
@@ -342,8 +342,8 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
         )
     if "settlementsuggestionengine" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain zero-sum, duplicate-row, one-sided, and multi-currency tests; classify only the strictly-positive transfer guard under queue invariants.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "SettlementSuggestionTest covers zero-sum, duplicate aggregation, one-sided/corrupt snapshots, multi-currency isolation, and deterministic positive transfers. Keep the strictly-positive transfer guard and classify only its residual JaCoCo mapping after preserving the settlement invariants.",
         )
     if "synccontroller" in qualified:
         return (
@@ -355,10 +355,15 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
             "CANDIDATE-STRUCTURAL",
             "Retain first/subsequent success, retry exhaustion, permanent failure, interruption, and zero-attempt tests; classify only the defensive loop-exit mapping.",
         )
-    if "dbreaderhealth" in qualified or "dboperationpolicy" in qualified:
+    if "dbreaderhealth" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain timing, routing, and all policy invariant tests; review the residual nullability/redundant short-circuit mapping without removing a guard.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "DbReaderHealthTest covers unknown, healthy, lagging, disconnected, open, exact-deadline, timeout, recovery, and causal-watermark states with a controlled clock. Keep the fail-closed routing guard and classify only the residual state-transition mapping.",
+        )
+    if "dboperationpolicy" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "DbOperationPolicyTest covers valid writer/reader policies plus invalid names, reader-eligibility kinds, and strong-consistency combinations. Keep the constructor invariants and classify only the residual validation short-circuit mappings.",
         )
     if "globalerrorhandler" in qualified:
         return (

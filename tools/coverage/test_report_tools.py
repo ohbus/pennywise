@@ -62,7 +62,7 @@ class CoverageInventoryTest(unittest.TestCase):
             else:
                 self.assertIn(": identify a focused", target)
         self.assertEqual(
-            17,
+            21,
             sum(gap.closure_status == "BEHAVIOR-COVERED-MAPPING" for gap in gaps),
         )
         group_store_gaps = [gap for gap in gaps if "JpaGroupStore" in gap.class_name]
@@ -89,6 +89,18 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertTrue(
             all("GlobalErrorHandlerTest" in gap.record_acceptance for gap in error_handler_gaps)
         )
+        for class_name, test_name in {
+            "FallbackJwtDecoder": "FallbackJwtDecoderTest",
+            "SettlementSuggestionEngine": "SettlementSuggestionTest",
+            "DbReaderHealth": "DbReaderHealthTest",
+            "DbOperationPolicy": "DbOperationPolicyTest",
+        }.items():
+            candidate_gaps = [gap for gap in gaps if class_name in gap.class_name]
+            self.assertTrue(candidate_gaps, f"missing inventory record for {class_name}")
+            self.assertTrue(
+                all(gap.closure_status == "BEHAVIOR-COVERED-MAPPING" for gap in candidate_gaps)
+            )
+            self.assertTrue(all(test_name in gap.record_acceptance for gap in candidate_gaps))
         expected_counts = {
             "QA10-A01": 0,
                 "QA10-A02": 0,

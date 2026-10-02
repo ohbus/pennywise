@@ -29,8 +29,8 @@ missing groups, placeholder/invite validation, duplicate removal, expiry,
 claim races, rollback, revisions, audit, synchronization, and outbox effects
 are exercised without changing the store. The residual JaCoCo counters remain
 in the ledger and are treated as line/instrumentation mappings, not removed
-coverage gaps. The resulting review split is 21 candidate structural mappings,
-17 behavior-covered mappings, and one open-design helper. No implementation,
+coverage gaps. The resulting review split is 17 candidate structural mappings,
+21 behavior-covered mappings, and one open-design helper. No implementation,
 contract, guard, or JaCoCo exclusion was added or removed.
 
 The same review covers the five `RecurringExpenseService` records through
@@ -47,6 +47,13 @@ HTTP status, invalid mocked status fallback, null-message fallback,
 `Retry-After`, headers, correlation, negotiation, and redaction are asserted.
 The exhaustive mapping and fail-safe fallback remain in production; only the
 JaCoCo mapping is classified.
+
+The follow-up review also classifies the residual `FallbackJwtDecoder`,
+`SettlementSuggestionEngine`, `DbReaderHealth`, and `DbOperationPolicy` records
+as behavior-covered mappings. Existing tests cover decoder ordering and failure,
+settlement conservation and isolation, reader state transitions and deadlines,
+and route-policy validation. No decoder, settlement, database policy, or health
+implementation was deleted or weakened.
 
 As a reproducible history check, the subject-matching audit selected **240
 commits** from `master..HEAD` whose subjects contain `test`, `coverage`, `QA`,

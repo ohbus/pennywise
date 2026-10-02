@@ -21,6 +21,11 @@ the repository-wide test and JaCoCo tasks. This baseline is local evidence;
 hosted CI, deployed E2E, and environment-owned release gates remain separate
 acceptance requirements.
 
+The current residual review split is **36 candidate structural mappings** and
+**one open-design record** (`ProfileController.problem`/`mapErrorCode`). No
+missed method is unaccounted for, but neither category is treated as
+automatically covered or closed.
+
 The Accounts RSA provider boundary is covered by generation, complete and
 partial PEM loading, blank PEM fallback, malformed PEM rejection, rotation,
 and `kid` validation tests. It no longer appears in the current missed-branch

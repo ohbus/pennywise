@@ -16,6 +16,10 @@ import com.subhrodip.squarewise.expensecore.messaging.outbox.persistence.OutboxE
 import com.subhrodip.squarewise.expensecore.settlements.domain.SettlementStatus;
 import com.subhrodip.squarewise.expensecore.settlements.persistence.SettlementEntity;
 import com.subhrodip.squarewise.expensecore.sync.persistence.SyncChangeEntity;
+import com.subhrodip.squarewise.expensecore.recurring.domain.RecurringExpenseOccurrence;
+import com.subhrodip.squarewise.expensecore.recurring.domain.RecurringExpenseSchedule;
+import com.subhrodip.squarewise.expensecore.recurring.domain.RecurrenceFrequency;
+import java.time.LocalDate;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -186,6 +190,24 @@ class ExpenseJavaBeanCompatibilityTest {
         assertEquals("{}", outbox.getPayload());
         assertEquals(OutboxStatus.PENDING, outbox.getStatus());
         assertEquals(1, outbox.getAttempts());
+
+        RecurringExpenseSchedule schedule = new RecurringExpenseSchedule(
+                UUID.randomUUID(), groupId, "Monthly dinner", 1200, "EUR", RecurrenceFrequency.MONTHLY,
+                null, LocalDate.of(2026, 1, 1), null, LocalDate.of(2026, 1, 1), false, NOW, 1);
+        schedule.setPaused(true);
+        schedule.setVersion(4);
+        assertEquals("Monthly dinner", schedule.getDescription());
+        assertEquals(RecurrenceFrequency.MONTHLY, schedule.getFrequency());
+        assertEquals(true, schedule.getPaused());
+        assertEquals(4, schedule.getVersion());
+
+        RecurringExpenseOccurrence occurrence = new RecurringExpenseOccurrence(
+                UUID.randomUUID(), schedule.getScheduleId(), LocalDate.of(2026, 1, 1), null, NOW);
+        occurrence.setExpenseId(expenseId);
+        occurrence.setCreatedAt(NOW);
+        assertEquals(schedule.getScheduleId(), occurrence.getScheduleId());
+        assertEquals(expenseId, occurrence.getExpenseId());
+        assertEquals(NOW, occurrence.getCreatedAt());
     }
 
     @Test

@@ -77,6 +77,17 @@ class BffTransportModelTest {
     }
 
     @Test
+    fun `browser transport defaults preserve the public optional-field contract`() {
+        val start = BrowserLoginStartRequest("alice@example.test")
+        val accepted = BrowserLoginStartResponse("ACCEPTED")
+        val session = BrowserSessionResponse(expiresIn = 600)
+
+        assertEquals(null, start.channel)
+        assertEquals(null, accepted.retryAfterSeconds)
+        assertEquals("AUTHENTICATED", session.status)
+    }
+
+    @Test
     fun `upstream group serialization preserves its wire properties`() {
         val group = UpstreamGroup("group-1", "Trip", "TRIP", "ACTIVE", 3)
         val json = ObjectMapper().writeValueAsString(group)

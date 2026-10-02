@@ -7,6 +7,10 @@ import com.subhrodip.squarewise.accounts.auth.delivery.outbox.AuthEmailOutboxEnt
 import com.subhrodip.squarewise.accounts.auth.identity.persistence.AccountIdentityEntity;
 import com.subhrodip.squarewise.accounts.auth.session.AuthSessionEntity;
 import com.subhrodip.squarewise.accounts.profile.persistence.ProfileEntity;
+import com.subhrodip.squarewise.accounts.requests.deletion.model.DeletionStatus;
+import com.subhrodip.squarewise.accounts.requests.deletion.persistence.AccountDeletionRequestEntity;
+import com.subhrodip.squarewise.accounts.requests.export.model.ExportStatus;
+import com.subhrodip.squarewise.accounts.requests.export.persistence.AccountExportRequestEntity;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -70,5 +74,19 @@ class AccountsJavaBeanCompatibilityTest {
         assertEquals("subject", profile.getSubject());
         assertEquals("Alice Updated", profile.getDisplayName());
         assertEquals(true, profile.getDeletionRequested());
+
+        AccountDeletionRequestEntity deletion = new AccountDeletionRequestEntity("subject", DeletionStatus.REQUESTED, NOW);
+        deletion.setStatus(DeletionStatus.COMPLETED);
+        deletion.setRequestedAt(NOW);
+        assertEquals("subject", deletion.getSubject());
+        assertEquals(DeletionStatus.COMPLETED, deletion.getStatus());
+        assertEquals(NOW, deletion.getRequestedAt());
+
+        AccountExportRequestEntity export = new AccountExportRequestEntity(UUID.randomUUID(), "subject", ExportStatus.REQUESTED, NOW);
+        export.setStatus(ExportStatus.READY);
+        export.setRequestedAt(NOW);
+        assertEquals("subject", export.getSubject());
+        assertEquals(ExportStatus.READY, export.getStatus());
+        assertEquals(NOW, export.getRequestedAt());
     }
 }

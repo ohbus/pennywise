@@ -23,6 +23,14 @@ the repository-wide test and JaCoCo tasks. This baseline is local evidence;
 hosted CI, deployed E2E, and environment-owned release gates remain separate
 acceptance requirements.
 
+On 2026-10-02, an isolated `qa10` Docker/OIDC stack supplied fresh local
+runtime evidence: the acceptance runner passed, signed Bruno passed 71/71
+requests and 78/78 assertions, and the product lifecycle journey passed. The
+normalized Bruno artifact credits 18 uniquely attributable contract operations;
+36 remain source-only because ambiguous/shared fixtures are deliberately not
+credited. This closes neither hosted-CI evidence nor the remaining per-operation
+acceptance rows.
+
 The current residual review split is **4 candidate structural mappings**,
 **34 behavior-covered boundary/instrumentation mappings**, and **one open-design
 record** (`ProfileController.problem`/`mapErrorCode`). No

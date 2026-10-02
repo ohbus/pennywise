@@ -33,6 +33,16 @@ coverage gaps. The resulting review split is 4 candidate structural mappings,
 34 behavior-covered mappings, and one open-design helper. No implementation,
 contract, guard, or JaCoCo exclusion was added or removed.
 
+The latest runtime increment is also implementation-preserving: on 2026-10-02
+the isolated `qa10` Docker/OIDC stack passed the acceptance runner, signed
+Bruno (71/71 requests and 78/78 assertions), and the product lifecycle journey.
+The only application-facing test adjustment sends the existing nonblank
+display name together with the timezone in the E2E `ProfilePatch` fixture,
+matching the existing contract validation. No production implementation,
+public contract, or assertion was deleted or weakened; 18 uniquely attributable
+operations are credited by the normalized artifact and 36 remain intentionally
+uncredited pending operation-specific evidence.
+
 The same review covers the five `RecurringExpenseService` records through
 `RecurringExpenseServiceTest`, `RecurringExpenseFailureTest`, and
 `RecurringExpenseOptionalOutboxTest`. These tests exercise optional custom

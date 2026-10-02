@@ -38,6 +38,35 @@ class JpaExpenseStoreTest @Autowired constructor(
 ) {
 
     @Test
+    fun `creation rejects a missing group before financial side effects`() {
+        val groupId = UUID.randomUUID()
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val record = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = groupId,
+            description = "Missing group expense",
+            category = "other",
+            currency = "EUR",
+            amountMinor = 100,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(participantId, 100)),
+            allocations = listOf(ExpenseAllocation(participantId, 100))
+        )
+
+        val error = assertThrows(ApplicationException::class.java) {
+            expenseStore.create(groupId, record, "missing-group-create", "alice")
+        }
+
+        assertEquals(ErrorCode.ERR_05, error.errorCode)
+        assertNull(expenseStore.findById(expenseId))
+        assertTrue(balancePostingRepository.findByGroupId(groupId).isEmpty())
+        assertTrue(outboxStore.snapshot().isEmpty())
+    }
+
+    @Test
     fun `actor-scoped creation accepts active membership identifiers`() {
         val group = groupStore.create("alice", CreateGroupRequest("Member trip", "TRIP", "EUR"))
         val membershipId = membershipRepository.findByGroupId(group.groupId).single().membershipId

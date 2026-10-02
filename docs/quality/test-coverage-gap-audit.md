@@ -9,7 +9,7 @@ test/quality documentation.
 ## Current baseline
 
 As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **44
-production methods with missed branches** containing **89 missed branches**,
+production methods with missed branches** containing **88 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 0 operations without a literal E2E reference and 49 without a literal
@@ -249,9 +249,9 @@ uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format 
 ```
 
 The JSON array is the machine-readable assignment set. Its record count must
-equal the `Methods with missed branches` total above (**47**), and the sum of
+equal the `Methods with missed branches` total above (**44**), and the sum of
 its `missed_branches` fields must equal the current missed-branch total
-(**95**). Each object carries the module, production class, source file,
+(**88**). Each object carries the module, production class, source file,
 method, source line, missed/covered branch counts, originating JaCoCo report,
 provisional QA-10 row, assignment basis, and the row's machine-readable
 `acceptance_criteria`. The record count and branch-count
@@ -551,7 +551,7 @@ planned new test. This prevents a broad suite from absorbing an unrelated gap.
 | QA10-B02 | `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/config/BearerTokenContextWebFilterTest.kt`, `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/BearerAuthorizationTest.kt`, `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/GraphQlLimitErrorInstrumentationTest.kt`, `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/GraphqlHttpTransportTest.kt`, and `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/GraphQlScalarConfigurationTest.kt` | `BearerTokenContextWebFilterTest` now proves case-insensitive trimmed bearer capture, valid watermark capture, malformed-header/watermark omission, and exchange retention. Extend GraphQL HTTP and WebSocket suites with every limit/error dimension; prove bearer extraction, subject normalization, and public limit-error mapping at the unit boundary. |
 | QA10-B03 | `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/LiveUpdateFanoutTest.kt`, `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/messaging/BffEventConsumerTest.kt`, and `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/messaging/RabbitBffEventListenerTest.kt` | Extend `tests/e2e/test_concurrency_subscriptions.py` and add reconnect/replay cases. |
 | QA10-B04 | `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/config/BrowserCsrfWebFilterTest.kt`, `app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/config/BrowserOriginPolicyTest.kt`, and cookie filter tests | Add browser-cookie mutation and WebSocket upgrade cases to the public E2E harness. |
-| QA10-C01 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/JpaExpenseStoreTest.kt`, `JpaExpenseStoreTransactionRollbackTest`, controller tests, and outbox tests | `JpaExpenseStoreTest` now covers actor-scoped active membership identifiers and duplicate/inactive participant rejection before mutation; `JpaExpenseStoreTransactionRollbackTest` injects an outbox-port failure and asserts expense, idempotency, postings, sync, and group revision rollback; outbox tests cover retry policy, state boundaries, and publisher delivery-policy validation. Extend `tests/e2e/test_product_journey.py` with deployed write-failure rollback and ledger reconciliation. |
+| QA10-C01 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/JpaExpenseStoreTest.kt`, `JpaExpenseStoreTransactionRollbackTest`, controller tests, and outbox tests | `JpaExpenseStoreTest` now covers actor-scoped active membership identifiers, missing-group rejection with no financial side effects, and duplicate/inactive participant rejection before mutation; `JpaExpenseStoreTransactionRollbackTest` injects an outbox-port failure and asserts expense, idempotency, postings, sync, and group revision rollback; outbox tests cover retry policy, state boundaries, and publisher delivery-policy validation. Extend `tests/e2e/test_product_journey.py` with deployed write-failure rollback and ledger reconciliation. |
 | QA10-C02 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/AllocationCalculatorTest.kt` and `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/expenses/ExpenseValidatorTest.kt` | Add deterministic property/table tests in the same package. |
 | QA10-C03 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/recurring/RecurringExpenseServiceTest.kt`, `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/recurring/RecurringExpenseWorkerTest.kt`, and `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/recurring/RecurringExpenseControllerTest.kt` | Add multi-worker and bounded catch-up cases to the Docker E2E suite. |
 | QA10-C04 | `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/JpaGroupStoreTest.kt` and `app/expense-core/src/test/kotlin/com/subhrodip/squarewise/expensecore/groups/GroupControllerTest.kt`; the JPA suite now covers archived member operations, invalid placeholder/invite tokens, and unknown membership removal without additional effects. | Extend signed-persona lifecycle coverage in `tests/e2e/test_product_journey.py`. |
@@ -691,7 +691,7 @@ The hosted Gradle workflow produces JaCoCo reports in a per-module matrix.
 The `qa10-coverage-inventory` job now downloads those module artifacts,
 restores them into their repository paths, and publishes one aggregate JSON
 inventory. It is intentionally discovery-only while the baseline contains
-44 records with missed branches / 89 missed branches; `--fail-on-gaps` remains the eventual
+44 records with missed branches / 88 missed branches; `--fail-on-gaps` remains the eventual
 blocking closure step. A
 single matrix shard is insufficient evidence for a repository-wide
 no-missed-branch claim.

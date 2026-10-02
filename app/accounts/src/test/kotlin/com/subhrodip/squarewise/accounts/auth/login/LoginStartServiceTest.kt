@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.`when`
+import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -98,6 +99,25 @@ class LoginStartServiceTest {
             any(AuthEmailMessage::class.java)
                 ?: AuthEmailMessage("ignored@example.com", AuthEmailTemplate.LOGIN_LINK, "", now)
         )
+    }
+
+    @Test
+    fun `delivery failure remains generic after credential issuance`() {
+        val credential = deliveryCredential(LoginCredentialService.CredentialKind.LINK)
+        `when`(credentialService.issue(any(), any(), any())).thenReturn(credential)
+        doThrow(IllegalStateException("mail provider unavailable"))
+            .`when`(emailSender)
+            .send(any())
+
+        val result = service.start(
+            "person@example.test",
+            "network",
+            LoginCredentialService.CredentialKind.LINK,
+            now
+        )
+
+        assertEquals(LoginStartResult.ACCEPTED, result)
+        verify(emailSender).send(any())
     }
 
     @Test

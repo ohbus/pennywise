@@ -72,7 +72,7 @@ def wait_for_credential(recipient: str) -> str:
 
 
 def main() -> int:
-    """Verify startLogin, verifyLogin, replay rejection, and logout revocation."""
+    """Verify login replay rejection, logout revocation, and logout idempotency."""
     recipient = f"qa-e2e-{int(time.time() * 1000)}@example.com"
     start_status, start_response = request_json(
         f"{ACCOUNTS_URL}/accounts/v1/auth/login/start",
@@ -114,7 +114,21 @@ def main() -> int:
         body={"refreshToken": refresh_token},
     )
     assert refresh_status == 401, "logout must revoke the refresh-token family"
-    print("  [ok] startLogin delivered, verifyLogin redeemed once, replay was rejected, and logout revoked refresh")
+
+    replay_logout_status, replay_logout_response = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/auth/logout",
+        method="POST",
+        body={"refreshToken": refresh_token},
+        bearer=access_token,
+    )
+    assert replay_logout_status == 204, (
+        "replaying logout for an already revoked family must remain idempotent: "
+        f"HTTP {replay_logout_status} ({replay_logout_response})"
+    )
+    print(
+        "  [ok] startLogin delivered, verifyLogin redeemed once, replay was rejected, "
+        "logout revoked refresh, and logout replay was idempotent"
+    )
     return 0
 
 

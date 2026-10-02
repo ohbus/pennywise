@@ -250,7 +250,7 @@ def record_acceptance(class_name: str, method: str) -> str:
     if "dboperationpolicy" in qualified:
         return "Assert valid writer/reader policies and every invalid name, kind, eligibility, and consistency combination; preserve fail-closed routing invariants."
     if "globalerrorhandler" in qualified:
-        return "Assert every catalog status and public problem envelope, including invalid-status fallback, headers, correlation, negotiation, and redaction; retain enum-governed defensive arms."
+        return "Assert every ErrorCode mapping and HTTP status, invalid status fallback, null-message detail fallback, Retry-After metadata, correlation/request ID, negotiation, headers, and redaction through GlobalErrorHandlerTest; retain exhaustive enum-governed defensive arms and classify only JaCoCo mapping residue."
     if "dbtelemetry" in qualified:
         return "Assert success/failure/slow/fallback metrics for positive and negative durations with absent and registry-backed timers; document Micrometer's non-null timer contract for the residual nullable mapping."
     return f"Add a behavior test for {class_name}.{method} or record a reviewed invariant proving the missed branch unreachable; do not modify implementation for JaCoCo."
@@ -362,8 +362,8 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
         )
     if "globalerrorhandler" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain exhaustive catalog and invalid-status fallback tests; the remaining arms are defensive against impossible enum/status combinations.",
+            "BEHAVIOR-COVERED-MAPPING",
+            "GlobalErrorHandlerTest exercises every ErrorCode, mapped HTTP status, invalid mocked status fallback, null-message fallback, Retry-After, headers, correlation, negotiation, and redaction. Keep the exhaustive mapping and fail-safe behavior; classify only the residual JaCoCo enum/status mapping after preserving these public problem-envelope assertions.",
         )
     if "dbtelemetry" in qualified and method in {"acquisition", "queryDuration"}:
         return (

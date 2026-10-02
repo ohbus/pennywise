@@ -2,15 +2,21 @@ package com.subhrodip.squarewise.expensecore.persistence
 
 import com.subhrodip.squarewise.expensecore.expenses.persistence.entity.BalancePostingEntity
 import com.subhrodip.squarewise.expensecore.expenses.persistence.entity.ExpenseIdempotencyEntity
+import com.subhrodip.squarewise.expensecore.expenses.persistence.entity.ExpenseAllocationEntity
+import com.subhrodip.squarewise.expensecore.expenses.persistence.entity.ExpenseEntity
+import com.subhrodip.squarewise.expensecore.expenses.persistence.entity.ExpensePayerEntity
+import com.subhrodip.squarewise.expensecore.groups.domain.GroupAuditEntity
 import com.subhrodip.squarewise.expensecore.groups.domain.GroupInvitationEntity
 import com.subhrodip.squarewise.expensecore.recurring.domain.RecurringExpenseOccurrence
 import com.subhrodip.squarewise.expensecore.settlements.domain.SettlementStatus
 import com.subhrodip.squarewise.expensecore.settlements.persistence.SettlementEntity
+import com.subhrodip.squarewise.expensecore.sync.persistence.SyncChangeEntity
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
 
 /** Verifies durable identity and lifecycle state for financial persistence records. */
 class PersistenceEntityStateTest {
@@ -106,5 +112,62 @@ class PersistenceEntityStateTest {
         assertEquals(LocalDate.parse("2026-10-02"), occurrence.occurrenceDate)
         assertEquals(expenseId, occurrence.expenseId)
         assertEquals(false, occurrence.createdAt.isAfter(Instant.now()))
+    }
+
+    @Test
+    fun `payer and allocation records retain expense participant amounts`() {
+        val expense = mock(ExpenseEntity::class.java)
+        val participantId = UUID.randomUUID()
+        val payer = ExpensePayerEntity(UUID.randomUUID(), expense, participantId, 900)
+        val allocation = ExpenseAllocationEntity(UUID.randomUUID(), expense, participantId, 900)
+        payer.amountMinor = 1000
+        allocation.allocatedMinor = 1000
+
+        assertEquals(expense, payer.expense)
+        assertEquals(participantId, payer.participantId)
+        assertEquals(1000, payer.amountMinor)
+        assertEquals(expense, allocation.expense)
+        assertEquals(participantId, allocation.participantId)
+        assertEquals(1000, allocation.allocatedMinor)
+    }
+
+    @Test
+    fun `sync change and audit records expose revision and event state`() {
+        val createdAt = Instant.parse("2026-10-02T12:00:00Z")
+        val change = SyncChangeEntity(
+            changeId = UUID.randomUUID(),
+            groupId = "group-1",
+            revision = 4,
+            entityId = "expense-1",
+            deleted = true,
+            payload = null,
+            createdAt = createdAt
+        )
+        val audit = GroupAuditEntity(
+            auditId = UUID.randomUUID(),
+            groupId = UUID.randomUUID(),
+            subject = "alice",
+            action = "group.renamed",
+            revision = 4,
+            payload = "{\"name\":\"Trip\"}",
+            occurredAt = createdAt
+        )
+        change.payload = "{\"kind\":\"updated\"}"
+        change.deleted = false
+        audit.subject = "bob"
+        audit.action = "group.updated"
+        audit.payload = "{\"name\":\"Holiday\"}"
+
+        assertEquals("group-1", change.groupId)
+        assertEquals(4, change.revision)
+        assertEquals("expense-1", change.entityId)
+        assertEquals(false, change.deleted)
+        assertEquals("{\"kind\":\"updated\"}", change.payload)
+        assertEquals(createdAt, change.createdAt)
+        assertEquals("bob", audit.subject)
+        assertEquals("group.updated", audit.action)
+        assertEquals(4, audit.revision)
+        assertEquals("{\"name\":\"Holiday\"}", audit.payload)
+        assertEquals(createdAt, audit.occurredAt)
     }
 }

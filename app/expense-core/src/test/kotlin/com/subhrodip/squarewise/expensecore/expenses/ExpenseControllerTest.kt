@@ -125,6 +125,50 @@ class ExpenseControllerTest {
         )
     }
 
+    /** Verifies payer aggregation overflow is translated to the public validation error. */
+    @Test
+    fun `rejects payer sum overflow for create and update mutations`() {
+        val groupId = UUID.randomUUID()
+        val expenseId = UUID.randomUUID()
+        val firstParticipant = UUID.randomUUID().toString()
+        val secondParticipant = UUID.randomUUID().toString()
+        val maximum = Long.MAX_VALUE.toString()
+        val request = CreateExpenseRequest(
+            expenseId = expenseId,
+            description = "Overflow",
+            amount = MoneyDto("EUR", maximum),
+            payers = listOf(
+                PayerDto(firstParticipant, MoneyDto("EUR", maximum)),
+                PayerDto(secondParticipant, MoneyDto("EUR", maximum))
+            ),
+            allocation = AllocationInputDto(
+                "EXACT",
+                listOf(AllocationItemDto(firstParticipant, maximum))
+            )
+        )
+
+        assertEquals(
+            ErrorCode.ERR_02,
+            assertThrows<ApplicationException> {
+                controller.createExpense(groupId, "overflow-create", request, Principal { "test-user" })
+            }.errorCode
+        )
+
+        val update = UpdateExpenseRequest(
+            version = 1,
+            description = request.description,
+            amount = request.amount,
+            payers = request.payers,
+            allocation = request.allocation
+        )
+        assertEquals(
+            ErrorCode.ERR_02,
+            assertThrows<ApplicationException> {
+                controller.updateExpense(groupId, expenseId, update, Principal { "test-user" })
+            }.errorCode
+        )
+    }
+
     @Test
     fun `rejects expense creation for non-member`() {
         val groupId = UUID.randomUUID()

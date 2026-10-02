@@ -544,6 +544,12 @@ def main() -> None:
         "payers": [{"participantId": participant, "amount": {"currency": "EUR", "minor": "100"}}],
         "allocation": {"mode": "EQUAL", "items": [{"participantId": participant, "value": "1"}]},
     }
+    status, before_rejected_expenses = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}"
+    )
+    expect("member expense baseline is readable before rejected writes", status, 200)
+    if not isinstance(before_rejected_expenses, list):
+        raise AssertionError("expense baseline must be a JSON list")
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
         method="POST", body=payload, token="non-member",
@@ -556,6 +562,14 @@ def main() -> None:
         headers={IDEMPOTENCY_KEY: f"missing-auth-{uuid.uuid4()}"},
     )
     expect("unauthenticated expense creation is rejected", status, 401)
+    status, after_rejected_expenses = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}"
+    )
+    expect("member expense state remains readable after rejected writes", status, 200)
+    if not isinstance(after_rejected_expenses, list):
+        raise AssertionError("expense state after rejected writes must be a JSON list")
+    if after_rejected_expenses != before_rejected_expenses:
+        raise AssertionError("rejected expense writes must not mutate durable expense state")
     status, first = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
         method="POST", body=payload, headers={IDEMPOTENCY_KEY: key},

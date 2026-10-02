@@ -31,7 +31,7 @@ normalized Bruno artifact credits 18 uniquely attributable contract operations;
 credited. This closes neither hosted-CI evidence nor the remaining per-operation
 acceptance rows.
 
-The current residual review split is **4 candidate structural mappings**,
+The current residual review split is **4 reviewed structural-invariant mappings**,
 **34 behavior-covered boundary/instrumentation mappings**, and **one open-design
 record** (`ProfileController.problem`/`mapErrorCode`). No
 missed method is unaccounted for; behavior-covered mappings are explicitly

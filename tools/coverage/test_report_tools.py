@@ -68,6 +68,14 @@ class CoverageInventoryTest(unittest.TestCase):
             34,
             sum(gap.closure_status == "BEHAVIOR-COVERED-MAPPING" for gap in gaps),
         )
+        self.assertEqual(
+            4,
+            sum(gap.closure_status == "STRUCTURAL-INVARIANT" for gap in gaps),
+        )
+        self.assertEqual(
+            1,
+            sum(gap.closure_status == "OPEN-DESIGN" for gap in gaps),
+        )
         group_store_gaps = [gap for gap in gaps if "JpaGroupStore" in gap.class_name]
         self.assertEqual(9, len(group_store_gaps))
         self.assertTrue(

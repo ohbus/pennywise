@@ -287,8 +287,8 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
         )
     if "expensecontroller" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain the public ensureActiveMember rejection tests; the nullable principal forwarding arm is unreachable after authentication and must not be exercised by bypassing the guard.",
+            "STRUCTURAL-INVARIANT",
+            "Reviewed against ExpenseControllerTest: create, update, and delete reject missing or unusable principals through ensureActiveMember before reaching the store call. The nullable principal forwarding arm is unreachable under the enforced authentication invariant; do not bypass the guard merely to alter JaCoCo.",
         )
     if "clientaddressresolver" in qualified:
         return (
@@ -302,8 +302,8 @@ def closure_review(class_name: str, method: str) -> tuple[str, str]:
         )
     if "loginverificationservice" in qualified:
         return (
-            "CANDIDATE-STRUCTURAL",
-            "Retain canonical-email enrollment/reuse tests; the fallback display name is unreachable after EmailAddress local-part validation.",
+            "STRUCTURAL-INVARIANT",
+            "Reviewed against LoginVerificationServiceTest and EmailAddressTest: enrollment and identity reuse use canonical addresses, and EmailAddress rejects an empty local part before verification can construct a credential. The fallback display name is unreachable under the value-object invariant; retain it unless a separate behavior change justifies otherwise.",
         )
     if "sessionpolicy" in qualified:
         return (

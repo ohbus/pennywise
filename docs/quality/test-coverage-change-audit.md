@@ -29,7 +29,7 @@ missing groups, placeholder/invite validation, duplicate removal, expiry,
 claim races, rollback, revisions, audit, synchronization, and outbox effects
 are exercised without changing the store. The residual JaCoCo counters remain
 in the ledger and are treated as line/instrumentation mappings, not removed
-coverage gaps. The resulting review split is 4 candidate structural mappings,
+coverage gaps. The resulting review split is 4 reviewed structural-invariant mappings,
 34 behavior-covered mappings, and one open-design helper. No implementation,
 contract, guard, or JaCoCo exclusion was added or removed.
 

@@ -22,6 +22,14 @@ class EmailAddressTest {
             .forEach { raw -> assertThrows(IllegalArgumentException::class.java) { EmailAddress.parse(raw) } }
     }
 
+    /** Proves the login display-name fallback cannot receive an empty local part. */
+    @Test
+    fun `rejects empty local part before login enrollment`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            EmailAddress.parse("@example.com")
+        }
+    }
+
     @Test
     fun `rejects overlong local part`() {
         val raw = "a".repeat(65) + "@example.com"

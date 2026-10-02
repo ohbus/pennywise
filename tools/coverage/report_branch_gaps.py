@@ -34,6 +34,7 @@ class BranchGap:
     qa_row: str
     assignment_basis: str
     acceptance_criteria: str
+    record_acceptance: str
     evidence_target: str
     closure_status: str
     next_action: str
@@ -54,6 +55,7 @@ class BranchLineGap:
     report: str
     qa_row: str
     acceptance_criteria: str
+    record_acceptance: str
     evidence_target: str
     closure_status: str
     next_action: str
@@ -201,6 +203,55 @@ def evidence_target(module: str, class_name: str) -> str:
         if expression in qualified:
             return target
     return f"{module}: identify a focused unit/integration test boundary"
+
+
+def record_acceptance(class_name: str, method: str) -> str:
+    """Return the exact proof required for one residual method record."""
+
+    qualified = class_name.lower()
+    if "clientaddressresolver" in qualified:
+        return "Exercise direct, trusted-proxy, IPv4, IPv6, malformed, and unsupported-address-family inputs; assert a stable non-empty partition and document the JDK address-family invariant for any unreachable fallback."
+    if "emailaddress" in qualified:
+        return "Exercise canonical, whitespace, malformed, length, IDN, and label-boundary inputs; assert normalized output or the documented validation error without weakening parser guards."
+    if "loginverificationservice" in qualified:
+        return "Verify canonical-email enrollment/reuse and display-name derivation through the public verification flow; prove the fallback arm is unreachable after EmailAddress validation."
+    if "sessionpolicy" in qualified:
+        return "Assert validity immediately before idle and absolute deadlines, expiry at each deadline, and clock-skew behavior; preserve the constructor invariant that idle expiry cannot exceed absolute expiry."
+    if "profilecontroller" in qualified:
+        return "Route a real public profile/deletion/export failure through the helper and assert the exact problem envelope, or record a separately reviewed design decision; reflection-only invocation is insufficient."
+    if "fallbackjwtdecoder" in qualified:
+        return "Assert first-decoder success, later-decoder success, and final validation failure; retain the non-empty decoder-list invariant that makes the terminal null guard unreachable."
+    if "browseroriginpolicy" in qualified:
+        return "Build the policy with valid, blank, and malformed origin configuration and assert fail-closed browser/CSRF behavior; classify only compiler/collection short-circuits after source review."
+    if "liveupdatefanout" in qualified:
+        return "Assert fanout membership, expiry, revocation, ordering, and deduplication through public methods, plus broker acknowledgement/reconnect behavior in deployed E2E; generated iterator mappings require source review."
+    if "bffgatewayfilters" in qualified:
+        return "Assert bearer and watermark propagation for present/absent headers and transport failure mapping through the gateway filter; deployed upstream evidence remains required."
+    if "expensecontroller" in qualified:
+        return "Assert active-member authorization and financial mutation behavior through the public controller; do not bypass the authentication guard to force a nullable-principal forwarding arm."
+    if "jpagroupstore" in qualified:
+        return "Assert each lifecycle mutation's durable state, membership/foreign-key invariant, revision, and failure result with persistence-backed tests; classify only proven defensive mappings."
+    if "recurrenceschedule" in qualified:
+        return "Exercise constructor/date/frequency invariants through the recurring-service boundary; do not use reflection to target compiler-generated validation branches."
+    if "recurringexpenseservice" in qualified:
+        return "Assert create/update membership, date/catch-up, duplicate, failure pause, expense-record construction, and optional-outbox outcomes with durable state and notification evidence."
+    if "searchcontroller" in qualified or "expensesearch" in qualified:
+        return "Assert authorization, filters, pagination, empty/populated results, and CSV header/value escaping through the public search boundary; classify generated iteration/telemetry mappings separately."
+    if "settlementsuggestionengine" in qualified:
+        return "Assert zero-sum, duplicate aggregation, one-sided/corrupt snapshots, multi-currency isolation, and deterministic positive settlements; retain the strictly-positive transfer invariant."
+    if "synccontroller" in qualified:
+        return "Assert blank, malformed, cross-group, expired, and valid cursor behavior with ordering and membership checks; classify only the non-null exception-message fallback after source review."
+    if "emaildispatcher" in qualified:
+        return "Assert disabled/invalid input, success, transient retry/exhaustion, interruption, permanent failure, redaction, and metrics; classify only the defensive loop-exit mapping."
+    if "dbreaderhealth" in qualified:
+        return "Assert healthy, lagging, disconnected, open, exact-timeout, recovery, causal-watermark, and unknown-reader routing; retain nullability guards and prove state transitions with a controlled clock."
+    if "dboperationpolicy" in qualified:
+        return "Assert valid writer/reader policies and every invalid name, kind, eligibility, and consistency combination; preserve fail-closed routing invariants."
+    if "globalerrorhandler" in qualified:
+        return "Assert every catalog status and public problem envelope, including invalid-status fallback, headers, correlation, negotiation, and redaction; retain enum-governed defensive arms."
+    if "dbtelemetry" in qualified:
+        return "Assert success/failure/slow/fallback metrics for positive and negative durations with absent and registry-backed timers; document Micrometer's non-null timer contract for the residual nullable mapping."
+    return f"Add a behavior test for {class_name}.{method} or record a reviewed invariant proving the missed branch unreachable; do not modify implementation for JaCoCo."
 
 
 def closure_review(class_name: str, method: str) -> tuple[str, str]:
@@ -379,6 +430,7 @@ def parse_report(root: Path, report: Path) -> list[BranchGap]:
                         qa_row=qa_row,
                         assignment_basis=assignment_basis,
                         acceptance_criteria=qa_acceptance(qa_row),
+                        record_acceptance=record_acceptance(class_name, method.get("name", "")),
                         evidence_target=evidence_target(module_name(root, report), class_name),
                         closure_status=closure_status,
                         next_action=next_action,
@@ -458,6 +510,7 @@ def line_gaps(root: Path) -> list[BranchLineGap]:
                             report=str(report.relative_to(root)).replace("\\", "/"),
                             qa_row=qa_row,
                             acceptance_criteria=qa_acceptance(qa_row),
+                            record_acceptance=record_acceptance(class_name, method_name),
                             evidence_target=evidence_target(module_name(root, report), class_name),
                             closure_status=closure_status,
                             next_action=next_action,
@@ -480,15 +533,15 @@ def markdown(gaps: Iterable[BranchGap]) -> str:
     """Render branch gaps as a review-friendly Markdown table."""
 
     rows = [
-        "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria | Evidence target | Closure status | Next action |",
-        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- |",
+        "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | QA-row acceptance | Record acceptance | Evidence target | Closure status | Next action |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for gap in gaps:
         rows.append(
             f"| `{gap.module}` | `{gap.qa_row}` | `{gap.class_name}` | `{gap.source_file}` | "
             f"`{gap.method}` | {gap.source_line or ''} | {gap.missed_branches} | "
             f"{gap.covered_branches} | {gap.assignment_basis} | `{gap.report}` | "
-            f"{gap.acceptance_criteria} | `{gap.evidence_target}` | **{gap.closure_status}** | {gap.next_action} |"
+            f"{gap.acceptance_criteria} | {gap.record_acceptance} | `{gap.evidence_target}` | **{gap.closure_status}** | {gap.next_action} |"
         )
     return "\n".join(rows)
 
@@ -497,14 +550,14 @@ def line_markdown(gaps: Iterable[BranchLineGap]) -> str:
     """Render exact source-line branch gaps as a review ledger."""
 
     rows = [
-        "| Module | Package | Source | Class | Method | Line | Missed | Covered | QA row | Acceptance criteria | Evidence target | Closure status | Next action | Report |",
-        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- |",
+        "| Module | Package | Source | Class | Method | Line | Missed | Covered | QA row | QA-row acceptance | Record acceptance | Evidence target | Closure status | Next action | Report |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for gap in gaps:
         rows.append(
             f"| `{gap.module}` | `{gap.package}` | `{gap.source_file}` | `{gap.class_name}` | "
             f"`{gap.method}` | {gap.source_line} | {gap.missed_branches} | "
-            f"{gap.covered_branches} | `{gap.qa_row}` | {gap.acceptance_criteria} | "
+            f"{gap.covered_branches} | `{gap.qa_row}` | {gap.acceptance_criteria} | {gap.record_acceptance} | "
             f"`{gap.evidence_target}` | **{gap.closure_status}** | {gap.next_action} | `{gap.report}` |"
         )
     return "\n".join(rows)

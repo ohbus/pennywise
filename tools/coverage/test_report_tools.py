@@ -45,6 +45,7 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertTrue(all(gap.qa_row.startswith("QA10-") for gap in gaps))
         self.assertTrue(all(gap.assignment_basis for gap in gaps))
         self.assertTrue(all(gap.acceptance_criteria for gap in gaps))
+        self.assertTrue(all(gap.record_acceptance for gap in gaps))
         self.assertTrue(all(gap.closure_status for gap in gaps))
         line_inventory = line_gaps(ROOT)
         ownership = {(gap.source_file, gap.source_line): gap.method for gap in line_inventory}
@@ -245,11 +246,11 @@ class CoverageInventoryTest(unittest.TestCase):
 
         self.assertEqual(41, len(rows))
         self.assertEqual(
-            "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | Acceptance criteria | Evidence target | Closure status | Next action |",
+            "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | QA-row acceptance | Record acceptance | Evidence target | Closure status | Next action |",
             rows[0],
         )
         self.assertEqual(
-            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- |",
+            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |",
             rows[1],
         )
         self.assertEqual(
@@ -287,7 +288,7 @@ class CoverageInventoryTest(unittest.TestCase):
         ledger = (
             ROOT / "docs/quality/qa10-branch-line-gap-ledger.md"
         ).read_text(encoding="utf-8")
-        marker = "| Module | Package | Source | Class | Method | Line | Missed | Covered | QA row | Acceptance criteria | Evidence target | Closure status | Next action | Report |\n"
+        marker = "| Module | Package | Source | Class | Method | Line | Missed | Covered | QA row | QA-row acceptance | Record acceptance | Evidence target | Closure status | Next action | Report |\n"
         self.assertIn(marker, ledger)
         self.assertEqual(
             line_markdown(line_gaps(ROOT)),

@@ -352,6 +352,12 @@ boundary because compiler-generated constructor paths must not be covered by
 reflection-only tests. The ProfileController target remains open design because
 source search found no production caller for the private helper.
 
+Each ledger row also has record-level acceptance criteria in addition to the
+broader QA-row criteria. A row cannot be closed by naming a test file alone:
+the named test must prove the listed input boundary, invariant, durable state,
+or deployed side effect, or the row must receive an evidence-backed structural
+classification.
+
 Current provisional assignment workload (39 records):
 
 | QA row | Branch-gap records | Primary missing evidence |

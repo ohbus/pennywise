@@ -7202,7 +7202,8 @@
         "2026-10-02 QA10-E2E01 corrected Bruno fixture ordering so placeholder removal occurs after financial requests and added the required settlement currency; public-surface validation and the Java 25 Gradle wrapper test build passed, while Docker-backed live rerun remains open.",
         "2026-10-02 QA10-E05 reviewed DbTelemetry acquisition/queryDuration JaCoCo residuals against bytecode and DbTelemetryTest; positive/negative and null/registry-backed behavior is covered, while the remaining nullable Timer?.record arms are documented instrumentation mappings.",
         "2026-10-02 QA10-E2E01 added an AST-based callable source signal to the 54-operation inventory; all 54 have named Python callable references, but the ledger explicitly does not treat static callable presence as executed E2E evidence.",
-        "2026-10-02 QA-10 added evidence-target metadata to all 39 JaCoCo method records and exact source-line records; target existence is tested separately from branch execution, and no production implementation or contract changed."
+        "2026-10-02 QA-10 added evidence-target metadata to all 39 JaCoCo method records and exact source-line records; target existence is tested separately from branch execution, and no production implementation or contract changed.",
+        "2026-10-02 QA-10 added record-level acceptance criteria to the branch and source-line ledgers, requiring exact invariant/input/durable/deployed proof rather than a test-file reference alone."
       ],
       "reviewer": "/root",
       "blocker": null

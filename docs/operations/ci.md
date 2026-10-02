@@ -142,5 +142,7 @@ the product job also attempts to write
 unique collection-path-to-contract mappings with assertion-backed checks; it
 preserves failed/blocked results and skips ambiguous or surface-mismatched
 fixtures. The artifact is therefore partial evidence, not blanket closure of
-the 54-operation matrix. Review it and run the operation-gap reporter with
-`--execution-artifact` before crediting any operation.
+the 54-operation matrix. The same hosted step feeds it to the operation-gap
+reporter and retains `qa10-operation-inventory.json`; review the resulting
+`EXECUTION-ARTIFACT-PASSED`, `FAILED`, and `BLOCKED` statuses before crediting
+any operation.

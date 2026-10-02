@@ -465,6 +465,17 @@ jobs:
           else
             echo 'Bruno report is unavailable; no normalized operation artifact was generated.'
           fi
+      - name: Generate operation inventory from normalized evidence
+        if: always()
+        run: |
+          artifact=build/reports/e2e/qa10-operation-execution.json
+          if test -f "$artifact"; then
+            uv run --frozen --no-build python tools/coverage/report_operation_test_gaps.py \
+              --format json --execution-artifact "$artifact" \
+              | tee build/reports/e2e/qa10-operation-inventory.json
+          else
+            echo 'Normalized operation artifact is unavailable; operation inventory remains source-only.'
+          fi
       - name: Tear down the complete local application stack
         if: always()
         run: docker compose -f infra/local/docker-compose.dev.yml down -v

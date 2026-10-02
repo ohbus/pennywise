@@ -14,7 +14,7 @@ As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **39
 production methods with missed branches** containing **78 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **three concrete
 execution-gap records**. Operation source discovery
-finds 0 operations without a literal E2E reference and 49 without a literal
+finds 0 operations without a literal E2E reference and 36 without a literal
 Bruno reference. These numbers are backlog signals, not passing-test claims;
 the hard branch gate remains red until the production reports are regenerated
 against the current source and every record is covered or explicitly classified.
@@ -106,7 +106,7 @@ For repeatable operation-level discovery, run
 `uv run --frozen --no-build python tools/coverage/report_operation_test_gaps.py --format markdown`.
 The tool compares contract operation IDs and GraphQL root fields with literal
 operation-name references in `tests/e2e/` and `tools/bruno/`. The current
-inventory contains 54 operations; 0 have no E2E source signal and 49 have no
+inventory contains 54 operations; 0 have no E2E source signal and 36 have no
 Bruno source signal. These are discovery signals only: a missing string can be
 a naming mismatch, while a present string does not prove authorization,
 negative behavior, persistence, messaging, replay, or deployed side effects.

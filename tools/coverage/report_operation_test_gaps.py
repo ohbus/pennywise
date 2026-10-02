@@ -274,6 +274,51 @@ def request_references(
     return tuple(path for path, text in sources if pattern.search(re.sub(r"\{[A-Za-z0-9_]+\}", "{}", text)) is not None)
 
 
+def bruno_references(
+    item: OperationEvidence, sources: Iterable[tuple[str, str]]
+) -> tuple[str, ...]:
+    """Find Bruno requests using collection surface and contract path shape.
+
+    A generic identifier scan is unsafe for Bruno because an Accounts request
+    contains ``/me`` while a GraphQL operation is also named ``me``. Collection
+    layout supplies the surface boundary, and REST rows additionally require
+    the contract path to occur in the request text with template placeholders.
+    """
+
+    matches: list[str] = []
+    for path, text in sources:
+        normalized_path = path.replace("\\", "/")
+        if item.surface.startswith("GraphQL"):
+            if not normalized_path.startswith("tools/bruno/bff/"):
+                continue
+            pattern = re.compile(
+                rf"(?<![A-Za-z0-9_]){re.escape(item.operation)}\s*(?:\(|\{{)"
+            )
+        elif item.surface == "REST":
+            if normalized_path.startswith("tools/bruno/bff/") or item.path is None:
+                continue
+            url_paths = re.findall(r"(?m)^\s*url:\s*([^\s]+)", text)
+            normalized_urls = [
+                re.sub(r"\{\{[^}]+\}\}", "{}", url).strip('"\'')
+                for url in url_paths
+            ]
+            method_match = re.search(
+                r"(?mi)^\s*(get|post|put|patch|delete)\s*\{", text
+            )
+            method_matches = method_match is not None and item.method == method_match.group(1).upper()
+            if method_matches and any(
+                "/v1" in url and url.split("/v1", maxsplit=1)[1] == item.path
+                for url in normalized_urls
+            ):
+                matches.append(path)
+            continue
+        else:
+            continue
+        if pattern.search(text) is not None:
+            matches.append(path)
+    return tuple(matches)
+
+
 def _required_string(record: Mapping[str, object], field: str) -> str:
     """Read a required non-blank string from an execution artifact record."""
 
@@ -398,7 +443,7 @@ def inventory(root: Path, execution_artifact: Path | None = None) -> list[Operat
                     "e2e_request_references": request_references(
                         operation, e2e
                     ),
-                    "bruno_references": references(operation.operation, bruno),
+                    "bruno_references": bruno_references(operation, bruno),
                     "execution_status": execution.get(key, "NO-EXECUTION-ARTIFACT-INGESTED"),
                 }
             )

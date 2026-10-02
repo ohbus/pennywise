@@ -182,11 +182,11 @@ class CoverageInventoryTest(unittest.TestCase):
             all(item.execution_status == "NO-EXECUTION-ARTIFACT-INGESTED" for item in operations)
         )
         self.assertEqual(
-            5,
+            18,
             sum(item.bruno_status == "BRUNO-SOURCE-REFERENCE-ONLY" for item in operations),
         )
         self.assertEqual(
-            49,
+            36,
             sum(item.bruno_status == "NO-BRUNO-SOURCE-REFERENCE" for item in operations),
         )
         self.assertEqual(
@@ -194,7 +194,7 @@ class CoverageInventoryTest(unittest.TestCase):
             sum(not item.has_e2e_signal for item in operations),
         )
         self.assertEqual(
-            49,
+            36,
             sum(not item.has_bruno_signal for item in operations),
         )
 
@@ -237,7 +237,7 @@ class CoverageInventoryTest(unittest.TestCase):
 
         report = [
             {
-                "path": "accounts/get-my-profile",
+                "path": "accounts/unmapped-request",
                 "status": "passed",
                 "testResults": [{"name": "profile response is successful"}],
             }

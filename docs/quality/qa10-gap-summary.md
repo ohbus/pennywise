@@ -16,7 +16,7 @@ evidence.
 | Exact branch lines | 52 source-line records account for all 78 missed branches | Each line remains open until behavior proof or an evidence-backed structural classification is recorded |
 | Concrete execution | 3 zero-instruction methods are recorded separately | ProfileController private helpers need a real caller or reviewed design decision; inline telemetry remains a compiler mapping |
 | Contract operations | 54 operations: 45 REST and 9 GraphQL; 54 request-shaped source signals | Static source is not execution evidence; every operation still needs its required persona, failure, durability, async, concurrency, and isolation artifact |
-| Bruno source | 5 operation references; 49 operations have no Bruno source reference | Bruno is supplementary and cannot substitute for the deployed E2E matrix |
+| Bruno source | 18 operation references; 36 operations have no Bruno source reference | Bruno is supplementary and cannot substitute for the deployed E2E matrix; surface-aware path/method matching prefers false negatives over cross-operation credit |
 | Runtime E2E | Latest local acceptance evidence was not green: 65/71 requests passed and 6 failed; hosted run `36975036809` also failed the product/offline E2E job and aggregate gate while edge/security and concurrency/chaos jobs passed | Authenticated review of the hosted failure logs plus retained machine-readable reports, followed by a normalized per-operation artifact |
 
 ## Required closure rule

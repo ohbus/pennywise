@@ -178,6 +178,18 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertTrue(all(gap.closure_status for gap in gaps))
         self.assertTrue(all(gap.source_line > 0 for gap in gaps))
 
+        for gap in gaps:
+            package_path = Path(gap.package)
+            candidates = [
+                ROOT / gap.module / "src" / source_root / package_path / gap.source_file
+                for source_root in ("main/kotlin", "main/java")
+            ]
+            source = next((candidate for candidate in candidates if candidate.exists()), None)
+            self.assertIsNotNone(source, f"Missing production source for {gap}")
+            assert source is not None
+            line_count = len(source.read_text(encoding="utf-8").splitlines())
+            self.assertLessEqual(gap.source_line, line_count)
+
     def test_committed_source_line_ledger_matches_current_inventory(self) -> None:
         ledger = (
             ROOT / "docs/quality/qa10-branch-line-gap-ledger.md"

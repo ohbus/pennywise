@@ -29,6 +29,9 @@ class BrowserOriginPolicyTest {
         assertThrows(IllegalArgumentException::class.java) {
             BrowserOriginPolicy(listOf("*"))
         }
+        assertThrows(IllegalArgumentException::class.java) {
+            BrowserOriginPolicy(listOf("https://app.example.test", "*"))
+        }
     }
 
     /** Verifies deployment fails fast when a configured origin is not an absolute origin. */
@@ -45,6 +48,8 @@ class BrowserOriginPolicyTest {
         listOf(
             "not-an-origin",
             "http://[",
+            "https:relative",
+            "http:///path",
             "/relative",
             "ftp://app.example.test",
             "https://user:password@app.example.test",
@@ -63,5 +68,15 @@ class BrowserOriginPolicyTest {
 
         assertTrue(defaultHttp.allows("http://localhost:80"))
         assertTrue(defaultHttp.configuredOrigins().contains("http://localhost"))
+    }
+
+    /** Verifies a native-only configuration remains valid while rejecting every supplied origin. */
+    @Test
+    fun `allows an empty native-only origin configuration`() {
+        val nativeOnly = BrowserOriginPolicy(emptyList())
+
+        assertTrue(nativeOnly.configuredOrigins().isEmpty())
+        assertTrue(nativeOnly.allows(null))
+        assertFalse(nativeOnly.allows("https://app.example.test"))
     }
 }

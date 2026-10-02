@@ -8,8 +8,8 @@ test/quality documentation.
 
 ## Current baseline
 
-As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **47
-production methods with missed branches** containing **95 missed branches**,
+As of 2026-10-02, the freshly regenerated JaCoCo XML baseline records **46
+production methods with missed branches** containing **93 missed branches**,
 **54 contract operations** (45 REST and 9 GraphQL), and **seven
 environment-owned E2E/operations rows**. Operation source discovery
 finds 0 operations without a literal E2E reference and 49 without a literal
@@ -210,7 +210,7 @@ the same dimension review rather than being inferred closed from a string match.
 
 ### Exhaustive current branch inventory
 
-The regenerated JaCoCo XML contains **47 methods with at least one missed
+The regenerated JaCoCo XML contains **46 methods with at least one missed
 branch**. This is the exhaustive discovery set for this revision; the summary
 below prevents a high-level module percentage from hiding a small but important
 method. Every method in this set must be assigned to a backlog row, tested, or
@@ -227,7 +227,7 @@ classified as generated/structural with reviewer approval.
 | `libs/ids` | 3 | 0 | 0 |
 | `libs/observability` | 2 | 0 | 0 |
 | `libs/security` | 2 | 0 | 0 |
-| **Total** | **107** | **24** | **47** |
+| **Total** | **107** | **24** | **46** |
 
 The exact class, source file, method, source line, missed-branch count, and
 covered-branch count are in the current files
@@ -286,16 +286,16 @@ JaCoCo exclusion, or changing a contract does not satisfy this rule.
 
 ### Current per-record ledger status
 
-The repository currently has the exact 47-record JSON discovery inventory and
+The repository currently has the exact 46-record JSON discovery inventory and
 row-level acceptance matrix, but it does **not** yet have closure evidence for
-all 47 records. The A07 and E02 tables provide supplemental method-level review
+all 46 records. The A07 and E02 tables provide supplemental method-level review
 detail; the remaining records still require one of the following to be
 recorded against the exact class/method/source line: a passing unit test, a
 persistence/messaging integration test, a deployed E2E artifact, or a reviewed
 structural rationale. This is an intentional open deliverable, not an implied
 claim that the aggregate row counts close every branch.
 
-Current provisional assignment workload (47 records):
+Current provisional assignment workload (46 records):
 
 | QA row | Branch-gap records | Primary missing evidence |
 | --- | ---: | --- |
@@ -310,7 +310,7 @@ Current provisional assignment workload (47 records):
 | QA10-B01 | 1 | BFF upstream transport and gateway failure behavior; nullable bearer omission is covered across gateway operations, while timeout, partial-response, malformed-body, and deployed failure evidence remain open. |
 | QA10-B02 | 0 | GraphQL resolver, error, scalar, and limit behavior; resolver classification, DateTime and MoneyMinor literal acceptance/rejection including nullable AST values, blank-bearer context omission, empty mutation invalidation behavior, required messaging startup validation, bounded deduplicator capacity validation, acceptance-fault filter boundary, empty settlement amount fallback, and subscription admission validation are covered. |
 | QA10-B03 | 3 | Realtime fanout and broker consumer behavior; fanout configuration, input, queue, delivery, expiry, and nullable broker-channel listener boundaries are now covered, while generated revocation predicates, broker acknowledgement, reconnect/replay, and deployed WebSocket evidence remain open. |
-| QA10-B04 | 2 | Browser origin, CSRF, cookie, and session filters; malformed configured origins now have an explicit fail-fast construction assertion. |
+| QA10-B04 | 1 | Browser origin, CSRF, cookie, and session filters; canonical parsing and malformed-origin behavior are covered, while the constructor's residual collection mapping is structurally reviewed. |
 | QA10-C01 | 11 | Expense persistence, transaction, ledger, idempotency, and outbox behavior; allocation-preview malformed/negative totals, overlong category validation, multi-group lookup selection, missing/repeated delete boundaries, update lookup/participant replacement, durable duplicate-event append preservation, broker-message value semantics, in-memory/durable outbox retry/state validation, publisher delivery-policy validation, durable claim eligibility, cleanup retention/batch boundaries, blank/unknown-category defaulting, explicit-null category handling, single and simultaneous payer/allocation-count bounds, custom recurring request mapping, missing/foreign schedule lookup boundaries, recurring membership authorization, amount parsing, JPA search cursor/category fallback, persistent adapter limit bounds, filtered CSV export mapping, blank cursor and non-positive CSV-bound validation, unknown-event acknowledgement no-op behavior, and group-controller rollback/fanout acceptance faults now have persistence or transport assertions. The recurring controller now covers both one-sided request mappings; null-principal forwarding mappings remain invariant-governed because membership validation rejects the request first. |
 | QA10-C02 | 0 | Pure calculator/validator slice is branch-complete; property tests remain required. |
 | QA10-C03 | 7 | Recurring schedules, claims, locking, and occurrence failures; creation now covers explicit IDs and valid day-of-month boundaries, monthly fallback to the source day, both payer/allocation membership rejection directions, service update mapping covers both one-sided custom specifications, occurrence-date deduplication is proven independently of occurrence-ID equality, and expense-store generation failure now proves schedule pause plus `generation_error` notification. One compiler-generated range branch and remaining date/membership/build fallbacks remain retained for review. |
@@ -342,6 +342,7 @@ does not delete code or create a coverage exclusion.
 
 | Production target | Structural rationale | Required proof before classification |
 | --- | --- | --- |
+| `app/bff/.../BrowserOriginPolicy.kt:16`, constructor wildcard predicate | `BrowserOriginPolicyTest` exercises valid non-wildcard lists, wildcard-first and wildcard-after-valid configurations, and an empty native-only list. The remaining JaCoCo mapping is the Kotlin collection/lambda iterator short-circuit for `none`, not an untested origin acceptance rule. | Retain the exact-origin, wildcard, malformed-host, and empty-list tests; classify only this generated collection mapping after each full report regeneration. Do not weaken wildcard rejection or allow arbitrary origins to change the metric. |
 | `libs/errors/.../GlobalErrorHandler.kt:143`, `applicationException` | Every production `ErrorCode.httpStatus` value resolves through `HttpStatus.resolve`; the fallback `when` arms are defensive against an enum value that cannot exist at runtime. The test suite now also exercises the invalid-status fail-safe `else` path with a mocked catalog value; the valid catalog mapping test remains the source-of-truth invariant. | Reconfirm the enum/status mapping from the current source, retain both the exhaustive catalog-status test and invalid-status fallback test, and do not simplify the defensive guard without a reviewed contract decision. |
 | `app/accounts/.../FallbackJwtDecoder.kt:29`, `decode` | The decoder list is required non-empty. Each loop iteration either returns a `Jwt` or catches a `JwtException` and assigns `lastFailure`; after the loop, `lastFailure` is therefore non-null. Existing tests cover first success, later success, and final failure. | Retain the constructor invariant and three outcome tests; do not simplify the terminal guard. |
 | `app/accounts/.../ClientAddressResolver.kt:89`, `normalizeToPartition` | `InetAddress.getByName` returns an `Inet4Address` or `Inet6Address` for the supported address families; the final `else` is defensive for a future JDK subtype. Existing tests cover IPv4, IPv6, malformed, and missing addresses. | Reconfirm the JDK address-family invariant and retain the family/malformed boundary tests. |

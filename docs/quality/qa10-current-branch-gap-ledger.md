@@ -7,7 +7,7 @@ a reviewed structural/invariant classification with exact source evidence. Regen
 after every test increment; the locked tooling tests assert that the record count and
 missed-branch total stay synchronized with the audit and CI documentation.
 
-Current baseline: **47 production methods with missed branches / 95 missed branches**.
+Current baseline: **46 production methods with missed branches / 93 missed branches**.
 
 ## Exact current records
 
@@ -20,7 +20,6 @@ Current baseline: **47 production methods with missed branches / 95 missed branc
 | `app/accounts` | `QA10-A06` | `com/subhrodip/squarewise/accounts/profile/api/ProfileController` | `ProfileController.kt` | `mapErrorCode` | 82 | 4 | 0 | profile boundary and authorization | `app/accounts/build/reports/jacoco/test/jacocoTestReport.xml` | Subject-scoped profile/deletion/export authorization, exact errors, durable state, and redaction. |
 | `app/accounts` | `QA10-A05` | `com/subhrodip/squarewise/accounts/security/FallbackJwtDecoder` | `FallbackJwtDecoder.kt` | `decode` | 29 | 1 | 3 | resource-server security wiring | `app/accounts/build/reports/jacoco/test/jacocoTestReport.xml` | Issuer, audience, algorithm, key discovery/rotation, invalid-token rejection, and fail-closed wiring. |
 | `app/bff` | `QA10-B04` | `com/subhrodip/squarewise/bff/config/BrowserOriginPolicy` | `BrowserOriginPolicy.kt` | `<init>` | 12 | 1 | 1 | browser security filter chain | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` | Origin/CSRF/cookie/session policy for browser, native, preflight, and WebSocket paths. |
-| `app/bff` | `QA10-B04` | `com/subhrodip/squarewise/bff/config/BrowserOriginPolicy` | `BrowserOriginPolicy.kt` | `canonicalOriginOrNull` | 31 | 2 | 34 | browser security filter chain | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` | Origin/CSRF/cookie/session policy for browser, native, preflight, and WebSocket paths. |
 | `app/bff` | `QA10-B03` | `com/subhrodip/squarewise/bff/realtime/LiveUpdateFanout` | `LiveUpdateFanout.kt` | `revokeUser$lambda$1` | 99 | 1 | 3 | realtime fanout and broker consumer | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` | Fanout ordering, deduplication, expiry/revocation, broker ack/retry, reconnect, and WebSocket isolation. |
 | `app/bff` | `QA10-B03` | `com/subhrodip/squarewise/bff/realtime/LiveUpdateFanout` | `LiveUpdateFanout.kt` | `revokeUserFromGroup$lambda$2` | 124 | 1 | 7 | realtime fanout and broker consumer | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` | Fanout ordering, deduplication, expiry/revocation, broker ack/retry, reconnect, and WebSocket isolation. |
 | `app/bff` | `QA10-B03` | `com/subhrodip/squarewise/bff/realtime/LiveUpdateFanout` | `LiveUpdateFanout.kt` | `removeExpired$lambda$0` | 161 | 1 | 5 | realtime fanout and broker consumer | `app/bff/build/reports/jacoco/test/jacocoTestReport.xml` | Fanout ordering, deduplication, expiry/revocation, broker ack/retry, reconnect, and WebSocket isolation. |

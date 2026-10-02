@@ -5,6 +5,52 @@
 tests, coverage, QA, JaCoCo, or E2E work, plus the restoration and CI commits
 that changed the audit evidence or test execution boundary.
 
+## Complete current-tip audit (2026-10-02)
+
+The audit was rerun against the complete `origin/master..HEAD` range, not only
+the earlier QA-10 checkpoint. The range contains 456 commits and has no deleted
+production files. Of those commits, 416 have a test/coverage/QA/JaCoCo/E2E/audit
+subject. Only one such commit touches `contracts/`, and it adds the versioned
+QA execution-evidence schema; no test/coverage commit changes a REST, GraphQL,
+event, or error contract. Twenty commits in the complete range remove at least
+one line from `app/**/src/main/**` or `libs/**/src/main/**`; the removals were
+reviewed by commit and classified as style/import cleanup, security/defect
+corrections, restoration, or coverage-driven behavior changes.
+
+The coverage-driven removal findings are the four commits listed in the table
+below. `fc42e27` and the guard removals in `aeb31e58` were unjustified metric
+shortcuts and were restored by `2110ffd`; their tests remain. `19d7a1b` retained
+only the tested blank-message hardening and restored the exhaustive status
+fallback. `a52b467` remains because exact window expiry is an intentional rate
+limit invariant, documented and covered by a focused boundary test. No JaCoCo
+exclusion, source deletion, contract weakening, or assertion deletion is used
+to improve the metric at the current branch tip.
+
+Reproducible audit commands:
+
+```text
+git rev-list --count origin/master..HEAD
+git diff --diff-filter=D --name-status origin/master...HEAD -- app libs
+git log --format='%H|%s' origin/master..HEAD
+git diff-tree --numstat -r <commit> -- app/**/src/main/** libs/**/src/main/**
+```
+
+The first two commands report `456` commits and no deleted production files.
+The commit-level `diff-tree` review is required because a file can remain
+present while implementation lines are removed. Any future coverage increment
+that removes implementation must be a separately justified behavior fix with a
+focused regression test and documentation; test naming alone is not approval.
+
+Test-source removals were audited separately. No test file was deleted. Some
+intermediate test commits did remove or rewrite individual assertions while
+consolidating fixtures or renaming evidence: `86154dc` temporarily simplified
+the `DbTelemetry` test, and `64df963` subsequently restored explicit
+registry-backed metric assertions; the current test retains those assertions.
+The E2E assertion-line removals were message renames or journey extraction, not
+production-logic deletion, and the current suites retain the relevant checks.
+Therefore the audit does not treat a lower historical test count as coverage
+closure; current behavior evidence is judged from the tests present at `HEAD`.
+
 ## Rule applied
 
 Coverage improvements must come from executable unit, integration, messaging, or

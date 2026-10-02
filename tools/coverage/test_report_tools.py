@@ -134,6 +134,13 @@ class CoverageInventoryTest(unittest.TestCase):
         self.assertNotIn("AccountIdentityStore", {gap.class_name for gap in gaps})
         self.assertNotIn("<init>", {gap.method for gap in gaps})
         self.assertNotIn("$default", " ".join(gap.method for gap in gaps))
+        profile_actions = [
+            gap.next_action
+            for gap in gaps
+            if gap.class_name.endswith("ProfileController")
+        ]
+        self.assertEqual(2, len(profile_actions))
+        self.assertTrue(all("source search found no production caller" in action for action in profile_actions))
 
     def test_committed_execution_gap_ledger_matches_current_inventory(self) -> None:
         gaps = execution_gaps(ROOT)

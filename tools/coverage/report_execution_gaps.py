@@ -93,6 +93,28 @@ def inline_source(
     ) is not None
 
 
+def next_action(class_name: str, method: str, inline: bool) -> str:
+    """Describe the exact closure decision for a concrete execution gap."""
+
+    if class_name.endswith("ProfileController") and method in {"problem", "mapErrorCode"}:
+        return (
+            "ProfileControllerTest covers the public profile/deletion/export problem behavior, "
+            "but source search found no production caller for this private helper. Keep the "
+            "helper as an OPEN-DESIGN item until a real public failure is routed through it "
+            "or a separately reviewed cleanup decision is made; do not use reflection-only "
+            "coverage or delete it to change JaCoCo."
+        )
+    if inline:
+        return (
+            "Retain direct behavior tests at call sites; Kotlin inline expansion does not execute "
+            "this JaCoCo method node, so do not add reflection-only coverage or change the contract."
+        )
+    return (
+        "Add a direct unit/integration test for the public behavior, or document why the method is "
+        "framework/bootstrap wiring; do not delete it or bypass its contract for coverage."
+    )
+
+
 def all_gaps(root: Path) -> list[ExecutionGap]:
     """Load concrete methods with no covered instructions."""
 
@@ -150,15 +172,7 @@ def all_gaps(root: Path) -> list[ExecutionGap]:
                             qa_row=qa_row,
                             acceptance_criteria=qa_acceptance(qa_row),
                             status=("INLINE-EXPANDED" if inline else "NO-INSTRUCTION-EXECUTION"),
-                            next_action=(
-                                "Retain direct behavior tests at call sites; Kotlin inline expansion "
-                                "does not execute this JaCoCo method node, so do not add reflection-only "
-                                "coverage or change the contract."
-                                if inline
-                                else "Add a direct unit/integration test for the public behavior, "
-                                "or document why the method is framework/bootstrap wiring; do not "
-                                "delete it or bypass its contract for coverage."
-                            ),
+                            next_action=next_action(class_name, method, inline),
                             report=str(report.relative_to(root)).replace("\\", "/"),
                         )
                     )

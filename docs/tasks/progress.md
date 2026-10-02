@@ -3,6 +3,8 @@
 The registry is the authoritative state machine. This ledger records meaningful
 execution checkpoints and evidence; it does not replace task acceptance criteria.
 
+| 2026-10-03 | QA-10 Expense Core JPA bean increment | Added direct Java-side persistence-bean coverage for expense, payer/allocation, group, membership, invitation, audit, settlement, sync, balance-posting, outbox, and idempotency entities. The test exercises the no-arg ORM construction path and public getter/setter state surface. | `./gradlew.bat :app:expense-core:test --tests '*ExpenseJavaBeanCompatibilityTest' --no-daemon --console=plain` passed; `git diff --check` passed. | current increment |
+
 | 2026-10-03 | QA-10 post-Accounts bean verification | Regenerated the complete aggregate after the Accounts JVM bean compatibility test. Full tests and JaCoCo pass; coverage is now 5,653/5,709 lines (99.02%), 37,854/39,473 instructions (95.90%), and 2,675/2,741 branches (97.59%). | `./gradlew.bat test --no-daemon --console=plain` passed (55 actionable tasks); `./gradlew.bat jacocoTestReport --rerun-tasks --no-daemon --console=plain` passed (36 actionable tasks). | current increment |
 
 | 2026-10-03 | QA-10 Accounts JPA bean increment | Added a direct Java-side persistence-bean test for identity, credential, session, auth-email outbox, and profile entities, exercising the getter/setter surface used by JPA and Java-bound infrastructure. | `./gradlew.bat :app:accounts:test --tests '*AccountsJavaBeanCompatibilityTest' --no-daemon --console=plain` passed; `git diff --check` passed. | current increment |

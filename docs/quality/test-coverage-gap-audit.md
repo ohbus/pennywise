@@ -31,7 +31,7 @@ records the 60 exact JaCoCo source lines that account for those 93 branches;
 it is regenerated from the same reports and is not a substitute for behavior
 acceptance.
 The companion [`QA-10 concrete execution-gap ledger`](qa10-execution-gap-ledger.md)
-also records 17 production methods with zero covered instructions after
+also records 15 production methods with zero covered instructions after
 excluding compiler-generated methods, accessors, application entry points, and
 interface declarations. These records catch method-level execution gaps that
 branch-only discovery cannot represent. Framework/bootstrap entries require
@@ -67,7 +67,7 @@ delivery, identity-provider behavior, or cross-service side effects.
 
 ## Audit evidence and limits
 
-The current source inventory contains 400 Kotlin production files and 176
+The current source inventory contains 400 Kotlin production files and 178
 Kotlin test files under `app/` and `libs/`. The generated local JaCoCo
 reports currently report these line-coverage signals:
 
@@ -119,7 +119,7 @@ per-operation authorization and side-effect matrix.
 
 For repeatable concrete execution-gap discovery, run
 `uv run --frozen --no-build python tools/coverage/report_execution_gaps.py --format markdown`.
-The current report contains 17 zero-instruction concrete methods across
+The current report contains 15 zero-instruction concrete methods across
 Accounts, BFF, Expense Core, Notifications, and shared libraries. It excludes
 interfaces and compiler-generated accessors/scaffolding but deliberately keeps
 real domain, transport, security, messaging, and configuration methods visible

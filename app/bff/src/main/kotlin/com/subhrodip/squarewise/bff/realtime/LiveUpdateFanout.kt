@@ -8,12 +8,25 @@ import com.subhrodip.squarewise.bff.realtime.LiveUpdate
 
 import com.subhrodip.squarewise.ids.generation.UuidGenerator
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import reactor.core.publisher.Sinks
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * In-process fanout hub for group real-time invalidations.
+ *
+ * Manages the lifecycle of [LiveSubscription] slots per user/group pair, enforces
+ * per-user subscription limits, and publishes [GroupInvalidation] events to a reactive
+ * multicast sink that active GraphQL subscriptions consume.
+ *
+ * SEC-003: Each subscription receives an independent [Sinks.One] revocation signal.
+ * When [revokeUser] or [revokeUserFromGroup] removes a subscription entry, it completes
+ * the corresponding signal so that any downstream [Flux] using [revocationSignal] will
+ * terminate automatically via `takeUntilOther`.
+ */
 class LiveUpdateFanout(
     private val queueCapacity: Int = DEFAULT_QUEUE_CAPACITY,
     private val clock: Clock = Clock.systemUTC(),
@@ -21,6 +34,10 @@ class LiveUpdateFanout(
     private val maxSubscriptionsPerUser: Int = DEFAULT_MAX_SUBSCRIPTIONS_PER_USER
 ) {
     private val subscriptions = ConcurrentHashMap<String, Subscriber>()
+
+    /** Per-subscription revocation signals: completing the sink terminates the consumer Flux. */
+    private val revocationSignals = ConcurrentHashMap<String, Sinks.One<Void>>()
+
     private val admissionLock = Any()
     val invalidationSink: Sinks.Many<GroupInvalidation> =
         Sinks.many().multicast().directBestEffort()
@@ -35,6 +52,17 @@ class LiveUpdateFanout(
     }
 
     fun invalidations(): Flux<GroupInvalidation> = invalidationSink.asFlux()
+
+    /**
+     * Returns a [Mono] that completes (with no item) when this subscription is revoked.
+     *
+     * GraphQL subscription controllers should compose this with `takeUntilOther` on the
+     * event stream so the subscriber's Flux terminates immediately upon membership loss.
+     *
+     * @param subscriptionId the [LiveSubscription.id] obtained from [subscribe]
+     */
+    fun revocationSignal(subscriptionId: String): Mono<Void> =
+        revocationSignals[subscriptionId]?.asMono() ?: Mono.empty()
 
     init {
         require(queueCapacity > 0) { "queueCapacity must be positive" }
@@ -54,12 +82,14 @@ class LiveUpdateFanout(
                 UuidGenerator.next().toString(), userId, groupId, Instant.now(clock).plus(subscriptionTtl)
             )
             subscriptions[subscription.id] = Subscriber(subscription, ArrayDeque())
+            revocationSignals[subscription.id] = Sinks.one()
             subscription
         }
     }
 
     fun unsubscribe(subscriptionId: String) {
         subscriptions.remove(subscriptionId)
+        revocationSignals.remove(subscriptionId)?.tryEmitEmpty()
     }
 
     fun revokeUser(userId: String): Int {
@@ -67,13 +97,25 @@ class LiveUpdateFanout(
         var revoked = 0
         subscriptions.entries.removeIf {
             val matches = it.value.subscription.userId == userId
-            if (matches) revoked++
+            if (matches) {
+                revoked++
+                revocationSignals.remove(it.key)?.tryEmitEmpty()
+            }
             matches
         }
         return revoked
     }
 
-    /** Revokes only the removed subject's subscriptions for the affected group. */
+    /**
+     * Revokes only the removed subject's subscriptions for the affected group.
+     *
+     * Completes the corresponding revocation signal for each removed subscription so
+     * that any active GraphQL subscription stream terminates immediately.
+     *
+     * @param userId  the subject identifier of the removed member
+     * @param groupId the group from which the member was removed
+     * @return the number of subscription slots that were revoked
+     */
     fun revokeUserFromGroup(userId: String, groupId: String): Int {
         require(userId.isNotBlank()) { "userId must not be blank" }
         require(groupId.isNotBlank()) { "groupId must not be blank" }
@@ -81,7 +123,10 @@ class LiveUpdateFanout(
         subscriptions.entries.removeIf {
             val subscription = it.value.subscription
             val matches = subscription.userId == userId && subscription.groupId == groupId
-            if (matches) revoked++
+            if (matches) {
+                revoked++
+                revocationSignals.remove(it.key)?.tryEmitEmpty()
+            }
             matches
         }
         return revoked
@@ -112,7 +157,11 @@ class LiveUpdateFanout(
 
     private fun removeExpired() {
         val now = Instant.now(clock)
-        subscriptions.entries.removeIf { !now.isBefore(it.value.subscription.expiresAt) }
+        subscriptions.entries.removeIf {
+            val expired = !now.isBefore(it.value.subscription.expiresAt)
+            if (expired) revocationSignals.remove(it.key)?.tryEmitEmpty()
+            expired
+        }
     }
 
     private class Subscriber(val subscription: LiveSubscription, private val queue: ArrayDeque<LiveUpdate>) {

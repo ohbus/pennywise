@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.accounts.auth.credential
+import org.junit.jupiter.api.Assertions.assertEquals
 
 import java.time.Duration
 import java.time.Instant
@@ -31,6 +32,9 @@ class OneTimeCredentialIssuerTest {
     fun `rejects unsafe lifetime and attempt policy`() {
         assertThrows(IllegalArgumentException::class.java) {
             issuer.issue(now, Duration.ZERO, 5)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            issuer.issue(now, Duration.ofMinutes(-1), 5)
         }
         assertThrows(IllegalArgumentException::class.java) {
             issuer.issue(now, Duration.ofMinutes(16), 5)
@@ -67,10 +71,30 @@ class OneTimeCredentialIssuerTest {
             remainingAttempts = 3
         )
 
-        org.junit.jupiter.api.Assertions.assertEquals(cred1, cred2)
-        org.junit.jupiter.api.Assertions.assertEquals(cred1.hashCode(), cred2.hashCode())
+        assertEquals(cred1, cred2)
+        assertEquals(cred1.hashCode(), cred2.hashCode())
         assertNotEquals(cred1, cred3)
         assertTrue(cred1.toString().contains("[REDACTED]"))
+    }
+
+    @Test
+    fun `equality rejects every differing field null and unrelated types`() {
+        val base = OneTimeCredentialIssuer.IssuedCredential(
+            plaintext = "abc",
+            digest = byteArrayOf(1, 2, 3),
+            issuedAt = now,
+            expiresAt = now.plusSeconds(300),
+            remainingAttempts = 3,
+        )
+
+        assertEquals(base, base)
+        assertNotEquals(base, base.copy(plaintext = "different"))
+        assertNotEquals(base, base.copy(digest = byteArrayOf(1, 2, 4)))
+        assertNotEquals(base, base.copy(issuedAt = now.plusSeconds(1)))
+        assertNotEquals(base, base.copy(expiresAt = now.plusSeconds(301)))
+        assertNotEquals(base, base.copy(remainingAttempts = 2))
+        assertNotEquals(base, null)
+        assertNotEquals(base, "not-an-issued-credential")
     }
 
     @Test

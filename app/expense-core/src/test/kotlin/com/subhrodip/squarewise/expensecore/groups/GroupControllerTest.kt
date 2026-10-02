@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.expensecore.groups
+import java.util.UUID
 import com.subhrodip.squarewise.expensecore.groups.api.CreateGroupRequest
 import com.subhrodip.squarewise.expensecore.groups.api.CreateInviteRequest
 import com.subhrodip.squarewise.expensecore.groups.api.GroupController
@@ -109,6 +110,42 @@ class GroupControllerTest {
             .andExpect(status().isNotFound)
     }
 
+    /** Verifies lookup scans past an earlier group before returning the requested member-owned group. */
+    @Test
+    fun `gets the matching group when the member owns multiple groups`() {
+        mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"First Group\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}")
+        ).andExpect(status().isCreated)
+
+        val second = mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Second Group\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}")
+        ).andExpect(status().isCreated).andReturn().response.contentAsString
+        val secondGroupId = Regex("\\\"groupId\\\":\\\"([^\\\"]+)\\\"").find(second)!!.groupValues[1]
+
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupById(secondGroupId)).with(alice))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.groupId").value(secondGroupId))
+            .andExpect(jsonPath("$.name").value("Second Group"))
+    }
+
+    /** Verifies a member-owned group list still returns not-found for an unknown requested ID. */
+    @Test
+    fun `returns 404 when a member requests an unknown group`() {
+        mvc.perform(
+            post(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS).with(alice)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Known Group\",\"kind\":\"TRIP\",\"currency\":\"EUR\"}")
+        ).andExpect(status().isCreated)
+
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupById(UUID.randomUUID().toString())).with(alice)
+        ).andExpect(status().isNotFound)
+    }
+
     /**
      * Verifies that group membership lists are visible to members and return 404 for non-members.
      */
@@ -178,6 +215,38 @@ class GroupControllerTest {
         mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupById(groupId)).with(alice))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.name").value("New Name"))
+    }
+
+    /** Verifies the controlled rollback fault returns the documented conflict without a store call. */
+    @Test
+    fun `update acceptance rollback fault maps to conflict`() {
+        mvc.perform(
+            patch(ApiEndpoints.ExpenseCore.V1.groupById(UUID.randomUUID().toString()))
+                .with(alice)
+                .header(
+                    ApiEndpoints.Headers.ACCEPTANCE_FAULT,
+                    ApiEndpoints.Headers.ACCEPTANCE_FAULT_ROLLBACK
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"ignored\"}")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("CONFLICT"))
+    }
+
+    /** Verifies the controlled member-fanout fault returns the documented upstream error. */
+    @Test
+    fun `member list acceptance fanout fault maps to bad gateway`() {
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupMembers(UUID.randomUUID().toString()))
+                .with(alice)
+                .header(
+                    ApiEndpoints.Headers.ACCEPTANCE_FAULT,
+                    ApiEndpoints.Bff.ACCEPTANCE_FAULT_FANOUT
+                )
+        )
+            .andExpect(status().isBadGateway)
+            .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
     }
 
     /**
@@ -278,7 +347,7 @@ class GroupControllerTest {
         val membersRes = testMvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupMembers(groupId)).with(alice))
             .andExpect(status().isOk)
             .andReturn().response.contentAsString
-        val bobMembershipId = store.listMembers(java.util.UUID.fromString(groupId), "alice").find { it.subject == "bob" }!!.membershipId
+        val bobMembershipId = store.listMembers(UUID.fromString(groupId), "alice").find { it.subject == "bob" }!!.membershipId
 
         // Remove Bob
         testMvc.perform(delete(ApiEndpoints.ExpenseCore.V1.groupById(groupId) + "/members/$bobMembershipId").with(alice))

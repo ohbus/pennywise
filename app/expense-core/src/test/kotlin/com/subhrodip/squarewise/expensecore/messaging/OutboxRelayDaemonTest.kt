@@ -78,7 +78,7 @@ class OutboxRelayDaemonTest {
     fun `daemon bean is omitted when disabled by default`() {
         contextRunner
             .run { context ->
-                org.junit.jupiter.api.Assertions.assertThrows(NoSuchBeanDefinitionException::class.java) {
+                assertThrows(NoSuchBeanDefinitionException::class.java) {
                     context.getBean(OutboxRelayDaemon::class.java)
                 }
             }

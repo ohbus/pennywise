@@ -1,5 +1,9 @@
 # MVP product and future experience
 
+<p align="left">
+  <img src="../visuals/logo.svg" alt="Squarewise Logo" width="320">
+</p>
+
 ## Product promise
 
 Help roommates, couples and travel groups record shared spending, understand every

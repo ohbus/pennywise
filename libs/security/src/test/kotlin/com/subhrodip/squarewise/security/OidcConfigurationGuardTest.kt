@@ -33,4 +33,12 @@ class OidcConfigurationGuardTest {
             OidcConfigurationGuard("http://keycloak.example/realms/squarewise", "squarewise-api", "production")
         }
     }
+
+    /** Local OIDC is the only profile allowed to use an HTTP issuer for local infrastructure. */
+    @Test
+    fun `accepts http issuer only for local oidc profile`() {
+        assertDoesNotThrow {
+            OidcConfigurationGuard("http://keycloak:8080/realms/squarewise", "squarewise-api", "local-oidc")
+        }
+    }
 }

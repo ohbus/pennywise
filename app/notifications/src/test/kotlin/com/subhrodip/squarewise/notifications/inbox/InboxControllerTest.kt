@@ -1,4 +1,7 @@
 package com.subhrodip.squarewise.notifications.inbox
+import com.subhrodip.squarewise.db.routing.DbExecutionContext
+import java.util.Base64
+import org.junit.jupiter.api.Assertions.assertThrows
 
 import com.subhrodip.squarewise.notifications.inbox.persistence.JpaNotificationInboxStore
 import com.subhrodip.squarewise.notifications.inbox.persistence.NotificationInboxRepository
@@ -74,10 +77,10 @@ class InboxControllerTest {
     @Test
     fun `rejects malformed cursor`() {
         val testInbox = NotificationInboxService(InMemoryNotificationInboxStore())
-        val err = org.junit.jupiter.api.Assertions.assertThrows(com.subhrodip.squarewise.errors.domain.ApplicationException::class.java) {
+        val err = assertThrows(ApplicationException::class.java) {
             testInbox.page("alice", "bad", 10)
         }
-        assertEquals(com.subhrodip.squarewise.errors.domain.ErrorCode.ERR_02, err.errorCode)
+        assertEquals(ErrorCode.ERR_02, err.errorCode)
     }
 
     @Test
@@ -119,6 +122,24 @@ class InboxControllerTest {
     }
 
     @Test
+    fun `rejects blank subject when listing the inbox`() {
+        val blankSubject = RequestPostProcessor { request -> request.userPrincipal = Principal { "   " }; request }
+
+        mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_INBOX).with(blankSubject))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
+    @Test
+    fun `rejects blank subject when marking an inbox item as read`() {
+        val blankSubject = RequestPostProcessor { request -> request.userPrincipal = Principal { "   " }; request }
+
+        mvc.perform(post(ApiEndpoints.Notifications.V1.inboxMarkRead(UUID.randomUUID())).with(blankSubject))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
+    @Test
     fun `rejects invalid inbox page limits with the validation application code`() {
         mvc.perform(get(ApiEndpoints.Notifications.V1.PATH_INBOX).with(user).param("limit", "0"))
             .andExpect(status().isBadRequest)
@@ -127,7 +148,7 @@ class InboxControllerTest {
 
     @Test
     fun `page limit violation is represented by the validation application exception`() {
-        val error = org.junit.jupiter.api.Assertions.assertThrows(ApplicationException::class.java) {
+        val error = assertThrows(ApplicationException::class.java) {
             controller.list(Principal { "alice" }, null, 101)
         }
 
@@ -145,6 +166,19 @@ class InboxControllerTest {
     }
 
     @Test
+    fun `returns an empty page when a valid cursor is after all stored items`() {
+        val testInbox = NotificationInboxService(InMemoryNotificationInboxStore())
+        testInbox.append("alice", InboxItem(UUID.randomUUID(), "event", "Event", Instant.EPOCH))
+
+        val cursor = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("1969-01-01T00:00:00Z|00000000-0000-7000-8000-000000000001".toByteArray())
+        val page = testInbox.page("alice", cursor, 10)
+
+        assertTrue(page.items.isEmpty())
+        assertEquals(null, page.nextCursor)
+    }
+
+    @Test
     fun `in memory store markAsRead updates status correctly`() {
         val store = InMemoryNotificationInboxStore()
         val id = UUID.randomUUID()
@@ -158,7 +192,7 @@ class InboxControllerTest {
 }
 
 private class RecordingInboxStore(private val delegate: NotificationInboxStore) : NotificationInboxStore {
-    var lastContext: com.subhrodip.squarewise.db.routing.DbExecutionContext? = null
+    var lastContext: DbExecutionContext? = null
 
     override fun append(subject: String, item: InboxItem) = delegate.append(subject, item)
 

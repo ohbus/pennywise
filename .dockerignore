@@ -1,0 +1,42 @@
+# Git, IDE and developer metadata
+.git
+.gitignore
+.gitattributes
+.idea
+.vscode
+*.iml
+
+# Local environment and secret material
+.env
+*.env
+!infra/*.env.example
+*.pem
+*.key
+
+# Build outputs, caches and runtime artifacts
+**/build/
+!app/*/build/libs/*.jar
+**/.gradle/
+**/bin/
+**/node_modules/
+**/dist/
+**/.venv/
+**/target/
+
+# Fast CI/runtime images consume downloaded bootJar artifacts. Keep compiled
+# output excluded by default, but allow only the application JARs required by
+# infra/docker/Dockerfile.fast.
+!app/
+!app/*/
+!app/*/build/
+!app/*/build/libs/
+!app/*/build/libs/*.jar
+
+# Documentation and design assets
+docs/
+*.md
+LICENSE
+
+# Test results and temporary reports
+**/test-results/
+**/reports/

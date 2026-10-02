@@ -12,6 +12,28 @@ The diagrams cover three levels:
   transaction, outbox publication, and notification delivery.
 - `component-boundaries.mmd` shows deployable application boundaries, shared
   libraries, owned persistence, and prohibited direct cross-service access.
+- `auth-lifecycle-unauthenticated.mmd` shows the authentication and session
+  establishment flow for unauthenticated users (login initiation, credential delivery, and verification).
+- `auth-lifecycle-authenticated.mmd` shows the authorization, JWT validation,
+  token family refresh rotation, and logout lifecycle for authenticated users.
+
+## Brand Identity Assets
+
+The canonical brand artwork files and convenient generic symlinks are organized in this directory:
+
+- Canonical source files:
+  - [`squarewise-logo.svg`](squarewise-logo.svg): Primary horizontal brand logo featuring the Squarewise wordmark and overlapping square icon badge (1200x320 viewBox).
+  - [`squarewise-icon.svg`](squarewise-icon.svg): Standalone square icon / app icon / favicon featuring overlapping rounded squares in vibrant blue, teal, and navy (512x512 viewBox).
+- Generic stable references (symlinks within this directory):
+  - [`logo.svg`](logo.svg) &rarr; `squarewise-logo.svg`
+  - [`icon.svg`](icon.svg) &rarr; `squarewise-icon.svg`
+
+Documentation and UI references target the generic names located in `docs/visuals/` (`docs/visuals/logo.svg` / `docs/visuals/icon.svg`), allowing brand artwork or color variations to be refreshed seamlessly by re-pointing symlinks without polluting the repository root.
+
+<p align="center">
+  <img src="logo.svg" alt="Squarewise Logo" width="360">&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="icon.svg" alt="Squarewise Icon" width="80">
+</p>
 
 Edit the diagram source and the relevant architecture or contract document in
 the same task. Do not edit generated SVG files. Render locally with:

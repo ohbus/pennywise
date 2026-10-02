@@ -6,6 +6,7 @@ import com.subhrodip.squarewise.accounts.auth.login.LoginStartResponse
 import com.subhrodip.squarewise.accounts.auth.login.LoginStartService
 import com.subhrodip.squarewise.accounts.auth.login.LoginVerifyRequest
 import com.subhrodip.squarewise.accounts.auth.login.LoginVerificationService
+import com.subhrodip.squarewise.accounts.auth.abuse.ClientAddressResolver
 import com.subhrodip.squarewise.accounts.auth.abuse.RateLimitStoreUnavailableException
 import com.subhrodip.squarewise.accounts.auth.abuse.RefreshRateLimitService
 import com.subhrodip.squarewise.accounts.auth.session.RefreshTokenRequest
@@ -41,6 +42,8 @@ import org.springframework.web.bind.annotation.RestController
  * @param loginStartService Passwordless login start orchestrator.
  * @param loginVerificationService Credential verification and session creation service.
  * @param tokenSessionService Token session and family lifecycle coordinator.
+ * @param refreshRateLimitService Refresh-token rotation rate limiter.
+ * @param clientAddressResolver Trusted-proxy-aware client IP resolver for rate-limit partitioning (SEC-007).
  */
 @RestController
 @RequestMapping(ApiEndpoints.Accounts.V1.BASE)
@@ -48,7 +51,8 @@ class AuthController(
     private val loginStartService: LoginStartService,
     private val loginVerificationService: LoginVerificationService,
     private val tokenSessionService: TokenSessionService,
-    private val refreshRateLimitService: RefreshRateLimitService
+    private val refreshRateLimitService: RefreshRateLimitService,
+    private val clientAddressResolver: ClientAddressResolver
 ) {
 
     /**
@@ -69,7 +73,7 @@ class AuthController(
             "CODE" -> LoginCredentialService.CredentialKind.CODE
             else -> LoginCredentialService.CredentialKind.LINK
         }
-        val networkPartition = deriveNetworkPartition(servletRequest)
+        val networkPartition = clientAddressResolver.resolvePartition(servletRequest)
 
         loginStartService.start(
             email = request.email,
@@ -118,7 +122,7 @@ class AuthController(
         servletRequest: HttpServletRequest
     ): ResponseEntity<TokenResponse> {
         val userAgent = servletRequest.getHeader(ApiEndpoints.Headers.USER_AGENT)
-        val networkPartition = deriveNetworkPartition(servletRequest)
+        val networkPartition = clientAddressResolver.resolvePartition(servletRequest)
         try {
             if (!refreshRateLimitService.tryAcquire(networkPartition, Instant.now())) {
                 throw ApplicationException(ErrorCode.ERR_11, "Refresh rate limit exceeded")
@@ -153,12 +157,6 @@ class AuthController(
             expectedSubject = principal.name,
             now = Instant.now()
         )
-    }
-
-    private fun deriveNetworkPartition(request: HttpServletRequest): String {
-        val remoteAddr = request.remoteAddr ?: "unknown"
-        val ipPart = remoteAddr.split(".").take(2).joinToString(".")
-        return if (ipPart.isBlank()) "default-partition" else ipPart
     }
 
     /** Returns token material with cache directives that prevent intermediary persistence. */

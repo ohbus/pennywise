@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.expensecore.expenses.persistence.repository
+import org.springframework.data.jpa.repository.Query
 import com.subhrodip.squarewise.expensecore.expenses.persistence.entity.ExpenseEntity
 
 import java.util.UUID
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ExpenseRepository : JpaRepository<ExpenseEntity, UUID> {
     /** Bounded scalar search projection for the reader-eligible search path. */
-    @org.springframework.data.jpa.repository.Query(
+    @Query(
         value = """
             SELECT CAST(e.expense_id AS VARCHAR) AS expenseId, e.description AS description,
                    e.category AS category, e.currency AS currency,

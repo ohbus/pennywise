@@ -8,6 +8,7 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.Base64
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -48,6 +49,24 @@ class SynchronizationTest {
         assertThrows(InvalidSyncCursorException::class.java) { store.snapshot("bad", 1) }
         assertThrows(IllegalArgumentException::class.java) { store.snapshot(null, 0) }
         assertThrows(IllegalArgumentException::class.java) { store.snapshot(null, 101) }
+    }
+
+    /** Verifies malformed cursor fields normalize to the domain-level cursor exception. */
+    @Test
+    fun `rejects malformed cursor structure and numeric fields`() {
+        val malformedStructure = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("group|1".toByteArray())
+        val blankGroup = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("|1|${now.toEpochMilli()}".toByteArray())
+        val malformedRevision = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("group|not-a-number|${now.toEpochMilli()}".toByteArray())
+        val malformedExpiry = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("group|1|not-a-number".toByteArray())
+
+        assertThrows(InvalidSyncCursorException::class.java) { SyncCursor.decode(malformedStructure) }
+        assertThrows(InvalidSyncCursorException::class.java) { SyncCursor.decode(blankGroup) }
+        assertThrows(InvalidSyncCursorException::class.java) { SyncCursor.decode(malformedRevision) }
+        assertThrows(InvalidSyncCursorException::class.java) { SyncCursor.decode(malformedExpiry) }
     }
 
     @Test

@@ -1,4 +1,7 @@
 package com.subhrodip.squarewise.expensecore.sync
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import com.subhrodip.squarewise.expensecore.sync.api.SyncController
 import com.subhrodip.squarewise.expensecore.sync.persistence.InMemorySynchronizationStore
 import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupMembershipRepository
@@ -19,7 +22,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import com.subhrodip.squarewise.ids.contracts.ApiEndpoints
 
 class SyncControllerTest {
-    private val store = InMemorySynchronizationStore(java.time.Clock.systemUTC())
+    private val store = InMemorySynchronizationStore(Clock.systemUTC())
     private val memberships: GroupMembershipRepository = mock(GroupMembershipRepository::class.java)
     private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(SyncController(store, memberships)).setControllerAdvice(GlobalErrorHandler()).build()
     private val user = RequestPostProcessor { request -> request.userPrincipal = Principal { "alice" }; request }
@@ -52,6 +55,22 @@ class SyncControllerTest {
             .andExpect(status().isBadRequest)
         mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSyncSnapshot(groupId)).with(user).param("limit", "101"))
             .andExpect(status().isBadRequest)
+        mvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSyncSnapshot(groupId)).with(user).param("limit", "0"))
+            .andExpect(status().isBadRequest)
+    }
+
+    /** Verifies a blank authenticated subject cannot access synchronization data. */
+    @Test
+    fun `rejects blank authenticated subject`() {
+        mvc.perform(
+            get(ApiEndpoints.ExpenseCore.V1.groupSyncSnapshot(groupId)).with(
+                RequestPostProcessor { request ->
+                    request.userPrincipal = Principal { " " }
+                    request
+                }
+            )
+        )
+            .andExpect(status().isUnauthorized)
     }
 
     @Test
@@ -65,10 +84,10 @@ class SyncControllerTest {
 
     @Test
     fun `rejects an expired cursor through both public sync routes`() {
-        val otherStore = InMemorySynchronizationStore(java.time.Clock.fixed(java.time.Instant.parse("2026-01-01T00:00:00Z"), java.time.ZoneOffset.UTC))
+        val otherStore = InMemorySynchronizationStore(Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC))
         otherStore.append(groupId.toString(), "expense-1", "{}")
         val cursor = otherStore.snapshot(groupId.toString(), null, 1).nextCursor!!
-        val expiredStore = InMemorySynchronizationStore(java.time.Clock.fixed(java.time.Instant.parse("2026-01-02T00:00:00Z"), java.time.ZoneOffset.UTC))
+        val expiredStore = InMemorySynchronizationStore(Clock.fixed(Instant.parse("2026-01-02T00:00:00Z"), ZoneOffset.UTC))
         val expiredMvc = MockMvcBuilders.standaloneSetup(SyncController(expiredStore, memberships)).setControllerAdvice(GlobalErrorHandler()).build()
 
         expiredMvc.perform(get(ApiEndpoints.ExpenseCore.V1.groupSyncSnapshot(groupId)).with(user).param("cursor", cursor))

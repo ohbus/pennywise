@@ -1,5 +1,8 @@
 package com.subhrodip.squarewise.accounts.auth.login
+import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailTemplate
 
+import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditEvent
+import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditLogger
 import com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitService
 import com.subhrodip.squarewise.accounts.auth.abuse.RateLimitStoreUnavailableException
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialService
@@ -13,7 +16,8 @@ import com.subhrodip.squarewise.errors.domain.ErrorCode
 class LoginStartService(
     private val rateLimitService: LoginRateLimitService,
     private val credentialService: LoginCredentialService,
-    private val emailSender: AuthEmailSender
+    private val emailSender: AuthEmailSender,
+    private val auditLogger: SecurityAuditLogger = SecurityAuditLogger()
 ) {
     /**
      * Starts login without exposing account existence or delivery details to the
@@ -40,6 +44,7 @@ class LoginStartService(
             throw ApplicationException(ErrorCode.ERR_11, "Rate-limit service unavailable", exception)
         }
         if (!allowed) {
+            auditLogger.emit(SecurityAuditEvent.LOGIN_RATE_LIMITED)
             throw ApplicationException(ErrorCode.ERR_11, "Login rate limit exceeded")
         }
 
@@ -62,7 +67,7 @@ class LoginStartService(
 
     private fun LoginCredentialService.CredentialKind.toTemplate() =
         when (this) {
-            LoginCredentialService.CredentialKind.LINK -> com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailTemplate.LOGIN_LINK
-            LoginCredentialService.CredentialKind.CODE -> com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailTemplate.LOGIN_CODE
+            LoginCredentialService.CredentialKind.LINK -> AuthEmailTemplate.LOGIN_LINK
+            LoginCredentialService.CredentialKind.CODE -> AuthEmailTemplate.LOGIN_CODE
         }
 }

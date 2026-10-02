@@ -5,10 +5,17 @@ import java.util.UUID
 
 /** Reader-side profile persistence port. */
 interface ProfileQueryStore {
-    /** Retrieves a profile, applying the bounded-context default when absent. */
-    fun get(subject: String): ProfileResponse
+    /**
+     * Retrieves an existing profile for an authenticated subject without mutating state.
+     *
+     * @param subject OIDC / provider-qualified subject identifier.
+     * @return [ProfileResponse] or null if no profile exists for this subject.
+     */
+    fun get(subject: String): ProfileResponse?
+
     /** Finds a profile by account id. */
     fun findById(accountId: UUID): ProfileResponse?
+
     /** Finds profiles for a batch of account ids. */
     fun findByIds(accountIds: List<UUID>): List<ProfileResponse>
 }

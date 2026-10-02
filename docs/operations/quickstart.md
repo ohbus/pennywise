@@ -1,5 +1,9 @@
 # Clone and run
 
+<p align="left">
+  <img src="../visuals/logo.svg" alt="Squarewise Logo" width="300">
+</p>
+
 Prerequisites for native development are Java 25, Docker with Compose v2,
 and `uv` for isolated Python tooling and virtual environment management.
 The wrapper supplies Gradle. No Node runtime is required for the backend
@@ -7,7 +11,7 @@ services and their dependency topology.
 
 ```sh
 make doctor
-uv sync       # or make sync
+uv sync --frozen --no-build       # or make sync
 make check
 ```
 
@@ -29,28 +33,29 @@ publish the same stable host ports.
 For the complete containerized environment, run:
 
 ```sh
-make full-up
+make dev-setup     # Ensures infra/local/.env exists with safe development keys
+make compose-up    # Starts Postgres, RabbitMQ, Redis, Keycloak, Mailpit, and 4 services
+make seed          # Seeds rich realistic groups, multi-participant expenses, and settlements
 ```
 
-Before the first local start, provide the required credential-digest secret
-and auth-email envelope key without committing either secret. Copy
-`infra/local/auth.env.example` to a private env file or export
-`SQUAREWISE_SECURITY_CREDENTIAL_DIGEST_SECRET` with at least 32 random bytes and
-`SQUAREWISE_SECURITY_AUTH_EMAIL_ENVELOPE_KEY` with exactly 32 random bytes,
-encoded as base64. The Compose profile fails closed when either is missing;
-local authentication intentionally does not use a shared default.
+To seed an extensive high-volume dataset (50+ groups and hundreds of expenses across categories):
+```sh
+make seed-large
+```
 
-This builds and runs PostgreSQL 17, RabbitMQ 4.3, Mailpit, Accounts, Expense
-Core, Notifications, and BFF from `infra/local/docker-compose.dev.yml`. Stop it
-with `make full-down`; `compose-dev-up`, `compose-dev-down`, `compose-up`, and
-`compose-down` remain compatibility aliases. Application health endpoints are
-on ports 8080 (BFF), 8081 (Accounts), 8082 (Expense Core), and 8083
-(Notifications). Mailpit's web UI is at `http://localhost:8025`.
+To reset and start with a clean slate:
+```sh
+make seed-reset
+```
 
-The BFF exposes GraphQL HTTP at `POST http://localhost:8080/graphql`; its
-WebSocket subscription endpoint uses the same `/graphql` path. This route is
-configured by `spring.graphql.path` and verified by the BFF WebFlux transport
-tests.
+Stop the stack at any time with:
+```sh
+make compose-down
+```
+
+Application health endpoints are on ports 8080 (BFF), 8081 (Accounts), 8082 (Expense Core), and 8083 (Notifications). Mailpit's web UI is at `http://localhost:8025`. Keycloak IdP is available on port 8090.
+
+The BFF exposes GraphQL HTTP at `POST http://localhost:8080/graphql`; its WebSocket subscription endpoint uses the same `/graphql` path. This route is configured by `spring.graphql.path` and verified by the BFF WebFlux transport tests.
 
 Run `make compose-config` after editing any local Compose file. The full command,
 service, port, credential, health-check, and startup-order matrix is in
@@ -98,3 +103,13 @@ For production, build and scan each immutable image with `infra/docker/Dockerfil
 run owner migrations, set the four `SQUAREWISE_*_IMAGE` variables, inject secrets
 through the deployment platform, and use
 `infra/deploy/docker-compose.prod.yml`. Do not commit `.env` files or credentials.
+
+### Production Keycloak Baseline (L-2)
+
+Keycloak in `infra/local/docker-compose.yml` runs in `start-dev` mode strictly for local
+developer and CI fixture convenience. In staging and production environments:
+- Keycloak must run `kc.sh start --optimized` with build-time optimizations.
+- An external hardened PostgreSQL instance must back the Keycloak realm.
+- Strict TLS termination (`KC_HOSTNAME_STRICT_HTTPS=true`) and trusted CA certificates must be configured.
+- Embedded development features and dev caches must remain disabled.
+

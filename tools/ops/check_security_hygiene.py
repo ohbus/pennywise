@@ -9,6 +9,7 @@ from typing import Final
 
 
 ROOT: Final[pathlib.Path] = pathlib.Path(__file__).resolve().parents[2]
+TEST_PATH_MARKERS: Final[tuple[str, ...]] = ("tests/", "src/test/")
 SECRET: Final[re.Pattern[str]] = re.compile(
     r"(?i)(password|secret|token|private[_-]?key)\s*[:=]\s*['\"][^'\"]{12,}"
 )
@@ -21,6 +22,8 @@ def main() -> int:
     findings: list[str] = []
     for name in files:
         path: pathlib.Path = ROOT / name
+        normalized_name = name.replace("\\", "/")
+        is_test_path = any(marker in normalized_name for marker in TEST_PATH_MARKERS)
         if path.suffix not in {
             ".yml", ".yaml", ".json", ".properties", ".env", ".md", ".kt", ".kts", ".py"
         }:
@@ -31,7 +34,7 @@ def main() -> int:
             continue
         for number, line in enumerate(lines, 1):
             if (
-                ("security-hygiene: test-fixture" in line and "tests" in name)
+                ("security-hygiene: test-fixture" in line and is_test_path)
                 or
                 "local-only" in line
                 or "example" in str(path)

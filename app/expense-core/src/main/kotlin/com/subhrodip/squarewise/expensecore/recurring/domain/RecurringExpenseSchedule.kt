@@ -6,6 +6,8 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import jakarta.persistence.Version
 import java.time.Instant
 import java.time.LocalDate
@@ -38,7 +40,7 @@ class RecurringExpenseSchedule(
     @Column(name = "amount_minor", nullable = false)
     var amountMinor: Long,
 
-    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.CHAR)
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "currency", nullable = false, length = 3)
     var currency: String,
 

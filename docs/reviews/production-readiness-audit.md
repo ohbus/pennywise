@@ -1142,7 +1142,7 @@ To request reassessment:
 |---|---|
 | [production-readiness-roadmap.md](../implementation/production-readiness-roadmap.md) | Phase-by-phase execution plan |
 | [production-readiness-tracker.md](../tasks/production-readiness-tracker.md) | Workstream status and ownership |
-| [production-readiness-plan.md](production-readiness-plan.md) | Pre-production approval checklist |
+| [production-readiness-plan.md](../operations/production-readiness-plan.md) | Pre-production approval checklist |
 | [production-validation.md](../quality/production-validation.md) | QA-08 evidence tracker |
 | [QA-08.md](../tasks/details/QA-08.md) | Production-like evidence task |
 | [programming-principles.md](../quality/programming-principles.md) | Code quality standards |

@@ -19,8 +19,14 @@ Workflows declare `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'` in their top-leve
 Node 24 ahead of runner deprecation deadlines.
 
 Each verification-matrix job receives isolated PostgreSQL 17 and RabbitMQ 4.3
-service containers. Docker health checks (`pg_isready` and
-`rabbitmq-diagnostics ping`) must pass before job steps begin, and no service
+service containers. The CI-only RabbitMQ service uses the protocol image rather
+than the management variant because verification and Sonar do not use the
+management UI; the local Compose topology retains management for operator
+inspection. Docker health checks (`pg_isready` and
+`rabbitmq-diagnostics ping`) must pass before job steps begin. RabbitMQ receives
+a 60-second health-check start period, 10-second health-check timeout, and 24
+five-second retries to accommodate slow hosted-runner startup without weakening
+the readiness command. No service
 state is shared between matrix jobs. The parallelized E2E jobs instead let the complete
 local Compose topology exclusively own PostgreSQL, RabbitMQ, Keycloak, Redis, and
 Mailpit; declaring duplicate job services on the host would contend for host ports `5432`
@@ -30,11 +36,15 @@ To achieve fast feedback and conserve runner CPU, the E2E stages eliminate redun
 Gradle test runs and compilation. Instead, the parallel E2E jobs depend directly on
 `verify` and consume the pre-built application `bootJar` artifacts (`app-jar-*`),
 allowing `Dockerfile.fast` to package lightweight runtime containers in seconds.
+The Docker context explicitly re-includes only these downloaded application JARs
+from the otherwise ignored Gradle `build/` directories. Each E2E job verifies all
+four artifact paths before Compose starts, so a missing artifact fails at the
+handoff instead of later as an opaque Docker `COPY` checksum error.
 The monolithic E2E stage is split into three parallel streams:
 1. `e2e-edge-and-security`: Contract smoke, Redis authentication-cache
    eviction/outage/restart checks (`make e2e-auth-cache`), negative OIDC JWT
    path probes, and live REST edge cases (`make e2e-rest-edge`).
-2. `e2e-product-and-offline`: Public acceptance suite (`make acceptance-live`), ordered Bruno collection (`make bruno-run`), live multi-service product lifecycle (`make e2e-live`), and offline client synchronization / replay resilience (`make e2e-offline`).
+2. `e2e-product-and-offline`: Passwordless auth-email delivery (`make e2e-auth-email`), public acceptance suite (`make acceptance-live`), ordered Bruno collection (`make bruno-run`), live multi-service product lifecycle (`make e2e-live`), and offline client synchronization / replay resilience (`make e2e-offline`).
 3. `e2e-concurrency-and-chaos`: Real-time WebSocket GraphQL subscription invalidation, concurrent member edit race resolution (`make e2e-concurrency`), message broker outage chaos, and transactional outbox drain recovery (`make e2e-chaos`).
 
 An aggregate gate job (`e2e-gate`) monitors all parallel streams and provides a single,
@@ -44,18 +54,41 @@ The matrix tests every application and library in parallel after a single
 preflight, validates contracts, REST path structure, GraphQL schema/resolver
 parity, and Compose files, runs Gradle `test`, `check`, and JaCoCo, and builds
 application jars. The lightweight checks also run the acceptance unit suite,
-workflow YAML parsing, strict Python typing via `uv run mypy`, and
-`git diff --check`. Jobs use Microsoft Build of OpenJDK. Python dependencies
+workflow YAML parsing, strict Python typing via `uv run --frozen --no-build mypy`, and
+`git diff --check`. The nine matrix entries are capped at four concurrent jobs
+because each entry owns PostgreSQL and RabbitMQ service containers; this avoids
+hosted-runner broker startup contention without removing or changing any shard.
+Jobs use Microsoft Build of OpenJDK. Python dependencies
 and tooling are deterministically managed via `pyproject.toml` and `uv.lock`.
-CI workflows install dependencies via `astral-sh/setup-uv@v6` with
-`uv sync --frozen`, running tools and scripts via `uv run`. Local Python tooling
+CI workflows install dependencies via the immutable commit
+`astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e` (the `v6` tag)
+with `uv sync --frozen --no-build`, running tools and scripts via
+`uv run --frozen --no-build`. `--frozen` prevents lockfile resolution changes;
+`--no-build` prevents dependency/project build hooks from executing during the
+tool-environment setup and invocation. Local Python tooling
 must use `uv` rather than installing packages into the system interpreter.
+All non-GitHub-owned actions are also pinned to full commit SHAs; the repository
+test suite rejects floating third-party action tags. GitHub-owned actions remain
+on their supported major tags because the repository policy scopes this pinning
+requirement to third-party actions.
 The lightweight lint job also installs the same Microsoft JDK 25 and Gradle
 setup before generating the CycloneDX SBOM; every job that invokes Gradle owns
 its toolchain setup explicitly.
+QA-10 coverage is reported per module in the Gradle matrix and aggregated by
+the follow-up `qa10-coverage-inventory` job, which publishes one JSON inventory
+artifact. A single matrix shard cannot prove repository-wide coverage. The
+eventual blocking gate command is
+`uv run --frozen --no-build python tools/coverage/report_branch_gaps.py --format json --fail-on-gaps`.
+The current local discovery baseline is 39 methods containing 78 missed
+branches. This is a backlog signal, not a target to reduce by deleting
+implementation; hosted closure requires tests or reviewed structural
+classification for every record.
 Every test run publishes a readable test summary directly to GitHub Actions job
 summaries (`test-summary/action@v2`) and uploads JUnit XML and HTML reports as
 job artifacts with `if: always()` retention.
+A dedicated `sonar` job runs SonarQube / SonarCloud static analysis with cached
+Sonar packages (`~/.sonar/cache`) and Gradle cache, sending coverage and test analysis
+for `master` and pull requests.
 For application projects, `_reusable-ci.yml` uploads the built executable
 `bootJar` artifact (`app-jar-<service>`). Master image publishing in `ci-master.yml`
 downloads this pre-built artifact and packages the runtime image with
@@ -97,3 +130,19 @@ baseline.
 
 Use `make workflow-validate` to parse all workflow files and `make acceptance`
 to produce `build/reports/acceptance/qa-01.json`.
+
+The hosted E2E jobs retain raw acceptance JSON, Bruno JSON, and suite logs as
+artifacts with `if: always()`, including when a suite or service startup fails.
+The product job writes Bruno output to `build/reports/e2e/bruno.json`; the
+other retained files identify the suite and execution order. These raw files
+are evidence inputs, not automatic pass claims. To close QA-10 operation rows,
+the product job also attempts to write
+`build/reports/e2e/qa10-operation-execution.json` using
+`tools/coverage/normalize_bruno_execution.py`. The normalizer credits only
+unique collection-path-to-contract mappings with assertion-backed checks; it
+preserves failed/blocked results and skips ambiguous or surface-mismatched
+fixtures. The artifact is therefore partial evidence, not blanket closure of
+the 54-operation matrix. The same hosted step feeds it to the operation-gap
+reporter and retains `qa10-operation-inventory.json`; review the resulting
+`EXECUTION-ARTIFACT-PASSED`, `FAILED`, and `BLOCKED` statuses before crediting
+any operation.

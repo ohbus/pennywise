@@ -31,5 +31,6 @@ body:json {
 script:post-response {
   if (res.status === 201) {
     bru.setVar("membershipId", res.body.membershipId);
+    bru.setVar("participantId2", res.body.membershipId);
   }
 }

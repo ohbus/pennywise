@@ -36,6 +36,10 @@ class GroupGraphqlController(
     /**
      * Authorizes and admits a bounded group subscription, releasing its slot when
      * the reactive stream is cancelled or terminates.
+     *
+     * SEC-003: The event stream is composed with [LiveUpdateFanout.revocationSignal] via
+     * `takeUntilOther` so that the Flux terminates immediately when the subscriber loses
+     * group membership (e.g., on a `member.removed` event processed by [BffEventConsumer]).
      */
     @SubscriptionMapping
     fun groupChanged(@Argument groupId: String, @AuthenticationPrincipal principal: Any?): Flux<GroupInvalidation> =
@@ -52,10 +56,15 @@ class GroupGraphqlController(
             },
             { subscription ->
                 gateway.getGroup(groupId, bearerToken(principal))
-                    .flatMapMany { liveFanout.invalidations().filter { it.groupId == groupId } }
+                    .flatMapMany {
+                        liveFanout.invalidations()
+                            .filter { it.groupId == groupId }
+                            .takeUntilOther(liveFanout.revocationSignal(subscription.id))
+                    }
             },
             { subscription -> liveFanout.unsubscribe(subscription.id) }
         )
+
 
     @QueryMapping
     fun groups(@AuthenticationPrincipal(expression = "tokenValue") principal: Any?): Mono<List<BffGroup>> = gateway.listGroups(bearerToken(principal))

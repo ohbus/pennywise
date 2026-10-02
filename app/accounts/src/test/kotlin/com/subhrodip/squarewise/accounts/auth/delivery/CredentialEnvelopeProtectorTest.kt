@@ -31,6 +31,13 @@ class CredentialEnvelopeProtectorTest {
     }
 
     @Test
+    fun `empty plaintext is rejected before encryption`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            protector.protect("", context)
+        }
+    }
+
+    @Test
     fun `context mismatch is rejected`() {
         val envelope = protector.protect("one-time-secret", context)
 
@@ -50,6 +57,23 @@ class CredentialEnvelopeProtectorTest {
         val tampered = Base64.getUrlEncoder().withoutPadding().encodeToString(decoded)
 
         assertThrows(IllegalArgumentException::class.java) { protector.reveal(tampered, context) }
+    }
+
+    @Test
+    fun `malformed and unsupported envelopes are rejected`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            protector.reveal("not%base64", context)
+        }
+
+        val truncated = Base64.getUrlEncoder().withoutPadding().encodeToString(byteArrayOf(1, 2))
+        assertThrows(IllegalArgumentException::class.java) {
+            protector.reveal(truncated, context)
+        }
+
+        val unsupportedVersion = Base64.getUrlEncoder().withoutPadding().encodeToString(ByteArray(30) { 0 })
+        assertThrows(IllegalArgumentException::class.java) {
+            protector.reveal(unsupportedVersion, context)
+        }
     }
 
     @Test

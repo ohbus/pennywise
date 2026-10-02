@@ -7,8 +7,43 @@ QA-07's contract-driven public-interface matrix is maintained in
 [`public-interface-coverage.md`](public-interface-coverage.md). It is the
 required cross-layer checklist for every REST method/path pair, GraphQL field,
 and WebSocket subscription lifecycle. Contract parsing, controller tests, and
-mocked gateway tests are not interchangeable with live integration evidence;
-reports must identify the highest evidence level actually executed.
+mocked gateway tests are not interchangeable with live integration evidence.
+
+The repository-wide implementation-to-test gap register is
+[`test-coverage-gap-audit.md`](test-coverage-gap-audit.md). It is the source
+for missing branch, unit, persistence/messaging integration, and deployed E2E
+acceptance criteria; this strategy document and the public operation matrix
+must link to it rather than treating line coverage or operation inventory as
+complete behavior coverage.
+
+Coverage integrity is part of the quality contract: close gaps by adding
+behavioral tests and evidence against the existing implementation. Do not
+delete implementation logic, remove branches, or weaken public contracts merely
+to improve JaCoCo results. A behavior change requires an observed defect or
+explicit requirement, a focused regression test, and documented justification.
+The corrective history for the current branch is recorded in
+[`test-coverage-change-audit.md`](test-coverage-change-audit.md).
+Reports must identify the highest evidence level actually executed.
+
+For QA-10 closure, the gap audit's per-record contract is mandatory: every
+remaining JaCoCo method record must name its exact test, invariant, evidence
+layer, and side-effect assertion. Every public operation must also account for
+authentication, authorization, input/failure behavior, durable state,
+asynchronous state, replay/concurrency, isolation, and redaction. A source
+reference or line-coverage increase is discovery evidence only; it is not a
+substitute for the required test layer. The current QA-10 discovery baseline
+contains 39 branch-gap method records and 78 missed branches, while the
+operation inventory contains 54 operations. Every operation now has a literal
+E2E source signal, but source presence is not complete acceptance evidence. These are tracked acceptance work, not
+permission to delete implementation branches or infer closure from a shared
+journey.
+
+The audit's event-type and routing inventory is also authoritative for
+messaging gaps. It distinguishes local parser/unit evidence from the required
+versioned event registry, producer/consumer mapping, outbox atomicity, real
+RabbitMQ routing/acknowledgement/retry/DLQ, deduplication, and credential
+redaction artifacts. An event literal or mocked listener test does not close
+those integration or deployed criteria.
 
 For the practical test layout, commands, environment prerequisites, CI gates,
 coverage dimensions, and contribution workflow, see the

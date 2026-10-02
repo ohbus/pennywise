@@ -1,5 +1,13 @@
 package com.subhrodip.squarewise.expensecore.expenses
+import com.subhrodip.squarewise.errors.domain.ApplicationException
+import com.subhrodip.squarewise.errors.domain.ErrorCode
 import com.subhrodip.squarewise.expensecore.expenses.api.ExpenseController
+import com.subhrodip.squarewise.expensecore.expenses.api.request.AllocationInputDto
+import com.subhrodip.squarewise.expensecore.expenses.api.request.AllocationItemDto
+import com.subhrodip.squarewise.expensecore.expenses.api.request.CreateExpenseRequest
+import com.subhrodip.squarewise.expensecore.expenses.api.request.MoneyDto
+import com.subhrodip.squarewise.expensecore.expenses.api.request.PayerDto
+import com.subhrodip.squarewise.expensecore.expenses.api.request.UpdateExpenseRequest
 import com.subhrodip.squarewise.expensecore.expenses.persistence.store.InMemoryExpenseStore
 import com.subhrodip.squarewise.expensecore.groups.domain.GroupEntity
 import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupMembershipRepository
@@ -62,15 +70,59 @@ class ExpenseControllerTest {
 
     @Test
     fun `rejects missing and blank authenticated subjects before membership lookup`() {
-        val missing = assertThrows<com.subhrodip.squarewise.errors.domain.ApplicationException> {
+        val missing = assertThrows<ApplicationException> {
             controller.getBalances(UUID.randomUUID(), null)
         }
-        assertEquals(com.subhrodip.squarewise.errors.domain.ErrorCode.ERR_03, missing.errorCode)
+        assertEquals(ErrorCode.ERR_03, missing.errorCode)
 
-        val blank = assertThrows<com.subhrodip.squarewise.errors.domain.ApplicationException> {
+        val blank = assertThrows<ApplicationException> {
             controller.getBalances(UUID.randomUUID(), Principal { "   " })
         }
-        assertEquals(com.subhrodip.squarewise.errors.domain.ErrorCode.ERR_03, blank.errorCode)
+        assertEquals(ErrorCode.ERR_03, blank.errorCode)
+    }
+
+    /** Verifies every financial mutation rejects a missing principal before validation or persistence. */
+    @Test
+    fun `rejects missing principal for create update and delete mutations`() {
+        val groupId = UUID.randomUUID()
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID().toString()
+        val createRequest = CreateExpenseRequest(
+            expenseId = expenseId,
+            description = "Unauthenticated",
+            amount = MoneyDto("EUR", "100"),
+            payers = listOf(PayerDto(participantId, MoneyDto("EUR", "100"))),
+            allocation = AllocationInputDto(
+                "EXACT",
+                listOf(AllocationItemDto(participantId, "100"))
+            )
+        )
+        val updateRequest = UpdateExpenseRequest(
+            version = 1,
+            description = "Unauthenticated update",
+            amount = MoneyDto("EUR", "100"),
+            payers = createRequest.payers,
+            allocation = createRequest.allocation
+        )
+
+        assertEquals(
+            ErrorCode.ERR_03,
+            assertThrows<ApplicationException> {
+                controller.createExpense(groupId, "unauthenticated-create", createRequest, null)
+            }.errorCode
+        )
+        assertEquals(
+            ErrorCode.ERR_03,
+            assertThrows<ApplicationException> {
+                controller.updateExpense(groupId, expenseId, updateRequest, null)
+            }.errorCode
+        )
+        assertEquals(
+            ErrorCode.ERR_03,
+            assertThrows<ApplicationException> {
+                controller.deleteExpense(groupId, expenseId, null, null)
+            }.errorCode
+        )
     }
 
     @Test
@@ -434,6 +486,156 @@ class ExpenseControllerTest {
         ).andExpect(status().isConflict)
     }
 
+    /** Verifies update validation rejects malformed payer values, currency drift, sums, and allocations before persistence. */
+    @Test
+    fun `rejects invalid update financial inputs before store mutation`() {
+        val groupId = UUID.randomUUID()
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID().toString()
+        val principal = Principal { "test-user" }
+        val base = UpdateExpenseRequest(
+            version = 1,
+            description = "Updated",
+            amount = MoneyDto("EUR", "100"),
+            payers = listOf(PayerDto(participantId, MoneyDto("EUR", "100"))),
+            allocation = AllocationInputDto(
+                "EXACT",
+                listOf(AllocationItemDto(participantId, "100"))
+            )
+        )
+
+        val invalidRequests = listOf(
+            base.copy(payers = listOf(PayerDto(participantId, MoneyDto("EUR", "not-an-integer")))),
+            base.copy(payers = listOf(PayerDto(participantId, MoneyDto("EUR", "-1")))),
+            base.copy(payers = listOf(PayerDto(participantId, MoneyDto("USD", "100")))),
+            base.copy(payers = listOf(PayerDto(participantId, MoneyDto("EUR", "99")))),
+            base.copy(allocation = AllocationInputDto("EXACT", listOf(AllocationItemDto(participantId, "99"))))
+        )
+
+        invalidRequests.forEach { request ->
+            val error = assertThrows<ApplicationException> {
+                controller.updateExpense(groupId, expenseId, request, principal)
+            }
+            assertEquals(ErrorCode.ERR_02, error.errorCode)
+        }
+    }
+
+    /** Verifies create validation rejects malformed payer values, currency drift, sums, and allocations before persistence. */
+    @Test
+    fun `rejects invalid create financial inputs before store mutation`() {
+        val groupId = UUID.randomUUID()
+        val participantId = UUID.randomUUID().toString()
+        val principal = Principal { "test-user" }
+        val base = CreateExpenseRequest(
+            expenseId = UUID.randomUUID(),
+            description = "Created",
+            amount = MoneyDto("EUR", "100"),
+            payers = listOf(PayerDto(participantId, MoneyDto("EUR", "100"))),
+            allocation = AllocationInputDto(
+                "EXACT",
+                listOf(AllocationItemDto(participantId, "100"))
+            )
+        )
+
+        val invalidRequests = listOf(
+            base.copy(payers = listOf(PayerDto(participantId, MoneyDto("EUR", "not-an-integer")))),
+            base.copy(payers = listOf(PayerDto(participantId, MoneyDto("EUR", "-1")))),
+            base.copy(payers = listOf(PayerDto(participantId, MoneyDto("USD", "100")))),
+            base.copy(payers = listOf(PayerDto(participantId, MoneyDto("EUR", "99")))),
+            base.copy(allocation = AllocationInputDto("EXACT", listOf(AllocationItemDto(participantId, "99"))))
+        )
+
+        invalidRequests.forEachIndexed { index, request ->
+            val error = assertThrows<ApplicationException> {
+                controller.createExpense(groupId, "create-validation-$index", request, principal)
+            }
+            assertEquals(ErrorCode.ERR_02, error.errorCode)
+        }
+    }
+
+    /** Verifies the controller rejects a category beyond the documented request bound. */
+    @Test
+    fun `rejects an overlong category before store mutation`() {
+        val groupId = UUID.randomUUID()
+        val participantId = UUID.randomUUID().toString()
+        val request = CreateExpenseRequest(
+            expenseId = UUID.randomUUID(),
+            description = "Bounded category",
+            category = "x".repeat(33),
+            amount = MoneyDto("EUR", "100"),
+            payers = listOf(PayerDto(participantId, MoneyDto("EUR", "100"))),
+            allocation = AllocationInputDto(
+                "EXACT",
+                listOf(AllocationItemDto(participantId, "100"))
+            )
+        )
+
+        val error = assertThrows<ApplicationException> {
+            controller.createExpense(groupId, "category-boundary", request, Principal { "test-user" })
+        }
+
+        assertEquals(ErrorCode.ERR_02, error.errorCode)
+    }
+
+    /** Verifies blank categories use the documented neutral category on create and update. */
+    @Test
+    fun `defaults blank category to other for create and update`() {
+        val groupId = UUID.randomUUID()
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID().toString()
+        val principal = Principal { "test-user" }
+        val allocation = AllocationInputDto(
+            "EXACT",
+            listOf(AllocationItemDto(participantId, "100"))
+        )
+        val payer = listOf(PayerDto(participantId, MoneyDto("EUR", "100")))
+
+        val created = controller.createExpense(
+            groupId,
+            "blank-category-create",
+            CreateExpenseRequest(
+                expenseId = expenseId,
+                description = "Created with blank category",
+                category = "   ",
+                amount = MoneyDto("EUR", "100"),
+                payers = payer,
+                allocation = allocation
+            ),
+            principal
+        )
+        assertEquals("other", created.category)
+
+        val explicitNull = controller.createExpense(
+            groupId,
+            "null-category-create",
+            CreateExpenseRequest(
+                expenseId = UUID.randomUUID(),
+                description = "Created with null category",
+                category = null,
+                amount = MoneyDto("EUR", "100"),
+                payers = payer,
+                allocation = allocation
+            ),
+            principal
+        )
+        assertEquals("other", explicitNull.category)
+
+        val updated = controller.updateExpense(
+            groupId,
+            expenseId,
+            UpdateExpenseRequest(
+                version = 1,
+                description = "Updated with blank category",
+                category = "   ",
+                amount = MoneyDto("EUR", "100"),
+                payers = payer,
+                allocation = allocation
+            ),
+            principal
+        )
+        assertEquals("other", updated.category)
+    }
+
     @Test
     fun `deletes expense successfully and removes it from listing`() {
         val groupId = UUID.randomUUID()
@@ -544,5 +746,60 @@ class ExpenseControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json)
         ).andExpect(status().isBadRequest)
+    }
+
+    /** Verifies the allocation-side participant limit is enforced independently of payer count. */
+    @Test
+    fun `rejects oversized allocation collection before financial processing`() {
+        val groupId = UUID.randomUUID()
+        val participantId = UUID.randomUUID().toString()
+        val request = CreateExpenseRequest(
+            expenseId = UUID.randomUUID(),
+            description = "bounded allocations",
+            amount = MoneyDto("EUR", "101"),
+            payers = listOf(PayerDto(participantId, MoneyDto("EUR", "101"))),
+            allocation = AllocationInputDto(
+                "EQUAL",
+                (1..101).map { AllocationItemDto(UUID.randomUUID().toString(), "1") }
+            )
+        )
+
+        val error = assertThrows<ApplicationException> {
+            controller.createExpense(
+                groupId,
+                "bounded-allocation-count",
+                request,
+                Principal { "test-user" }
+            )
+        }
+        assertEquals(ErrorCode.ERR_02, error.errorCode)
+    }
+
+    /** Verifies simultaneous oversized payer and allocation collections fail at the shared bound. */
+    @Test
+    fun `rejects simultaneous oversized payer and allocation collections`() {
+        val participantId = UUID.randomUUID().toString()
+        val request = CreateExpenseRequest(
+            expenseId = UUID.randomUUID(),
+            description = "both collections bounded",
+            amount = MoneyDto("EUR", "101"),
+            payers = (1..101).map {
+                PayerDto(participantId, MoneyDto("EUR", "1"))
+            },
+            allocation = AllocationInputDto(
+                "EQUAL",
+                (1..101).map { AllocationItemDto(UUID.randomUUID().toString(), "1") }
+            )
+        )
+
+        val error = assertThrows<ApplicationException> {
+            controller.createExpense(
+                UUID.randomUUID(),
+                "both-collections-bounded",
+                request,
+                Principal { "test-user" }
+            )
+        }
+        assertEquals(ErrorCode.ERR_02, error.errorCode)
     }
 }

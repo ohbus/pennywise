@@ -39,6 +39,13 @@ this order:
    validation commands, and expected evidence in the progress update before
    editing.
 
+The complete documentation navigation is maintained in [`docs/README.md`](docs/README.md).
+Use it to discover documents that are not part of every fresh-session read, including
+security, reviews, extended operations, quality, implementation, contract, and visual
+documentation. The task-detail directory is intentionally navigated through the
+authoritative [`docs/tasks/registry.yaml`](docs/tasks/registry.yaml), which identifies
+the relevant detail file for the active task.
+
 Do not begin implementation from memory or from an isolated prompt. Every delegated
 subagent must explicitly read and strictly adhere to all relevant documentation
 listed above before beginning any implementation. If these documents disagree,

@@ -1,9 +1,13 @@
 package com.subhrodip.squarewise.expensecore.groups
+import com.subhrodip.squarewise.expensecore.sync.persistence.SyncChangeRepository
+import java.util.UUID
+import org.junit.jupiter.api.assertThrows
 import com.subhrodip.squarewise.expensecore.groups.api.CreateGroupRequest
 import com.subhrodip.squarewise.expensecore.groups.api.CreateInviteRequest
 import com.subhrodip.squarewise.expensecore.groups.api.CreatePlaceholderRequest
 import com.subhrodip.squarewise.expensecore.groups.api.UpdateGroupRequest
 import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupAuditRepository
+import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupMembershipRepository
 import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupRepository
 import com.subhrodip.squarewise.expensecore.groups.persistence.store.JpaGroupStore
 import com.subhrodip.squarewise.expensecore.messaging.outbox.persistence.OutboxRepository
@@ -30,9 +34,10 @@ import tools.jackson.databind.ObjectMapper
 class JpaGroupStoreTest @Autowired constructor(
     private val store: JpaGroupStore,
     private val auditRepository: GroupAuditRepository,
-    private val syncRepository: com.subhrodip.squarewise.expensecore.sync.persistence.SyncChangeRepository,
-    private val outboxRepository: com.subhrodip.squarewise.expensecore.messaging.outbox.persistence.OutboxRepository,
+    private val syncRepository: SyncChangeRepository,
+    private val outboxRepository: OutboxRepository,
     private val groupRepository: GroupRepository,
+    private val membershipRepository: GroupMembershipRepository,
     private val objectMapper: ObjectMapper
 ) {
     /**
@@ -70,6 +75,35 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals(1, results.count { it.get() })
         executor.shutdown()
         assertEquals(1, (1..8).sumOf { store.list("member-$it").size })
+    }
+
+    /** Verifies the atomic claim failure path for two users racing on one targeted placeholder invite. */
+    @Test
+    fun `allows exactly one concurrent targeted placeholder claim`() {
+        val group = store.create("targeted-race-owner", CreateGroupRequest("Targeted race", "TRIP", "EUR"))
+        val placeholder = store.addPlaceholder(
+            group.groupId,
+            "targeted-race-owner",
+            CreatePlaceholderRequest("Racing placeholder")
+        )
+        val invitation = store.invite(
+            group.groupId,
+            "targeted-race-owner",
+            CreateInviteRequest(24, placeholder.membershipId)
+        )
+        val executor = Executors.newFixedThreadPool(2)
+        val start = CountDownLatch(1)
+        val results = (1..2).map { index ->
+            executor.submit(Callable {
+                start.await()
+                runCatching { store.claim(invitation.token, "targeted-race-$index") }.isSuccess
+            })
+        }
+        start.countDown()
+
+        assertEquals(1, results.count { it.get() })
+        executor.shutdown()
+        assertEquals(1, store.list("targeted-race-1").size + store.list("targeted-race-2").size)
     }
 
     /**
@@ -117,7 +151,7 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals(2, membersAfterClaim.size)
         assertEquals(setOf("member-alice", "member-bob"), membersAfterClaim.map { it.subject }.toSet())
 
-        val err = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val err = assertThrows<ApplicationException> {
             store.listMembers(group.groupId, "intruder")
         }
         assertEquals(ErrorCode.ERR_05, err.errorCode)
@@ -140,7 +174,7 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals("After rename", fetched.name)
         assertEquals(1, fetched.revision)
 
-        val updateErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val updateErr = assertThrows<ApplicationException> {
             store.update(group.groupId, "stranger", UpdateGroupRequest("Nope"))
         }
         assertEquals(ErrorCode.ERR_05, updateErr.errorCode)
@@ -235,14 +269,14 @@ class JpaGroupStoreTest @Autowired constructor(
         val initialOutboxCount = outboxRepository.count()
 
         // Non-member attempt
-        val nonMemberErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val nonMemberErr = assertThrows<ApplicationException> {
             store.update(group.groupId, "unauthorized-subject", UpdateGroupRequest("Hacked Name"))
         }
         assertEquals(ErrorCode.ERR_05, nonMemberErr.errorCode)
 
         // Missing group attempt
-        val nonExistentId = java.util.UUID.randomUUID()
-        val missingErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val nonExistentId = UUID.randomUUID()
+        val missingErr = assertThrows<ApplicationException> {
             store.update(nonExistentId, "owner-side-effects", UpdateGroupRequest("Missing Group Name"))
         }
         assertEquals(ErrorCode.ERR_05, missingErr.errorCode)
@@ -278,13 +312,13 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals("group.archived.v1", outbox.eventType)
 
         // Repeat archive fails with 409
-        val archiveErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val archiveErr = assertThrows<ApplicationException> {
             store.archive(group.groupId, "archive-owner")
         }
         assertEquals(ErrorCode.ERR_06, archiveErr.errorCode)
 
         // Update name fails with 409 Conflict
-        val updateErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val updateErr = assertThrows<ApplicationException> {
             store.update(group.groupId, "archive-owner", UpdateGroupRequest("New Name"))
         }
         assertEquals(ErrorCode.ERR_06, updateErr.errorCode)
@@ -337,13 +371,13 @@ class JpaGroupStoreTest @Autowired constructor(
         assertEquals("remove-owner", membersAfter[0].subject)
 
         // Removed member can no longer list group members
-        val listErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val listErr = assertThrows<ApplicationException> {
             store.listMembers(group.groupId, "member-to-remove")
         }
         assertEquals(ErrorCode.ERR_05, listErr.errorCode)
 
         // Duplicate removal returns 409 Conflict
-        val dupErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val dupErr = assertThrows<ApplicationException> {
             store.removeMember(group.groupId, "remove-owner", removeTarget.membershipId)
         }
         assertEquals(ErrorCode.ERR_06, dupErr.errorCode)
@@ -359,12 +393,257 @@ class JpaGroupStoreTest @Autowired constructor(
 
         store.revokeInvite(group.groupId, "revoke-owner", invite.token)
 
-        val claimErr = org.junit.jupiter.api.assertThrows<ApplicationException> {
+        val claimErr = assertThrows<ApplicationException> {
             store.claim(invite.token, "intruder")
         }
         assertEquals(ErrorCode.ERR_06, claimErr.errorCode)
 
         val audit = auditRepository.findAll().single { it.groupId == group.groupId && it.action == "invitation.revoked" }
         assertEquals("invitation.revoked", audit.action)
+    }
+
+    /** Verifies expiry, idempotent same-subject replay, and competing-subject rejection for invitations. */
+    @Test
+    fun `rejects expired and already claimed invitations without extra membership effects`() {
+        val group = store.create("claim-owner", CreateGroupRequest("Claims", "TRIP", "EUR"))
+        val expired = store.invite(group.groupId, "claim-owner", CreateInviteRequest(0))
+
+        val expiredError = assertThrows<ApplicationException> {
+            store.claim(expired.token, "expired-member")
+        }
+        assertEquals(ErrorCode.ERR_06, expiredError.errorCode)
+        assertEquals(1, store.listMembers(group.groupId, "claim-owner").size)
+
+        val invite = store.invite(group.groupId, "claim-owner", CreateInviteRequest(24))
+        store.claim(invite.token, "claimed-member")
+        val revisionAfterClaim = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        val sameSubjectInvite = store.invite(group.groupId, "claim-owner", CreateInviteRequest(24))
+        val sameSubjectReplay = store.claim(sameSubjectInvite.token, "claimed-member")
+        assertEquals(group.groupId, sameSubjectReplay.groupId)
+        assertEquals(revisionAfterClaim, groupRepository.findById(group.groupId).orElseThrow().revision)
+
+        val competingSubjectError = assertThrows<ApplicationException> {
+            store.claim(invite.token, "competing-member")
+        }
+        assertEquals(ErrorCode.ERR_06, competingSubjectError.errorCode)
+        assertEquals(2, store.listMembers(group.groupId, "claim-owner").size)
+        assertTrue(store.list("competing-member").isEmpty())
+    }
+
+    /** Verifies an invitation cannot mutate an archived group after the token was issued. */
+    @Test
+    fun `rejects invitation claim for archived group without membership effects`() {
+        val group = store.create("archived-claim-owner", CreateGroupRequest("Archived claim", "TRIP", "EUR"))
+        val invitation = store.invite(group.groupId, "archived-claim-owner", CreateInviteRequest(24))
+        store.archive(group.groupId, "archived-claim-owner")
+        val revisionAfterArchive = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        val error = assertThrows<ApplicationException> {
+            store.claim(invitation.token, "archived-invitee")
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+        assertEquals(revisionAfterArchive, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertTrue(store.list("archived-invitee").isEmpty())
+    }
+
+    /** Verifies a targeted invitation rejects a placeholder removed after the invitation was issued. */
+    @Test
+    fun `rejects claim when targeted placeholder is no longer active`() {
+        val group = store.create("removed-placeholder-owner", CreateGroupRequest("Removed placeholder", "TRIP", "EUR"))
+        val placeholder = store.addPlaceholder(
+            group.groupId,
+            "removed-placeholder-owner",
+            CreatePlaceholderRequest("Former placeholder")
+        )
+        val invitation = store.invite(
+            group.groupId,
+            "removed-placeholder-owner",
+            CreateInviteRequest(24, placeholder.membershipId)
+        )
+        store.removeMember(group.groupId, "removed-placeholder-owner", placeholder.membershipId)
+        val revisionAfterRemoval = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        val error = assertThrows<ApplicationException> {
+            store.claim(invitation.token, "replacement-subject")
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+        assertEquals(revisionAfterRemoval, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertTrue(store.list("replacement-subject").isEmpty())
+    }
+
+    /** Verifies an unclaimed invitation cannot bind a placeholder already associated with a subject. */
+    @Test
+    fun `rejects claim when targeted placeholder is already bound`() {
+        val group = store.create("bound-placeholder-owner", CreateGroupRequest("Bound placeholder", "TRIP", "EUR"))
+        val placeholder = store.addPlaceholder(
+            group.groupId,
+            "bound-placeholder-owner",
+            CreatePlaceholderRequest("Bound placeholder")
+        )
+        val invitation = store.invite(
+            group.groupId,
+            "bound-placeholder-owner",
+            CreateInviteRequest(24, placeholder.membershipId)
+        )
+        val persistedPlaceholder = membershipRepository.findById(placeholder.membershipId).orElseThrow()
+        persistedPlaceholder.subject = "existing-subject"
+        membershipRepository.saveAndFlush(persistedPlaceholder)
+        val revisionBeforeClaim = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        val error = assertThrows<ApplicationException> {
+            store.claim(invitation.token, "new-subject")
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+        assertEquals(revisionBeforeClaim, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertTrue(store.list("new-subject").isEmpty())
+    }
+
+    /**
+     * Verifies archived groups reject member-facing mutations while preserving the archive state
+     * and the already-recorded mutation effects.
+     */
+    @Test
+    fun `rejects archived group member operations without additional effects`() {
+        val group = store.create("archived-members-owner", CreateGroupRequest("Archived", "TRIP", "EUR"))
+        store.archive(group.groupId, "archived-members-owner")
+        val auditCount = auditRepository.count()
+        val outboxCount = outboxRepository.count()
+
+        val listError = assertThrows<ApplicationException> {
+            store.listMembers(group.groupId, "archived-members-owner")
+        }
+        assertEquals(ErrorCode.ERR_05, listError.errorCode)
+
+        val placeholderError = assertThrows<ApplicationException> {
+            store.addPlaceholder(
+                group.groupId,
+                "archived-members-owner",
+                CreatePlaceholderRequest("No mutation")
+            )
+        }
+        assertEquals(ErrorCode.ERR_06, placeholderError.errorCode)
+        assertEquals("ARCHIVED", groupRepository.findById(group.groupId).orElseThrow().status)
+        assertEquals(auditCount, auditRepository.count())
+        assertEquals(outboxCount, outboxRepository.count())
+    }
+
+    /** Verifies invalid placeholder and invitation tokens fail before any group mutation is recorded. */
+    @Test
+    fun `rejects invalid placeholder and invitation operations without mutation`() {
+        val group = store.create("invalid-invite-owner", CreateGroupRequest("Invites", "TRIP", "EUR"))
+        val auditCount = auditRepository.count()
+        val outboxCount = outboxRepository.count()
+
+        val placeholderError = assertThrows<ApplicationException> {
+            store.invite(
+                group.groupId,
+                "invalid-invite-owner",
+                CreateInviteRequest(24, UUID.randomUUID())
+            )
+        }
+        assertEquals(ErrorCode.ERR_06, placeholderError.errorCode)
+
+        val unknownToken = "a".repeat(64)
+        val revokeError = assertThrows<ApplicationException> {
+            store.revokeInvite(group.groupId, "invalid-invite-owner", unknownToken)
+        }
+        assertEquals(ErrorCode.ERR_06, revokeError.errorCode)
+
+        val malformedClaimError = assertThrows<ApplicationException> {
+            store.claim("not-a-token", "invitee")
+        }
+        assertEquals(ErrorCode.ERR_06, malformedClaimError.errorCode)
+
+        val unknownClaimError = assertThrows<ApplicationException> {
+            store.claim(unknownToken, "invitee")
+        }
+        assertEquals(ErrorCode.ERR_06, unknownClaimError.errorCode)
+        assertEquals(0L, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertEquals(auditCount, auditRepository.count())
+        assertEquals(outboxCount, outboxRepository.count())
+    }
+
+    /** Verifies an active ordinary member cannot be used as a placeholder invite target. */
+    @Test
+    fun `rejects invite targeting an ordinary active member`() {
+        val group = store.create("ordinary-target-owner", CreateGroupRequest("Invite targets", "TRIP", "EUR"))
+        val ordinaryMember = membershipRepository.findByGroupIdAndStatus(group.groupId, "ACTIVE").single()
+
+        val error = assertThrows<ApplicationException> {
+            store.invite(
+                group.groupId,
+                "ordinary-target-owner",
+                CreateInviteRequest(24, ordinaryMember.membershipId)
+            )
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+    }
+
+    /** Verifies a placeholder already bound to a subject cannot receive a second targeted invite. */
+    @Test
+    fun `rejects invite targeting an already bound placeholder`() {
+        val group = store.create("bound-target-owner", CreateGroupRequest("Bound target", "TRIP", "EUR"))
+        val placeholder = store.addPlaceholder(
+            group.groupId,
+            "bound-target-owner",
+            CreatePlaceholderRequest("Already bound")
+        )
+        val boundPlaceholder = membershipRepository.findById(placeholder.membershipId).orElseThrow()
+        boundPlaceholder.subject = "existing-subject"
+        membershipRepository.saveAndFlush(boundPlaceholder)
+
+        val error = assertThrows<ApplicationException> {
+            store.invite(
+                group.groupId,
+                "bound-target-owner",
+                CreateInviteRequest(24, placeholder.membershipId)
+            )
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+    }
+
+    /** Verifies an invitation cannot target a placeholder that was removed after creation. */
+    @Test
+    fun `rejects invite targeting a removed placeholder`() {
+        val group = store.create("removed-target-owner", CreateGroupRequest("Removed target", "TRIP", "EUR"))
+        val placeholder = store.addPlaceholder(
+            group.groupId,
+            "removed-target-owner",
+            CreatePlaceholderRequest("Former target")
+        )
+        store.removeMember(group.groupId, "removed-target-owner", placeholder.membershipId)
+
+        val error = assertThrows<ApplicationException> {
+            store.invite(
+                group.groupId,
+                "removed-target-owner",
+                CreateInviteRequest(24, placeholder.membershipId)
+            )
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+    }
+
+    /** Verifies removing an unknown membership is rejected without changing the group revision or effects. */
+    @Test
+    fun `rejects removal of an unknown membership without mutation`() {
+        val group = store.create("missing-member-owner", CreateGroupRequest("Members", "HOUSEHOLD", "EUR"))
+        val auditCount = auditRepository.count()
+        val outboxCount = outboxRepository.count()
+
+        val error = assertThrows<ApplicationException> {
+            store.removeMember(group.groupId, "missing-member-owner", UUID.randomUUID())
+        }
+
+        assertEquals(ErrorCode.ERR_05, error.errorCode)
+        assertEquals(0L, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertEquals(auditCount, auditRepository.count())
+        assertEquals(outboxCount, outboxRepository.count())
     }
 }

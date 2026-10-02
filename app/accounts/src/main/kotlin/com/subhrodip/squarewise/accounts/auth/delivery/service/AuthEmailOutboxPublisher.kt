@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.accounts.auth.delivery.service
+import java.util.Date
 
 import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailPublishOutcome
 import java.time.Duration
@@ -49,7 +50,7 @@ class AuthEmailOutboxPublisher(
             val properties = MessageProperties().apply {
                 contentType = MessageProperties.CONTENT_TYPE_JSON
                 messageId = record.eventId.toString()
-                timestamp = java.util.Date.from(record.createdAt)
+                timestamp = Date.from(record.createdAt)
             }
             rabbitTemplate.send(exchange, routingKey, Message(body, properties))
             outbox.acknowledge(record.eventId, clock())

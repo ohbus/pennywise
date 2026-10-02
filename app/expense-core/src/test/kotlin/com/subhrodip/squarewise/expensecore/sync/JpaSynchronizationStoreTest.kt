@@ -1,6 +1,7 @@
 package com.subhrodip.squarewise.expensecore.sync
 
 import com.subhrodip.squarewise.expensecore.sync.domain.InvalidSyncCursorException
+import com.subhrodip.squarewise.expensecore.sync.domain.SyncCursor
 import com.subhrodip.squarewise.expensecore.sync.persistence.JpaSynchronizationStore
 
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import java.time.Instant
 import java.util.UUID
 
 @SpringBootTest
@@ -103,5 +105,29 @@ class JpaSynchronizationStoreTest @Autowired constructor(
         assertEquals(1L, g1r1)
         assertEquals(1L, g2r1)
         assertEquals(2L, g1r2)
+    }
+
+    /** Verifies an empty durable snapshot has no continuation cursor or remaining changes. */
+    @Test
+    fun `empty group snapshot has no cursor and no remaining changes`() {
+        val snapshot = store.snapshot(UUID.randomUUID().toString(), null, 10)
+
+        assertTrue(snapshot.changes.isEmpty())
+        assertFalse(snapshot.hasMore)
+        assertNull(snapshot.nextCursor)
+    }
+
+    /** Verifies blank identifiers and out-of-range page limits fail before persistence access. */
+    @Test
+    fun `rejects blank identifiers and invalid page limits`() {
+        assertThrows(IllegalArgumentException::class.java) { store.append(" ", "entity", null) }
+        assertThrows(IllegalArgumentException::class.java) { store.append("group", " ", null) }
+        assertThrows(IllegalArgumentException::class.java) { store.delete(" ", "entity") }
+        assertThrows(IllegalArgumentException::class.java) { store.delete("group", " ") }
+        assertThrows(IllegalArgumentException::class.java) { store.snapshot(" ", null, 10) }
+        val expiredCursor = SyncCursor("group", 0, Instant.now().minusSeconds(1)).encode()
+        assertThrows(InvalidSyncCursorException::class.java) { store.snapshot("group", expiredCursor, 10) }
+        assertThrows(IllegalArgumentException::class.java) { store.snapshot("group", null, 0) }
+        assertThrows(IllegalArgumentException::class.java) { store.snapshot("group", null, 101) }
     }
 }

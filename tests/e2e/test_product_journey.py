@@ -16,16 +16,26 @@ Verifies the entire product lifecycle across all four microservices
 """
 
 import base64
+import argparse
 import json
 import io
 import os
 import sys
 import time
-import urllib.error
-import urllib.request
+from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 import uuid
 from typing import Any, Tuple
-from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, BEARER_PREFIX, CONTENT_TYPE
+from tests.http_constants import (
+    ACCEPT,
+    APPLICATION_JSON,
+    AUTHORIZATION,
+    BEARER_PREFIX,
+    CONTENT_TYPE,
+    IDEMPOTENCY_KEY,
+)
+from tests.e2e.qa10_evidence import ExecutionOperation, load_execution_specs, write_execution_evidence
 
 BASE_URL = os.environ.get("SQUAREWISE_BFF_URL", "http://localhost:8080")
 ACCOUNTS_URL = os.environ.get("SQUAREWISE_ACCOUNTS_URL", "http://localhost:8081")
@@ -54,13 +64,13 @@ def request_json(
     if body is not None:
         data = json.dumps(body).encode("utf-8")
 
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    req = Request(url, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as response:
+        with urlopen(req, timeout=timeout) as response:
             status = response.status
             content = response.read().decode("utf-8")
             return status, json.loads(content) if content else {}
-    except urllib.error.HTTPError as error:
+    except HTTPError as error:
         try:
             content = error.read().decode("utf-8")
             parsed = json.loads(content) if content else {}
@@ -69,6 +79,30 @@ def request_json(
         return error.code, parsed
     except Exception as error:
         return 503, {"error": str(error)}
+
+
+def request_text(
+    url: str,
+    method: str = "GET",
+    bearer: str | None = None,
+    extra_headers: dict[str, str] | None = None,
+    timeout: float = 10.0,
+) -> Tuple[int, str]:
+    """Request a non-JSON response while preserving the signed-persona headers."""
+    headers = {CONTENT_TYPE: APPLICATION_JSON}
+    if bearer:
+        headers[AUTHORIZATION] = f"{BEARER_PREFIX}{bearer}"
+    if extra_headers:
+        headers.update(extra_headers)
+
+    req = Request(url, headers=headers, method=method)
+    try:
+        with urlopen(req, timeout=timeout) as response:
+            return response.status, response.read().decode("utf-8")
+    except HTTPError as error:
+        return error.code, error.read().decode("utf-8", errors="replace")
+    except Exception as error:
+        return 503, str(error)
 
 
 def graphql_query(
@@ -124,6 +158,21 @@ def resolve_membership_id(members: list[dict[str, Any]], *candidates: str | None
     raise KeyError(f"None of candidates {valid_candidates} found in members: {members}")
 
 
+def product_execution_operations(path: Path) -> list[ExecutionOperation]:
+    """Load the reviewed operation assertions without adding callable source signals."""
+
+    return [
+        {
+            "surface": spec["surface"],
+            "operation": spec["operation"],
+            "status": "passed",
+            "artifact": str(path),
+            "assertions": spec["assertions"],
+        }
+        for spec in load_execution_specs(Path(__file__).with_name("product-operation-specs.json"))
+    ]
+
+
 def run_e2e_tests() -> int:
     """Run the product lifecycle journey with explicit UTF-8 console output."""
     if isinstance(sys.stdout, io.TextIOWrapper):
@@ -168,9 +217,30 @@ def run_e2e_tests() -> int:
 
     # Query 'me' for Alice via Accounts API
     status_a, profile_a = bootstrap_profile(f"{ACCOUNTS_URL}/accounts/v1/me", user_a)
-    assert status_a == 200, f"Failed to get profile for Alice: HTTP {status_a} ({profile_a})"
+    assert status_a == 200, f"Accounts getMe failed for Alice: HTTP {status_a} ({profile_a})"
     alice_id = profile_a["accountId"]
+    assert alice_id, "Accounts getMe must return a non-empty accountId"
     print(f"  ✓ Alice profile created: accountId={alice_id}, displayName={profile_a['displayName']}")
+
+    profile_status, profile_by_id = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/profiles/{alice_id}", bearer=user_a
+    )
+    assert profile_status == 200, (
+        f"Accounts getProfileById failed for the owning subject: "
+        f"HTTP {profile_status} ({profile_by_id})"
+    )
+    assert profile_by_id.get("accountId") == alice_id, (
+        "Accounts getProfileById must return the requested owner profile"
+    )
+
+    foreign_profile_status, foreign_profile = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/profiles/{alice_id}", bearer=user_b
+    )
+    assert foreign_profile_status == 403, (
+        f"Accounts getProfileById must reject a foreign subject: "
+        f"HTTP {foreign_profile_status} ({foreign_profile})"
+    )
+    print("  ✓ Accounts getProfileById enforces owner access and foreign-subject denial")
 
     # Query 'me' for Bob via GraphQL BFF
     data_bob = graphql_query(
@@ -181,6 +251,86 @@ def run_e2e_tests() -> int:
     bob_id = bob_me["accountId"]
     assert bob_id, "Bob accountId should not be empty"
     print(f"  ✓ Bob profile verified via GraphQL me: accountId={bob_id}, displayName={bob_me['displayName']}")
+
+    batch_status, batch_profiles = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/profiles/batch",
+        method="POST",
+        body={"accountIds": [alice_id, alice_id]},
+        bearer=user_a,
+    )
+    assert batch_status == 200, (
+        f"Accounts getProfilesBatch failed for the owning subject: "
+        f"HTTP {batch_status} ({batch_profiles})"
+    )
+    assert [profile["accountId"] for profile in batch_profiles] == [alice_id], (
+        "Accounts getProfilesBatch must deduplicate owner-only IDs"
+    )
+
+    workload_batch_status, workload_batch = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/profiles/batch",
+        method="POST",
+        body={"accountIds": [alice_id, alice_id, str(uuid.uuid4())]},
+        bearer=user_a,
+        extra_headers={"X-Squarewise-Workload-Role": "internal-service"},
+    )
+    assert workload_batch_status == 200, (
+        f"Accounts getProfilesBatch failed with workload authority: "
+        f"HTTP {workload_batch_status} ({workload_batch})"
+    )
+    assert [profile["accountId"] for profile in workload_batch] == [alice_id], (
+        "Accounts getProfilesBatch workload lookup must deduplicate IDs and omit unknown profiles"
+    )
+
+    foreign_batch_status, foreign_batch = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/profiles/batch",
+        method="POST",
+        body={"accountIds": [alice_id]},
+        bearer=user_b,
+    )
+    assert foreign_batch_status == 403, (
+        f"Accounts getProfilesBatch must reject a foreign subject: "
+        f"HTTP {foreign_batch_status} ({foreign_batch})"
+    )
+    print("  ✓ Accounts getProfilesBatch enforces deduplication, omission, and isolation")
+
+    export_status, export_request = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/me/export-request",
+        method="POST",
+        bearer=user_a,
+    )
+    assert export_status == 202, (
+        f"Accounts requestExport failed: HTTP {export_status} ({export_request})"
+    )
+    export_id = export_request.get("exportId")
+    assert export_id, "Accounts requestExport must return an exportId"
+
+    exports_status, export_requests = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/me/export-requests", bearer=user_a
+    )
+    assert exports_status == 200, (
+        f"Accounts listExportRequests failed: HTTP {exports_status} ({export_requests})"
+    )
+    assert any(item.get("exportId") == export_id for item in export_requests), (
+        "Accounts listExportRequests must expose the newly requested export"
+    )
+    print("  ✓ Accounts requestExport and listExportRequests preserve the durable request")
+
+    update_status, updated_profile = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/me",
+        method="PATCH",
+        body={"displayName": "Alice", "timezone": "Europe/Vienna"},
+        bearer=user_a,
+    )
+    assert update_status == 200, (
+        f"Accounts updateMe failed: HTTP {update_status} ({updated_profile})"
+    )
+    assert updated_profile.get("accountId") == alice_id, (
+        "Accounts updateMe must preserve the authenticated account identity"
+    )
+    assert updated_profile.get("timezone") == "Europe/Vienna", (
+        "Accounts updateMe must persist the requested timezone"
+    )
+    print("  ✓ Accounts updateMe persists a validated profile change")
 
     malformed_group_status, malformed_group_response = request_json(
         f"{BASE_URL}/graphql",
@@ -281,6 +431,34 @@ def run_e2e_tests() -> int:
     group_id = create_res["createGroup"]["id"]
     assert group_id, "Expected non-empty groupId"
     print(f"  ✓ Group created: id={group_id}, name='{group_name}'")
+
+    updated_group_response = graphql_query(
+        f'mutation {{ updateGroup(groupId: "{group_id}", name: "{group_name} Updated") {{ id name }} }}',
+        bearer=user_a,
+    )
+    assert updated_group_response["updateGroup"]["id"] == group_id
+    assert updated_group_response["updateGroup"]["name"] == f"{group_name} Updated"
+    print("  ✓ Authorized GraphQL group update persisted the renamed group")
+
+    listed_groups_status, listed_groups = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups", bearer=user_a
+    )
+    assert listed_groups_status == 200, (
+        f"Expense Core listGroups failed: HTTP {listed_groups_status} ({listed_groups})"
+    )
+    assert any(group.get("groupId") == group_id for group in listed_groups), (
+        "Expense Core listGroups must include the created group"
+    )
+    group_status, group_response = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}", bearer=user_a
+    )
+    assert group_status == 200, (
+        f"Expense Core getGroup failed: HTTP {group_status} ({group_response})"
+    )
+    assert group_response.get("groupId") == group_id, (
+        "Expense Core getGroup must return the requested group"
+    )
+    print("  ✓ Expense Core listGroups and getGroup expose the owner-visible group")
 
     outsider_update_status, outsider_update_response = request_json(
         f"{BASE_URL}/graphql",
@@ -388,7 +566,7 @@ def run_e2e_tests() -> int:
         body={"expiresInHours": 24},
         bearer=user_a
     )
-    assert status_inv == 201, f"Failed to create invite: {invite}"
+    assert status_inv == 201, f"Expense Core createInvite failed: {invite}"
     token = invite["token"]
     print(f"  ✓ Invite generated with token={token[:12]}...")
 
@@ -398,15 +576,36 @@ def run_e2e_tests() -> int:
         method="POST",
         bearer=user_b
     )
-    assert status_claim == 200, f"Bob failed to claim invite: {claim_res}"
+    assert status_claim == 200, f"Expense Core claimInvite failed for Bob: {claim_res}"
     print(f"  ✓ Bob claimed invite successfully: {claim_res.get('name')}")
+
+    placeholder_status, placeholder = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/placeholders",
+        method="POST",
+        body={"name": "Temporary participant"},
+        bearer=user_a,
+    )
+    assert placeholder_status == 201, (
+        f"Expense Core createPlaceholder failed: HTTP {placeholder_status} ({placeholder})"
+    )
+    placeholder_id = placeholder.get("membershipId")
+    assert placeholder_id, "Expense Core createPlaceholder must return a membershipId"
+    remove_status, remove_response = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/members/{placeholder_id}",
+        method="DELETE",
+        bearer=user_a,
+    )
+    assert remove_status == 204, (
+        f"Expense Core removeGroupMember failed: HTTP {remove_status} ({remove_response})"
+    )
+    print("  [ok] Expense Core createPlaceholder and removeGroupMember preserve lifecycle state")
 
     # Verify group members via Expense Core
     status_members, members = request_json(
         f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/members",
         bearer=user_a
     )
-    assert status_members == 200, f"Failed to list members: {members}"
+    assert status_members == 200, f"Expense Core listGroupMembers failed: {members}"
     alice_sub = extract_jwt_subject(user_a)
     bob_sub = extract_jwt_subject(user_b)
     alice_membership_id = resolve_membership_id(members, alice_sub, profile_a.get("displayName"), profile_a.get("accountId"))
@@ -414,6 +613,23 @@ def run_e2e_tests() -> int:
     alice_id = alice_membership_id
     bob_id = bob_membership_id
     print(f"  ✓ Group members verified: Alice membership={alice_id}, Bob membership={bob_id}")
+
+    preview_status, preview = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/allocations/preview",
+        method="POST",
+        body={"totalMinor": "10000", "participantIds": [alice_id, bob_id]},
+        bearer=user_a,
+    )
+    assert preview_status == 200, (
+        f"Expense Core previewAllocation failed: HTTP {preview_status} ({preview})"
+    )
+    assert preview.get("totalMinor") == "10000", (
+        "Expense Core previewAllocation must preserve the requested total"
+    )
+    assert preview.get("allocations") == {alice_id: "5000", bob_id: "5000"}, (
+        "Expense Core previewAllocation must split the total equally"
+    )
+    print("  ✓ Expense Core previewAllocation returns an equal two-member split")
 
     # 5. Add Expense via GraphQL createExpense
     print("\n[Step 5] Adding Expense via GraphQL createExpense (Alice pays 100.00 EUR split equally with Bob)...")
@@ -460,6 +676,47 @@ def run_e2e_tests() -> int:
     assert created_exp["id"] == expense_id
     assert created_exp["amount"]["minor"] == "10000"
     print(f"  ✓ Expense recorded: id={expense_id}, amount=100.00 EUR, allocations count={len(created_exp['allocations'])}")
+
+    listed_expenses_status, listed_expenses = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/expenses",
+        bearer=user_a,
+    )
+    assert listed_expenses_status == 200, (
+        f"Expense Core listExpenses failed: "
+        f"HTTP {listed_expenses_status} ({listed_expenses})"
+    )
+    assert any(item.get("expenseId") == expense_id for item in listed_expenses), (
+        "Expense Core listExpenses must return the persisted expense"
+    )
+
+    searched_expenses_status, searched_expenses = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/search?query=Ski",
+        bearer=user_a,
+    )
+    assert searched_expenses_status == 200, (
+        f"Expense Core searchExpenses failed: "
+        f"HTTP {searched_expenses_status} ({searched_expenses})"
+    )
+    assert any(
+        item.get("expenseId") == expense_id for item in searched_expenses.get("expenses", [])
+    ), "Expense Core searchExpenses must find the persisted expense by description"
+    print("  ✓ Expense Core listExpenses and searchExpenses expose the persisted expense")
+
+    export_status, export_csv = request_text(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/export?query=Ski",
+        bearer=user_a,
+        extra_headers={"Accept": "text/csv"},
+    )
+    assert export_status == 200, (
+        f"Expense Core exportExpenses failed: HTTP {export_status} ({export_csv})"
+    )
+    assert export_csv.startswith("expenseId,description,currency,amountMinor,category\n"), (
+        "Expense Core exportExpenses must return the documented CSV header"
+    )
+    assert expense_id in export_csv and "Ski Passes" in export_csv and ",10000," in export_csv, (
+        "Expense Core exportExpenses must include the persisted matching expense"
+    )
+    print("  [ok] Expense Core exportExpenses returns the persisted matching CSV row")
 
     replay_res = graphql_query(
         create_expense_mutation,
@@ -542,6 +799,20 @@ def run_e2e_tests() -> int:
     assert sugg["amount"]["minor"] == "5000"
     print(f"  ✓ Settlement suggestion verified: Bob pays Alice 50.00 EUR")
 
+    rest_suggestions_status, rest_suggestions = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/settlements/suggestions",
+        bearer=user_a,
+    )
+    assert rest_suggestions_status == 200, (
+        f"Expense Core getSettlementSuggestions failed: "
+        f"HTTP {rest_suggestions_status} ({rest_suggestions})"
+    )
+    assert any(
+        item.get("fromParticipantId") == bob_id and item.get("toParticipantId") == alice_id
+        for item in rest_suggestions
+    ), "Expense Core getSettlementSuggestions must expose Bob's outstanding payment"
+    print("  ✓ Expense Core getSettlementSuggestions matches the GraphQL projection")
+
     # 8. Record Repayment via GraphQL
     print("\n[Step 8] Recording repayment via GraphQL recordRepayment...")
     record_repayment_mutation = """
@@ -569,18 +840,110 @@ def run_e2e_tests() -> int:
     assert settlement["amount"]["minor"] == "5000"
     print(f"  ✓ Repayment recorded successfully: id={settlement['id']}, status={settlement['status']}")
 
-    # 9. Verify Reconciled Balances via REST
+    # 9. Record and reverse a REST settlement against a second persisted expense.
+    rest_expense_id = str(uuid.uuid4())
+    rest_expense_status, rest_expense = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/expenses",
+        method="POST",
+        body={
+            "expenseId": rest_expense_id,
+            "description": "REST settlement fixture",
+            "amount": {"currency": "EUR", "minor": "1000"},
+            "payers": [{"participantId": alice_id, "amount": {"currency": "EUR", "minor": "1000"}}],
+            "allocation": {
+                "mode": "EQUAL",
+                "items": [
+                    {"participantId": alice_id, "value": "1"},
+                    {"participantId": bob_id, "value": "1"},
+                ],
+            },
+        },
+        bearer=user_a,
+        extra_headers={IDEMPOTENCY_KEY: f"rest-expense-{uuid.uuid4()}"},
+    )
+    assert rest_expense_status == 201, (
+        f"REST settlement fixture expense failed: HTTP {rest_expense_status} ({rest_expense})"
+    )
+    update_status, updated_rest_expense = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/expenses/{rest_expense_id}",
+        method="PUT",
+        body={
+            "version": 1,
+            "description": "Updated REST settlement fixture",
+            "amount": {"currency": "EUR", "minor": "1000"},
+            "payers": [{"participantId": alice_id, "amount": {"currency": "EUR", "minor": "1000"}}],
+            "allocation": {
+                "mode": "EQUAL",
+                "items": [
+                    {"participantId": alice_id, "value": "1"},
+                    {"participantId": bob_id, "value": "1"},
+                ],
+            },
+        },
+        bearer=user_a,
+    )
+    assert update_status == 200, (
+        f"Expense Core updateExpense failed: HTTP {update_status} ({updated_rest_expense})"
+    )
+    assert updated_rest_expense.get("expenseId") == rest_expense_id
+    assert updated_rest_expense.get("version") == 2
+
+    settlement_status, rest_settlement = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/settlements",
+        method="POST",
+        body={
+            "fromParticipantId": bob_id,
+            "toParticipantId": alice_id,
+            "amountMinor": "500",
+            "currency": "EUR",
+        },
+        bearer=user_b,
+        extra_headers={IDEMPOTENCY_KEY: f"rest-settlement-{uuid.uuid4()}"},
+    )
+    assert settlement_status == 201, (
+        f"Expense Core recordSettlement failed: HTTP {settlement_status} ({rest_settlement})"
+    )
+    settlement_id = rest_settlement.get("id")
+    assert settlement_id and rest_settlement.get("status") == "RECORDED"
+    assert rest_settlement.get("fromParticipantId") == bob_id
+    assert rest_settlement.get("toParticipantId") == alice_id
+    assert rest_settlement.get("amountMinor") == 500
+
+    reversal_status, reversed_settlement = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/settlements/{settlement_id}/reversal",
+        method="POST",
+        body={"reason": "E2E settlement reversal"},
+        bearer=user_b,
+    )
+    assert reversal_status == 200, (
+        f"Expense Core reverseSettlement failed: HTTP {reversal_status} ({reversed_settlement})"
+    )
+    assert reversed_settlement.get("id") == settlement_id
+    assert reversed_settlement.get("status") == "REVERSED"
+
+    delete_status, delete_response = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/expenses/{rest_expense_id}?version=2",
+        method="DELETE",
+        bearer=user_a,
+    )
+    assert delete_status == 204, (
+        f"Expense Core deleteExpense failed: HTTP {delete_status} ({delete_response})"
+    )
+    print("  [ok] Expense Core recordSettlement and reverseSettlement preserve settlement identity")
+    print("  [ok] Expense Core updateExpense and deleteExpense preserve optimistic versioning")
+
+    # 10. Verify Reconciled Balances via REST
     print("\n[Step 9] Verifying balances via REST /balances endpoint...")
     status_bal, rest_balances = request_json(
         f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/balances",
         bearer=user_a
     )
-    assert status_bal == 200, f"Failed to get balances: {rest_balances}"
+    assert status_bal == 200, f"Expense Core getBalances failed: {rest_balances}"
     bal_items = rest_balances.get("balances", [])
-    print(f"  ✓ REST balances returned: {len(bal_items)} items")
+    print(f"  ✓ Expense Core getBalances returned: {len(bal_items)} items")
 
-    # 10. Verify Outbox Dispatch & Notifications Inbox
-    print("\n[Step 10] Verifying Outbox Relay & Notifications Inbox...")
+    # 11. Verify Outbox Dispatch & Notifications Inbox
+    print("\n[Step 11] Verifying Outbox Relay & Notifications Inbox...")
     # Allow background outbox daemon and rabbit listener a few seconds to deliver
     found_notification = False
     for attempt in range(1, 10):
@@ -594,21 +957,131 @@ def run_e2e_tests() -> int:
             if matching:
                 print(f"  ✓ Verified event delivery to Notifications Inbox: eventType={matching[0]['eventType']}, message='{matching[0]['message']}'")
                 found_notification = True
+                notification_id = matching[0]["notificationId"]
+                status_read, _ = request_json(
+                    f"{NOTIFICATIONS_URL}/notifications/v1/inbox/{notification_id}/read",
+                    method="POST",
+                    bearer=user_a,
+                )
+                assert status_read == 204, f"markAsRead failed: HTTP {status_read}"
+                status_after_read, inbox_after_read = request_json(
+                    f"{NOTIFICATIONS_URL}/notifications/v1/inbox",
+                    bearer=user_a,
+                )
+                assert status_after_read == 200, f"listInbox after markAsRead failed: HTTP {status_after_read}"
+                read_item = next(
+                    (item for item in inbox_after_read.get("items", []) if item.get("notificationId") == notification_id),
+                    None,
+                )
+                assert read_item is not None and read_item.get("read") is True, (
+                    f"markAsRead did not persist read state: {read_item}"
+                )
                 break
         time.sleep(1)
 
     assert found_notification, "Expected notification to be delivered to Notifications inbox"
 
-    # 11. Verify Offline Sync Snapshot and Changes Feed
-    print("\n[Step 11] Verifying Offline Sync Feed...")
+    # 12. Verify Offline Sync Snapshot and Changes Feed
+    print("\n[Step 12] Verifying Offline Sync Feed...")
     status_snap, snapshot = request_json(
         f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/sync/snapshot",
         bearer=user_a
     )
-    assert status_snap == 200, f"Failed to get sync snapshot: {snapshot}"
+    assert status_snap == 200, f"Expense Core getSnapshot failed: {snapshot}"
     changes = snapshot.get("changes", [])
     assert len(changes) >= 1, "Expected at least one change record in sync snapshot"
     print(f"  ✓ Sync snapshot verified: {len(changes)} revisions tracked (latest revision={changes[-1]['revision']})")
+
+    next_cursor = snapshot.get("nextCursor")
+    assert next_cursor, "Expense Core getSnapshot must return a continuation cursor"
+    changes_status, changes_page = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/sync/changes"
+        f"?cursor={next_cursor}&limit=50",
+        bearer=user_a,
+    )
+    assert changes_status == 200, (
+        f"Expense Core getChanges failed: HTTP {changes_status} ({changes_page})"
+    )
+    assert isinstance(changes_page.get("changes"), list), (
+        "Expense Core getChanges must return a changes page"
+    )
+    print("  ✓ Expense Core getChanges accepts the snapshot continuation cursor")
+
+    schedule_payload = {
+        "description": "E2E future recurring schedule",
+        "amount": {"currency": "EUR", "minor": "90000"},
+        "frequency": "MONTHLY",
+        "dayOfMonth": 1,
+        "startDate": "2099-01-01",
+    }
+    schedule_status, schedule = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/schedules",
+        method="POST",
+        body=schedule_payload,
+        bearer=user_a,
+    )
+    assert schedule_status == 201, (
+        f"Expense Core createRecurringSchedule failed: HTTP {schedule_status} ({schedule})"
+    )
+    schedule_id = schedule.get("scheduleId")
+    assert schedule_id and schedule.get("paused") is False
+
+    schedules_status, schedules = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/schedules",
+        bearer=user_a,
+    )
+    assert schedules_status == 200 and any(
+        item.get("scheduleId") == schedule_id for item in schedules
+    ), "Expense Core listRecurringSchedules must include the created schedule"
+
+    schedule_get_status, schedule_get = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/schedules/{schedule_id}",
+        bearer=user_a,
+    )
+    assert schedule_get_status == 200 and schedule_get.get("scheduleId") == schedule_id, (
+        f"Expense Core getRecurringSchedule failed: HTTP {schedule_get_status} ({schedule_get})"
+    )
+
+    pause_status, paused_schedule = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/schedules/{schedule_id}/pause",
+        method="POST",
+        bearer=user_a,
+    )
+    assert pause_status == 200 and paused_schedule.get("paused") is True, (
+        f"Expense Core pauseRecurringSchedule failed: HTTP {pause_status} ({paused_schedule})"
+    )
+
+    resume_status, resumed_schedule = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/schedules/{schedule_id}/resume",
+        method="POST",
+        bearer=user_a,
+    )
+    assert resume_status == 200 and resumed_schedule.get("paused") is False, (
+        f"Expense Core resumeRecurringSchedule failed: HTTP {resume_status} ({resumed_schedule})"
+    )
+
+    update_status, updated_schedule = request_json(
+        f"{EXPENSE_CORE_URL}/expense-core/v1/groups/{group_id}/schedules/{schedule_id}",
+        method="PUT",
+        body={**schedule_payload, "description": "Updated E2E future recurring schedule", "amount": {"currency": "EUR", "minor": "91000"}},
+        bearer=user_a,
+    )
+    assert update_status == 200 and updated_schedule.get("scheduleId") == schedule_id, (
+        f"Expense Core updateRecurringSchedule failed: HTTP {update_status} ({updated_schedule})"
+    )
+    assert updated_schedule.get("description") == "Updated E2E future recurring schedule"
+    assert updated_schedule.get("amount", {}).get("minor") == "91000"
+    print("  [ok] Expense Core recurring schedule create/list/get/pause/resume/update lifecycle works")
+
+    deletion_status, deletion_response = request_json(
+        f"{ACCOUNTS_URL}/accounts/v1/me/deletion-request",
+        method="POST",
+        bearer=user_a,
+    )
+    assert deletion_status == 202, (
+        f"Accounts requestDeletion failed: HTTP {deletion_status} ({deletion_response})"
+    )
+    print("  ✓ Accounts requestDeletion accepted as the final lifecycle action")
 
     print("\n" + "=" * 70)
     print("🎉 ALL END-TO-END PRODUCT LIFECYCLE TESTS PASSED SUCCESSFULLY!")
@@ -617,8 +1090,29 @@ def run_e2e_tests() -> int:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run the live multi-service product journey")
+    parser.add_argument("--evidence-output", type=Path, help="write QA-10 operation evidence after success")
+    parser.add_argument(
+        "--source-revision",
+        default=os.environ.get("GITHUB_SHA", "local-worktree"),
+        help="source revision recorded in the QA-10 evidence artifact",
+    )
+    parser.add_argument(
+        "--environment",
+        default=os.environ.get("QA10_E2E_ENVIRONMENT", "local-compose-oidc"),
+        help="runtime environment recorded in the QA-10 evidence artifact",
+    )
+    arguments = parser.parse_args()
     try:
-        sys.exit(run_e2e_tests())
+        result = run_e2e_tests()
+        if arguments.evidence_output is not None:
+            write_execution_evidence(
+                arguments.evidence_output,
+                arguments.source_revision,
+                arguments.environment,
+                product_execution_operations(arguments.evidence_output),
+            )
+        sys.exit(result)
     except AssertionError as err:
         print(f"\n❌ TEST FAILED: {err}", file=sys.stderr)
         sys.exit(1)

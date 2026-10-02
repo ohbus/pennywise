@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.bff.graphql
+import java.time.Duration
 
 import com.subhrodip.squarewise.bff.transport.ExpenseCoreGateway
 import com.subhrodip.squarewise.bff.transport.AccountsGateway
@@ -32,8 +33,10 @@ import com.subhrodip.squarewise.bff.transport.UpstreamServiceException
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
@@ -46,6 +49,34 @@ class GroupGraphqlControllerTest {
     private val gateway = mock(ExpenseCoreGateway::class.java)
     private val controller = GroupGraphqlController(gateway, LiveUpdateFanout())
     private val principal = Principal { "alice" }
+
+    /** Verifies explicit change identifiers survive the controller invalidation boundary. */
+    @Test
+    fun `emitInvalidation preserves explicit change identifier`() {
+        val invalidation = controller.emitInvalidation("group-1", 7L, "change-7")
+
+        assertEquals("group-1", invalidation.groupId)
+        assertEquals(7L, invalidation.revision)
+        assertEquals("change-7", invalidation.changeId)
+    }
+
+    @Test
+    fun `groupChanged rejects blank group identifiers before admission`() {
+        val error = assertThrows(ApplicationException::class.java) {
+            controller.groupChanged(" ", principal).blockFirst()
+        }
+
+        assertEquals(ErrorCode.ERR_02, error.errorCode)
+    }
+
+    @Test
+    fun `groupChanged rejects missing authenticated subjects before admission`() {
+        val error = assertThrows(ApplicationException::class.java) {
+            controller.groupChanged("group-1", null).blockFirst()
+        }
+
+        assertEquals(ErrorCode.ERR_03, error.errorCode)
+    }
 
     @Test
     fun `resolves groups query`() {
@@ -95,8 +126,8 @@ class GroupGraphqlControllerTest {
                 )
             ),
             members = listOf(
-                BffMember(membershipId = "mem-1", subject = "alice")
-            )
+            BffMember(membershipId = "mem-1", subject = "alice")
+        )
         )
 
         `when`(gateway.getGroup(groupId, "alice")).thenReturn(Mono.just(expected))
@@ -113,6 +144,7 @@ class GroupGraphqlControllerTest {
         assertEquals(1, result?.members?.size)
         assertEquals("mem-1", result?.members?.get(0)?.membershipId)
         assertEquals("alice", result?.members?.get(0)?.subject)
+        assertEquals(null, result?.members?.get(0)?.isPlaceholder)
     }
 
     @Test
@@ -234,6 +266,78 @@ class GroupGraphqlControllerTest {
         }
     }
 
+    /** Verifies an empty update response does not publish a fabricated invalidation. */
+    @Test
+    fun `updateGroup does not emit invalidation when gateway returns empty`() {
+        val groupId = UUID.randomUUID().toString()
+        `when`(gateway.getGroup(groupId, "alice"))
+            .thenReturn(Mono.just(BffGroup(groupId, "Trip", "TRIP", "1")))
+        `when`(gateway.updateGroup(groupId, "Renamed", "alice"))
+            .thenReturn(Mono.empty())
+
+        val events = mutableListOf<GroupInvalidation>()
+        val disposable = controller.groupChanged(groupId, principal).subscribe { events.add(it) }
+        try {
+            assertEquals(null, controller.updateGroup(groupId, "Renamed", principal).block())
+            assertTrue(events.isEmpty())
+        } finally {
+            disposable.dispose()
+        }
+    }
+
+    /** Verifies an empty expense response does not publish a fabricated invalidation. */
+    @Test
+    fun `createExpense does not emit invalidation when gateway returns empty`() {
+        val groupId = UUID.randomUUID().toString()
+        val participantId = UUID.randomUUID().toString()
+        val input = CreateExpenseInput(
+            expenseId = UUID.randomUUID().toString(),
+            description = "Dinner",
+            amount = MoneyInput("EUR", "2000"),
+            payers = listOf(PayerInput(participantId, MoneyInput("EUR", "2000"))),
+            allocation = AllocationInput("EQUAL", listOf(AllocationItemInput(participantId, "1")))
+        )
+        `when`(gateway.getGroup(groupId, "alice"))
+            .thenReturn(Mono.just(BffGroup(groupId, "Trip", "TRIP", "1")))
+        `when`(gateway.createExpense(groupId, input, "empty-expense", "alice"))
+            .thenReturn(Mono.empty())
+
+        val events = mutableListOf<GroupInvalidation>()
+        val disposable = controller.groupChanged(groupId, principal).subscribe { events.add(it) }
+        try {
+            assertEquals(null, controller.createExpense(groupId, input, "empty-expense", principal).block())
+            assertTrue(events.isEmpty())
+        } finally {
+            disposable.dispose()
+        }
+    }
+
+    /** Verifies an empty repayment response does not publish a fabricated invalidation. */
+    @Test
+    fun `recordRepayment does not emit invalidation when gateway returns empty`() {
+        val groupId = UUID.randomUUID().toString()
+        val input = RepaymentInput(
+            groupId = groupId,
+            fromParticipantId = UUID.randomUUID().toString(),
+            toParticipantId = UUID.randomUUID().toString(),
+            amount = MoneyInput("EUR", "1000"),
+            reason = "Settling up lunch"
+        )
+        `when`(gateway.getGroup(groupId, "alice"))
+            .thenReturn(Mono.just(BffGroup(groupId, "Trip", "TRIP", "1")))
+        `when`(gateway.recordRepayment(groupId, input, "alice"))
+            .thenReturn(Mono.empty())
+
+        val events = mutableListOf<GroupInvalidation>()
+        val disposable = controller.groupChanged(groupId, principal).subscribe { events.add(it) }
+        try {
+            assertEquals(null, controller.recordRepayment(input, principal).block())
+            assertTrue(events.isEmpty())
+        } finally {
+            disposable.dispose()
+        }
+    }
+
     @Test
     fun `groupChanged rejects a user at the subscription limit with rate limit code`() {
         val boundedFanout = LiveUpdateFanout(maxSubscriptionsPerUser = 1)
@@ -246,7 +350,7 @@ class GroupGraphqlControllerTest {
         val first = boundedController.groupChanged(groupId, principal).subscribe()
         try {
             val error = assertThrows(ApplicationException::class.java) {
-                boundedController.groupChanged(groupId, principal).blockFirst(java.time.Duration.ofMillis(100))
+                boundedController.groupChanged(groupId, principal).blockFirst(Duration.ofMillis(100))
             }
             assertEquals(ErrorCode.ERR_11, error.errorCode)
         } finally {
@@ -356,6 +460,41 @@ class GroupGraphqlControllerTest {
             assertEquals(groupId, events[0].groupId)
             assertEquals(1L, events[0].revision)
             assertNotNull(events[0].changeId)
+        } finally {
+            disposable.dispose()
+        }
+    }
+
+    @Test
+    fun `groupChanged flux terminates when member is revoked mid-stream (SEC-003)`() {
+        val fanout = LiveUpdateFanout()
+        val revokeController = GroupGraphqlController(gateway, fanout)
+        val groupId = UUID.randomUUID().toString()
+        `when`(gateway.getGroup(groupId, "alice"))
+            .thenReturn(Mono.just(BffGroup(groupId, "Trip", "TRIP", "1")))
+
+        val received = mutableListOf<GroupInvalidation>()
+        var completed = false
+
+        val disposable = revokeController.groupChanged(groupId, principal)
+            .doOnComplete { completed = true }
+            .subscribe { received.add(it) }
+
+        try {
+            // Emit an event — should be received while still subscribed.
+            fanout.emitInvalidation(groupId, 1L, "change-1")
+            assertEquals(1, received.size)
+            assertFalse(completed, "stream must still be active before revocation")
+
+            // Simulate a member.removed event via BffEventConsumer.
+            fanout.revokeUserFromGroup("alice", groupId)
+
+            // After revocation the Flux should have completed.
+            assertTrue(completed, "stream must terminate after revokeUserFromGroup")
+
+            // Events emitted after revocation must not reach the subscriber.
+            fanout.emitInvalidation(groupId, 2L, "change-2")
+            assertEquals(1, received.size, "no new events should arrive after revocation")
         } finally {
             disposable.dispose()
         }

@@ -1,0 +1,610 @@
+"""Enumerate every production method with missed JaCoCo branches.
+
+The report is intentionally a discovery artifact, not a pass/fail coverage
+threshold. A QA-10 row must assign each emitted method to a behavior test,
+environment test, or reviewed structural classification.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+import xml.etree.ElementTree as ET
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Iterable, Literal, Sequence
+
+OutputFormat = Literal["json", "markdown"]
+
+
+@dataclass(frozen=True)
+class BranchGap:
+    """One production method whose JaCoCo branch counter is not complete."""
+
+    module: str
+    class_name: str
+    source_file: str
+    method: str
+    source_line: int | None
+    missed_branches: int
+    covered_branches: int
+    report: str
+    qa_row: str
+    assignment_basis: str
+    acceptance_criteria: str
+    record_acceptance: str
+    evidence_target: str
+    closure_status: str
+    next_action: str
+
+
+@dataclass(frozen=True)
+class BranchLineGap:
+    """One source line with JaCoCo-reported missed branches."""
+
+    module: str
+    package: str
+    source_file: str
+    class_name: str
+    method: str
+    source_line: int
+    missed_branches: int
+    covered_branches: int
+    report: str
+    qa_row: str
+    acceptance_criteria: str
+    record_acceptance: str
+    evidence_target: str
+    closure_status: str
+    next_action: str
+
+
+def qa_assignment(module: str, class_name: str) -> tuple[str, str]:
+    """Assign a discovered method to the narrowest current QA-10 row.
+
+    The assignment is deliberately provisional: it guarantees that every
+    discovery record has an accountable acceptance row, while the reviewer
+    still verifies the class-level classification before closure.
+    """
+
+    qualified = class_name.lower()
+    patterns: tuple[tuple[str, str, str], ...]
+    if module == "app/accounts":
+        patterns = (
+            ("emailaddress", "QA10-A08", "email canonicalization value object"),
+            ("authemailoutboxpublisher", "QA10-A01", "auth email publication"),
+            ("outboxauthemailsender|authemailoutboxservice", "QA10-A02", "auth email outbox sender"),
+            ("ratelimit|abuse", "QA10-A03", "authentication abuse and rate limiting"),
+            ("externaloidctokenprovider|authsessionconfiguration", "QA10-A04", "external identity-provider path"),
+            ("productionsecurityconfig|oidcsubject|jwtdecoder", "QA10-A05", "resource-server security wiring"),
+            ("profilecontroller|profile.store|jpaprofilestore", "QA10-A06", "profile boundary and authorization"),
+        )
+        default = ("QA10-A07", "authentication session and identity behavior")
+    elif module == "app/bff":
+        patterns = (
+            ("gateway|restgateway", "QA10-B01", "upstream transport gateway"),
+            ("exceptionresolver|limiterror|scalar", "QA10-B02", "GraphQL error and limit boundary"),
+            ("fanout|eventconsumer|rabbit.*listener", "QA10-B03", "realtime fanout and broker consumer"),
+            ("browserorigin|csrf|cookie|session", "QA10-B04", "browser security filter chain"),
+        )
+        default = ("QA10-B02", "GraphQL transport and resolver behavior")
+    elif module == "app/expense-core":
+        patterns = (
+            ("jpaexpensestore|expensecontroller", "QA10-C01", "expense persistence and transport"),
+            ("validator|allocationcalculator|financialarithmetic", "QA10-C02", "financial arithmetic and validation"),
+            ("recurring", "QA10-C03", "recurring expense lifecycle"),
+            ("jpagroupstore|invite|member", "QA10-C04", "group and membership lifecycle"),
+            ("settlement", "QA10-C05", "settlement and balance invariants"),
+            ("synchronization|sync", "QA10-C06", "synchronization and cursor behavior"),
+        )
+        default = ("QA10-C01", "Expense Core persistence and financial behavior")
+    elif module == "app/notifications":
+        patterns = (
+            ("authemail|envelope", "QA10-D01", "authentication email consumer"),
+            ("notificationevent|rabbitnotification|broker", "QA10-D02", "notification event processing"),
+            ("smtp|mail|emaildispatcher", "QA10-D03", "mail delivery adapter"),
+            ("inbox|preference", "QA10-D04", "notification inbox and preferences"),
+        )
+        default = ("QA10-D02", "notification event delivery")
+    elif module == "libs/errors":
+        patterns = ()
+        default = ("QA10-E01", "error and request-correlation boundary")
+    elif module == "libs/db":
+        patterns = ()
+        default = ("QA10-E02", "database routing and operational infrastructure")
+    elif module == "libs/security":
+        patterns = ()
+        default = ("QA10-E03", "OIDC decoder and security infrastructure")
+    elif module == "libs/ids":
+        patterns = ()
+        default = ("QA10-E04", "IDs, constants, and static contract invariants")
+    else:
+        patterns = ()
+        default = ("QA10-E05", "observability and cross-cutting infrastructure")
+
+    for expression, row, basis in patterns:
+        if re.search(expression, qualified):
+            return row, basis
+    return default
+
+
+def qa_acceptance(qa_row: str) -> str:
+    """Return the minimum evidence required for an assigned QA-10 row."""
+
+    criteria = {
+        "QA10-A01": "Auth-email publication, acknowledgement/retry state, redaction, and deployed broker delivery.",
+        "QA10-A02": "Protected outbox handoff, caller-transaction rollback, replay safety, and durable delivery state.",
+        "QA10-A03": "Normalized identity limits, atomic shared-Redis behavior, outage recovery, and public 429 semantics.",
+        "QA10-A04": "Explicit external OIDC selection, exchange, failure mapping, and no fallback authority.",
+        "QA10-A05": "Issuer, audience, algorithm, key discovery/rotation, invalid-token rejection, and fail-closed wiring.",
+        "QA10-A06": "Subject-scoped profile/deletion/export authorization, exact errors, durable state, and redaction.",
+        "QA10-A07": "Identity/session/replay/expiry/deletion invariants, durable transitions, concurrency, and redacted outcomes.",
+        "QA10-A08": "Canonical email normalization plus malformed, length, whitespace, IDN, and label boundaries.",
+        "QA10-B01": "Bearer/watermark propagation, transport failure mapping, redaction, and deployed gateway behavior.",
+        "QA10-B02": "GraphQL resolver/scalar/error/limit behavior, admission validation, and exact public extensions.",
+        "QA10-B03": "Fanout ordering, deduplication, expiry/revocation, broker ack/retry, reconnect, and WebSocket isolation.",
+        "QA10-B04": "Origin/CSRF/cookie/session policy for browser, native, preflight, and WebSocket paths.",
+        "QA10-C01": "Financial validation, idempotency, persistence, postings, revisions, side effects, rollback, and isolation.",
+        "QA10-C02": "Arithmetic conservation, deterministic allocation, overflow/invalid-input rejection, and zero-sum invariants.",
+        "QA10-C03": "Recurring date/catch-up/locking/membership/duplicate/failure behavior and notification/outbox effects.",
+        "QA10-C04": "Group/invite/member lifecycle, expiry/replay/races, archive/removal behavior, revisions, and side effects.",
+        "QA10-C05": "Settlement/reversal validation, idempotency, balances, corruption detection, concurrency, and zero-sum state.",
+        "QA10-C06": "Sync ordering, cursor ownership/expiry/limits, tombstones, membership loss, and revision invariants.",
+        "QA10-D01": "Auth-email envelope validation, decrypt/expiry handling, ack/retry/DLQ, deduplication, and redaction.",
+        "QA10-D02": "Notification transaction/ack coupling, deduplication, poison/retry behavior, Redis admission, and inbox effects.",
+        "QA10-D03": "SMTP mapping, validation, failure classification, retry/parking, metrics, and redaction.",
+        "QA10-D04": "Subject-isolated preferences/inbox behavior, cursors/versioning, duplicate mark-read, and database failures.",
+        "QA10-E01": "Every catalog/framework error envelope, correlation lifecycle, negotiation, headers, and redaction.",
+        "QA10-E02": "Writer/reader routing, lag/fallback/recovery, causal watermarks, pool bounds, and safe write routing.",
+        "QA10-E03": "Servlet/reactive OIDC parity, issuer/audience/algorithm/time/key rotation, and fail-closed headers.",
+        "QA10-E04": "Endpoint/event/error/ID uniqueness and contract drift, with explicit generated-code classification.",
+        "QA10-E05": "Bounded observability labels and exact success/failure/slow/fallback metric behavior.",
+    }
+    return criteria.get(qa_row, "Exact behavior test or reviewed structural rationale linked to this production branch.")
+
+
+def evidence_target(module: str, class_name: str) -> str:
+    """Return the concrete test boundary that must supply residual evidence.
+
+    The result is a review target, not proof that the target currently executes
+    the exact branch. In particular, compiler-generated methods must be
+    evaluated through their public/service boundary, and open design rows must
+    not be closed with reflection-only tests.
+    """
+
+    qualified = class_name.lower()
+    targets = (
+        ("clientaddressresolver", "app/accounts/src/test/.../ClientAddressResolverTest.kt"),
+        ("emailaddress", "app/accounts/src/test/.../EmailAddressTest.kt"),
+        ("loginverificationservice", "app/accounts/src/test/.../LoginVerificationServiceTest.kt"),
+        ("sessionpolicy", "app/accounts/src/test/.../SessionPolicyTest.kt"),
+        ("fallbackjwtdecoder", "app/accounts/src/test/.../FallbackJwtDecoderTest.kt"),
+        ("profilecontroller", "app/accounts/src/test/.../ProfileControllerTest.kt"),
+        ("browseroriginpolicy", "app/bff/src/test/.../BrowserOriginPolicyTest.kt"),
+        ("liveupdatefanout", "app/bff/src/test/.../LiveUpdateFanoutTest.kt"),
+        ("bffgatewayfilters", "app/bff/src/test/.../BffGatewayFiltersTest.kt"),
+        ("expensecontroller", "app/expense-core/src/test/.../ExpenseControllerTest.kt"),
+        ("jpagroupstore", "app/expense-core/src/test/.../JpaGroupStoreTest.kt"),
+        ("recurrenceschedule", "app/expense-core/src/test/.../RecurrencePolicyTest.kt (constructor boundary)"),
+        ("recurringexpenseservice", "app/expense-core/src/test/.../RecurringExpenseServiceTest.kt"),
+        ("searchcontroller", "app/expense-core/src/test/.../SearchControllerTest.kt"),
+        ("expensesearch", "app/expense-core/src/test/.../ExpenseSearchTest.kt"),
+        ("settlementsuggestionengine", "app/expense-core/src/test/.../SettlementSuggestionTest.kt"),
+        ("synccontroller", "app/expense-core/src/test/.../SyncControllerTest.kt"),
+        ("emaildispatcher", "app/notifications/src/test/.../EmailDispatcherTest.kt"),
+        ("dbreaderhealth", "libs/db/src/test/.../DbReaderHealthTest.kt"),
+        ("dboperationpolicy", "libs/db/src/test/.../DbOperationPolicyTest.kt"),
+        ("globalerrorhandler", "libs/errors/src/test/.../GlobalErrorHandlerTest.kt"),
+        ("dbtelemetry", "libs/observability/src/test/.../DbTelemetryTest.kt"),
+    )
+    for expression, target in targets:
+        if expression in qualified:
+            return target
+    return f"{module}: identify a focused unit/integration test boundary"
+
+
+def record_acceptance(class_name: str, method: str) -> str:
+    """Return the exact proof required for one residual method record."""
+
+    qualified = class_name.lower()
+    if "clientaddressresolver" in qualified:
+        return "Exercise direct, trusted-proxy, IPv4, IPv6, malformed, missing, multi-hop, and unsupported-address-family inputs through ClientAddressResolverTest; assert a stable non-empty partition and document the JDK address-family invariant for any unreachable fallback."
+    if "emailaddress" in qualified:
+        return "Exercise canonical, whitespace, malformed, local/domain length, IDN, control, separator, and label-boundary inputs through EmailAddressTest; assert normalized output or the documented validation error without weakening parser guards."
+    if "loginverificationservice" in qualified:
+        return "Verify canonical-email enrollment/reuse and display-name derivation through the public verification flow; prove the fallback arm is unreachable after EmailAddress validation."
+    if "sessionpolicy" in qualified:
+        return "Assert validity immediately before idle and absolute deadlines, expiry at each deadline, capped refresh, and clock-skew behavior through SessionPolicyTest; preserve the constructor invariant that idle expiry cannot exceed absolute expiry."
+    if "profilecontroller" in qualified:
+        return "Route a real public profile/deletion/export failure through the helper and assert the exact problem envelope, or record a separately reviewed design decision; reflection-only invocation is insufficient."
+    if "jpagroupstore" in qualified:
+        return "Assert the lifecycle behavior through JpaGroupStoreTest and JpaGroupStoreClaimTest: missing and archived groups, membership authorization, duplicate removal, placeholder binding, invite validation/revocation, claim expiry/races, durable revision, audit, sync, outbox, and rollback invariants. Treat only the remaining JaCoCo mappings as instrumentation after confirming both normal and rejection paths."
+    if "fallbackjwtdecoder" in qualified:
+        return "Assert empty-list construction rejection, first-decoder success, later-decoder success, and final validation failure through FallbackJwtDecoderTest; retain the non-empty decoder-list invariant and classify only the unreachable terminal null guard."
+    if "browseroriginpolicy" in qualified:
+        return "Build the policy with valid, blank, malformed, wildcard, default-port, explicit-port, and native-only configuration through BrowserOriginPolicyTest; assert exact-origin fail-closed behavior and classify only compiler/collection short-circuits after source review."
+    if "liveupdatefanout" in qualified:
+        return "Assert fanout membership, expiry, revocation, ordering, and deduplication through public methods, plus broker acknowledgement/reconnect behavior in deployed E2E; generated iterator mappings require source review."
+    if "bffgatewayfilters" in qualified:
+        return "Assert bearer and watermark propagation for present/absent headers and transport failure mapping through the gateway filter; deployed upstream evidence remains required."
+    if "expensecontroller" in qualified:
+        return "Assert active-member authorization and financial mutation behavior through the public controller; do not bypass the authentication guard to force a nullable-principal forwarding arm."
+    if "jpagroupstore" in qualified:
+        return "Assert each lifecycle mutation's durable state, membership/foreign-key invariant, revision, and failure result with persistence-backed tests; classify only proven defensive mappings."
+    if "recurrenceschedule" in qualified:
+        return "Exercise constructor identity, day-range, frequency-compatibility, monthly, and weekly invariants through RecurrencePolicyTest; do not use reflection to target compiler-generated validation branches."
+    if "recurringexpenseservice" in qualified:
+        return "Assert create/update optional-specification branches, date/end-date and catch-up limits, paused and duplicate occurrence paths, empty/foreign membership rejection, successful expense construction, generation failure pause, and outbox-present/absent notification behavior through RecurringExpenseServiceTest, RecurringExpenseFailureTest, and RecurringExpenseOptionalOutboxTest."
+    if "searchcontroller" in qualified or "expensesearch" in qualified:
+        return "Assert authorization, filters, pagination, empty/populated results, cursor/limit validation, CSV header/value escaping, and reader-policy context through SearchControllerTest and ExpenseSearchTest; classify only generated iteration/telemetry mappings."
+    if "settlementsuggestionengine" in qualified:
+        return "Assert zero-sum, duplicate aggregation, one-sided/corrupt snapshots, multi-currency isolation, and deterministic positive settlements through SettlementSuggestionTest; retain the strictly-positive transfer invariant and classify only the defensive transfer guard."
+    if "synccontroller" in qualified:
+        return "Assert blank, malformed, cross-group, expired, and valid cursor behavior with ordering, limits, and membership checks through SyncControllerTest; classify only the non-null exception-message fallback after source review."
+    if "emaildispatcher" in qualified:
+        return "Assert disabled/invalid input, success, transient retry/exhaustion, interruption, permanent failure, recipient trimming, and retry bounds through EmailDispatcherTest; classify only the defensive loop-exit mapping."
+    if "dbreaderhealth" in qualified:
+        return "Assert healthy, lagging, disconnected, open, exact-timeout, recovery, causal-watermark, and unknown-reader routing through DbReaderHealthTest; retain nullability guards and prove state transitions with a controlled clock."
+    if "dboperationpolicy" in qualified:
+        return "Assert valid writer/reader policies and every invalid name, kind, eligibility, and consistency combination through DbOperationPolicyTest; preserve fail-closed routing invariants and classify only constructor short-circuit mappings."
+    if "globalerrorhandler" in qualified:
+        return "Assert every ErrorCode mapping and HTTP status, invalid status fallback, null-message detail fallback, Retry-After metadata, correlation/request ID, negotiation, headers, and redaction through GlobalErrorHandlerTest; retain exhaustive enum-governed defensive arms and classify only JaCoCo mapping residue."
+    if "dbtelemetry" in qualified:
+        return "Assert success/failure/slow/fallback metrics for positive and negative durations with absent and registry-backed timers; document Micrometer's non-null timer contract for the residual nullable mapping."
+    return f"Add a behavior test for {class_name}.{method} or record a reviewed invariant proving the missed branch unreachable; do not modify implementation for JaCoCo."
+
+
+def closure_review(class_name: str, method: str) -> tuple[str, str]:
+    """Assign an explicit review status and next action to a residual branch.
+
+    These statuses never close a branch automatically. They make the residual
+    inventory auditable: structural candidates still require reviewer sign-off,
+    while reachable or unreferenced behavior remains an open test/design item.
+    """
+
+    qualified = class_name.lower()
+    if qualified.endswith("profilecontroller") and method == "mapErrorCode":
+        return (
+            "OPEN-DESIGN",
+            "Route a real controller failure through problem() and assert its public envelope, or record a separately reviewed cleanup decision; do not use reflection-only coverage.",
+        )
+    if qualified.endswith("recurringexpenseservice") and method == "emitSchedulePausedNotification":
+        return (
+            "OPEN-BEHAVIOR",
+            "Add a focused service test proving the optional outbox absence is a safe no-op while configured outbox delivery remains asserted.",
+        )
+    if "jpagroupstore" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "JpaGroupStoreTest and JpaGroupStoreClaimTest exercise the normal and rejection paths for every residual lifecycle mapping, including missing/archived groups, placeholder/invite guards, duplicate removal, expiry, claim races, and durable side effects. Keep the implementation guards; classify only the remaining JaCoCo line mapping as behavior-covered after preserving the integration evidence.",
+        )
+    if "recurringexpenseservice" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "RecurringExpenseServiceTest, RecurringExpenseFailureTest, and RecurringExpenseOptionalOutboxTest exercise the normal and rejection paths for every residual schedule mapping: optional custom payer/allocation specifications, date and catch-up limits, paused/duplicate occurrences, membership failure, expense-generation failure, and outbox presence or absence. Keep the service fallbacks and guards; classify only the remaining JaCoCo line mapping as behavior-covered after preserving these durable-state and notification assertions.",
+        )
+    if "expensecontroller" in qualified:
+        return (
+            "STRUCTURAL-INVARIANT",
+            "Reviewed against ExpenseControllerTest: create, update, and delete reject missing or unusable principals through ensureActiveMember before reaching the store call. The nullable principal forwarding arm is unreachable under the enforced authentication invariant; do not bypass the guard merely to alter JaCoCo.",
+        )
+    if "clientaddressresolver" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "ClientAddressResolverTest covers direct/trusted proxy extraction, multi-hop and spoofed headers, IPv4/IPv6 normalization, missing and malformed addresses, and proxy-property parsing. Keep the non-empty fallback and classify only the residual address-family mapping under the JDK invariant.",
+        )
+    if "emailaddress" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "EmailAddressTest covers canonicalization, whitespace, malformed input, local/complete length limits, IDN conversion failure, control characters, separators, and label boundaries. Keep all parser guards and classify only residual JaCoCo short-circuit mappings.",
+        )
+    if "loginverificationservice" in qualified:
+        return (
+            "STRUCTURAL-INVARIANT",
+            "Reviewed against LoginVerificationServiceTest and EmailAddressTest: enrollment and identity reuse use canonical addresses, and EmailAddress rejects an empty local part before verification can construct a credential. The fallback display name is unreachable under the value-object invariant; retain it unless a separate behavior change justifies otherwise.",
+        )
+    if "sessionpolicy" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "SessionPolicyTest covers validity immediately before idle and absolute deadlines, expiry at each boundary, capped refresh, clock skew, and constructor invariants. Keep the expiry predicate and classify only the residual short-circuit mapping.",
+        )
+    if "fallbackjwtdecoder" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "FallbackJwtDecoderTest covers empty-list construction rejection, first-success, later-success, and final-failure behavior. Keep the non-empty decoder-list invariant and fail-closed final exception; classify only the residual terminal null-guard mapping.",
+        )
+    if "browseroriginpolicy" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "BrowserOriginPolicyTest covers valid and empty configurations, wildcard and malformed rejection, default and explicit ports, exact-origin matching, and native-only requests. Keep fail-closed origin validation and classify only the residual constructor/collection mapping.",
+        )
+    if "bffgatewayfilters" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "BffGatewayFiltersTest covers present, blank, and missing context values, absent and malformed downstream watermarks, monotonic propagation, and missing exchange context. Keep credential and watermark propagation unchanged; classify only the generated collection/short-circuit mapping while deployed upstream evidence remains a separate E2E requirement.",
+        )
+    if "liveupdatefanout" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "LiveUpdateFanoutTest covers expiry, matching and non-matching user/group revocation, queue membership, signal completion, and invalid inputs. Keep fanout and revocation behavior unchanged; classify only generated predicate/iterator mappings while deployed broker/WebSocket evidence remains a separate E2E requirement.",
+        )
+    if "recurrenceschedule" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "RecurrencePolicyTest covers valid monthly/weekly construction, blank identity, day bounds, and frequency compatibility. Keep constructor invariants and classify only compiler-generated validation short-circuits.",
+        )
+    if "recurringexpenseservice" in qualified:
+        return (
+            "CANDIDATE-STRUCTURAL",
+            "Retain date, catch-up, membership, custom participant, duplicate, and failure tests; classify only impossible empty-member/fallback mappings after invariant review.",
+        )
+    if "searchcontroller" in qualified or "expensesearch" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "SearchControllerTest and ExpenseSearchTest cover authorization, filtering, pagination, cursor/limit validation, empty/header-only exports, CSV escaping, and reader-policy context. Keep the search and export contracts; classify only generated telemetry/iteration mappings.",
+        )
+    if "settlementsuggestionengine" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "SettlementSuggestionTest covers zero-sum, duplicate aggregation, one-sided/corrupt snapshots, multi-currency isolation, and deterministic positive transfers. Keep the strictly-positive transfer guard and classify only its residual JaCoCo mapping after preserving the settlement invariants.",
+        )
+    if "synccontroller" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "SyncControllerTest covers valid ordering, membership isolation, malformed/cross-group/expired cursors, blank subjects, and limit bounds. Keep the structured cursor error contract and classify only the residual exception-message mapping.",
+        )
+    if "emaildispatcher" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "EmailDispatcherTest covers disabled/invalid input, successful delivery, transient retry/success/exhaustion, interruption, permanent and unknown failures, trimming, and zero-attempt normalization. Keep retry and failure outcomes; classify only the defensive loop-exit mapping.",
+        )
+    if "dbreaderhealth" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "DbReaderHealthTest covers unknown, healthy, lagging, disconnected, open, exact-deadline, timeout, recovery, and causal-watermark states with a controlled clock. Keep the fail-closed routing guard and classify only the residual state-transition mapping.",
+        )
+    if "dboperationpolicy" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "DbOperationPolicyTest covers valid writer/reader policies plus invalid names, reader-eligibility kinds, and strong-consistency combinations. Keep the constructor invariants and classify only the residual validation short-circuit mappings.",
+        )
+    if "globalerrorhandler" in qualified:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "GlobalErrorHandlerTest exercises every ErrorCode, mapped HTTP status, invalid mocked status fallback, null-message fallback, Retry-After, headers, correlation, negotiation, and redaction. Keep the exhaustive mapping and fail-safe behavior; classify only the residual JaCoCo enum/status mapping after preserving these public problem-envelope assertions.",
+        )
+    if "dbtelemetry" in qualified and method in {"acquisition", "queryDuration"}:
+        return (
+            "BEHAVIOR-COVERED-MAPPING",
+            "DbTelemetryTest covers positive and negative durations with null and registry-backed telemetry; the remaining JaCoCo arm is the defensive nullable Timer?.record mapping, while MeterRegistry.timer returns a non-null Timer by contract.",
+        )
+    return (
+        "OPEN-REVIEW",
+        "Inspect the exact source/bytecode mapping and add a behavior test or a reviewed invariant classification; do not alter implementation for JaCoCo.",
+    )
+
+
+def report_paths(root: Path) -> list[Path]:
+    """Return application and library JaCoCo XML reports in stable order."""
+
+    candidates = [
+        path
+        for parent in (root / "app", root / "libs")
+        if parent.exists()
+        for path in parent.glob("*/build/reports/jacoco/test/jacocoTestReport.xml")
+    ]
+    return sorted(candidates)
+
+
+def module_name(root: Path, report: Path) -> str:
+    """Derive the repository module name from a report path."""
+
+    relative_parts = report.relative_to(root).parts
+    return "/".join(relative_parts[:2])
+
+
+def counter(method: ET.Element) -> ET.Element | None:
+    """Return a method's branch counter, if JaCoCo emitted one."""
+
+    return next(
+        (item for item in method.findall("counter") if item.get("type") == "BRANCH"),
+        None,
+    )
+
+
+def parse_report(root: Path, report: Path) -> list[BranchGap]:
+    """Parse behavioral branch gaps from one JaCoCo XML report."""
+
+    document = ET.parse(report)
+    gaps: list[BranchGap] = []
+    for package in document.findall("./package"):
+        for clazz in package.findall("./class"):
+            class_name = clazz.get("name", "")
+            source_file = clazz.get("sourcefilename", "")
+            for method in clazz.findall("./method"):
+                branch_counter = counter(method)
+                missed = int(branch_counter.get("missed", "0")) if branch_counter is not None else 0
+                if missed == 0:
+                    continue
+                covered = int(branch_counter.get("covered", "0")) if branch_counter is not None else 0
+                line_text = method.get("line")
+                qa_row, assignment_basis = qa_assignment(module_name(root, report), class_name)
+                closure_status, next_action = closure_review(
+                    class_name, method.get("name", "")
+                )
+                gaps.append(
+                    BranchGap(
+                        module=module_name(root, report),
+                        class_name=class_name,
+                        source_file=source_file,
+                        method=method.get("name", ""),
+                        source_line=int(line_text) if line_text is not None else None,
+                        missed_branches=missed,
+                        covered_branches=covered,
+                        report=str(report.relative_to(root)).replace("\\", "/"),
+                        qa_row=qa_row,
+                        assignment_basis=assignment_basis,
+                        acceptance_criteria=qa_acceptance(qa_row),
+                        record_acceptance=record_acceptance(class_name, method.get("name", "")),
+                        evidence_target=evidence_target(module_name(root, report), class_name),
+                        closure_status=closure_status,
+                        next_action=next_action,
+                    )
+                )
+    return gaps
+
+
+def all_gaps(root: Path) -> list[BranchGap]:
+    """Load and stably sort all current module branch gaps."""
+
+    gaps = [gap for report in report_paths(root) for gap in parse_report(root, report)]
+    return sorted(
+        gaps,
+        key=lambda gap: (
+            gap.module,
+            gap.class_name,
+            gap.source_line if gap.source_line is not None else -1,
+            gap.method,
+        ),
+    )
+
+
+def line_gaps(root: Path) -> list[BranchLineGap]:
+    """Load exact source lines containing JaCoCo-missed branches."""
+
+    def is_generated_accessor(method_name: str) -> bool:
+        """Exclude Kotlin data/property accessors from source-line ownership."""
+
+        return (
+            method_name.startswith("get")
+            and len(method_name) > 3
+            and method_name[3].isupper()
+        ) or method_name.startswith("set") or method_name.startswith("component") or method_name in {
+            "copy",
+            "equals",
+            "hashCode",
+            "toString",
+        }
+
+    gaps: list[BranchLineGap] = []
+    for report in report_paths(root):
+        document = ET.parse(report)
+        for package in document.findall("./package"):
+            package_name = package.get("name", "")
+            classes_by_source: dict[str, list[tuple[int, str, str]]] = {}
+            for clazz in package.findall("./class"):
+                source_name = clazz.get("sourcefilename", "")
+                class_name = clazz.get("name", "")
+                methods = classes_by_source.setdefault(source_name, [])
+                for method in clazz.findall("./method"):
+                    method_line = method.get("line")
+                    if method_line is not None and not is_generated_accessor(method.get("name", "")):
+                        methods.append((int(method_line), class_name, method.get("name", "")))
+            for source_file in package.findall("./sourcefile"):
+                source_name = source_file.get("name", "")
+                methods = sorted(classes_by_source.get(source_name, []))
+                for line in source_file.findall("./line"):
+                    missed = int(line.get("mb", "0"))
+                    if missed == 0:
+                        continue
+                    source_line = int(line.get("nr", "0"))
+                    owners = [item for item in methods if item[0] <= source_line]
+                    _, class_name, method_name = owners[-1] if owners else (0, "", "")
+                    qa_row, _ = qa_assignment(module_name(root, report), class_name)
+                    closure_status, next_action = closure_review(class_name, method_name)
+                    gaps.append(
+                        BranchLineGap(
+                            module=module_name(root, report),
+                            package=package_name,
+                            source_file=source_name,
+                            class_name=class_name,
+                            method=method_name,
+                            source_line=source_line,
+                            missed_branches=missed,
+                            covered_branches=int(line.get("cb", "0")),
+                            report=str(report.relative_to(root)).replace("\\", "/"),
+                            qa_row=qa_row,
+                            acceptance_criteria=qa_acceptance(qa_row),
+                            record_acceptance=record_acceptance(class_name, method_name),
+                            evidence_target=evidence_target(module_name(root, report), class_name),
+                            closure_status=closure_status,
+                            next_action=next_action,
+                        )
+                    )
+    return sorted(
+        gaps,
+        key=lambda gap: (
+            gap.module,
+            gap.package,
+            gap.source_file,
+            gap.source_line,
+            gap.class_name,
+            gap.method,
+        ),
+    )
+
+
+def markdown(gaps: Iterable[BranchGap]) -> str:
+    """Render branch gaps as a review-friendly Markdown table."""
+
+    rows = [
+        "| Module | QA row | Production class | Source | Method | Line | Missed | Covered | Assignment | Report | QA-row acceptance | Record acceptance | Evidence target | Closure status | Next action |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for gap in gaps:
+        rows.append(
+            f"| `{gap.module}` | `{gap.qa_row}` | `{gap.class_name}` | `{gap.source_file}` | "
+            f"`{gap.method}` | {gap.source_line or ''} | {gap.missed_branches} | "
+            f"{gap.covered_branches} | {gap.assignment_basis} | `{gap.report}` | "
+            f"{gap.acceptance_criteria} | {gap.record_acceptance} | `{gap.evidence_target}` | **{gap.closure_status}** | {gap.next_action} |"
+        )
+    return "\n".join(rows)
+
+
+def line_markdown(gaps: Iterable[BranchLineGap]) -> str:
+    """Render exact source-line branch gaps as a review ledger."""
+
+    rows = [
+        "| Module | Package | Source | Class | Method | Line | Missed | Covered | QA row | QA-row acceptance | Record acceptance | Evidence target | Closure status | Next action | Report |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for gap in gaps:
+        rows.append(
+            f"| `{gap.module}` | `{gap.package}` | `{gap.source_file}` | `{gap.class_name}` | "
+            f"`{gap.method}` | {gap.source_line} | {gap.missed_branches} | "
+            f"{gap.covered_branches} | `{gap.qa_row}` | {gap.acceptance_criteria} | {gap.record_acceptance} | "
+            f"`{gap.evidence_target}` | **{gap.closure_status}** | {gap.next_action} | `{gap.report}` |"
+        )
+    return "\n".join(rows)
+
+
+def arguments(argv: Sequence[str]) -> argparse.Namespace:
+    """Parse command-line options for the inventory command."""
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=Path.cwd())
+    parser.add_argument("--format", choices=("json", "markdown"), default="markdown")
+    parser.add_argument(
+        "--fail-on-gaps",
+        action="store_true",
+        help="return non-zero when any missed branch remains",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Emit the current branch-gap inventory and return a process status."""
+
+    options = arguments(sys.argv[1:] if argv is None else argv)
+    gaps = all_gaps(options.root.resolve())
+    if options.format == "json":
+        print(json.dumps([asdict(gap) for gap in gaps], indent=2))
+    else:
+        print(markdown(gaps))
+    return 1 if options.fail_on_gaps and gaps else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

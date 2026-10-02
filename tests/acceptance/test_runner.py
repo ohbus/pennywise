@@ -1,6 +1,6 @@
 """Unit and integration tests for acceptance test runner."""
 
-import http.server
+from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 import json
 import socket
 import tempfile
@@ -18,7 +18,7 @@ except ImportError:
     import runner
 
 
-class MockServicesHandler(http.server.BaseHTTPRequestHandler):
+class MockServicesHandler(BaseHTTPRequestHandler):
     """Mock HTTP handler simulating BFF and Expense Core endpoints."""
 
     def log_message(self, format: str, *args: object) -> None:
@@ -233,7 +233,7 @@ class RunnerTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         MockServicesHandler.renames = 0
         cls.port = find_free_port()
-        cls.server = http.server.ThreadingHTTPServer(("127.0.0.1", cls.port), MockServicesHandler)
+        cls.server = ThreadingHTTPServer(("127.0.0.1", cls.port), MockServicesHandler)
         cls.server_thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
         cls.server_thread.start()
         cls.server_url = f"http://127.0.0.1:{cls.port}"
@@ -357,7 +357,7 @@ class RunnerTest(unittest.TestCase):
     def test_service_failure_marks_scenario_failed(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
         # Start a server that returns 500 for /actuator/health
-        class FailingHandler(http.server.BaseHTTPRequestHandler):
+        class FailingHandler(BaseHTTPRequestHandler):
             def log_message(self, format: str, *args: object) -> None:
                 pass
             def do_GET(self) -> None:
@@ -370,7 +370,7 @@ class RunnerTest(unittest.TestCase):
                 self.wfile.write(b'{"error": "internal error"}')
 
         port = find_free_port()
-        fail_server = http.server.HTTPServer(("127.0.0.1", port), FailingHandler)
+        fail_server = HTTPServer(("127.0.0.1", port), FailingHandler)
         thread = threading.Thread(target=fail_server.serve_forever, daemon=True)
         thread.start()
         try:

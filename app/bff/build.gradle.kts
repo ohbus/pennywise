@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.boot.webclient)
     implementation(libs.kotlin.reflect)
     testImplementation(libs.boot.test)
+    testImplementation(kotlin("test"))
 }
 tasks.withType<Test> { useJUnitPlatform() }
 sourceSets {

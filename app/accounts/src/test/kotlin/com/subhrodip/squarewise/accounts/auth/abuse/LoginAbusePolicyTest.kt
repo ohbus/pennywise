@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.accounts.auth.abuse
+import java.time.Duration
 
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -21,6 +22,11 @@ class LoginAbusePolicyTest {
     }
 
     @Test
+    fun `allows a resend at the exact cooldown boundary`() {
+        assertEquals(LoginRateLimitDecision.ALLOW, policy.evaluate(now, state(1, now.minusSeconds(60))))
+    }
+
+    @Test
     fun `denies exhausted request window`() {
         assertEquals(LoginRateLimitDecision.DENY, policy.evaluate(now, state(5, now.minusSeconds(120))))
     }
@@ -34,9 +40,20 @@ class LoginAbusePolicyTest {
     }
 
     @Test
+    fun `resets at the exact window boundary`() {
+        assertEquals(
+            LoginRateLimitDecision.ALLOW,
+            policy.evaluate(now, LoginRateLimitState(now.minusSeconds(900), 5, now.minusSeconds(900)))
+        )
+    }
+
+    @Test
     fun `rejects invalid policy configuration`() {
+        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(window = Duration.ZERO) }
+        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(window = Duration.ofSeconds(-1)) }
         assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(maximumRequests = 0) }
-        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(resendCooldown = java.time.Duration.ofMinutes(16)) }
+        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(resendCooldown = Duration.ofSeconds(-1)) }
+        assertThrows(IllegalArgumentException::class.java) { LoginAbusePolicy(resendCooldown = Duration.ofMinutes(16)) }
     }
 
     private fun state(count: Int, lastRequestedAt: Instant?) = LoginRateLimitState(

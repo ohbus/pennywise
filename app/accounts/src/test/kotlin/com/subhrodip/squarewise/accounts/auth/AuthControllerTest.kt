@@ -1,10 +1,15 @@
 package com.subhrodip.squarewise.accounts.auth
+import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailDeliveryResult
+import java.time.Duration
+import org.junit.jupiter.api.Assertions.assertNotNull
 
+import com.subhrodip.squarewise.accounts.auth.abuse.ClientAddressResolver
 import com.subhrodip.squarewise.accounts.auth.credential.HmacCredentialDigest
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialRepository
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialService
 import com.subhrodip.squarewise.accounts.auth.credential.OneTimeCredentialIssuer
 import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailMessage
+import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailTemplate
 import com.subhrodip.squarewise.accounts.auth.delivery.service.AuthEmailSender
 import com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitKeyDeriver
 import com.subhrodip.squarewise.accounts.auth.abuse.LoginRateLimitService
@@ -33,6 +38,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.transaction.annotation.Transactional
+import org.junit.jupiter.api.Assertions.assertEquals
 
 @SpringBootTest
 @Transactional
@@ -51,7 +57,7 @@ class AuthControllerTest @Autowired constructor(
     private val sentEmails = mutableListOf<AuthEmailMessage>()
     private val emailSender = AuthEmailSender {
         sentEmails.add(it)
-        com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailDeliveryResult.QUEUED
+        AuthEmailDeliveryResult.QUEUED
     }
     private val startService = LoginStartService(rateLimitService, credentialService, emailSender)
 
@@ -60,7 +66,7 @@ class AuthControllerTest @Autowired constructor(
         secretSigningKey = secret,
         issuerUri = "https://issuer.example.squarewise",
         audience = "squarewise-api",
-        tokenLifetime = java.time.Duration.ofMinutes(10)
+        tokenLifetime = Duration.ofMinutes(10)
     )
     private val tokenSessionService = TokenSessionService(
         sessionRepository = sessionRepository,
@@ -71,14 +77,19 @@ class AuthControllerTest @Autowired constructor(
     private val verificationService = LoginVerificationService(
         credentialService = credentialService,
         profileStore = profileStore,
-        tokenSessionService = tokenSessionService
+        tokenSessionService = tokenSessionService,
+        accountIdentityStore = profileStore
     )
+
+    // No trusted proxies in tests — raw socket address is always used.
+    private val clientAddressResolver = ClientAddressResolver()
 
     private val controller = AuthController(
         loginStartService = startService,
         loginVerificationService = verificationService,
         tokenSessionService = tokenSessionService,
-        refreshRateLimitService = refreshRateLimitService
+        refreshRateLimitService = refreshRateLimitService,
+        clientAddressResolver = clientAddressResolver
     )
 
     private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(controller)
@@ -99,6 +110,30 @@ class AuthControllerTest @Autowired constructor(
         )
             .andExpect(status().isAccepted)
             .andExpect(jsonPath("$.status").value("ACCEPTED"))
+    }
+
+    @Test
+    fun `startLogin selects the code credential channel`() {
+        mvc.perform(
+            post(ApiEndpoints.Accounts.V1.PATH_LOGIN_START)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"code@example.com\",\"channel\":\"CODE\",\"clientKind\":\"BROWSER\"}")
+        )
+            .andExpect(status().isAccepted)
+
+        assertEquals(AuthEmailTemplate.LOGIN_CODE, sentEmails.single().template)
+    }
+
+    @Test
+    fun `startLogin defaults a missing channel to a link credential`() {
+        mvc.perform(
+            post(ApiEndpoints.Accounts.V1.PATH_LOGIN_START)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"default-channel@example.com\",\"clientKind\":\"BROWSER\"}")
+        )
+            .andExpect(status().isAccepted)
+
+        assertEquals(AuthEmailTemplate.LOGIN_LINK, sentEmails.single().template)
     }
 
     @Test
@@ -236,23 +271,44 @@ class AuthControllerTest @Autowired constructor(
             now = Instant.now()
         )
         val session = verificationService.verify(issued.plaintext, "BROWSER", null, Instant.now())
+        val userPrincipal = RequestPostProcessor { request ->
+            val identity = profileStore.findByEmail("alice@example.com")!!
+            request.userPrincipal = Principal { identity.subject }
+            request
+        }
 
         mvc.perform(
             post(ApiEndpoints.Accounts.V1.PATH_LOGOUT)
-                .with(alice)
+                .with(userPrincipal)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"refreshToken\":\"${session.refreshToken}\"}")
         )
             .andExpect(status().isNoContent)
 
         val stored = sessionRepository.findByRefreshTokenDigest(digest.digest(session.refreshToken))
-        org.junit.jupiter.api.Assertions.assertNotNull(stored?.revokedAt)
+        assertNotNull(stored?.revokedAt)
     }
 
     @Test
     fun `logout returns 401 Unauthorized when unauthenticated`() {
         mvc.perform(
             post(ApiEndpoints.Accounts.V1.PATH_LOGOUT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"refreshToken\":\"unknown\"}")
+        )
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `logout returns 401 Unauthorized when principal name is blank`() {
+        val blankPrincipal = RequestPostProcessor { request ->
+            request.userPrincipal = Principal { " " }
+            request
+        }
+
+        mvc.perform(
+            post(ApiEndpoints.Accounts.V1.PATH_LOGOUT)
+                .with(blankPrincipal)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"refreshToken\":\"unknown\"}")
         )

@@ -64,7 +64,13 @@ class GlobalErrorHandler(
 
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun messageNotReadable(error: HttpMessageNotReadableException): ResponseEntity<ApiProblem> {
-        val detail = error.rootCause?.message ?: error.message ?: "Malformed request payload"
+        val rootCauseMessage = error.rootCause?.message
+        val exceptionMessage = error.message
+        val detail = when {
+            rootCauseMessage?.isNotBlank() == true -> rootCauseMessage
+            exceptionMessage?.isNotBlank() == true -> exceptionMessage
+            else -> "Malformed request payload"
+        }
         log.warn("Malformed HTTP request payload [requestId={}]: {}", RequestIdContext.get(), detail)
         return problem(
             ErrorCode.ERR_02,
@@ -76,7 +82,7 @@ class GlobalErrorHandler(
 
     @ExceptionHandler(ServletRequestBindingException::class)
     fun requestBinding(error: ServletRequestBindingException): ResponseEntity<ApiProblem> {
-        val detail = error.message ?: "Invalid request binding"
+        val detail = error.message?.takeIf { it.isNotBlank() } ?: "Invalid request binding"
         log.warn("Missing or invalid request parameter or header [requestId={}]: {}", RequestIdContext.get(), detail)
         return problem(
             ErrorCode.ERR_02,

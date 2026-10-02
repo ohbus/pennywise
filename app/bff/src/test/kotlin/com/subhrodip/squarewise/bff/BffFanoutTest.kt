@@ -1,6 +1,12 @@
 package com.subhrodip.squarewise.bff
 
 import com.subhrodip.squarewise.bff.transport.UpstreamServiceException
+import com.subhrodip.squarewise.bff.transport.model.input.AllocationInput
+import com.subhrodip.squarewise.bff.transport.model.input.CreateExpenseInput
+import com.subhrodip.squarewise.bff.transport.model.input.MoneyInput
+import com.subhrodip.squarewise.bff.transport.model.input.PayerInput
+import com.subhrodip.squarewise.bff.transport.model.input.RepaymentInput
+import com.subhrodip.squarewise.bff.transport.model.output.BffCreateGroup
 
 import com.subhrodip.squarewise.bff.transport.ExpenseCoreGateway
 import com.subhrodip.squarewise.bff.transport.AccountsGateway
@@ -23,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.core.codec.DecodingException
 import com.subhrodip.squarewise.ids.contracts.ApiEndpoints
 import reactor.core.Exceptions
 import java.net.InetSocketAddress
@@ -32,6 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -295,7 +303,7 @@ class BffFanoutTest {
             shortTimeoutGateway.listGroups("bearer-token").block()
         }
         val cause = Exceptions.unwrap(ex)
-        assertThat(cause).isInstanceOf(java.util.concurrent.TimeoutException::class.java)
+        assertThat(cause).isInstanceOf(TimeoutException::class.java)
     }
 
     /**
@@ -314,7 +322,7 @@ class BffFanoutTest {
             gateway.listGroups("bearer-token").block()
         }
         val cause = Exceptions.unwrap(ex)
-        assertThat(cause).isInstanceOf(org.springframework.core.codec.DecodingException::class.java)
+        assertThat(cause).isInstanceOf(DecodingException::class.java)
     }
 
     /**
@@ -418,6 +426,145 @@ class BffFanoutTest {
         val cause = Exceptions.unwrap(ex)
         assertThat(cause).isInstanceOf(UpstreamServiceException::class.java)
         assertThat((cause as UpstreamServiceException).status).isEqualTo(404)
+    }
+
+    /** Verifies response mapping for the remaining Expense Core gateway operations. */
+    @Test
+    fun `maps group expense repayment and suggestion responses`() {
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
+            respondJson(exchange, 200, """{"groupId":"g-1","name":"Trip","kind":"TRIP","revision":4}""")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupById("g-1")) { exchange ->
+            respondJson(exchange, 200, """{"groupId":"g-1","name":"Renamed","kind":"TRIP","revision":5}""")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupExpenses("g-1")) { exchange ->
+            respondJson(exchange, 200, """{"expenseId":"e-1","version":2,"amount":{"currency":"EUR","minor":"1200"},"category":"travel","allocations":[]}""")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupSettlements("g-1")) { exchange ->
+            respondJson(exchange, 200, """{"id":"s-1","fromParticipantId":"p-1","toParticipantId":"p-2","amountMinor":500,"currency":"EUR","status":"RECORDED"}""")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions("g-1")) { exchange ->
+            respondJson(exchange, 200, """[{"fromParticipantId":"p-1","toParticipantId":"p-2","amountMinor":700,"currency":"EUR"}]""")
+        }
+
+        val group = gateway.createGroup(BffCreateGroup("Trip", "TRIP", "EUR"), "token").block()
+        val updated = gateway.updateGroup("g-1", "Renamed", "token").block()
+        val expense = gateway.createExpense(
+            "g-1",
+            CreateExpenseInput(
+                "e-1",
+                "Fallback description",
+                MoneyInput("EUR", "1200"),
+                listOf(PayerInput("p-1", MoneyInput("EUR", "1200"))),
+                AllocationInput("EQUAL", emptyList())
+            ),
+            "idempotency-1",
+            "token"
+        ).block()
+        val settlement = gateway.recordRepayment(
+            "g-1",
+            RepaymentInput("g-1", "p-1", "p-2", MoneyInput("EUR", "500"), null),
+            "token"
+        ).block()
+        val suggestions = gateway.getSettlementSuggestions("g-1", "token").block()
+
+        assertThat(group?.groupId).isEqualTo("g-1")
+        assertThat(updated?.name).isEqualTo("Renamed")
+        assertThat(expense?.description).isEqualTo("Fallback description")
+        assertThat(settlement?.amountMinor).isEqualTo(500)
+        assertThat(suggestions).hasSize(1)
+        assertThat(suggestions!![0].amountMinor).isEqualTo(700)
+    }
+
+    /** Verifies mutation gateway calls preserve upstream HTTP failure status. */
+    @Test
+    fun `propagates upstream mutation failures as typed service exceptions`() {
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
+            respondJson(exchange, 422, """{"error":"invalid group"}""")
+        }
+
+        val ex = assertThrows<RuntimeException> {
+            gateway.createGroup(BffCreateGroup("", "TRIP", "EUR"), "token").block()
+        }
+
+        val cause = Exceptions.unwrap(ex)
+        assertThat(cause).isInstanceOf(UpstreamServiceException::class.java)
+        assertThat((cause as UpstreamServiceException).status).isEqualTo(422)
+    }
+
+    /** Verifies nullable bearer inputs never create an empty or synthetic Authorization header. */
+    @Test
+    fun `omits authorization when gateway bearer is absent`() {
+        val authorizationHeaders = CopyOnWriteArrayList<String>()
+        fun capture(exchange: HttpExchange) {
+            authorizationHeaders.addAll(
+                exchange.requestHeaders.getOrDefault(ApiEndpoints.Headers.AUTHORIZATION, emptyList())
+            )
+        }
+
+        registerHandler(ApiEndpoints.ExpenseCore.V1.PATH_GROUPS) { exchange ->
+            capture(exchange)
+            val response = if (exchange.requestMethod == "POST") {
+                groupJson("g-null", "No Token")
+            } else {
+                "[${groupJson("g-null", "No Token")}]"
+            }
+            respondJson(exchange, 200, response)
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupById("g-null")) { exchange ->
+            capture(exchange)
+            respondJson(exchange, 200, groupJson("g-null", "No Token"))
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupBalances("g-null")) { exchange ->
+            capture(exchange)
+            respondJson(exchange, 200, """{"groupId":"g-null","balances":[]}""")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupExpenses("g-null")) { exchange ->
+            capture(exchange)
+            val response = if (exchange.requestMethod == "POST") {
+                """{"expenseId":"e-null","version":1,"amount":{"currency":"EUR","minor":"1"},"allocations":[]}"""
+            } else {
+                "[]"
+            }
+            respondJson(exchange, 200, response)
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupMembers("g-null")) { exchange ->
+            capture(exchange)
+            respondJson(exchange, 200, "[]")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupSettlements("g-null")) { exchange ->
+            capture(exchange)
+            respondJson(exchange, 200, """{"id":"s-null","fromParticipantId":"p-1","toParticipantId":"p-2","amountMinor":1,"currency":"EUR","status":"RECORDED"}""")
+        }
+        registerHandler(ApiEndpoints.ExpenseCore.V1.groupSettlementSuggestions("g-null")) { exchange ->
+            capture(exchange)
+            respondJson(exchange, 200, "[]")
+        }
+
+        gateway.listGroups(null).block()
+        gateway.getGroup("g-null", null).block()
+        gateway.createGroup(BffCreateGroup("No Token", "TRIP", "EUR"), null).block()
+        gateway.updateGroup("g-null", "No Token", null).block()
+        gateway.createExpense(
+            "g-null",
+            CreateExpenseInput(
+                "e-null",
+                "No Token",
+                MoneyInput("EUR", "1"),
+                listOf(PayerInput("p-null", MoneyInput("EUR", "1"))),
+                AllocationInput("EQUAL", emptyList())
+            ),
+            "idempotency-null",
+            null
+        ).block()
+        gateway.recordRepayment(
+            "g-null",
+            RepaymentInput("g-null", "p-1", "p-2", MoneyInput("EUR", "1"), null),
+            null
+        ).block()
+        gateway.getSettlementSuggestions("g-null", null).block()
+
+        assertThat(authorizationHeaders).isEmpty()
     }
 
     /**

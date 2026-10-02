@@ -1,0 +1,146 @@
+# Proposed canonical domain and module registry for the six-digit error-code standard.
+# ERRC-01 is documentation-only: validation and runtime consumption are follow-on work.
+# Domain and module numbers become immutable once the implementation gate accepts them.
+#
+# Format: DM-L-C-EE where D=domain, M=module, L=layer, C=category, EE=error(01-99)
+# See: docs/architecture/error-code-standard.md
+
+schemaVersion: 1
+status: accepted-design-not-implemented
+format:
+  machine: DMLCEE
+  display: DM-L-C-EE
+  pattern: "^[1-9]{4}(0[1-9]|[1-9][0-9])$"
+  normalSequenceRange: 01-89
+  reservedSequenceRange: 90-98
+  unclassifiedSequence: 99
+
+domains:
+  1:
+    name: Accounts
+    description: Identity, profiles, preferences, authentication, lifecycle
+    modules:
+      1:
+        name: Profile
+        description: Profile CRUD, preferences, subject validation
+      2:
+        name: Authentication
+        description: Login start, verification, credential management
+      3:
+        name: Session
+        description: Token minting, refresh rotation, family revocation
+      4:
+        name: Lifecycle
+        description: Deletion requests, export requests, GDPR
+      5:
+        name: Identity
+        description: Account identity mapping (issuer, subject)
+
+  2:
+    name: Expense Core
+    description: Groups, membership, expenses, allocation, ledger, settlements, recurrence, sync
+    modules:
+      1:
+        name: Groups
+        description: Group lifecycle, rename, archive
+      2:
+        name: Membership
+        description: Participants, invitations, claiming
+      3:
+        name: Expenses
+        description: Expense CRUD, allocation, categories
+      4:
+        name: Settlements
+        description: Repayments, reversals, suggestions
+      5:
+        name: Recurrence
+        description: Recurring schedules, occurrences, runner
+      6:
+        name: Sync
+        description: Change feed, cursors, offline replay
+      7:
+        name: Search
+        description: Filtering, export, CSV
+      8:
+        name: Outbox
+        description: Transactional outbox relay, event publishing
+
+  3:
+    name: Notifications
+    description: Notification inbox, delivery, preferences, email dispatch
+    modules:
+      1:
+        name: Inbox
+        description: Notification inbox, read state
+      2:
+        name: Delivery
+        description: Delivery jobs, channel dispatch
+      3:
+        name: Preferences
+        description: Channel opt-in, delivery settings
+      4:
+        name: Email
+        description: SMTP dispatch, template rendering
+
+  4:
+    name: BFF
+    description: Client-facing GraphQL gateway, upstream transport, live updates
+    modules:
+      1:
+        name: GraphQL
+        description: Resolvers, schema mapping
+      2:
+        name: Transport
+        description: Upstream REST client, error mapping
+      3:
+        name: LiveUpdate
+        description: WebSocket fanout, subscriptions
+
+  9:
+    name: Platform
+    description: Cross-cutting infrastructure shared libraries
+    modules:
+      1:
+        name: Error Framework
+        description: ErrorCode value class, definitions, exceptions, handler
+      2:
+        name: Security
+        description: Token validation, OIDC, CSRF, origin policy
+      3:
+        name: Persistence
+        description: JPA/Flyway configuration, database health
+      4:
+        name: Messaging
+        description: RabbitMQ transport, dead-letter, acknowledgement
+      5:
+        name: Observability
+        description: Tracing, metrics, structured logging
+      6:
+        name: IDs
+        description: UUID generation, endpoint constants
+
+reserved:
+  domains: [5, 6, 7, 8]
+  description: Available for future bounded contexts. Not yet allocated.
+
+layers:
+  1: { name: Interface, description: "REST, GraphQL, CLI, or input/output boundary" }
+  2: { name: Application, description: "Use cases, orchestration, application services" }
+  3: { name: Domain, description: "Domain rules and business logic" }
+  4: { name: Persistence, description: "Repository, database, and storage concerns" }
+  5: { name: Messaging, description: "Producers, consumers, event processing" }
+  6: { name: Integration, description: "External/downstream systems" }
+  7: { name: Security, description: "Authentication, authorization, tokens" }
+  8: { name: Infrastructure, description: "Configuration, startup, environment" }
+  9: { name: Shared Runtime, description: "Generic framework/shared-library failures" }
+
+categories:
+  1: { name: Validation, description: "Malformed or invalid input" }
+  2: { name: Missing, description: "Resource/value does not exist" }
+  3: { name: Conflict, description: "Duplicate, uniqueness, competing operation" }
+  4: { name: State, description: "Operation invalid for current lifecycle/state" }
+  5: { name: Business Rule, description: "Domain policy or rule rejected the operation" }
+  6: { name: Data/Consistency, description: "Corruption, inconsistent data, integrity" }
+  7: { name: Communication, description: "Dependency, protocol, or communication failure" }
+  8: { name: Availability/Timeout, description: "Unavailable resource, timeout" }
+  9: { name: Internal/Unexpected, description: "Invariant failure or unclassified condition" }

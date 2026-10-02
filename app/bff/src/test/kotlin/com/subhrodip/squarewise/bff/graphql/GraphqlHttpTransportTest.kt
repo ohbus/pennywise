@@ -1,4 +1,6 @@
 package com.subhrodip.squarewise.bff.graphql
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 
 import com.subhrodip.squarewise.bff.transport.ExpenseCoreGateway
 import com.subhrodip.squarewise.ids.contracts.ApiEndpoints
@@ -322,7 +324,20 @@ class GraphqlHttpTransportTest {
             .expectStatus().isNoContent
             .expectHeader().valueMatches("Set-Cookie", ".*squarewise_access=;.*Max-Age=0.*")
 
-        org.mockito.Mockito.verify(accountsGateway).logoutBrowserSession("access-jwt", "rotated-refresh")
+        verify(accountsGateway).logoutBrowserSession("access-jwt", "rotated-refresh")
+    }
+
+    @Test
+    fun `browser logout without a refresh cookie is idempotent and clears cookies`() {
+        client.post().uri(ApiEndpoints.Bff.BROWSER_LOGOUT)
+            .header("Origin", "https://app.example.test")
+            .header("X-CSRF-Token", "nonce")
+            .cookie("squarewise_csrf", "nonce")
+            .exchange()
+            .expectStatus().isNoContent
+            .expectHeader().valueMatches("Set-Cookie", ".*squarewise_access=;.*Max-Age=0.*")
+
+        verifyNoInteractions(accountsGateway)
     }
 
     @Test
@@ -333,7 +348,7 @@ class GraphqlHttpTransportTest {
             .exchange()
             .expectStatus().isForbidden
 
-        org.mockito.Mockito.verifyNoInteractions(accountsGateway)
+        verifyNoInteractions(accountsGateway)
     }
 
     @Test
@@ -520,6 +535,6 @@ class GraphqlHttpTransportTest {
             .jsonPath("$.errors[0].extensions.code").isEqualTo("RATE_LIMITED")
             .jsonPath("$.data").doesNotExist()
 
-        org.mockito.Mockito.verifyNoInteractions(accountsGateway, expenseCoreGateway)
+        verifyNoInteractions(accountsGateway, expenseCoreGateway)
     }
 }

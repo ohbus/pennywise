@@ -40,6 +40,7 @@ query classification, and evidence gates are complete.
 | QA-07 | coordinator | done | Contract-driven REST, GraphQL, WebSocket, negative-path, concurrency, recovery, and evidence matrix |
 | QA-08 | coordinator | done | Production-scale, deployment-resilience, security, and unresolved WebSocket protocol evidence |
 | QA-09 | coordinator | done | Optimized and parallelized E2E pipeline with artifact reuse |
+| QA-10 | coordinator | in_progress | Repository-wide unit, integration, and E2E test gap audit and closure criteria |
 | OPS-25 | coordinator | done | Migrate Python tooling to pyproject.toml + uv sync + uv run |
 
 ## Production hardening milestone
@@ -87,7 +88,13 @@ query classification, and evidence gates are complete.
 | PR-40 | coordinator | done | Idempotency retention and cleanup |
 | AUTH-07 | coordinator | done | Squarewise-owned passwordless login, token lifecycle, provider portability, and authorization evidence |
 | AUTH-08 | coordinator | done | RFC-aligned authentication/session hardening, endpoint protection, cache consistency, and full local security evidence |
-| SEC-01 | coordinator | planned | Whole-security remediation plan for SEC-001 through SEC-013; register child workstreams before execution |
+| SEC-01 | coordinator | done | Whole-security remediation plan for SEC-001 through SEC-013 |
+| SEC-01A | coordinator | done | Establish operational token authority and asymmetric signing (SEC-001, SEC-009) |
+| SEC-01B | coordinator | done | Make durable identity independent of email with (issuer, subject) mapping (SEC-002) |
+| SEC-01C | coordinator | done | Enforce object authorization on profiles and workload trust boundary (SEC-004, SEC-005) |
+| SEC-01D | coordinator | done | Close browser mutation CSRF and WebSocket subscription continuity gaps (SEC-003, SEC-006) |
+| SEC-01E | coordinator | done | Formalize rate-limit proxy topology and bearer-revocation guarantees (SEC-007, SEC-008) |
+| SEC-01F | coordinator | done | Make security operations, telemetry, supply chain, and release evidence executable (SEC-010 - SEC-013) |
 | OPS-24 | coordinator | done | Remove undeclared Ruby dependency and E2E Compose host-port collisions from CI |
 | OPS-17 | coordinator | done | Stable error taxonomy and service/source attribution |
 | OPS-18 | coordinator | done | Micrometer and Prometheus metrics for all services |
@@ -113,6 +120,20 @@ query classification, and evidence gates are complete.
 | ERR-10 | quality | done | Contract, unit, integration, Bruno, and acceptance coverage |
 | ERR-11 | operations | done | Bounded error metrics, dashboards, and alerts |
 | ERR-12 | coordinator | done | Governance review, release evidence, and completion gate |
+
+## Six-digit error-code redesign
+
+This documentation-only workstream reconciles the proposed `DM-L-C-EE` identity
+with the already delivered ERR-01 through ERR-12 public contract. No application
+implementation is authorized until the plan and compatibility decisions are
+reviewed and the follow-on tasks are registered.
+
+| ID | Owner | Status | Deliverable |
+| --- | --- | --- | --- |
+| ERRC-01 | coordinator | done | Canonical standard, registry, decisions, exhaustive migration and onboarding plan |
+| ERRC-01A | review | done | Kotlin throw/catch/boundary inventory |
+| ERRC-01B | contracts | done | REST, GraphQL, event, and compatibility audit |
+| ERRC-01C | architecture | done | Exception, performance, fatal-failure, and operations policy review |
 
 | ID | Owner | Status | Deliverable |
 | --- | --- | --- | --- |
@@ -234,3 +255,4 @@ query classification, and evidence gates are complete.
 | FND-08 | coordinator | done | Refactor domain ports, in-memory stores, and consumer services into dedicated files |
 | OBS-01 | coordinator | done | Implement cross-cutting structured logging, MDC correlation, and observability tools |
 | DOC-26 | coordinator | done | Reconcile local smoke-demo delivery evidence and Bruno API collection |
+| SEC-02 | coordinator | done | Implement and verify whole security audit remediation (H-1, H-2, M-1 to M-5, L-1 to L-6) |

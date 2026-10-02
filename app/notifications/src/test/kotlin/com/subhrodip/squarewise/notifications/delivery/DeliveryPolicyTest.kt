@@ -26,4 +26,17 @@ class DeliveryPolicyTest {
         assertEquals(setOf(DeliveryChannel.PUSH), policy.decide(event, "alice")!!.channels)
         assertNull(policy.decide(event, "alice"))
     }
+
+    @Test
+    fun `selects both channels and suppresses delivery when both are disabled`() {
+        val store = InMemoryPreferenceStore()
+        val bothEnabled = UUID.randomUUID()
+        val neitherEnabled = UUID.randomUUID()
+        store.put("both", NotificationPreferences(emailEnabled = true, pushEnabled = true))
+        store.put("neither", NotificationPreferences(emailEnabled = false, pushEnabled = false))
+        val policy = DeliveryPolicy(InboxDeduplicator(), store)
+
+        assertEquals(setOf(DeliveryChannel.EMAIL, DeliveryChannel.PUSH), policy.decide(bothEnabled, "both")!!.channels)
+        assertEquals(emptySet<DeliveryChannel>(), policy.decide(neitherEnabled, "neither")!!.channels)
+    }
 }

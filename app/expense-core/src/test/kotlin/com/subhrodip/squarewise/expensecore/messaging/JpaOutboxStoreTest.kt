@@ -10,6 +10,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -113,6 +114,80 @@ class JpaOutboxStoreTest @Autowired constructor(
         assertEquals(eventId, reclaimed.eventId)
         assertEquals(2, reclaimed.attempts)
         assertEquals(OutboxStatus.CLAIMED, reclaimed.status)
+    }
+
+    /** Verifies claim rejects invalid policies and skips messages that are not yet eligible. */
+    @Test
+    fun `claim validates policy and skips future pending and active leases`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            store.claim(0, Duration.ofMinutes(1))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            store.claim(-1, Duration.ofMinutes(1))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            store.claim(1, Duration.ZERO)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            store.claim(1, Duration.ofSeconds(-1))
+        }
+
+        val future = Instant.now().plusSeconds(60)
+        val pendingId = UUID.randomUUID()
+        val claimedId = UUID.randomUUID()
+        store.append(message(pendingId, Instant.now()).copy(availableAt = future))
+        store.append(
+            message(claimedId, Instant.now()).copy(
+                status = OutboxStatus.CLAIMED,
+                attempts = 1,
+                leaseUntil = future
+            )
+        )
+
+        assertTrue(store.claim(10, Duration.ofMinutes(1)).isEmpty())
+        val snapshot = store.snapshot().associateBy { it.eventId }
+        assertEquals(OutboxStatus.PENDING, snapshot.getValue(pendingId).status)
+        assertEquals(OutboxStatus.CLAIMED, snapshot.getValue(claimedId).status)
+    }
+
+    /** Verifies durable append preserves the first payload and rejects duplicate event identifiers. */
+    @Test
+    fun `append rejects duplicate event ID without replacing the persisted message`() {
+        val eventId = UUID.randomUUID()
+        val original = message(eventId, Instant.now(), mapOf("amount" to 1250, "currency" to "EUR"))
+        val replacement = original.copy(payload = mapOf("amount" to 9999, "currency" to "USD"))
+
+        store.append(original)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            store.append(replacement)
+        }
+
+        assertEquals(original.payload, store.snapshot().single().payload)
+    }
+
+    /** Verifies durable retry-policy validation and the harmless unknown-event no-op. */
+    @Test
+    fun `reject validates retry policy and ignores an unknown event`() {
+        val unknownEventId = UUID.randomUUID()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            store.reject(unknownEventId, maxAttempts = 0, retryAfter = Duration.ZERO)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            store.reject(unknownEventId, maxAttempts = 1, retryAfter = Duration.ofSeconds(-1))
+        }
+
+        store.reject(unknownEventId, maxAttempts = 1, retryAfter = Duration.ZERO)
+        assertTrue(store.snapshot().isEmpty())
+    }
+
+    /** Verifies acknowledging an unknown event is a durable no-op rather than a failure. */
+    @Test
+    fun `acknowledge ignores an unknown event`() {
+        store.acknowledge(UUID.randomUUID())
+
+        assertTrue(store.snapshot().isEmpty())
     }
 
     /**

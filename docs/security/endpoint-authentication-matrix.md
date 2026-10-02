@@ -42,7 +42,7 @@ future `/auth/login/*` route cannot become public accidentally.
 
 | Class | Required checks |
 |---|---|
-| Account profile | Authenticated subject and account ownership |
+| Account profile | Authenticated subject and account ownership (self-lookup only; cross-account or arbitrary batch queries require internal workload authority `X-Squarewise-Workload-Role`) |
 | Export/deletion | Authenticated subject, account state, rate policy |
 | Expense groups | Authenticated subject and active membership |
 | Expense mutations | Membership, archived state, idempotency, revision |

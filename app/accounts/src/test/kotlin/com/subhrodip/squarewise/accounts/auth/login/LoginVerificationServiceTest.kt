@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.accounts.auth.login
+import java.time.Duration
 
 import com.subhrodip.squarewise.accounts.auth.credential.HmacCredentialDigest
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialRepository
@@ -11,6 +12,7 @@ import com.subhrodip.squarewise.accounts.profile.persistence.InMemoryProfileStor
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
 import java.time.Instant
+import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -34,7 +36,7 @@ class LoginVerificationServiceTest @Autowired constructor(
         secretSigningKey = secret,
         issuerUri = "https://issuer.example.squarewise",
         audience = "squarewise-api",
-        tokenLifetime = java.time.Duration.ofMinutes(10)
+        tokenLifetime = Duration.ofMinutes(10)
     )
     private val tokenSessionService = TokenSessionService(
         sessionRepository = sessionRepository,
@@ -45,7 +47,8 @@ class LoginVerificationServiceTest @Autowired constructor(
     private val service = LoginVerificationService(
         credentialService = credentialService,
         profileStore = profileStore,
-        tokenSessionService = tokenSessionService
+        tokenSessionService = tokenSessionService,
+        accountIdentityStore = profileStore
     )
 
     @Test
@@ -67,9 +70,12 @@ class LoginVerificationServiceTest @Autowired constructor(
         assertNotNull(tokens.accessToken)
         assertNotNull(tokens.refreshToken)
 
-        val profile = profileStore.get("internal:login@example.com")
+        val identity = profileStore.findByEmail("login@example.com")
+        assertNotNull(identity)
+        val profile = profileStore.get(identity!!.subject)
         assertNotNull(profile)
-        assertEquals("internal:login@example.com", profile.displayName)
+        assertEquals("login", profile!!.displayName)
+        assertEquals(identity.accountId, profile.accountId)
     }
 
     @Test
@@ -89,5 +95,32 @@ class LoginVerificationServiceTest @Autowired constructor(
             service.verify(issued.plaintext, "NATIVE", null, now.plusSeconds(2))
         }
         assertEquals(ErrorCode.ERR_03, ex.errorCode)
+    }
+
+    @Test
+    fun `reuses an existing identity without provisioning another account`() {
+        val now = Instant.now()
+        val accountId = UUID.randomUUID()
+        val subject = "sqw:existing-$accountId"
+        profileStore.create(accountId, subject, "Existing User", "UTC", "EUR")
+        profileStore.enrollIdentity(
+            accountId = accountId,
+            issuer = "squarewise-internal",
+            providerSubject = subject,
+            email = "existing@example.com",
+            verified = true,
+        )
+        val issued = credentialService.issue(
+            email = "existing@example.com",
+            kind = LoginCredentialService.CredentialKind.LINK,
+            now = now,
+        )
+
+        val tokens = service.verify(issued.plaintext, "BROWSER", "existing-device", now.plusSeconds(1))
+
+        assertNotNull(tokens.accessToken)
+        assertEquals(accountId, profileStore.findByEmail("existing@example.com")?.accountId)
+        assertEquals(subject, profileStore.findByEmail("existing@example.com")?.subject)
+        assertEquals("Existing User", profileStore.get(subject)?.displayName)
     }
 }

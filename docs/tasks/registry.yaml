@@ -1076,7 +1076,8 @@
       ],
       "evidence": [
         "Ruby YAML parser loaded all four workflows; python3 tools/contracts/validate.py and ./gradlew test passed on 2026-09-17; git diff --check passed.",
-        "Main-only image publishing is gated by reusable workflow input and packages:write permission; PR and branch wrappers grant contents:read only."
+        "Main-only image publishing is gated by reusable workflow input and packages:write permission; PR and branch wrappers grant contents:read only.",
+        "2026-10-02 reduced hosted verification and Sonar RabbitMQ service startup work to the rabbitmq:4.3 protocol image; management remains in local Compose. Workflow yamllint, security hygiene, mypy, public-surface validation, and diff checks passed; hosted rerun remains unverified."
       ],
       "reviewer": "/root",
       "blocker": null
@@ -4962,17 +4963,17 @@
       "specification": "docs/tasks/details/OPS-25.md",
       "acceptance_criteria": [
         "uv sync completes from a clean checkout with no system Python packages required.",
-        "uv run mypy tests tools exits 0 with the existing rule set.",
+        "uv run --frozen --no-build mypy tests tools exits 0 with the existing rule set.",
         "uv run python3 -m unittest discover -s tests/acceptance exits 0 (10/10).",
         "No PYTHONPATH=. appears in Makefile or _reusable-ci.yml.",
         "mypy.ini deleted; mypy config lives in pyproject.toml [tool.mypy].",
-        "uv.lock committed; CI runs uv sync --frozen.",
+        "uv.lock committed; CI runs uv sync --frozen --no-build and uv run --frozen --no-build.",
         "All make e2e-* targets pass without PYTHONPATH prefix.",
         "make workflow-validate and make python-typecheck pass."
       ],
       "validation_commands": [
         "uv sync",
-        "uv run mypy tests tools",
+        "uv run --frozen --no-build mypy tests tools",
         "uv run python3 -m unittest discover -s tests/acceptance",
         "make python-typecheck",
         "make acceptance-live",
@@ -4986,7 +4987,7 @@
         "Generated and committed uv.lock via uv sync.",
         "Deleted mypy.ini in favor of [tool.mypy] in pyproject.toml.",
         "Migrated all Makefile python targets to uv run and added sync target, completely removing PYTHONPATH=.",
-        "Updated .github/workflows/_reusable-ci.yml with uv sync --frozen and uv run, removing PYTHONPATH env blocks.",
+        "Updated .github/workflows/_reusable-ci.yml with immutable setup-uv commit pinning, uv sync --frozen --no-build, and uv run --frozen --no-build, removing PYTHONPATH env blocks.",
         "Updated quickstart.md, ci.md, and technology-decisions.md.",
         "Verified with uv sync, uv run mypy tests tools (30 files clean), uv run python3 -m unittest discover -s tests/acceptance (10/10), make check, make workflow-validate, make acceptance-live (10/10), make e2e-rest-edge (97 checks), make e2e-live (11 steps), make e2e-offline (6 steps), make e2e-concurrency (5 steps), and make e2e-chaos (8 steps)."
       ],
@@ -6816,7 +6817,7 @@
       "parent_id": "AUTH-08",
       "title": "Plan whole-security remediation",
       "phase": "security",
-      "status": "planned",
+      "status": "done",
       "owner_role": "coordinator",
       "owner_agent": "/root",
       "depends_on": [
@@ -6847,7 +6848,270 @@
       ],
       "evidence": [
         "SEC-01 documents SEC-01A through SEC-01F and requires child registration before implementation.",
-        "The plan preserves the audit's NO-GO decision and explicit local-versus-production evidence boundary."
+        "The plan preserves the audit's NO-GO decision and explicit local-versus-production evidence boundary.",
+        "All six child workstreams (SEC-01A through SEC-01F) completed with verified implementation, tests, and documentation.",
+        "All 13 SEC-001 through SEC-013 findings are verified closed at code and local test level; production-scale evidence remains release-gated under QA-08/OPS-20."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "SEC-01A",
+      "parent_id": "SEC-01",
+      "title": "Establish operational token authority",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [
+        "SEC-01"
+      ],
+      "owned_paths": [
+        "app/accounts/src/main/kotlin/com/squarewise/accounts/auth/config/",
+        "app/accounts/src/main/kotlin/com/squarewise/accounts/auth/provider/",
+        "app/accounts/src/main/kotlin/com/squarewise/accounts/auth/login/LoginVerificationService.kt",
+        "app/accounts/src/main/kotlin/com/squarewise/accounts/auth/session/TokenSessionService.kt",
+        "app/accounts/src/main/kotlin/com/squarewise/accounts/auth/jwks/",
+        "contracts/rest/accounts.openapi.json",
+        "docs/tasks/details/SEC-01A.md"
+      ],
+      "specification": "docs/tasks/details/SEC-01A.md",
+      "acceptance_criteria": [
+        "Accounts configures a production-ready asymmetric JWT token provider backed by RSA key material.",
+        "The JWKS endpoint is exposed publicly and returns RFC 7517 compliant JWKS JSON.",
+        "Passwordless verification generates a valid access token accepted by all resource servers.",
+        "ExternalOidcTokenProvider throwing stub is replaced so deployed profiles never throw UnsupportedOperationException."
+      ],
+      "validation_commands": [
+        "./gradlew :app:accounts:test --rerun-tasks --no-daemon",
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/ops/check_security_hygiene.py"
+      ],
+      "evidence": [
+        "Implemented Squarewise-owned asymmetric RSA RS256 token authority, DefaultRsaKeyProvider with key rotation support, and OidcDiscoveryController exposing standard JWKS and RFC 8414 metadata.",
+        "Replaced throwing ExternalOidcTokenProvider stub in production/staging/local-oidc configurations with AsymmetricJwtTokenProvider, closing SEC-001 and SEC-009.",
+        "Added in-memory OidcJwtDecoderFactory JWKSource and public-key decoder creation in libs/security.",
+        "Verified with unit tests across all libraries and DeployedPasswordlessTokenIntegrationTest under local-oidc profile proving token issuance and validation."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "SEC-01B",
+      "parent_id": "SEC-01",
+      "title": "Make durable identity independent of email",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [
+        "SEC-01A"
+      ],
+      "owned_paths": [
+        "app/accounts/src/main/kotlin/com/squarewise/accounts/profile/",
+        "app/accounts/src/main/kotlin/com/squarewise/accounts/auth/identity/",
+        "app/accounts/src/main/kotlin/com/squarewise/accounts/auth/login/LoginVerificationService.kt",
+        "app/accounts/src/main/kotlin/com/squarewise/accounts/auth/session/TokenSessionService.kt",
+        "app/accounts/src/main/resources/db/migration/",
+        "docs/tasks/details/SEC-01B.md"
+      ],
+      "specification": "docs/tasks/details/SEC-01B.md",
+      "acceptance_criteria": [
+        "Dedicated account_identities table created via Flyway migration with unique (issuer, provider_subject).",
+        "Changing email does not change the durable account subject.",
+        "Lookup on /me for unmapped subject returns 401/404 rather than implicitly provisioning a profile."
+      ],
+      "validation_commands": [
+        "./gradlew :app:accounts:test --rerun-tasks --no-daemon",
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/ops/check_security_hygiene.py"
+      ],
+      "evidence": [
+        "Created Flyway V10 migration with unique (issuer, provider_subject) and deterministic backfill.",
+        "Created AccountIdentityEntity, AccountIdentityRepository, and JpaAccountIdentityStore under auth/identity/persistence.",
+        "Refactored ProfileStore to pure query (nullable get) and explicit command (create), eliminating implicit provisioning on GET /me.",
+        "Enrolled durable identity in LoginVerificationService with sqw:$accountId subjects independent of email.",
+        "All 100+ accounts unit and integration tests passed, including JpaAccountIdentityStoreTest and ProfileControllerTest."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "SEC-01C",
+      "parent_id": "SEC-01",
+      "title": "Enforce object authorization and workload trust",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [
+        "SEC-01A",
+        "SEC-01B"
+      ],
+      "owned_paths": [
+        "libs/ids/src/main/kotlin/com/subhrodip/squarewise/ids/contracts/ApiEndpoints.kt",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/profile/api/ProfileController.kt",
+        "app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/profile/ProfileControllerTest.kt",
+        "contracts/rest/accounts.openapi.json",
+        "docs/tasks/details/SEC-01C.md"
+      ],
+      "specification": "docs/tasks/details/SEC-01C.md",
+      "acceptance_criteria": [
+        "ProfileController rejects attempts by User A to read User B profile unless authorized.",
+        "Internal service calls authenticate with appropriate workload roles/credentials."
+      ],
+      "validation_commands": [
+        "./gradlew :app:accounts:test --rerun-tasks --no-daemon",
+        "./gradlew :app:bff:test --rerun-tasks --no-daemon",
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/contracts/validate_public_surface.py",
+        "uv run python tools/ops/check_security_hygiene.py"
+      ],
+      "evidence": [
+        "Enforced object authorization on ProfileController.getProfileById (self-lookup or internal workload role; foreign lookups yield 403 Forbidden).",
+        "Restricted ProfileController.getProfilesBatch to internal workload authority or caller self-lookup; foreign IDs without workload authority yield 403 Forbidden.",
+        "Updated contracts/rest/accounts.openapi.json and Bruno suites with security schemes, 401 Unauthorized, and 403 Forbidden responses.",
+        "Verified with accounts and bff test suites, contract validators, and security hygiene scan."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "SEC-01D",
+      "parent_id": "SEC-01",
+      "title": "Close browser mutation and subscription time-of-check gaps",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [
+        "SEC-01B"
+      ],
+      "owned_paths": [
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/graphql/GroupGraphqlController.kt",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/config/BrowserCsrfWebFilter.kt",
+        "app/bff/src/main/kotlin/com/subhrodip/squarewise/bff/realtime/LiveUpdateFanout.kt",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/config/BrowserCsrfWebFilterTest.kt",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/LiveUpdateFanoutTest.kt",
+        "app/bff/src/test/kotlin/com/subhrodip/squarewise/bff/graphql/GroupGraphqlControllerTest.kt",
+        "docs/tasks/details/SEC-01D.md"
+      ],
+      "specification": "docs/tasks/details/SEC-01D.md",
+      "acceptance_criteria": [
+        "Established WebSocket subscription terminates or suppresses events upon loss of membership.",
+        "GraphQL mutations with cookie authentication require CSRF double-submit proof."
+      ],
+      "validation_commands": [
+        "./gradlew :app:bff:test --rerun-tasks --no-daemon",
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/ops/check_security_hygiene.py"
+      ],
+      "evidence": [
+        "SEC-003: LiveUpdateFanout now maintains per-subscription Sinks.One<Void> revocation signals. revokeUser, revokeUserFromGroup, unsubscribe, and removeExpired all complete the signal, terminating the downstream Flux immediately.",
+        "SEC-003: GroupGraphqlController.groupChanged uses takeUntilOther(liveFanout.revocationSignal(subscription.id)) so the stream auto-terminates when BffEventConsumer processes a member.removed event.",
+        "SEC-006: BrowserCsrfWebFilter extended to cover POST to /graphql when access cookie is present and no explicit Authorization header — cookie-authenticated GraphQL mutations now require X-CSRF-Token to match SW_CSRF cookie.",
+        "SEC-006: Pure bearer-authenticated requests (no access cookie, or explicit Authorization header) bypass CSRF checks cleanly. GraphQL GET requests are unaffected.",
+        "New BrowserCsrfWebFilterTest covers: valid CSRF pass-through, missing header 403, mismatch 403, bearer bypass, explicit-auth bypass, GET bypass, unrelated path passthrough.",
+        "LiveUpdateFanoutTest: 5 new revocation signal tests covering per-sub revocation, user-wide revocation, unsubscribe, unknown ID, and group-scoped isolation.",
+        "GroupGraphqlControllerTest: midstream revocation integration test verifies Flux terminates after revokeUserFromGroup and no events delivered after revocation.",
+        "BUILD SUCCESSFUL: ./gradlew :app:bff:test --rerun-tasks --no-daemon (18 tasks)",
+        "uv run python tools/contracts/validate.py: valid (207 tasks)",
+        "uv run python tools/ops/check_security_hygiene.py: passed (1031 files)"
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "SEC-01E",
+      "parent_id": "SEC-01",
+      "title": "Formalize rate-limit and bearer-revocation guarantees",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [
+        "SEC-01A",
+        "SEC-01B"
+      ],
+      "owned_paths": [
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/auth/AuthController.kt",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/auth/abuse/ClientAddressResolver.kt",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/auth/abuse/TrustedProxyProperties.kt",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/auth/config/AuthenticationCredentialConfiguration.kt",
+        "app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/abuse/ClientAddressResolverTest.kt",
+        "app/accounts/src/test/kotlin/com/subhrodip/squarewise/accounts/auth/AuthControllerTest.kt",
+        "docs/tasks/details/SEC-01E.md"
+      ],
+      "specification": "docs/tasks/details/SEC-01E.md",
+      "acceptance_criteria": [
+        "Client IP resolution parses client addresses only from configured trusted proxies.",
+        "Rate-limit keys properly partition IPv4 and IPv6 addresses.",
+        "Access token lifetime is explicitly bounded and documented."
+      ],
+      "validation_commands": [
+        "./gradlew :app:accounts:test --rerun-tasks --no-daemon",
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/ops/check_security_hygiene.py"
+      ],
+      "evidence": [
+        "SEC-007: Introduced ClientAddressResolver (new class) and TrustedProxyProperties (new config). Only connections from configured trusted proxies cause forwarded headers to be consulted; all others use raw socket address.",
+        "SEC-007: IPv4 addresses normalized to /24 (three-octet prefix); IPv6 addresses normalized to /48 (three 16-bit groups). Resolves collision between unrelated subnets sharing a two-octet prefix.",
+        "SEC-007: AuthController now injects ClientAddressResolver, removing inline two-octet truncation heuristic. Spring bean wired in AuthenticationCredentialConfiguration.",
+        "SEC-008: Access token lifetime explicitly bounded at 10 minutes (SessionPolicyProperties.accessTokenLifetime). Refresh session revocation via PostgreSQL revokedAt is already implemented and atomic.",
+        "New ClientAddressResolverTest: 14 test cases covering direct connections, trusted proxy XFF/X-Real-IP, spoofing prevention, IPv4/24, IPv6/48, multi-hop chains, fallback, fromProperties factory.",
+        "AuthControllerTest updated to inject ClientAddressResolver (no trusted proxies in tests).",
+        "BUILD SUCCESSFUL: ./gradlew :app:accounts:test --rerun-tasks --no-daemon (19 tasks)",
+        "uv run python tools/contracts/validate.py: valid (207 tasks)",
+        "uv run python tools/ops/check_security_hygiene.py: passed (1032 files)"
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "SEC-01F",
+      "parent_id": "SEC-01",
+      "title": "Make security operations and release evidence executable",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [
+        "SEC-01A",
+        "SEC-01B",
+        "SEC-01C",
+        "SEC-01D",
+        "SEC-01E"
+      ],
+      "owned_paths": [
+        "docs/operations/",
+        "docs/security/",
+        "docs/quality/",
+        ".github/workflows/",
+        "tools/ops/",
+        "docs/tasks/details/SEC-01F.md",
+        "app/accounts/src/main/kotlin/com/subhrodip/squarewise/accounts/auth/audit/"
+      ],
+      "specification": "docs/tasks/details/SEC-01F.md",
+      "acceptance_criteria": [
+        "Asymmetric key rotation procedures are documented and verified.",
+        "Structured security audit events are logged without secret leakage.",
+        "Supply chain hygiene checks pass cleanly.",
+        "Endpoint operation matrix is updated with verified evidence."
+      ],
+      "validation_commands": [
+        "./gradlew :app:accounts:test --no-daemon",
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/ops/check_security_hygiene.py",
+        "uv run python tools/ops/check_architecture.py",
+        "uv run python tools/ops/validate_sbom_baseline.py"
+      ],
+      "evidence": [
+        "SEC-012: Created SecurityAuditEvent enum (11 event types) and SecurityAuditLogger writing to 'security.audit' logger. Wired into TokenSessionService (LOGIN_SUCCESS, TOKEN_REUSE_DETECTED, SESSION_DENIED_DELETION_REQUESTED, SESSION_SUBJECT_MISMATCH, TOKEN_REFRESHED, SESSION_REVOKED), LoginVerificationService (LOGIN_FAILURE, IDENTITY_ENROLLED), LoginStartService (LOGIN_RATE_LIMITED), DefaultRsaKeyProvider (KEY_ROTATED). SecurityAuditLoggerTest: 13 cases.",
+        "SEC-010: Extended DefaultRsaKeyProviderTest from 2 to 8 tests covering overlap window, multi-generation accumulation, fail-closed guards, and JWKSource consistency. Created docs/operations/key-rotation-runbook.md.",
+        "SEC-011: Created docs/security/supply-chain-evidence.md documenting implemented controls and explicitly listing release-gated items.",
+        "SEC-013: Rewrote docs/quality/public-interface-operation-matrix.md with SEC-01A through SEC-01F evidence annotations and a full finding closure summary table.",
+        "./gradlew :app:accounts:test BUILD SUCCESSFUL (19 tasks); all Python validation gates passed.",
+        "Commit 2b4b51d"
       ],
       "reviewer": "/root",
       "blocker": null
@@ -6882,6 +7146,273 @@
       ],
       "evidence": [
         "Reconciled all 17 CQRS tasks (DB-01 through DB-17) against plan requirements, verified zero cross-service SQL or database leakage in app/bff, confirmed technical encapsulation in libs/db, and validated all test and contract gates."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "QA-10",
+      "parent_id": "MILESTONE-QUALITY",
+      "title": "Repository-wide test gap audit and closure",
+      "phase": "quality",
+      "status": "in_progress",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [
+        "QA-07",
+        "QA-08",
+        "ERR-10"
+      ],
+      "owned_paths": [
+        "docs/quality/test-coverage-gap-audit.md",
+        "docs/quality/testing-strategy.md",
+        "docs/quality/public-interface-coverage.md",
+        "docs/tasks/details/QA-10.md",
+        "docs/tasks/progress.md",
+        "app/*/src/test/",
+        "libs/*/src/test/",
+        "tests/e2e/",
+        "tests/acceptance/"
+      ],
+      "specification": "docs/tasks/details/QA-10.md",
+      "acceptance_criteria": [
+        "Every production class, method, and branch is mapped to unit, transport, persistence/messaging, deployed E2E, or an explicit structural classification.",
+        "Every missing test row names the exact target path, layer, invariant, failure behavior, side effect, and acceptance criterion.",
+        "All 45 REST operations and 9 GraphQL roots retain operation evidence while authorization, replay, failure, concurrency, pagination, and side effects remain independently tracked.",
+        "Security, financial, identity, outbox, notification, cursor, and error paths require durable/redaction assertions where applicable; status-only tests cannot close them.",
+        "Production-scale, failover, restore, rollback, rotation, alerting, and distributed WebSocket evidence remain environment-gated and are not inferred from local or mocked tests.",
+        "Each closure increment records exact commands, results, source revision, generated coverage, and residual limitations."
+      ],
+      "validation_commands": [
+        "./gradlew test jacocoTestReport --rerun-tasks --no-daemon",
+        "make contracts",
+        "make python-typecheck",
+        "make check",
+        "make e2e-all",
+        "make security-hygiene",
+        "make load-k6-validate",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Initial repository-wide source/test inventory and JaCoCo discovery audit documented in docs/quality/test-coverage-gap-audit.md.",
+        "Concrete unit, controller, persistence/messaging, deployed E2E, and operations acceptance criteria are grouped by Accounts, BFF, Expense Core, Notifications, and shared libraries.",
+        "No test closure is claimed until the named rows have executable evidence.",
+        "2026-10-02 registry-backed DbTelemetry tests reduced the measured branch inventory to 39 methods / 78 missed branches; the exact ledgers and residual acceptance criteria are synchronized in docs/quality/.",
+        "2026-10-02 DbWatermark public round-trip coverage removed its value-class method from the concrete zero-instruction inventory; three concrete execution records remain, including the documented inline telemetry node.",
+        "2026-10-02 QA10-C02 fixed-seed generated allocation tests cover 200 varied domain cases for conservation, non-negativity, and permutation determinism; no implementation or contract changed.",
+        "2026-10-02 QA10-E2E01 corrected Bruno fixture ordering so placeholder removal occurs after financial requests and added the required settlement currency and dynamic Idempotency-Key (c89fa55); the regression guard, public-surface validation, Python audit suite, and Java 25 Gradle wrapper test build passed, while Docker-backed live rerun remains open.",
+        "2026-10-02 QA-10 repository gate regenerated all Java 25 JaCoCo reports with the Gradle wrapper: 62 actionable tasks passed and the authoritative inventory remains 39 records / 78 missed branches / 499 covered branches, 3 concrete execution gaps, and 54 operations without execution artifacts.",
+        "2026-10-02 QA10-E2E01 isolated qa10 Docker/OIDC evidence: acceptance scenarios passed, signed Bruno passed 71/71 requests and 78/78 assertions, and the product lifecycle journey passed. The normalized artifact credits 18 uniquely attributable operations; 36 remain source-only by design. The E2E fixture sends the existing nonblank display name with timezone for ProfilePatch; no production logic or contract changed.",
+        "2026-10-02 QA10-A07/QA10-C01 reviewed four residual structural-invariant mappings against EmailAddressTest, LoginVerificationServiceTest, and ExpenseControllerTest; missing principals and empty email local parts are rejected before nullable/fallback arms can execute. The unused ProfileController helper remains OPEN-DESIGN.",
+        "2026-10-02 QA-10 repository gate reran the full Java 25 Gradle wrapper after the invariant-test increment: BUILD SUCCESSFUL with 62 actionable tasks; the regenerated branch inventory remains 39 records / 78 missed branches, classified as 34 behavior-covered, 4 STRUCTURAL-INVARIANT, and 1 OPEN-DESIGN.",
+        "2026-10-02 QA10-E05 reviewed DbTelemetry acquisition/queryDuration JaCoCo residuals against bytecode and DbTelemetryTest; positive/negative and null/registry-backed behavior is covered, while the remaining nullable Timer?.record arms are documented instrumentation mappings.",
+        "2026-10-02 QA10-E2E01 added an AST-based callable source signal to the 54-operation inventory; all 54 have named Python callable references, but the ledger explicitly does not treat static callable presence as executed E2E evidence.",
+        "2026-10-02 QA-10 added evidence-target metadata to all 39 JaCoCo method records and exact source-line records; target existence is tested separately from branch execution, and no production implementation or contract changed.",
+        "2026-10-02 QA-10 added record-level acceptance criteria to the branch and source-line ledgers, requiring exact invariant/input/durable/deployed proof rather than a test-file reference alone.",
+        "2026-10-02 QA10-E2E01 made source, Bruno, and execution-artifact statuses explicit for all 54 operations; every row remains NO-EXECUTION-ARTIFACT-INGESTED until a runner result is recorded.",
+        "2026-10-02 QA10-E2E01 added surface-aware REST-path and GraphQL-field request signals so duplicate operation IDs cannot be credited across protocols; all 54 remain source-only.",
+        "2026-10-02 QA-10 added docs/quality/qa10-gap-summary.md as the reviewer entry point for branch, unit/integration, E2E-source, and runtime evidence, with explicit closure rules and reproduction commands.",
+        "2026-10-02 QA10-C04 reviewed the nine JpaGroupStore residual mappings against JpaGroupStoreTest and JpaGroupStoreClaimTest; normal/rejection lifecycle, race, rollback, revision, audit, sync, and outbox behavior is covered, while JaCoCo line mappings remain visible. No implementation or contract changed.",
+        "2026-10-02 QA10-C03 reviewed the five RecurringExpenseService residual mappings against RecurringExpenseServiceTest, RecurringExpenseFailureTest, and RecurringExpenseOptionalOutboxTest; optional participants, catch-up/end-date/duplicate paths, membership/generation failures, durable state, and outbox-present/absent notifications are covered without changing implementation or contract.",
+        "2026-10-02 QA10-E01 reviewed the residual GlobalErrorHandler.applicationException mapping against GlobalErrorHandlerTest; every ErrorCode/status mapping, invalid-status and null-message fallback, Retry-After, headers, correlation, negotiation, and redaction behavior is exercised. The exhaustive fail-safe implementation and public problem contract remain unchanged.",
+        "2026-10-02 QA10-E02/QA10-C05 reviewed FallbackJwtDecoder, SettlementSuggestionEngine, DbReaderHealth, and DbOperationPolicy against existing exhaustive tests; decoder, settlement, reader-state, causal-watermark, and routing-policy invariants are covered without deleting or weakening implementation.",
+        "2026-10-02 QA10-A03/A07/A08 reviewed ClientAddressResolver, SessionPolicy, and EmailAddress against existing boundary suites; trusted-proxy/address, expiry/skew, canonicalization, IDN, length, control, separator, and label invariants are covered without changing guards or contracts.",
+        "2026-10-02 QA10-B04/QA10-C03 reviewed BrowserOriginPolicy and RecurrenceSchedule against existing boundary suites; exact-origin, port, wildcard/malformed/native-only, identity/day/frequency invariants are covered without changing guards or contracts.",
+        "2026-10-02 QA10-C01/D03/E04 reviewed SearchController, ExpenseSearch, SyncController, and EmailDispatcher against existing boundary suites; search/filter/CSV, cursor/limit, membership isolation, and email retry/permanent/interruption invariants are covered without changing implementation or contracts. The review split is 8 structural, 30 behavior-covered mappings, and 1 open-design record.",
+        "2026-10-02 QA10-E2E01/A06/E05 re-audited the operation and concrete execution ledgers; all 54 contract operations remain NO-EXECUTION-ARTIFACT-INGESTED, and the three concrete execution records remain the ProfileController problem/mapErrorCode helpers and inline DbTelemetry.measureQuery. Java 25 and the Gradle Wrapper are available, but Docker Desktop's Linux engine is unavailable, so no deployed E2E result is claimed.",
+        "2026-10-02 QA10 repository gate reran ./gradlew.bat test jacocoTestReport --no-daemon --parallel --console=plain under Java 25/Gradle 9.7.1; BUILD SUCCESSFUL with 62 actionable tasks, all up-to-date. This is local unit/integration evidence only; deployed E2E remains unverified.",
+        "2026-10-02 QA10-B01/B03 reclassified four generated BFF lambda mappings as behavior-covered after reviewing BffGatewayFiltersTest and LiveUpdateFanoutTest; generated mappings remain visible and broker/WebSocket deployed acceptance remains open. Current split is 4 structural, 34 behavior-covered mappings, and 1 open-design record.",
+        "2026-10-02 QA10-C01 added ExpenseControllerTest coverage for missing principals on create/update/delete mutations; ERR_03 is asserted before financial validation or store mutation, with no contract or signature change. The sequential Java 25 focused suite passed; concurrent same-module Gradle execution is documented as unsafe due to shared binary test-result files.",
+        "2026-10-02 QA10-E2E01 tooling added strict qa10-operation-execution-v1 artifact ingestion. Source references remain non-execution evidence; schema, revision, environment, exact operation, retained artifact, status, and non-empty assertions are required before EXECUTION-ARTIFACT-* status. No artifact is currently supplied, so all 54 operations remain NO-EXECUTION-ARTIFACT-INGESTED.",
+        "2026-10-02 QA10-E2E01 CI now retains acceptance JSON, Bruno JSON, and suite logs from all three parallel hosted E2E jobs with if: always(); pipefail preserves failures. Raw artifacts remain inputs to normalized per-operation review, not automatic pass evidence. Workflow YAML validation passed; hosted execution remains unrun locally.",
+        "2026-10-02 QA10-E2E01 added contracts/qa10/operation-execution.schema.json as the versioned normalized E2E evidence shape and aligned reporter surface validation; no public API contract changed and no execution artifact is currently available.",
+        "2026-10-02 QA10-E2E01 added success-only typed evidence emission to test_concurrency_subscriptions.py for GraphQL Subscription/groupChanged and wired the hosted concurrency job to retain it. A signed local qa10 run passed the full WebSocket/concurrency suite and report_operation_test_gaps.py accepted the generated artifact; committed operation credit remains gated on retained CI artifact ingestion.",
+        "2026-10-02 QA10-E2E01 extended the offline replay/sync suite with success-only evidence for exactly createGroup, createExpense, getBalances, getSnapshot, and getChanges, and wired hosted retention plus per-suite inventory generation. A signed local qa10 run passed replay, conservation, idempotency conflict, snapshot, and cursor recovery assertions; committed operation credit remains gated on retained CI artifact ingestion.",
+        "2026-10-02 QA10-E2E01 extended the product lifecycle journey with success-only evidence for 42 asserted operations and wired hosted retention plus per-suite inventory generation. A signed local qa10 run passed the full product lifecycle; login/session, archive/revoke/update-group, notification-preference, and subscription operations remain explicitly outside this artifact.",
+        "2026-10-02 QA10-E2E01 extended the Mailpit passwordless journey with success-only evidence for startLogin, verifyLogin, logout, and refreshToken and wired hosted retention plus inventory generation. A signed local run passed credential delivery, replay rejection, refresh-family revocation, and idempotent logout; LINK/expiry/wrong-subject/rate-limit/DLQ/redaction gaps remain open.",
+        "2026-10-02 QA10-E2E01 extended REST edge evidence for createGroup, updateGroup, archiveGroup, revokeInvite, getPreferences, and updatePreferences. The five local success-only artifact union covers all 54 contract operation identities exactly once or more; hosted retention and CI execution remain required evidence.",
+        "2026-10-02 QA10-E2E01 audited hosted run 36975036809: module verification, edge/security E2E, and concurrency/chaos E2E passed; product/offline E2E and aggregate gate failed. No E2E artifact was retained and detailed logs require unavailable authentication, so no operation is credited; rerun with artifact retention is required.",
+        "2026-10-02 QA-10 revalidated the current source/test baseline: the Java 25 Gradle wrapper passed 62 actionable tasks, coverage-tool regression tests passed 34 tests, mypy passed for 22 Python files, and the 39-record/78-branch inventory remained unchanged. Docker Desktop's Linux engine is still unavailable, so all 54 operations remain without normalized execution artifacts and deployed E2E remains open.",
+        "2026-10-02 QA10-E2E01 added a strict Bruno-result normalizer and wired it into the hosted product job with if: always(); only unique assertion-backed mappings are emitted, failed/blocked results are preserved, and ambiguous or surface-mismatched fixtures remain uncredited. Coverage tooling passes 36 tests, mypy and workflow validation pass, and the resulting artifact remains partial evidence rather than blanket operation closure.",
+        "2026-10-02 QA10-E2E01 wired the normalized artifact through report_operation_test_gaps.py in the hosted job and retains the full 54-operation inventory with explicit execution statuses; absent artifacts remain source-only and do not pass the gate.",
+        "2026-10-02 QA10-E2E01 corrected Bruno source discovery to require exact REST path/method matches and BFF-scoped GraphQL root-field matches; the ledger now reports 18 Bruno references and 36 without, while all 54 remain without execution artifacts. Coverage tooling passed 36 tests and mypy passed; no application logic, contract, or audited test assertion changed.",
+        "2026-10-02 QA-10 audit extended test-coverage-change-audit.md from aaa34fd through 34afd01 across 138 commits. Three production-source changes were separately justified: numeric watermark ordering with a regression test, additive endpoint helpers aligned to existing paths, and the QA evidence schema. The Java 25 Gradle wrapper passed 62 actionable tasks; current evidence remains 39 branch records / 78 missed branches, 3 concrete execution records, and no local deployed E2E artifact.",
+        "2026-10-02 QA10-B03/E04 corrected the producer/consumer mismatch for member.removed.v1 after a focused BffEventConsumerTest failed with the producer's versioned value; the aligned test passed. A static source guard now synchronizes the eleven documented event values. No event contract was weakened; RabbitMQ/WebSocket deployed evidence remains open."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "SEC-02",
+      "parent_id": "SEC-01",
+      "title": "Implement software security audit remediation",
+      "phase": "security",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": [
+        "SEC-01",
+        "SEC-01F"
+      ],
+      "owned_paths": [
+        "libs/security/",
+        "libs/ids/",
+        "app/accounts/",
+        "app/expense-core/",
+        "app/notifications/",
+        "app/bff/",
+        "infra/",
+        ".dockerignore",
+        "docs/tasks/details/SEC-02.md",
+        "docs/tasks/board.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/SEC-02.md",
+      "acceptance_criteria": [
+        "All 13 security audit findings (H-1, H-2, M-1 through M-5, L-1 through L-6) are remediated across shared security library, applications, and infrastructure configurations.",
+        "Shared HttpHeadersConfiguration enforces HSTS, CSP, X-Frame-Options: DENY, and nosniff across all 4 services.",
+        "CryptographicSecretSanityGuard fails startup on predictable CI keys in production/staging.",
+        "PostgreSQL pg_hba.conf local socket enforces SCRAM-SHA-256 and init-databases.sql provisions least-privilege roles.",
+        "Root .dockerignore exists and prevents sensitive material from entering build context.",
+        "CredentialCleanupTask purges expired and consumed login credentials.",
+        "Full test suite, linting, Python typecheck, security hygiene, and SBOM validation pass."
+      ],
+      "validation_commands": [
+        "make lint",
+        "make python-typecheck",
+        "python tools/ops/check_security_hygiene.py",
+        "python tools/ops/validate_sbom_baseline.py",
+        "./gradlew test"
+      ],
+      "evidence": [
+        "Created libs/security HttpHeadersConfiguration and wired into Accounts, Expense Core, Notifications, and BFF.",
+        "Created CryptographicSecretSanityGuard and verified fail-closed behavior with CryptographicSecretSanityGuardTest.",
+        "Added root .dockerignore and calibrated container MaxRAMPercentage=65.",
+        "Secured pg_hba.conf with scram-sha-256 and added dedicated service users in init-databases.sql.",
+        "Added CredentialCleanupTask in Accounts with unit tests.",
+        "Documented zero-trust transport encryption and Keycloak production baseline.",
+        "All 53 Gradle test tasks, make lint, make python-typecheck, check_security_hygiene.py, and validate_sbom_baseline.py passed."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "ERRC-01",
+      "parent_id": "MILESTONE-PRODUCTION-HARDENING",
+      "title": "Design six-digit domain error-code migration",
+      "phase": "documentation",
+      "status": "done",
+      "owner_role": "coordinator",
+      "owner_agent": "/root",
+      "depends_on": ["ERR-12", "SEC-02"],
+      "owned_paths": [
+        "contracts/errors/domains.yaml",
+        "docs/architecture/error-code-standard.md",
+        "docs/architecture/error-domain-registry.md",
+        "docs/architecture/error-code-refactoring.md",
+        "docs/architecture/error-handling-guide.md",
+        "docs/architecture/errors/",
+        "docs/architecture/error-flow.md",
+        "docs/implementation/plan.md",
+        "docs/README.md",
+        "docs/tasks/details/ERRC-01.md",
+        "docs/tasks/details/ERRC-01A.md",
+        "docs/tasks/details/ERRC-01B.md",
+        "docs/tasks/details/ERRC-01C.md",
+        "docs/tasks/registry.yaml",
+        "docs/tasks/board.md",
+        "docs/tasks/progress.md"
+      ],
+      "specification": "docs/tasks/details/ERRC-01.md",
+      "acceptance_criteria": [
+        "Reconcile the six-digit DM-L-C-EE proposal with the completed ERR-01 through ERR-12 contracts, implementation, tests, and operations without changing application code.",
+        "Define immutable domain, module, layer, category, sequence, lifecycle, ownership, reservation, allocation, deprecation, and backward-compatibility rules.",
+        "Inventory predictable REST, GraphQL, messaging, persistence, security, configuration, scheduled-work, and unexpected failure families with explicit transport status and retry semantics.",
+        "Specify typed exceptions with baked-in default definitions and constrained explicit overrides, prohibit deliberate generic throws, and define safe top-level handling for otherwise uncaught throwables.",
+        "Define a reflection-free constant-time runtime path, build-time catalog/code validation, contract migration, full test matrix, observability safeguards, rollout, rollback, and onboarding guidance.",
+        "Define registration-ready ordered implementation tasks with dependencies, owned paths, design hints, validation commands, evidence expectations, and documentation obligations; implementation remains unauthorized until those tasks are registered."
+      ],
+      "validation_commands": [
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/errors/validate_catalog.py",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Commit 33e5cea defines the six-digit standard, namespace registry, exception and boundary guide, per-context inventories, and registration-ready ERRC-02 through ERRC-31 implementation sequence.",
+        "API v1 compatibility keeps symbolic code and plans optional numericCode/errorName; no runtime or public schema was changed.",
+        "make contracts (45 REST operations, 9 GraphQL root operations, 50 Bruno requests/71 assertions), uv run python tools/errors/validate_catalog.py, and git diff --check passed."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "ERRC-01A",
+      "parent_id": "ERRC-01",
+      "title": "Audit Kotlin error throw catch and boundary behavior",
+      "phase": "documentation",
+      "status": "done",
+      "owner_role": "review",
+      "owner_agent": "/root/error_code_audit",
+      "depends_on": ["ERR-12", "SEC-02"],
+      "owned_paths": ["docs/tasks/details/ERRC-01A.md"],
+      "specification": "docs/tasks/details/ERRC-01A.md",
+      "acceptance_criteria": [
+        "Read-only inventory covers production throw sites, custom and generic exception types, catch blocks, HTTP advice, GraphQL resolution, messaging listeners, scheduled work, and configuration startup failures.",
+        "Findings identify concrete migration families, unsafe detail exposure, generic-throw debt, broad-catch risks, and missing predictable scenarios with file references."
+      ],
+      "validation_commands": ["rg -n --glob '*.kt' 'throw |catch \\(|@ExceptionHandler' app libs"],
+      "evidence": [
+        "Read-only audit counted 128 production application-error constructions and identified unsafe response text, four fatal-swallowing catch(Throwable) sites, security/filter, BFF, messaging, scheduler, and semantic mapping gaps.",
+        "Findings are recorded in docs/tasks/details/ERRC-01A.md and incorporated into commit 33e5cea."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "ERRC-01B",
+      "parent_id": "ERRC-01",
+      "title": "Audit error contracts and compatibility surface",
+      "phase": "documentation",
+      "status": "done",
+      "owner_role": "contracts",
+      "owner_agent": "/root/error_contract_audit",
+      "depends_on": ["ERR-12", "SEC-02"],
+      "owned_paths": ["docs/tasks/details/ERRC-01B.md"],
+      "specification": "docs/tasks/details/ERRC-01B.md",
+      "acceptance_criteria": [
+        "Read-only audit covers the error catalog, problem schema, every REST OpenAPI error response, GraphQL error extensions, event failure semantics, tests, Bruno, and compatibility risks.",
+        "Findings define the contract-first migration sequence, HTTP status equivalence, additive rollout, versioning, consumer evidence, and rollback requirements."
+      ],
+      "validation_commands": [
+        "uv run python tools/contracts/validate.py",
+        "uv run python tools/errors/validate_catalog.py"
+      ],
+      "evidence": [
+        "Read-only audit established additive v1 numericCode/errorName migration, documented schema/OpenAPI/GraphQL/event/test drift, and defined consumer-first rollout and rollback gates.",
+        "Findings are recorded in docs/tasks/details/ERRC-01B.md and incorporated into commit 33e5cea."
+      ],
+      "reviewer": "/root",
+      "blocker": null
+    },
+    {
+      "id": "ERRC-01C",
+      "parent_id": "ERRC-01",
+      "title": "Review exception architecture performance and operations policy",
+      "phase": "documentation",
+      "status": "done",
+      "owner_role": "architecture",
+      "owner_agent": "/root/error_architecture_audit",
+      "depends_on": ["ERR-12", "SEC-02"],
+      "owned_paths": ["docs/tasks/details/ERRC-01C.md"],
+      "specification": "docs/tasks/details/ERRC-01C.md",
+      "acceptance_criteria": [
+        "Read-only review defines a no-reflection hot path, exception-definition compatibility rules, fatal Throwable handling, async and reactive boundaries, metrics cardinality, logging redaction, and 10M-DAU operational constraints.",
+        "Findings challenge unsafe or over-engineered parts of the draft and recommend maintainable KISS/DRY/SOLID patterns with measurable validation."
+      ],
+      "validation_commands": ["git diff --check"],
+      "evidence": [
+        "Read-only review defined minimal governed exceptions, constrained overrides, fatal/cancellation policy, static no-reflection runtime mapping, bounded observability, privacy, and measured performance acceptance.",
+        "Findings are recorded in docs/tasks/details/ERRC-01C.md and incorporated into commit 33e5cea."
       ],
       "reviewer": "/root",
       "blocker": null

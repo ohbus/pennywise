@@ -18,6 +18,7 @@ import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import java.net.ConnectException
 import java.net.SocketException
+import java.io.IOException
 
 class EmailDispatcherTest {
 
@@ -59,6 +60,15 @@ class EmailDispatcherTest {
         assertThat(sentMessage.text).isEqualTo("You owe $25.00 for Dinner.")
     }
 
+    /** Verifies the public send alias preserves the same delivery and message contract as dispatch. */
+    @Test
+    fun `send delivers through the public compatibility entry point`() {
+        val outcome = dispatcher.send("alice@example.com", "Subject", "Body")
+
+        assertThat(outcome).isEqualTo(EmailDeliveryOutcome.DELIVERED)
+        verify(mailSender, times(1)).send(anyMessage())
+    }
+
     @Test
     fun `transient mail send exception returns RETRYABLE_FAILURE after exhausting retries`() {
         val recipient = "bob@example.com"
@@ -97,6 +107,53 @@ class EmailDispatcherTest {
         verify(mailSender, times(2)).send(anyMessage())
     }
 
+    /** Verifies an interrupted retry delay stops retrying and preserves interruption. */
+    @Test
+    fun `interrupted retry delay returns retryable failure and restores interrupt`() {
+        properties.retryDelayMs = 1L
+        doThrow(MailSendException("temporary SMTP failure"))
+            .`when`(mailSender)
+            .send(anyMessage())
+
+        Thread.currentThread().interrupt()
+        try {
+            val outcome = dispatcher.dispatch("delay@example.com", "Subject", "Body")
+
+            assertThat(outcome).isEqualTo(EmailDeliveryOutcome.RETRYABLE_FAILURE)
+            assertThat(Thread.currentThread().isInterrupted).isTrue()
+            verify(mailSender, times(1)).send(anyMessage())
+        } finally {
+            Thread.interrupted()
+        }
+    }
+
+    /** Verifies permanent causes remain non-retryable when wrapped by a mail failure. */
+    @Test
+    fun `nested illegal argument failure is permanent without retrying`() {
+        doThrow(MailSendException("invalid message", IllegalArgumentException("invalid header")))
+            .`when`(mailSender)
+            .send(anyMessage())
+
+        val outcome = dispatcher.dispatch("nested@example.com", "Subject", "Body")
+
+        assertThat(outcome).isEqualTo(EmailDeliveryOutcome.PERMANENT_FAILURE)
+        verify(mailSender, times(1)).send(anyMessage())
+    }
+
+    /** Verifies direct I/O failures use the transient retry policy. */
+    @Test
+    fun `direct io failure exhausts transient retries`() {
+        properties.maxAttempts = 2
+        doAnswer { throw IOException("connection reset") }
+            .`when`(mailSender)
+            .send(anyMessage())
+
+        val outcome = dispatcher.dispatch("io@example.com", "Subject", "Body")
+
+        assertThat(outcome).isEqualTo(EmailDeliveryOutcome.RETRYABLE_FAILURE)
+        verify(mailSender, times(2)).send(anyMessage())
+    }
+
     @Test
     fun `disabled dispatcher skips sending and returns SKIPPED`() {
         properties.enabled = false
@@ -108,7 +165,14 @@ class EmailDispatcherTest {
 
     @Test
     fun `invalid email address returns PERMANENT_FAILURE without sending`() {
-        val invalidEmails = listOf("", "   ", "not-an-email", "@missinguser.com", "missingdomain@.com")
+        val invalidEmails = listOf(
+            "",
+            "   ",
+            "not-an-email",
+            "@missinguser.com",
+            "missingdomain@.com",
+            "${"a".repeat(245)}@example.com"
+        )
 
         for (invalid in invalidEmails) {
             val outcome = dispatcher.dispatch(invalid, "Subject", "Body")
@@ -136,6 +200,29 @@ class EmailDispatcherTest {
 
         assertThat(outcome).isEqualTo(EmailDeliveryOutcome.PERMANENT_FAILURE)
         verify(mailSender, times(1)).send(anyMessage())
+    }
+
+    @Test
+    fun `unknown mail failure is permanent and is not retried`() {
+        doThrow(IllegalStateException("unexpected sender failure"))
+            .`when`(mailSender)
+            .send(anyMessage())
+
+        val outcome = dispatcher.dispatch("alice@example.com", "Valid Subject", "Body")
+
+        assertThat(outcome).isEqualTo(EmailDeliveryOutcome.PERMANENT_FAILURE)
+        verify(mailSender, times(1)).send(anyMessage())
+    }
+
+    @Test
+    fun `normalizes zero max attempts to one send and trims recipient`() {
+        properties.maxAttempts = 0
+        val outcome = dispatcher.dispatch("  alice@example.com  ", "Valid Subject", "Body")
+
+        assertThat(outcome).isEqualTo(EmailDeliveryOutcome.DELIVERED)
+        val messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage::class.java)
+        verify(mailSender).send(captureMessage(messageCaptor))
+        assertThat(messageCaptor.value.to).containsExactly("alice@example.com")
     }
 
     @Suppress("UNCHECKED_CAST")

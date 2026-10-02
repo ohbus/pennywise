@@ -24,7 +24,7 @@ class LoginAbusePolicy(
      * @return generic decision and retry time; callers must use an atomic store update.
      */
     fun evaluate(now: Instant, state: LoginRateLimitState): LoginRateLimitDecision {
-        if (state.windowStartedAt.plus(window).isBefore(now)) {
+        if (!state.windowStartedAt.plus(window).isAfter(now)) {
             return LoginRateLimitDecision.ALLOW
         }
         if (state.requestCount >= maximumRequests) {

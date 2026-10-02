@@ -5,7 +5,7 @@ The end-to-end test suites run against the live local environment (`infra/local/
 ### Test Suites
 
 1. **Product Journey Lifecycle (`test_product_journey.py`)**:
-   - User profile provisioning via Accounts and GraphQL BFF (`me`).
+   - Explicit local-fixture profile enrollment via Accounts and GraphQL BFF (`me`).
    - Group lifecycle via GraphQL BFF (`createGroup`, `group`).
    - Invitations and membership claiming across users via Expense Core.
    - Multi-participant expense creation with equal allocation splits.
@@ -14,6 +14,10 @@ The end-to-end test suites run against the live local environment (`infra/local/
    - Repayments recording via GraphQL BFF (`recordRepayment`).
    - Outbox relay transactional event publishing to RabbitMQ and consumption into Notifications Inbox.
    - Offline synchronization feed snapshot & change tracking.
+   - When invoked with `--evidence-output`, emits success-only QA-10 evidence
+     for the 42 operations asserted by this journey; login/session, archive,
+     revoke/update-group, and notification-preference operations remain
+     explicitly outside this suite.
 
 2. **Offline Client Sync & Replay Resilience (`test_offline_resilience.py`)**:
    - Client offline mutation queueing with client-generated UUIDs and unique `Idempotency-Key` headers.
@@ -21,12 +25,17 @@ The end-to-end test suites run against the live local environment (`infra/local/
    - Retransmission idempotency: identical retries succeed with 0 balance changes and 0 duplicate postings.
    - Conflicting idempotency reuse: modified payload with existing key correctly rejected with HTTP 409 (`ERR_06` / `CONFLICT`).
    - Offline sync cursor gap recovery via `/sync/changes?cursor=...`.
+   - When invoked with `--evidence-output`, emits retained QA-10 evidence only
+     after the suite passes for `createGroup`, `createExpense`, `getBalances`,
+     `getSnapshot`, and `getChanges`.
 
 3. **Concurrent Member Edit Conflicts & Real-Time Invalidation (`test_concurrency_subscriptions.py`)**:
    - Real-time WebSocket connection to GraphQL BFF via RFC 6455 and `graphql-transport-ws`.
    - Subscription to `groupChanged(groupId: ID!)` with immediate delivery of revision and `changeId` invalidation events.
    - Concurrent race testing: simultaneous PUT updates to the same expense version. Exactly 1 succeeds (version increments to 2), competing update receives HTTP 409 Conflict (`ERR_06`).
    - Conflict resolution: stale client fetches latest state and reapplies cleanly.
+   - When invoked with `--evidence-output`, emits retained QA-10 evidence only
+     after all subscription and concurrency assertions pass.
 
 4. **Message Broker Outage Chaos & Transactional Outbox Recovery (`test_chaos_recovery.py`)**:
    - Fault injection: pauses Expense Core and verifies GraphQL `groups` returns a
@@ -37,6 +46,16 @@ The end-to-end test suites run against the live local environment (`infra/local/
    - PostgreSQL inspection: outbox records held safely in `PENDING` state.
    - Fault healing: unpauses RabbitMQ; verifies outbox relay daemon drains `PENDING` records to `PUBLISHED`.
    - End-to-end verification: Notifications service receives and confirms delivered events.
+
+5. **Passwordless Auth-Email Delivery (`test_auth_email_delivery.py`)**:
+   - Real Accounts outbox/RabbitMQ/Notifications/Mailpit CODE delivery.
+   - One-time credential redemption and replay rejection.
+   - Refresh-family revocation after logout and idempotent logout replay.
+   - Remaining acceptance work is explicit: LINK delivery, expiry, wrong-subject
+     redemption, rate-limit/error redaction, broker retry/DLQ, and log/output
+     secret absence.
+   - When invoked with `--evidence-output`, emits success-only QA-10 evidence
+     for `startLogin`, `verifyLogin`, `logout`, and `refreshToken`.
 
 ### Running Test Suites via Makefile
 
@@ -56,3 +75,13 @@ client uses a ten-second TCP/protocol-setup timeout and switches to blocking
 event reads only after `connection_ack`; this prevents unavailable services
 from hanging a test process indefinitely. These client timeouts do not claim
 that application-level timeout or retry policy is production-proven.
+The local OIDC token helper enrolls the three Keycloak service-account subjects in
+the local Accounts database before the suites run. This is fixture setup only:
+application profile reads remain non-provisioning, and production/staging never
+seed or implicitly create profiles from bearer-token reads.
+
+The product journey exercises Accounts batch lookup in both permitted modes:
+owner-only requests use the signed user token, while mixed or unknown profile IDs
+send the explicit `X-Squarewise-Workload-Role: internal-service` header. This
+matches the fail-closed authorization boundary; ordinary users are not granted
+bulk profile access merely to test deduplication.

@@ -9,9 +9,9 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 
-/** Explicit test-only identity provider; production uses the external OIDC adapter. */
+/** Explicit test-only identity provider; production and local-oidc use the asymmetric provider. */
 @Configuration(proxyBeanMethods = false)
-@Profile("test")
+@Profile("test & !local-oidc & !production & !staging")
 class TestIdentityProviderConfiguration {
     /** Creates the deterministic signer required by isolated authentication tests. */
     @Bean

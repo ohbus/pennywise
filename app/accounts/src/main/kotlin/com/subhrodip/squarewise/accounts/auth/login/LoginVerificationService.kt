@@ -1,32 +1,42 @@
 package com.subhrodip.squarewise.accounts.auth.login
 
+import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditEvent
+import com.subhrodip.squarewise.accounts.auth.audit.SecurityAuditLogger
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialService
+import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentityStore
 import com.subhrodip.squarewise.accounts.auth.session.TokenResponse
 import com.subhrodip.squarewise.accounts.auth.session.TokenSessionService
 import com.subhrodip.squarewise.accounts.profile.persistence.ProfileStore
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
 import java.time.Instant
+import java.util.UUID
 import org.slf4j.LoggerFactory
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Service coordinating single-use credential redemption, profile resolution,
+ * Service coordinating single-use credential redemption, explicit identity resolution/enrollment,
  * and authenticated session initialization.
  *
- * Implements the core passwordless verification flow:
+ * Implements SEC-002 identity model:
  * 1. Atomically redeems the submitted credential (rejecting expired/replayed/unknown credentials).
- * 2. Resolves or provisions the user profile for the canonical subject (`internal:{email}`).
- * 3. Initializes a new refresh token family and mints access & refresh tokens via [TokenSessionService].
+ * 2. Resolves or explicitly enrolls the identity via [AccountIdentityStore].
+ * 3. Durable identity is (issuer, subject); email is verified contact data, never concatenated to form subject.
+ * 4. Initializes a new refresh token family and mints access & refresh tokens via [TokenSessionService].
  *
  * @param credentialService Credential issuance and redemption port.
  * @param profileStore Profile lookup and provisioning port.
  * @param tokenSessionService Session family and token lifecycle coordinator.
+ * @param accountIdentityStore Authoritative account identity mapping port.
+ * @param issuerUri Authority/issuer identifier for enrolled identities.
  */
 open class LoginVerificationService(
     private val credentialService: LoginCredentialService,
     private val profileStore: ProfileStore,
-    private val tokenSessionService: TokenSessionService
+    private val tokenSessionService: TokenSessionService,
+    private val accountIdentityStore: AccountIdentityStore,
+    private val issuerUri: String = "squarewise-internal",
+    private val auditLogger: SecurityAuditLogger = SecurityAuditLogger()
 ) {
     private val log = LoggerFactory.getLogger(LoginVerificationService::class.java)
 
@@ -48,16 +58,44 @@ open class LoginVerificationService(
         now: Instant
     ): TokenResponse {
         val redeemed = credentialService.redeem(credential, now)
-            ?: throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
+            ?: run {
+                auditLogger.emit(SecurityAuditEvent.LOGIN_FAILURE, detail = "invalid-or-expired-credential")
+                throw ApplicationException(ErrorCode.ERR_03, "Authentication required")
+            }
 
         val canonicalEmail = redeemed.canonicalEmail
-        val subject = "internal:$canonicalEmail"
+        val existingIdentity = accountIdentityStore.findByEmail(canonicalEmail)
 
-        val profile = profileStore.get(subject)
-        log.info("Successfully redeemed credential for accountId={}", profile.accountId)
+        val (accountId, subject) = if (existingIdentity != null) {
+            existingIdentity.accountId to existingIdentity.subject
+        } else {
+            // Explicit enrollment: generate durable accountId and stable provider-qualified subject
+            val newAccountId = UUID.randomUUID()
+            val newSubject = "sqw:$newAccountId"
+            val displayName = canonicalEmail.substringBefore("@").ifBlank { "User" }
+
+            profileStore.create(
+                accountId = newAccountId,
+                subject = newSubject,
+                displayName = displayName,
+                timezone = "UTC",
+                defaultCurrency = "EUR"
+            )
+            accountIdentityStore.enrollIdentity(
+                accountId = newAccountId,
+                issuer = issuerUri,
+                providerSubject = newSubject,
+                email = canonicalEmail,
+                verified = true
+            )
+            auditLogger.emit(SecurityAuditEvent.IDENTITY_ENROLLED, accountId = newAccountId)
+            newAccountId to newSubject
+        }
+
+        log.info("Successfully authenticated credential for accountId={}", accountId)
 
         return tokenSessionService.createSession(
-            accountId = profile.accountId,
+            accountId = accountId,
             subject = subject,
             email = canonicalEmail,
             clientKind = clientKind,

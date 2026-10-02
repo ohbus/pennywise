@@ -1,7 +1,9 @@
 package com.subhrodip.squarewise.expensecore.search
 
+import com.subhrodip.squarewise.expensecore.categories.ExpenseCategory
 import com.subhrodip.squarewise.expensecore.search.api.SearchQuery
 import com.subhrodip.squarewise.expensecore.search.model.SearchExpense
+import com.subhrodip.squarewise.expensecore.search.model.ExpenseSearch
 import com.subhrodip.squarewise.expensecore.search.persistence.JpaSearchStore
 import com.subhrodip.squarewise.expensecore.expenses.persistence.entity.ExpenseEntity
 import com.subhrodip.squarewise.expensecore.expenses.persistence.repository.ExpenseRepository
@@ -10,8 +12,11 @@ import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupR
 
 import com.subhrodip.squarewise.ids.generation.UuidGenerator
 import java.time.Instant
+import java.nio.charset.StandardCharsets
+import java.util.Base64
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -23,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional
 @SpringBootTest
 @Transactional
 class JpaSearchStoreTest @Autowired constructor(
-    private val groupRepository: com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupRepository,
+    private val groupRepository: GroupRepository,
     private val expenseRepository: ExpenseRepository,
     private val searchStore: JpaSearchStore
 ) {
@@ -32,7 +37,7 @@ class JpaSearchStoreTest @Autowired constructor(
     fun `finds active expenses and maps categories while ignoring deleted expenses`() {
         // Create and persist a group to satisfy foreign key constraint
         val groupId = UUID.randomUUID()
-        val group = com.subhrodip.squarewise.expensecore.groups.domain.GroupEntity(
+        val group = GroupEntity(
             groupId = groupId,
             name = "Test Group",
             kind = "HOUSEHOLD",
@@ -92,5 +97,52 @@ class JpaSearchStoreTest @Autowired constructor(
         assertEquals(expected[0].amountMinor.toString(), results[0].amountMinor)
         assertEquals(expected[1].expenseId.toString(), results[1].expenseId)
         assertEquals(expected[1].description, results[1].description)
+    }
+
+    /** Verifies legacy categories fall back safely and opaque cursors reach the JPA query. */
+    @Test
+    fun `maps unknown category to other and decodes a non-null cursor`() {
+        val groupId = UUID.randomUUID()
+        groupRepository.save(GroupEntity(groupId, "Legacy Group", "HOUSEHOLD", "EUR"))
+        val expenseId = UuidGenerator.next()
+        expenseRepository.save(
+            ExpenseEntity(
+                expenseId = expenseId,
+                groupId = groupId,
+                description = "Legacy expense",
+                category = "legacy-category",
+                currency = "EUR",
+                amountMinor = 1250,
+                version = 1,
+                allocationMode = "EQUAL",
+                createdAt = Instant.now(),
+                deleted = false
+            )
+        )
+
+        val results = searchStore.findSearchExpenses(SearchQuery(groupId))
+
+        assertEquals(1, results.size)
+        assertEquals(ExpenseCategory.OTHER, results.single().category)
+
+        val cursor = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(expenseId.toString().toByteArray(StandardCharsets.UTF_8))
+        assertEquals(
+            emptyList<SearchExpense>(),
+            searchStore.findSearchExpenses(SearchQuery(groupId, afterExpenseId = cursor))
+        )
+    }
+
+    /** Verifies the persistent adapter enforces both sides of its bounded query contract. */
+    @Test
+    fun `rejects search limits outside the export bounds`() {
+        val groupId = UUID.randomUUID()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            searchStore.findSearchExpenses(SearchQuery(groupId, limit = 0))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            searchStore.findSearchExpenses(SearchQuery(groupId, limit = ExpenseSearch.MAX_EXPORT_ROWS + 1))
+        }
     }
 }

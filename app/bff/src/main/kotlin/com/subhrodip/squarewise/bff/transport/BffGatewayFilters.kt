@@ -20,12 +20,12 @@ object BffGatewayFilters {
             }.build()
             next.exchange(forwardedRequest).doOnNext { response ->
                 val downstream = response.headers().header(DbWatermarkHeaders.WRITER_WATERMARK).firstOrNull()
-                    ?.let { runCatching { DbWatermark.parse(it).asLsn() }.getOrNull() }
+                    ?.let { runCatching { DbWatermark.parse(it) }.getOrNull() }
                 if (exchange != null && downstream != null) {
                     val current = exchange.response.headers.getFirst(DbWatermarkHeaders.WRITER_WATERMARK)
-                    val existing = current?.let { runCatching { DbWatermark.parse(it).asLsn() }.getOrNull() }
+                    val existing = current?.let { runCatching { DbWatermark.parse(it) }.getOrNull() }
                     if (existing == null || downstream > existing) {
-                        exchange.response.headers.set(DbWatermarkHeaders.WRITER_WATERMARK, downstream)
+                        exchange.response.headers.set(DbWatermarkHeaders.WRITER_WATERMARK, downstream.asLsn())
                     }
                 }
             }

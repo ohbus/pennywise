@@ -1,0 +1,70 @@
+%% Source: contracts/rest/accounts.openapi.json, docs/security/endpoint-authentication-matrix.md
+sequenceDiagram
+    autonumber
+    participant U as Authenticated Client
+    participant B as GraphQL BFF / Gateway
+    participant E as Expense Core / Downstream Service
+    participant DB as Service PostgreSQL
+    participant A as Accounts Service
+    participant ADB as Accounts PostgreSQL
+
+    Note over U,ADB: Phase 1: Protected Operation & Resource Authorization
+    alt Browser Request
+        U->>B: POST /graphql (Cookie: squarewise_access=...)
+        B->>B: Extract JWT from Secure HttpOnly Cookie
+    else Native / API Request
+        U->>B: POST /graphql (Authorization: Bearer <JWT>)
+    end
+    B->>E: POST /v1/expenses (Forward Authorization: Bearer <JWT>)
+    E->>E: Local JWT Verification (signature, exp, iss, aud, alg)
+    alt Invalid Signature, Expired, or Untrusted Token
+        E-->>B: 401 Unauthorized (Bearer error="invalid_token")
+        B-->>U: 401 Unauthorized
+    else Valid Token
+        E->>DB: Query Resource & Membership (e.g. group_members for sub)
+        alt Not a member of the group
+            DB-->>E: Member record not found
+            E-->>B: 403 Forbidden (Problem Details: NOT_GROUP_MEMBER)
+            B-->>U: 403 Forbidden / GraphQL Error
+        else Resource Archived or Ineligible
+            E-->>B: 409 Conflict (Problem Details: GROUP_ARCHIVED)
+            B-->>U: 409 Conflict
+        else Authorized Active Member
+            E->>DB: Atomic mutation (expense + audit + outbox)
+            DB-->>E: Commit
+            E-->>B: 201 Created
+            B-->>U: 200 OK / GraphQL Response
+        end
+    end
+
+    Note over U,ADB: Phase 2: Token Refresh & Family Rotation
+    U->>B: POST /auth/token/refresh (with refresh cookie / bearer + CSRF)
+    B->>A: POST /accounts/v1/auth/token/refresh
+    A->>ADB: SELECT FROM auth_sessions WHERE token_hash = hash(token) FOR UPDATE
+    alt Refresh Token Replayed (Reuse Detected)
+        ADB-->>A: Token already marked consumed/revoked
+        A->>ADB: Revoke ALL tokens in family (compromise response)
+        ADB-->>A: Commit
+        A-->>B: 401 Unauthorized (Session revoked)
+        B-->>U: 401 Unauthorized (Clear Cookies)
+    else Token Expired or Revoked
+        ADB-->>A: Session expired
+        A-->>B: 401 Unauthorized
+        B-->>U: 401 Unauthorized
+    else Valid Active Refresh Token
+        A->>ADB: Mark current refresh token revoked
+        A->>A: Mint new Access JWT + new Refresh Token (family preserved)
+        A->>ADB: Insert new token into auth_sessions
+        ADB-->>A: Commit
+        A-->>B: 200 OK (New Tokens)
+        B-->>U: 200 OK (Rotated Cookies or Payload)
+    end
+
+    Note over U,ADB: Phase 3: Explicit Logout & Invalidation
+    U->>B: POST /auth/logout (Origin + CSRF / Bearer)
+    B->>A: POST /accounts/v1/auth/logout
+    A->>ADB: UPDATE auth_sessions SET revoked_at = NOW() WHERE family_id = ...
+    A->>ADB: Insert security audit event (SESSION_REVOKED)
+    ADB-->>A: Commit
+    A-->>B: 204 No Content
+    B-->>U: 204 No Content (Clear all cookies)

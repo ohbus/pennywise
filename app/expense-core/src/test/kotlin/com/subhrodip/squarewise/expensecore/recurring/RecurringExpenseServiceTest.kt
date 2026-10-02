@@ -8,6 +8,7 @@ import com.subhrodip.squarewise.expensecore.groups.persistence.store.JpaGroupSto
 import com.subhrodip.squarewise.expensecore.messaging.outbox.persistence.OutboxStore
 import com.subhrodip.squarewise.expensecore.recurring.api.CreateRecurringScheduleRequest
 import com.subhrodip.squarewise.expensecore.recurring.api.UpdateRecurringScheduleRequest
+import com.subhrodip.squarewise.expensecore.recurring.domain.RecurringExpenseOccurrence
 import com.subhrodip.squarewise.expensecore.recurring.domain.RecurrenceFrequency
 import com.subhrodip.squarewise.expensecore.recurring.persistence.RecurringExpenseOccurrenceRepository
 import com.subhrodip.squarewise.expensecore.recurring.persistence.RecurringExpenseScheduleRepository
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional
 import com.subhrodip.squarewise.errors.domain.ApplicationException
 import com.subhrodip.squarewise.errors.domain.ErrorCode
 import java.nio.charset.StandardCharsets
+import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
@@ -74,6 +76,42 @@ class RecurringExpenseServiceTest @Autowired constructor(
     }
 
     @Test
+    fun `creates monthly schedule with explicit identifier and valid day of month`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Monthly bills", "HOUSEHOLD", "EUR"))
+        val scheduleId = UUID.randomUUID()
+
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                scheduleId = scheduleId,
+                description = "Rent",
+                amountMinor = 120000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.MONTHLY,
+                dayOfMonth = 31,
+                startDate = LocalDate.of(2026, 9, 1)
+            )
+        )
+
+        assertEquals(scheduleId, schedule.scheduleId)
+        assertEquals(31, schedule.dayOfMonth)
+        assertEquals(scheduleId, scheduleRepository.findById(scheduleId).orElseThrow().scheduleId)
+
+        val firstOfMonth = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Insurance",
+                amountMinor = 4500,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.MONTHLY,
+                dayOfMonth = 1,
+                startDate = LocalDate.of(2026, 9, 1)
+            )
+        )
+        assertEquals(1, firstOfMonth.dayOfMonth)
+    }
+
+    @Test
     fun `updates schedule properties successfully`() {
         val group = groupStore.create("alice", CreateGroupRequest("Apartment 4B", "HOUSEHOLD", "EUR"))
         val startDate = LocalDate.of(2026, 9, 1)
@@ -103,6 +141,113 @@ class RecurringExpenseServiceTest @Autowired constructor(
 
         assertEquals("Biweekly Deep Clean", updated.description)
         assertEquals(8000, updated.amountMinor)
+    }
+
+    @Test
+    fun `updates schedule with valid monthly bounds and custom participants`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Monthly update", "HOUSEHOLD", "EUR"))
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Original schedule",
+                amountMinor = 8000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = LocalDate.of(2026, 9, 1)
+            )
+        )
+        val participantId = UUID.randomUUID()
+
+        val updated = service.updateSchedule(
+            group.groupId,
+            schedule.scheduleId,
+            UpdateRecurringScheduleRequest(
+                description = "Month-end schedule",
+                amountMinor = 8000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.MONTHLY,
+                dayOfMonth = 31,
+                startDate = LocalDate.of(2026, 9, 1),
+                endDate = LocalDate.of(2026, 12, 31),
+                payers = listOf(ExpensePayer(participantId, 8000)),
+                allocations = listOf(ExpenseAllocation(participantId, 8000))
+            )
+        )
+
+        assertEquals("Month-end schedule", updated.description)
+        assertEquals(RecurrenceFrequency.MONTHLY, updated.frequency)
+        assertEquals(31, updated.dayOfMonth)
+        assertEquals(LocalDate.of(2026, 12, 31), updated.endDate)
+    }
+
+    /** Verifies update-time one-sided custom specifications preserve the derived side. */
+    @Test
+    fun `updates schedules with allocation-only and payer-only specifications`() {
+        val group = groupStore.create("alice", CreateGroupRequest("One-sided updates", "HOUSEHOLD", "EUR"))
+        val invite = groupStore.invite(group.groupId, "alice", CreateInviteRequest(24))
+        groupStore.claim(invite.token, "bob")
+        val aliceId = UUID.nameUUIDFromBytes("alice".toByteArray(StandardCharsets.UTF_8))
+        val bobId = UUID.nameUUIDFromBytes("bob".toByteArray(StandardCharsets.UTF_8))
+        val startDate = LocalDate.of(2026, 9, 1)
+
+        val allocationOnly = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Allocation-only original",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate
+            )
+        )
+        service.updateSchedule(
+            group.groupId,
+            allocationOnly.scheduleId,
+            UpdateRecurringScheduleRequest(
+                description = "Allocation-only updated",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate,
+                allocations = listOf(ExpenseAllocation(bobId, 6000))
+            )
+        )
+
+        val payerOnly = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Payer-only original",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate
+            )
+        )
+        service.updateSchedule(
+            group.groupId,
+            payerOnly.scheduleId,
+            UpdateRecurringScheduleRequest(
+                description = "Payer-only updated",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate,
+                payers = listOf(ExpensePayer(aliceId, 6000))
+            )
+        )
+
+        assertEquals(2, service.processDueOccurrences(asOfDate = startDate))
+        val allocationOnlyExpense = expenseStore.findById(
+            service.getOccurrences(allocationOnly.scheduleId).single().expenseId!!
+        )
+        val payerOnlyExpense = expenseStore.findById(
+            service.getOccurrences(payerOnly.scheduleId).single().expenseId!!
+        )
+
+        assertEquals(listOf(ExpenseAllocation(bobId, 6000)), allocationOnlyExpense?.allocations)
+        assertEquals(6000, allocationOnlyExpense?.payers?.single()?.amountMinor)
+        assertEquals(listOf(ExpensePayer(aliceId, 6000)), payerOnlyExpense?.payers)
+        assertEquals(2, payerOnlyExpense?.allocations?.size)
     }
 
     @Test
@@ -247,6 +392,33 @@ class RecurringExpenseServiceTest @Autowired constructor(
         assertEquals(5, occurrences.size)
     }
 
+    /** Verifies a zero worker budget leaves due schedule state untouched. */
+    @Test
+    fun `does not process due occurrences when catch-up budget is zero`() {
+        val group = groupStore.create("zero-budget-owner", CreateGroupRequest("Zero budget", "TRIP", "EUR"))
+        val startDate = LocalDate.of(2026, 1, 1)
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Zero budget schedule",
+                amountMinor = 3000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate
+            )
+        )
+
+        assertEquals(
+            0,
+            service.processDueOccurrences(
+                asOfDate = startDate.plusWeeks(4),
+                maxCatchUpOccurrences = 0
+            )
+        )
+        assertTrue(service.getOccurrences(schedule.scheduleId).isEmpty())
+        assertEquals(startDate, service.getSchedule(schedule.scheduleId)?.nextOccurrenceDate)
+    }
+
     @Test
     fun `pauses schedule and emits outbox notification on invalid membership`() {
         val group = groupStore.create("alice", CreateGroupRequest("Private Flat", "HOUSEHOLD", "EUR"))
@@ -278,6 +450,34 @@ class RecurringExpenseServiceTest @Autowired constructor(
         assertNotNull(notificationMsg)
         assertEquals(schedule.scheduleId, notificationMsg?.aggregateId)
         assertEquals("invalid_membership", notificationMsg?.payload?.get("reason"))
+    }
+
+    /** Verifies a payer outside the group cannot authorize recurring expense generation. */
+    @Test
+    fun `pauses recurring schedule when a custom payer is not a group member`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Payer membership", "HOUSEHOLD", "EUR"))
+        val aliceId = UUID.nameUUIDFromBytes("alice".toByteArray(StandardCharsets.UTF_8))
+        val nonMemberId = UUID.randomUUID()
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Unauthorized payer",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = LocalDate.of(2026, 9, 1),
+                payers = listOf(ExpensePayer(nonMemberId, 6000)),
+                allocations = listOf(ExpenseAllocation(aliceId, 6000))
+            )
+        )
+
+        assertEquals(0, service.processDueOccurrences(asOfDate = schedule.startDate))
+        assertTrue(service.getSchedule(schedule.scheduleId)?.paused == true)
+        assertEquals(
+            "invalid_membership",
+            outboxStore.snapshot().single { it.aggregateId == schedule.scheduleId }.payload["reason"]
+        )
+        assertTrue(service.getOccurrences(schedule.scheduleId).isEmpty())
     }
 
     @Test
@@ -398,6 +598,63 @@ class RecurringExpenseServiceTest @Autowired constructor(
     }
 
     @Test
+    fun `fills only the omitted side of a custom recurring specification`() {
+        val group = groupStore.create("alice", CreateGroupRequest("One-sided custom specs", "HOUSEHOLD", "EUR"))
+        val invite = groupStore.invite(group.groupId, "alice", CreateInviteRequest(24))
+        groupStore.claim(invite.token, "bob")
+
+        val aliceId = UUID.nameUUIDFromBytes("alice".toByteArray(StandardCharsets.UTF_8))
+        val bobId = UUID.nameUUIDFromBytes("bob".toByteArray(StandardCharsets.UTF_8))
+        val startDate = LocalDate.of(2026, 9, 1)
+
+        val payersOnly = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Payer only",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate,
+                payers = listOf(ExpensePayer(bobId, 6000))
+            )
+        )
+        val allocationsOnly = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Allocation only",
+                amountMinor = 6000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate,
+                allocations = listOf(
+                    ExpenseAllocation(aliceId, 4000),
+                    ExpenseAllocation(bobId, 2000)
+                )
+            )
+        )
+
+        assertEquals(2, service.processDueOccurrences(asOfDate = startDate))
+
+        val payerOnlyExpense = expenseStore.findById(
+            service.getOccurrences(payersOnly.scheduleId).single().expenseId!!
+        )
+        assertEquals(listOf(ExpensePayer(bobId, 6000)), payerOnlyExpense?.payers)
+        assertEquals(listOf(3000L, 3000L), payerOnlyExpense?.allocations?.map { it.allocatedMinor }?.sorted())
+
+        val allocationOnlyExpense = expenseStore.findById(
+            service.getOccurrences(allocationsOnly.scheduleId).single().expenseId!!
+        )
+        assertEquals(listOf(ExpensePayer(aliceId, 6000)), allocationOnlyExpense?.payers)
+        assertEquals(
+            listOf(
+                ExpenseAllocation(aliceId, 4000),
+                ExpenseAllocation(bobId, 2000)
+            ),
+            allocationOnlyExpense?.allocations
+        )
+    }
+
+    @Test
     fun `idempotency skips already generated occurrence`() {
         val group = groupStore.create("alice", CreateGroupRequest("Dorm", "HOUSEHOLD", "EUR"))
         val startDate = LocalDate.of(2026, 9, 1)
@@ -424,6 +681,46 @@ class RecurringExpenseServiceTest @Autowired constructor(
 
         val occurrences = service.getOccurrences(schedule.scheduleId)
         assertEquals(1, occurrences.size)
+    }
+
+    /** Verifies the schedule/date uniqueness guard independently of occurrence-ID equality. */
+    @Test
+    fun `idempotency skips an existing occurrence with a different occurrence id`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Legacy occurrence", "HOUSEHOLD", "EUR"))
+        val startDate = LocalDate.of(2026, 9, 1)
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Internet",
+                amountMinor = 2000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.WEEKLY,
+                startDate = startDate
+            )
+        )
+
+        service.processDueOccurrences(asOfDate = startDate)
+        val generated = occurrenceRepository.findByScheduleIdAndOccurrenceDate(schedule.scheduleId, startDate)!!
+        val generatedExpenseId = generated.expenseId
+        occurrenceRepository.delete(generated)
+        occurrenceRepository.flush()
+        occurrenceRepository.saveAndFlush(
+            RecurringExpenseOccurrence(
+                occurrenceId = UUID.randomUUID(),
+                scheduleId = schedule.scheduleId,
+                occurrenceDate = startDate,
+                expenseId = generatedExpenseId,
+                createdAt = Instant.parse("2026-09-01T00:00:00Z")
+            )
+        )
+
+        schedule.nextOccurrenceDate = startDate
+        scheduleRepository.saveAndFlush(schedule)
+
+        assertEquals(0, service.processDueOccurrences(asOfDate = startDate))
+        assertEquals(1, service.getOccurrences(schedule.scheduleId).size)
+        assertNotNull(generatedExpenseId)
+        assertNotNull(expenseStore.findById(generatedExpenseId!!))
     }
 
     @Test
@@ -495,5 +792,89 @@ class RecurringExpenseServiceTest @Autowired constructor(
                 )
             )
         }
+    }
+
+    @Test
+    fun `update validation rejects invalid schedule state before saving`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Update validation", "HOUSEHOLD", "EUR"))
+        val schedule = service.createSchedule(
+            group.groupId,
+            CreateRecurringScheduleRequest(
+                description = "Valid schedule",
+                amountMinor = 1000,
+                currency = "EUR",
+                frequency = RecurrenceFrequency.MONTHLY,
+                startDate = LocalDate.of(2026, 9, 1)
+            )
+        )
+        val valid = UpdateRecurringScheduleRequest(
+            description = "Updated schedule",
+            amountMinor = 1000,
+            currency = "EUR",
+            frequency = RecurrenceFrequency.MONTHLY,
+            startDate = LocalDate.of(2026, 9, 1)
+        )
+
+        assertThrows(ApplicationException::class.java) {
+            service.updateSchedule(UUID.randomUUID(), schedule.scheduleId, valid)
+        }
+        assertThrows(ApplicationException::class.java) {
+            service.updateSchedule(group.groupId, UUID.randomUUID(), valid)
+        }
+        assertThrows(IllegalArgumentException::class.java) { service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(description = " ")) }
+        assertThrows(IllegalArgumentException::class.java) { service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(amountMinor = 0)) }
+        assertThrows(IllegalArgumentException::class.java) { service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(currency = "eur")) }
+        assertThrows(IllegalArgumentException::class.java) { service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(dayOfMonth = 0)) }
+        assertThrows(IllegalArgumentException::class.java) { service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(frequency = RecurrenceFrequency.WEEKLY, dayOfMonth = 1)) }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(endDate = LocalDate.of(2026, 8, 31)))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(payers = emptyList()))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(payers = listOf(ExpensePayer(UUID.randomUUID(), 999))))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(allocations = emptyList()))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.updateSchedule(group.groupId, schedule.scheduleId, valid.copy(allocations = listOf(ExpenseAllocation(UUID.randomUUID(), 999))))
+        }
+
+        assertEquals("Valid schedule", service.getSchedule(schedule.scheduleId)?.description)
+    }
+
+    @Test
+    fun `create validation rejects date and participant invariants`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Create validation", "HOUSEHOLD", "EUR"))
+        val valid = CreateRecurringScheduleRequest(
+            description = "Valid schedule",
+            amountMinor = 1000,
+            currency = "EUR",
+            frequency = RecurrenceFrequency.MONTHLY,
+            startDate = LocalDate.of(2026, 9, 1)
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            service.createSchedule(group.groupId, valid.copy(endDate = LocalDate.of(2026, 8, 31)))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.createSchedule(group.groupId, valid.copy(dayOfMonth = 32))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.createSchedule(group.groupId, valid.copy(payers = emptyList()))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.createSchedule(group.groupId, valid.copy(payers = listOf(ExpensePayer(UUID.randomUUID(), 999))))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.createSchedule(group.groupId, valid.copy(allocations = emptyList()))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            service.createSchedule(group.groupId, valid.copy(allocations = listOf(ExpenseAllocation(UUID.randomUUID(), 999))))
+        }
+
+        assertEquals(0, scheduleRepository.count())
     }
 }

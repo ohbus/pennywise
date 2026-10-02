@@ -3,6 +3,7 @@ import com.subhrodip.squarewise.expensecore.messaging.outbox.model.OutboxMessage
 import com.subhrodip.squarewise.expensecore.messaging.outbox.service.OutboxRelay
 import com.subhrodip.squarewise.expensecore.messaging.outbox.model.OutboxStatus
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.Duration
@@ -47,5 +48,48 @@ class OutboxTest {
 
         assertEquals(OutboxStatus.PARKED, relay.snapshot().single().status)
         assertEquals(0, relay.claim(1, Duration.ofMinutes(1)).size)
+    }
+
+    @Test
+    fun `reject validates retry policy and ignores an unknown event`() {
+        val relay = OutboxRelay { Instant.parse("2026-01-01T00:00:00Z") }
+
+        assertThrows(IllegalArgumentException::class.java) {
+            relay.reject(UUID.randomUUID(), maxAttempts = 0, retryAfter = Duration.ZERO)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            relay.reject(UUID.randomUUID(), maxAttempts = 1, retryAfter = Duration.ofSeconds(-1))
+        }
+
+        relay.reject(UUID.randomUUID(), maxAttempts = 1, retryAfter = Duration.ZERO)
+        assertEquals(0, relay.snapshot().size)
+    }
+
+    @Test
+    fun `claim and append enforce event state boundaries`() {
+        val now = Instant.parse("2026-01-01T00:00:00Z")
+        val eventId = UUID.randomUUID()
+        val relay = OutboxRelay { now }
+        val message = OutboxMessage(
+            eventId,
+            "expense.created",
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            1,
+            now,
+            emptyMap()
+        )
+
+        assertThrows(IllegalArgumentException::class.java) { relay.claim(0, Duration.ofMinutes(1)) }
+        relay.append(message)
+        assertThrows(IllegalArgumentException::class.java) { relay.append(message.copy()) }
+
+        val claimedWithoutLease = message.copy(status = OutboxStatus.CLAIMED, leaseUntil = null)
+        relay.append(claimedWithoutLease.copy(eventId = UUID.randomUUID()))
+        assertEquals(1, relay.claim(10, Duration.ofMinutes(1)).size)
+        assertEquals(0, relay.claim(10, Duration.ofMinutes(1)).size)
+
+        relay.acknowledge(UUID.randomUUID())
+        assertEquals(2, relay.snapshot().size)
     }
 }

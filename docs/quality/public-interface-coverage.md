@@ -10,6 +10,12 @@ The literal operation inventory and current gap status are maintained in the
 intentionally honest about partial dimensions; contract inventory completeness
 does not imply edge-case completion.
 
+Implementation-level missing unit, controller, persistence/messaging, and
+deployed E2E tests are tracked in the
+[repository-wide test gap audit](test-coverage-gap-audit.md). A complete row
+in this public matrix does not close a production branch that the audit still
+marks uncovered.
+
 ## Coverage dimensions
 
 Each applicable operation must be checked for:
@@ -87,7 +93,7 @@ check when the matrix requires one.
 | --- | --- | --- | --- |
 | Gradle service tests | Controller, service, persistence | Validation, authorization, not-found, conflict, money/allocation invariants, pagination, persistence, audit, sync, outbox, notification deduplication | Mocked or in-process dependencies do not prove deployed wiring |
 | BFF GraphQL HTTP transport tests | `/graphql` HTTP | Query/mutation success, malformed JSON transport, malformed input, invalid fields, upstream validation/auth/timeout/malformed failures, error redaction | Does not prove WebSocket framing or live upstream availability |
-| Bruno collection | Live REST and GraphQL HTTP | Contract-shaped success flows, persistence-visible sequencing, allocation, recurrence, settlement, sync, notification inbox/preferences, structured negative responses | The collection inventories all 41 REST operations and every current HTTP request has a direct assertion; dimension-specific negative cases remain in dedicated E2E suites |
+| Bruno collection | Live REST and GraphQL HTTP | Contract-shaped success flows, persistence-visible sequencing, allocation, recurrence, settlement, sync, notification inbox/preferences, structured negative responses | The collection contains 50 requests with 71 assertion-backed checks; surface-aware matching finds 18 operation signals and 36 operations without a Bruno request signal. Dimension-specific negative cases remain in dedicated E2E suites. |
 | `tests/e2e/test_rest_edge_cases.py` | Live REST | Authentication, malformed IDs, boundary validation, missing resources, idempotent replay, tampered replay conflict | Does not cover every endpoint’s full authorization matrix |
 | `test_product_journey.py` | Live cross-service REST | Group/expense/settlement journey, balances, outbox-to-inbox delivery, offline replay | Production scale and deployment failure domains are not represented |
 | `test_offline_resilience.py` | Live REST sync | Queue/replay, duplicate suppression, idempotency conflict, cursor recovery | Client implementation is simulated |
@@ -111,10 +117,27 @@ production evidence. CI runs contract validation, formatting, all Gradle checks,
 acceptance tests, and—when the E2E input is enabled—the complete local-stack
 integration suites.
 
-The latest local `make e2e-all` execution passed all four suites. This confirms
-the listed local live-integration/E2E dimensions while leaving production-scale
+The prior local `make e2e-all` execution passed all four suites. This confirms
+the listed local live-integration/E2E dimensions for that recorded revision;
+the current stack must be rerun after every acceptance-fixture or contract
+change. Production-scale
 capacity, multi-region ordering, restore rehearsal, security scanning, and
 deployment rollback as environment-dependent evidence.
+
+The latest reported `make acceptance-live` run on 2026-10-01 is not a green
+closure artifact: 65 of 71 requests passed and six failed. The failures were
+Accounts logout (`400`, where the request assertion allowed only `204` or
+`401`), Expense Core create expense (`404`), update expense (`500`), delete
+expense (`500`), record settlement (`400`), and reverse settlement (`401`).
+The following `make e2e-live` run also stopped when the signed owner called
+Accounts `getProfilesBatch` and received `403` because the endpoint requires
+internal workload authority. These results are evidence of missing or
+misaligned deployed acceptance, not permission to loosen assertions: the
+replacement tests must first establish the signed persona, durable fixture
+state, expected contract status/error, and no-mutation or side-effect
+invariant for each failure. If the owner-versus-workload authority expectation
+is inconsistent with the contract, resolve that contract decision before
+changing either the implementation or the test.
 
 Every GraphQL HTTP query and mutation now has direct transport evidence for
 upstream failure or timeout conversion and detail redaction. Settlement

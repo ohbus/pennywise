@@ -19,6 +19,9 @@ object ApiEndpoints {
     /** Shared operational endpoint paths. */
     object Operations {
         const val HEALTH: String = "/actuator/health/**"
+        const val ACTUATOR_PROMETHEUS: String = "/actuator/prometheus"
+        const val ACTUATOR_METRICS: String = "/actuator/metrics/**"
+        const val ACTUATOR_INFO: String = "/actuator/info"
     }
 
     /** Common HTTP Headers */
@@ -41,6 +44,8 @@ object ApiEndpoints {
         const val BEARER_SCHEME: String = "Bearer"
         const val ORIGIN: String = "Origin"
         const val X_CSRF_TOKEN: String = "X-CSRF-Token"
+        const val WORKLOAD_ROLE: String = "X-Squarewise-Workload-Role"
+        const val WORKLOAD_ROLE_INTERNAL: String = "internal-service"
     }
 
     /** Accounts service API endpoints */
@@ -58,12 +63,16 @@ object ApiEndpoints {
             const val ME_EXPORT_REQUESTS: String = "/me/export-requests"
             const val PROFILES_BY_ID: String = "/profiles/{accountId}"
             const val PROFILES_BATCH: String = "/profiles/batch"
+            const val JWKS: String = "/auth/jwks.json"
+            const val WELL_KNOWN_JWKS: String = "/.well-known/jwks.json"
+            const val WELL_KNOWN_OPENID_CONFIGURATION: String = "/.well-known/openid-configuration"
 
             const val PATH_ME: String = "$BASE$ME"
             const val PATH_LOGIN_START: String = "$BASE$LOGIN_START"
             const val PATH_LOGIN_VERIFY: String = "$BASE$LOGIN_VERIFY"
             const val PATH_TOKEN_REFRESH: String = "$BASE$TOKEN_REFRESH"
             const val PATH_LOGOUT: String = "$BASE$LOGOUT"
+            const val PATH_JWKS: String = "$BASE$JWKS"
             const val PATH_ME_DELETION_REQUEST: String = "$BASE$ME_DELETION_REQUEST"
             const val PATH_ME_EXPORT_REQUEST: String = "$BASE$ME_EXPORT_REQUEST"
             const val PATH_ME_EXPORT_REQUESTS: String = "$BASE$ME_EXPORT_REQUESTS"
@@ -81,8 +90,12 @@ object ApiEndpoints {
             const val BASE: String = "/expense-core/v1"
             const val GROUPS: String = "/groups"
             const val GROUP_BY_ID: String = "/groups/{groupId}"
+            const val GROUP_ARCHIVE: String = "/groups/{groupId}/archive"
             const val GROUP_MEMBERS: String = "/groups/{groupId}/members"
+            const val GROUP_MEMBER_BY_ID: String = "/groups/{groupId}/members/{membershipId}"
+            const val GROUP_PLACEHOLDERS: String = "/groups/{groupId}/placeholders"
             const val GROUP_INVITES: String = "/groups/{groupId}/invites"
+            const val GROUP_INVITE_REVOKE: String = "/groups/{groupId}/invites/{token}/revoke"
             const val INVITES: String = "/invites"
             const val INVITE_CLAIM: String = "/invites/{token}/claim"
 
@@ -133,8 +146,12 @@ object ApiEndpoints {
             // Absolute application paths starting with BASE
             const val PATH_GROUPS: String = "$BASE$GROUPS"
             const val PATH_GROUP_BY_ID: String = "$BASE$GROUP_BY_ID"
+            const val PATH_GROUP_ARCHIVE: String = "$BASE$GROUP_ARCHIVE"
             const val PATH_GROUP_MEMBERS: String = "$BASE$GROUP_MEMBERS"
+            const val PATH_GROUP_MEMBER_BY_ID: String = "$BASE$GROUP_MEMBER_BY_ID"
+            const val PATH_GROUP_PLACEHOLDERS: String = "$BASE$GROUP_PLACEHOLDERS"
             const val PATH_GROUP_INVITES: String = "$BASE$GROUP_INVITES"
+            const val PATH_GROUP_INVITE_REVOKE: String = "$BASE$GROUP_INVITE_REVOKE"
             const val PATH_INVITES: String = "$BASE$INVITES"
             const val PATH_INVITE_CLAIM: String = "$BASE$INVITE_CLAIM"
             const val PATH_GROUP_EXPENSES: String = "$BASE$GROUP_EXPENSES"
@@ -153,8 +170,14 @@ object ApiEndpoints {
             const val PATH_GROUP_SCHEDULE_RESUME: String = "$BASE$GROUP_SCHEDULE_RESUME"
 
             fun groupById(groupId: Any): String = "$BASE/groups/$groupId"
+            fun groupArchive(groupId: Any): String = "$BASE/groups/$groupId/archive"
             fun groupMembers(groupId: Any): String = "$BASE/groups/$groupId/members"
+            fun groupMemberById(groupId: Any, membershipId: Any): String =
+                "$BASE/groups/$groupId/members/$membershipId"
+            fun groupPlaceholders(groupId: Any): String = "$BASE/groups/$groupId/placeholders"
             fun groupInvites(groupId: Any): String = "$BASE/groups/$groupId/invites"
+            fun groupInviteRevoke(groupId: Any, token: String): String =
+                "$BASE/groups/$groupId/invites/$token/revoke"
             fun inviteClaim(token: String): String = "$BASE/invites/$token/claim"
             fun groupExpenses(groupId: Any): String = "$BASE/groups/$groupId/expenses"
             fun groupExpenseById(groupId: Any, expenseId: Any): String = "$BASE/groups/$groupId/expenses/$expenseId"

@@ -1,5 +1,9 @@
 # Operations plan
 
+<p align="left">
+  <img src="../visuals/logo.svg" alt="Squarewise Logo" width="300">
+</p>
+
 The first environment is a reproducible Docker Compose stack. It contains one
 PostgreSQL cluster with separate service databases, RabbitMQ, and SMTP capture.
 OIDC provider selection and provisioning remain external to the current local

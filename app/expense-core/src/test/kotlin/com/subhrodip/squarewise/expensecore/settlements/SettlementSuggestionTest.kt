@@ -96,6 +96,23 @@ class SettlementSuggestionTest {
         assertEquals(1000L, usdSuggestion.amountMinor)
     }
 
+    /** Verifies repeated balance rows aggregate by participant before matching. */
+    @Test
+    fun `aggregates duplicate participant balances within a currency`() {
+        val debtor = UUID.randomUUID()
+        val creditor = UUID.randomUUID()
+
+        val suggestions = engine.calculateSuggestions(
+            listOf(
+                GroupBalanceItem(debtor.toString(), MoneyDto("EUR", "-400")),
+                GroupBalanceItem(debtor.toString(), MoneyDto("EUR", "-600")),
+                GroupBalanceItem(creditor.toString(), MoneyDto("EUR", "1000"))
+            )
+        )
+
+        assertEquals(listOf(SuggestedSettlement(debtor, creditor, 1000L, "EUR")), suggestions)
+    }
+
     @Test
     fun `zero balance handling produces no suggestions`() {
         val a = UUID.randomUUID()
@@ -113,6 +130,26 @@ class SettlementSuggestionTest {
     @Test
     fun `empty balances produce empty suggestions`() {
         val suggestions = engine.calculateSuggestions(emptyList())
+        assertTrue(suggestions.isEmpty())
+    }
+
+    /** Verifies an imbalanced snapshot with only debtors cannot invent a recipient. */
+    @Test
+    fun `one-sided debtor balances produce no suggestions`() {
+        val suggestions = engine.calculateSuggestions(
+            listOf(GroupBalanceItem(UUID.randomUUID().toString(), MoneyDto("EUR", "-100")))
+        )
+
+        assertTrue(suggestions.isEmpty())
+    }
+
+    /** Verifies an imbalanced snapshot with only creditors cannot invent a payer. */
+    @Test
+    fun `one-sided creditor balances produce no suggestions`() {
+        val suggestions = engine.calculateSuggestions(
+            listOf(GroupBalanceItem(UUID.randomUUID().toString(), MoneyDto("EUR", "100")))
+        )
+
         assertTrue(suggestions.isEmpty())
     }
 

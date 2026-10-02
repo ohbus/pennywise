@@ -6,6 +6,8 @@ import com.subhrodip.squarewise.expensecore.expenses.persistence.repository.Bala
 import com.subhrodip.squarewise.expensecore.expenses.persistence.store.JpaExpenseStore
 import com.subhrodip.squarewise.expensecore.groups.api.CreateGroupRequest
 import com.subhrodip.squarewise.expensecore.groups.persistence.store.JpaGroupStore
+import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupMembershipRepository
+import com.subhrodip.squarewise.expensecore.groups.persistence.repository.GroupRepository
 import com.subhrodip.squarewise.expensecore.messaging.outbox.persistence.OutboxStore
 
 import com.subhrodip.squarewise.expensecore.sync.persistence.SynchronizationStore
@@ -28,10 +30,203 @@ import com.subhrodip.squarewise.errors.domain.ErrorCode
 class JpaExpenseStoreTest @Autowired constructor(
     private val expenseStore: JpaExpenseStore,
     private val groupStore: JpaGroupStore,
+    private val groupRepository: GroupRepository,
+    private val membershipRepository: GroupMembershipRepository,
     private val outboxStore: OutboxStore,
     private val syncStore: SynchronizationStore,
     private val balancePostingRepository: BalancePostingRepository
 ) {
+
+    @Test
+    fun `creation rejects a missing group before financial side effects`() {
+        val groupId = UUID.randomUUID()
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val record = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = groupId,
+            description = "Missing group expense",
+            category = "other",
+            currency = "EUR",
+            amountMinor = 100,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(participantId, 100)),
+            allocations = listOf(ExpenseAllocation(participantId, 100))
+        )
+
+        val error = assertThrows(ApplicationException::class.java) {
+            expenseStore.create(groupId, record, "missing-group-create", "alice")
+        }
+
+        assertEquals(ErrorCode.ERR_05, error.errorCode)
+        assertNull(expenseStore.findById(expenseId))
+        assertTrue(balancePostingRepository.findByGroupId(groupId).isEmpty())
+        assertTrue(outboxStore.snapshot().isEmpty())
+    }
+
+    @Test
+    fun `actor-scoped creation accepts active membership identifiers`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Member trip", "TRIP", "EUR"))
+        val membershipId = membershipRepository.findByGroupId(group.groupId).single().membershipId
+        val expenseId = UUID.randomUUID()
+        val record = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Shared hotel",
+            category = "lodging",
+            currency = "EUR",
+            amountMinor = 1000,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(membershipId, 1000)),
+            allocations = listOf(ExpenseAllocation(membershipId, 1000))
+        )
+
+        val created = expenseStore.create(group.groupId, record, "actor-create-key", "alice")
+
+        assertEquals(expenseId, created.expenseId)
+        assertEquals(2, balancePostingRepository.findByExpenseId(expenseId).size)
+    }
+
+    @Test
+    fun `actor-scoped creation rejects duplicate or inactive participants before mutation`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Validated trip", "TRIP", "EUR"))
+        val activeMembershipId = membershipRepository.findByGroupId(group.groupId).single().membershipId
+        val initialRevision = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        val duplicateId = UUID.randomUUID()
+        val duplicateParticipant = ExpenseRecord(
+            expenseId = duplicateId,
+            groupId = group.groupId,
+            description = "Duplicate payer",
+            category = "food",
+            currency = "EUR",
+            amountMinor = 1000,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(activeMembershipId, 500), ExpensePayer(activeMembershipId, 500)),
+            allocations = listOf(ExpenseAllocation(activeMembershipId, 1000))
+        )
+        val duplicateError = assertThrows(ApplicationException::class.java) {
+            expenseStore.create(group.groupId, duplicateParticipant, "duplicate-key", "alice")
+        }
+        assertEquals(ErrorCode.ERR_02, duplicateError.errorCode)
+
+        val duplicateAllocationId = UUID.randomUUID()
+        val duplicateAllocation = duplicateParticipant.copy(
+            expenseId = duplicateAllocationId,
+            payers = listOf(ExpensePayer(activeMembershipId, 1000)),
+            allocations = listOf(
+                ExpenseAllocation(activeMembershipId, 500),
+                ExpenseAllocation(activeMembershipId, 500)
+            )
+        )
+        val duplicateAllocationError = assertThrows(ApplicationException::class.java) {
+            expenseStore.create(group.groupId, duplicateAllocation, "duplicate-allocation-key", "alice")
+        }
+        assertEquals(ErrorCode.ERR_02, duplicateAllocationError.errorCode)
+
+        val inactiveId = UUID.randomUUID()
+        val inactiveParticipant = duplicateParticipant.copy(
+            expenseId = UUID.randomUUID(),
+            payers = listOf(ExpensePayer(activeMembershipId, 1000)),
+            allocations = listOf(ExpenseAllocation(inactiveId, 1000))
+        )
+        val inactiveError = assertThrows(ApplicationException::class.java) {
+            expenseStore.create(group.groupId, inactiveParticipant, "inactive-key", "alice")
+        }
+        assertEquals(ErrorCode.ERR_05, inactiveError.errorCode)
+
+        assertEquals(initialRevision, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertNull(expenseStore.findById(duplicateId))
+        assertTrue(balancePostingRepository.findByGroupId(group.groupId).isEmpty())
+    }
+
+    @Test
+    fun `actor-scoped update and delete reject non-members without mutation`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Owned trip", "TRIP", "EUR"))
+        val membershipId = membershipRepository.findByGroupId(group.groupId).single().membershipId
+        val expenseId = UUID.randomUUID()
+        val record = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Train tickets",
+            category = "travel",
+            currency = "EUR",
+            amountMinor = 1200,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(membershipId, 1200)),
+            allocations = listOf(ExpenseAllocation(membershipId, 1200))
+        )
+        expenseStore.create(group.groupId, record, "member-create-key", "alice")
+        val revisionBefore = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        val updateError = assertThrows(ApplicationException::class.java) {
+            expenseStore.update(group.groupId, expenseId, record.copy(description = "Changed"), "bob")
+        }
+        assertEquals(ErrorCode.ERR_05, updateError.errorCode)
+
+        val deleteError = assertThrows(ApplicationException::class.java) {
+            expenseStore.delete(group.groupId, expenseId, version = 1, actorSubject = "bob")
+        }
+        assertEquals(ErrorCode.ERR_05, deleteError.errorCode)
+
+        val unchanged = expenseStore.findById(expenseId)
+        assertEquals("Train tickets", unchanged?.description)
+        assertEquals(1, unchanged?.version)
+        assertEquals(revisionBefore, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertEquals(2, balancePostingRepository.findByExpenseId(expenseId).size)
+    }
+
+    @Test
+    fun `archived groups reject create update and delete without financial mutation`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Archived trip", "TRIP", "EUR"))
+        val membershipId = membershipRepository.findByGroupId(group.groupId).single().membershipId
+        val expenseId = UUID.randomUUID()
+        val existing = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Existing fare",
+            category = "travel",
+            currency = "EUR",
+            amountMinor = 800,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(membershipId, 800)),
+            allocations = listOf(ExpenseAllocation(membershipId, 800))
+        )
+        expenseStore.create(group.groupId, existing, "archive-create-key", "alice")
+        groupStore.archive(group.groupId, "alice")
+        val archivedRevision = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        val newExpense = existing.copy(expenseId = UUID.randomUUID(), description = "Rejected fare")
+        val createError = assertThrows(ApplicationException::class.java) {
+            expenseStore.create(group.groupId, newExpense, "archive-rejected-key", "alice")
+        }
+        assertEquals(ErrorCode.ERR_06, createError.errorCode)
+
+        val updateError = assertThrows(ApplicationException::class.java) {
+            expenseStore.update(group.groupId, expenseId, existing.copy(description = "Rejected update"), "alice")
+        }
+        assertEquals(ErrorCode.ERR_06, updateError.errorCode)
+
+        val deleteError = assertThrows(ApplicationException::class.java) {
+            expenseStore.delete(group.groupId, expenseId, version = 1, actorSubject = "alice")
+        }
+        assertEquals(ErrorCode.ERR_06, deleteError.errorCode)
+
+        assertEquals(archivedRevision, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertEquals("Existing fare", expenseStore.findById(expenseId)?.description)
+        assertEquals(2, balancePostingRepository.findByExpenseId(expenseId).size)
+        assertNull(expenseStore.findById(newExpense.expenseId))
+    }
 
     @Test
     fun `persists expense, payers, allocations, and postings atomically`() {
@@ -139,6 +334,39 @@ class JpaExpenseStoreTest @Autowired constructor(
     }
 
     @Test
+    fun `idempotency key reuse with a different payload throws conflict`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Idempotency conflict", "TRIP", "EUR"))
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val original = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Original expense",
+            category = "travel",
+            currency = "EUR",
+            amountMinor = 1000,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(participantId, 1000)),
+            allocations = listOf(ExpenseAllocation(participantId, 1000))
+        )
+
+        expenseStore.create(group.groupId, original, "same-idempotency-key")
+
+        val error = assertThrows(ApplicationException::class.java) {
+            expenseStore.create(
+                group.groupId,
+                original.copy(description = "Changed expense"),
+                "same-idempotency-key"
+            )
+        }
+
+        assertEquals(ErrorCode.ERR_06, error.errorCode)
+        assertEquals("Original expense", expenseStore.findById(expenseId)?.description)
+    }
+
+    @Test
     fun `creation with duplicate expense ID but different payload throws conflict`() {
         val group = groupStore.create("alice", CreateGroupRequest("Road Trip", "TRIP", "EUR"))
         val groupId = group.groupId
@@ -167,6 +395,78 @@ class JpaExpenseStoreTest @Autowired constructor(
             expenseStore.create(groupId, record2, "idemp-2")
         }
         assertEquals(ErrorCode.ERR_06, err.errorCode)
+    }
+
+    @Test
+    fun `creation with duplicate expense ID and identical payload returns existing record`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Duplicate identity", "TRIP", "EUR"))
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val record = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Same expense",
+            category = "other",
+            currency = "EUR",
+            amountMinor = 700,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(participantId, 700)),
+            allocations = listOf(ExpenseAllocation(participantId, 700))
+        )
+
+        val first = expenseStore.create(group.groupId, record, "first-key")
+        val second = expenseStore.create(group.groupId, record.copy(createdAt = Instant.now()), "second-key")
+
+        assertEquals(first.expenseId, second.expenseId)
+        assertEquals(first.description, second.description)
+        assertEquals(2, balancePostingRepository.findByExpenseId(expenseId).size)
+    }
+
+    @Test
+    fun `duplicate expense ID conflicts for every compared payload dimension`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Conflict dimensions", "TRIP", "EUR"))
+        val expenseId = UUID.randomUUID()
+        val originalPayer = UUID.randomUUID()
+        val alternatePayer = UUID.randomUUID()
+        val originalAllocation = UUID.randomUUID()
+        val alternateAllocation = UUID.randomUUID()
+        val original = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Original description",
+            category = "travel",
+            currency = "EUR",
+            amountMinor = 4000,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(originalPayer, 4000)),
+            allocations = listOf(ExpenseAllocation(originalAllocation, 4000))
+        )
+        expenseStore.create(group.groupId, original, "conflict-original")
+
+        val conflictingPayloads = listOf(
+            original.copy(description = "Changed description"),
+            original.copy(currency = "USD"),
+            original.copy(payers = listOf(ExpensePayer(alternatePayer, 4000))),
+            original.copy(allocations = listOf(ExpenseAllocation(alternateAllocation, 4000)))
+        )
+
+        conflictingPayloads.forEachIndexed { index, conflicting ->
+            val error = assertThrows(ApplicationException::class.java) {
+                expenseStore.create(group.groupId, conflicting, "conflict-$index")
+            }
+            assertEquals(ErrorCode.ERR_06, error.errorCode)
+        }
+
+        val persisted = expenseStore.findById(expenseId)
+        assertEquals(original.description, persisted?.description)
+        assertEquals(original.currency, persisted?.currency)
+        assertEquals(original.payers, persisted?.payers)
+        assertEquals(original.allocations, persisted?.allocations)
+        assertEquals(2, balancePostingRepository.findByExpenseId(expenseId).size)
     }
 
     @Test
@@ -234,6 +534,199 @@ class JpaExpenseStoreTest @Autowired constructor(
         val bobBalanceAfter = balancesAfter.find { it.participantId == bobId.toString() }?.amount?.minor?.toLong()
         assertEquals(-1500L, aliceBalanceAfter)
         assertEquals(1500L, bobBalanceAfter)
+    }
+
+    @Test
+    fun `updates existing payer and allocation rows in place`() {
+        val group = groupStore.create("alice", CreateGroupRequest("In-place update", "TRIP", "EUR"))
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val initial = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Initial charge",
+            category = "travel",
+            currency = "EUR",
+            amountMinor = 2000,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(participantId, 2000)),
+            allocations = listOf(ExpenseAllocation(participantId, 2000))
+        )
+        expenseStore.create(group.groupId, initial, "idemp-in-place")
+
+        val updated = expenseStore.update(
+            group.groupId,
+            expenseId,
+            initial.copy(
+                description = "Updated charge",
+                amountMinor = 3000,
+                payers = listOf(ExpensePayer(participantId, 3000)),
+                allocations = listOf(ExpenseAllocation(participantId, 3000))
+            )
+        )
+
+        assertEquals(2, updated.version)
+        assertEquals("Updated charge", updated.description)
+        assertEquals(listOf(ExpensePayer(participantId, 3000)), updated.payers)
+        assertEquals(listOf(ExpenseAllocation(participantId, 3000)), updated.allocations)
+        assertEquals(0L, balancePostingRepository.findByExpenseId(expenseId).sumOf { it.amountMinor })
+    }
+
+    @Test
+    fun `updates mixed existing and new participants without violating unique rows`() {
+        val group = groupStore.create("alice", CreateGroupRequest("Mixed participants", "TRIP", "EUR"))
+        val expenseId = UUID.randomUUID()
+        val existingParticipant = UUID.randomUUID()
+        val removedParticipant = UUID.randomUUID()
+        val newParticipant = UUID.randomUUID()
+        val initial = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Initial split",
+            category = "other",
+            currency = "EUR",
+            amountMinor = 2000,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(existingParticipant, 1000), ExpensePayer(removedParticipant, 1000)),
+            allocations = listOf(ExpenseAllocation(existingParticipant, 1000), ExpenseAllocation(removedParticipant, 1000))
+        )
+        expenseStore.create(group.groupId, initial, "mixed-initial")
+
+        val updated = expenseStore.update(
+            group.groupId,
+            expenseId,
+            initial.copy(
+                description = "Updated split",
+                amountMinor = 2000,
+                payers = listOf(ExpensePayer(existingParticipant, 1200), ExpensePayer(newParticipant, 800)),
+                allocations = listOf(ExpenseAllocation(existingParticipant, 1200), ExpenseAllocation(newParticipant, 800))
+            )
+        )
+
+        assertEquals(2, updated.version)
+        assertEquals(
+            setOf(existingParticipant, newParticipant),
+            updated.payers.map { it.participantId }.toSet()
+        )
+        assertEquals(
+            setOf(existingParticipant, newParticipant),
+            updated.allocations.map { it.participantId }.toSet()
+        )
+    }
+
+    /** Verifies update lookup and soft-deleted rejection outcomes do not mutate group state. */
+    @Test
+    fun `rejects update for missing group expense and deleted expense`() {
+        val missingGroupError = assertThrows(ApplicationException::class.java) {
+            expenseStore.update(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                ExpenseRecord(
+                    expenseId = UUID.randomUUID(),
+                    groupId = UUID.randomUUID(),
+                    description = "Missing group",
+                    category = "other",
+                    currency = "EUR",
+                    amountMinor = 100,
+                    version = 1,
+                    allocationMode = "EXACT",
+                    createdAt = Instant.now(),
+                    payers = emptyList(),
+                    allocations = emptyList()
+                )
+            )
+        }
+        assertEquals(ErrorCode.ERR_05, missingGroupError.errorCode)
+
+        val group = groupStore.create("update-boundary-owner", CreateGroupRequest("Update boundaries", "TRIP", "EUR"))
+        val missingExpenseError = assertThrows(ApplicationException::class.java) {
+            expenseStore.update(
+                group.groupId,
+                UUID.randomUUID(),
+                ExpenseRecord(
+                    expenseId = UUID.randomUUID(),
+                    groupId = group.groupId,
+                    description = "Missing expense",
+                    category = "other",
+                    currency = "EUR",
+                    amountMinor = 100,
+                    version = 1,
+                    allocationMode = "EXACT",
+                    createdAt = Instant.now(),
+                    payers = emptyList(),
+                    allocations = emptyList()
+                )
+            )
+        }
+        assertEquals(ErrorCode.ERR_05, missingExpenseError.errorCode)
+
+        val expenseId = UUID.randomUUID()
+        val record = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Deleted expense",
+            category = "other",
+            currency = "EUR",
+            amountMinor = 100,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = emptyList(),
+            allocations = emptyList()
+        )
+        expenseStore.create(group.groupId, record, "update-deleted")
+        expenseStore.delete(group.groupId, expenseId, version = 1)
+        val revisionAfterDelete = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        val deletedExpenseError = assertThrows(ApplicationException::class.java) {
+            expenseStore.update(group.groupId, expenseId, record)
+        }
+        assertEquals(ErrorCode.ERR_05, deletedExpenseError.errorCode)
+        assertEquals(revisionAfterDelete, groupRepository.findById(group.groupId).orElseThrow().revision)
+    }
+
+    /** Verifies update replaces removed payer/allocation rows and adds the new participant rows in place. */
+    @Test
+    fun `replaces payer and allocation participants during update`() {
+        val group = groupStore.create("replace-owner", CreateGroupRequest("Replace participants", "TRIP", "EUR"))
+        val expenseId = UUID.randomUUID()
+        val oldPayer = UUID.randomUUID()
+        val oldAllocation = UUID.randomUUID()
+        val newPayer = UUID.randomUUID()
+        val newAllocation = UUID.randomUUID()
+        val initial = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Initial participants",
+            category = "other",
+            currency = "EUR",
+            amountMinor = 1000,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(oldPayer, 1000)),
+            allocations = listOf(ExpenseAllocation(oldAllocation, 1000))
+        )
+        expenseStore.create(group.groupId, initial, "replace-initial")
+
+        val updated = expenseStore.update(
+            group.groupId,
+            expenseId,
+            initial.copy(
+                description = "Replaced participants",
+                payers = listOf(ExpensePayer(newPayer, 1000)),
+                allocations = listOf(ExpenseAllocation(newAllocation, 1000))
+            )
+        )
+
+        assertEquals(2, updated.version)
+        assertEquals(listOf(ExpensePayer(newPayer, 1000)), updated.payers)
+        assertEquals(listOf(ExpenseAllocation(newAllocation, 1000)), updated.allocations)
+        assertEquals(0L, balancePostingRepository.findByExpenseId(expenseId).sumOf { it.amountMinor })
     }
 
     @Test
@@ -322,5 +815,50 @@ class JpaExpenseStoreTest @Autowired constructor(
             expenseStore.delete(groupId, expenseId, version = 99)
         }
         assertEquals(ErrorCode.ERR_06, deleteErr.errorCode)
+    }
+
+    /** Verifies delete lookup, null-version, and already-deleted outcomes preserve the soft-delete contract. */
+    @Test
+    fun `rejects missing and repeated deletes without additional ledger effects`() {
+        val missingGroupError = assertThrows(ApplicationException::class.java) {
+            expenseStore.delete(UUID.randomUUID(), UUID.randomUUID(), version = null, actorSubject = "alice")
+        }
+        assertEquals(ErrorCode.ERR_05, missingGroupError.errorCode)
+
+        val group = groupStore.create("alice", CreateGroupRequest("Delete boundaries", "TRIP", "EUR"))
+        val missingExpenseError = assertThrows(ApplicationException::class.java) {
+            expenseStore.delete(group.groupId, UUID.randomUUID(), version = null, actorSubject = "alice")
+        }
+        assertEquals(ErrorCode.ERR_03, missingExpenseError.errorCode)
+
+        val expenseId = UUID.randomUUID()
+        val participantId = UUID.randomUUID()
+        val record = ExpenseRecord(
+            expenseId = expenseId,
+            groupId = group.groupId,
+            description = "Delete boundary",
+            category = "other",
+            currency = "EUR",
+            amountMinor = 100,
+            version = 1,
+            allocationMode = "EXACT",
+            createdAt = Instant.now(),
+            payers = listOf(ExpensePayer(participantId, 100)),
+            allocations = listOf(ExpenseAllocation(participantId, 100))
+        )
+        expenseStore.create(group.groupId, record, "delete-boundary")
+        val revisionBeforeDelete = groupRepository.findById(group.groupId).orElseThrow().revision
+
+        expenseStore.delete(group.groupId, expenseId, version = null, actorSubject = "alice")
+        val revisionAfterDelete = groupRepository.findById(group.groupId).orElseThrow().revision
+        assertEquals(revisionBeforeDelete + 1, revisionAfterDelete)
+        assertEquals(0L, balancePostingRepository.findByExpenseId(expenseId).sumOf { it.amountMinor })
+
+        val repeatedDeleteError = assertThrows(ApplicationException::class.java) {
+            expenseStore.delete(group.groupId, expenseId, version = null, actorSubject = "alice")
+        }
+        assertEquals(ErrorCode.ERR_05, repeatedDeleteError.errorCode)
+        assertEquals(revisionAfterDelete, groupRepository.findById(group.groupId).orElseThrow().revision)
+        assertEquals(2, balancePostingRepository.findByExpenseId(expenseId).size)
     }
 }

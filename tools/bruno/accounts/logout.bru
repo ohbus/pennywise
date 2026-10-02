@@ -6,13 +6,19 @@ meta {
 
 post {
   url: {{baseUrlAccounts}}/accounts/v1/auth/logout
-  body: none
+  body: json
   auth: none
 }
 
 headers {
   Authorization: Bearer {{token}}
   Content-Type: application/json
+}
+
+body:json {
+  {
+    "refreshToken": "00000000-0000-0000-0000-000000000001"
+  }
 }
 
 tests {

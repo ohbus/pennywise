@@ -34,6 +34,9 @@ class RestGatewayTest {
         assertEquals("0/20", greatestWriterWatermark("0/20", "0/10"))
         assertEquals("0/20", greatestWriterWatermark("0/20", "not-an-lsn"))
         assertEquals("0/30", greatestWriterWatermark(null, "0/30"))
+        assertEquals("0/20", greatestWriterWatermark("0/20", null))
+        assertEquals(null, greatestWriterWatermark(null, null))
+        assertEquals("0/30", greatestWriterWatermark("not-an-lsn", "0/30"))
     }
 
     @Test
@@ -79,6 +82,7 @@ class RestGatewayTest {
         assertEquals("settlement-123", settlement.id)
         assertEquals("2500", settlement.amount.minor)
         assertEquals("EUR", settlement.amount.currency)
+        assertEquals("0", BffSettlement("settlement-empty", status = "RECORDED", currency = "EUR").amount.minor)
 
         val suggestion = BffSuggestedSettlement(
             fromParticipantId = participantId,

@@ -1,4 +1,5 @@
 package com.subhrodip.squarewise.expensecore.messaging
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import com.subhrodip.squarewise.expensecore.messaging.broker.BrokerMessage
 import com.subhrodip.squarewise.expensecore.messaging.broker.InMemoryBroker
 import java.time.Instant
@@ -41,7 +42,7 @@ class BrokerTest {
 
         assertEquals(msg1, msg2)
         assertEquals(msg1.hashCode(), msg2.hashCode())
-        org.junit.jupiter.api.Assertions.assertNotEquals(msg1, msg3)
+        assertNotEquals(msg1, msg3)
         assertTrue(msg1.toString().contains("type"))
     }
 }

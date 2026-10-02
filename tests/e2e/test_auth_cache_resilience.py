@@ -8,8 +8,8 @@ import os
 import subprocess
 import sys
 import time
-import urllib.error
-import urllib.request
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from typing import Final
 
 
@@ -58,16 +58,16 @@ def redis_cli(*arguments: str) -> str:
 def refresh_status(timeout: float = 8.0) -> int:
     """Return the Accounts refresh response status for an intentionally invalid token."""
     body = json.dumps({"refreshToken": PROBE_TOKEN}).encode("utf-8")
-    request = urllib.request.Request(
+    request = Request(
         f"{ACCOUNTS_URL}{REFRESH_PATH}",
         data=body,
         headers={"Content-Type": "application/json"},
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with urlopen(request, timeout=timeout) as response:
             return response.status
-    except urllib.error.HTTPError as error:
+    except HTTPError as error:
         return error.code
 
 

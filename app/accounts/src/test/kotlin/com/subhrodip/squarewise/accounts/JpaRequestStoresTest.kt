@@ -6,10 +6,12 @@ import com.subhrodip.squarewise.accounts.requests.deletion.model.DeletionStatus
 import com.subhrodip.squarewise.accounts.requests.export.persistence.ExportRequestRepository
 import com.subhrodip.squarewise.accounts.requests.export.model.ExportStatus
 import com.subhrodip.squarewise.accounts.requests.export.persistence.JpaExportRequestStore
+import com.subhrodip.squarewise.accounts.profile.api.ProfilePatchRequest
 import com.subhrodip.squarewise.accounts.profile.persistence.JpaProfileStore
 import com.subhrodip.squarewise.accounts.profile.persistence.ProfileRepository
 import com.subhrodip.squarewise.accounts.auth.session.AuthSessionEntity
 import com.subhrodip.squarewise.accounts.auth.session.AuthSessionRepository
+import com.subhrodip.squarewise.errors.domain.ApplicationException
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -18,6 +20,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -39,8 +42,8 @@ class JpaRequestStoresTest @Autowired constructor(
     fun `persists deletion request idempotently and preserves historical financial profile reference`() {
         val subject = "oidc|user-${UUID.randomUUID()}"
 
-        // Initial profile creation
-        val profile = profileStore.get(subject)
+        // Explicit profile creation
+        val profile = profileStore.create(UUID.randomUUID(), subject, subject)
         assertEquals(subject, profile.displayName)
 
         val now = Instant.now()
@@ -122,7 +125,7 @@ class JpaRequestStoresTest @Autowired constructor(
     @Test
     fun `finds profile by account id`() {
         val subject = "oidc|user-${UUID.randomUUID()}"
-        val profile = profileStore.get(subject)
+        val profile = profileStore.create(UUID.randomUUID(), subject, subject)
 
         val found = profileStore.findById(profile.accountId)
         assertNotNull(found)
@@ -139,13 +142,87 @@ class JpaRequestStoresTest @Autowired constructor(
     fun `finds profiles in batch by account ids`() {
         val subject1 = "oidc|user-${UUID.randomUUID()}"
         val subject2 = "oidc|user-${UUID.randomUUID()}"
-        val p1 = profileStore.get(subject1)
-        val p2 = profileStore.get(subject2)
+        val p1 = profileStore.create(UUID.randomUUID(), subject1, subject1)
+        val p2 = profileStore.create(UUID.randomUUID(), subject2, subject2)
 
         val batch = profileStore.findByIds(listOf(p1.accountId, p2.accountId, UUID.randomUUID()))
         assertEquals(2, batch.size)
         val ids = batch.map { it.accountId }.toSet()
         assertTrue(ids.contains(p1.accountId))
         assertTrue(ids.contains(p2.accountId))
+    }
+
+    @Test
+    fun `gets profiles without provisioning and rejects invalid subjects`() {
+        val subject = "oidc|user-${UUID.randomUUID()}"
+        val profile = profileStore.create(UUID.randomUUID(), subject, "Alice")
+
+        val found = profileStore.get(subject)
+        assertNotNull(found)
+        assertEquals(profile.accountId, found?.accountId)
+        assertNull(profileStore.get("oidc|missing-${UUID.randomUUID()}"))
+        assertThrows(ApplicationException::class.java) { profileStore.get(" ") }
+        assertEquals(1, profileRepository.findAll().count { it.subject == subject })
+    }
+
+    @Test
+    fun `updates each profile field and fails closed for missing profiles`() {
+        val subject = "oidc|user-${UUID.randomUUID()}"
+        val profile = profileStore.create(UUID.randomUUID(), subject, "Alice")
+
+        val updated = profileStore.update(
+            subject,
+            ProfilePatchRequest(displayName = "Alicia", timezone = "Europe/Vienna", defaultCurrency = "USD")
+        )
+        assertEquals("Alicia", updated.displayName)
+        assertEquals("Europe/Vienna", updated.timezone)
+        assertEquals("USD", updated.defaultCurrency)
+
+        val timezoneOnly = profileStore.update(subject, ProfilePatchRequest(timezone = "UTC"))
+        assertEquals("Alicia", timezoneOnly.displayName)
+        assertEquals("UTC", timezoneOnly.timezone)
+        assertEquals("USD", timezoneOnly.defaultCurrency)
+
+        val displayNameOnly = profileStore.update(subject, ProfilePatchRequest(displayName = "Alice Again"))
+        assertEquals("Alice Again", displayNameOnly.displayName)
+        assertEquals("UTC", displayNameOnly.timezone)
+        assertEquals("USD", displayNameOnly.defaultCurrency)
+
+        assertThrows(ApplicationException::class.java) {
+            profileStore.update(subject, ProfilePatchRequest(timezone = "Not/AZone"))
+        }
+        assertThrows(ApplicationException::class.java) {
+            profileStore.update(" ", ProfilePatchRequest(displayName = "Ignored"))
+        }
+        assertThrows(ApplicationException::class.java) {
+            profileStore.update("oidc|missing-${UUID.randomUUID()}", ProfilePatchRequest(displayName = "Missing"))
+        }
+        assertEquals(profile.accountId, profileStore.get(subject)?.accountId)
+    }
+
+    @Test
+    fun `marks an existing profile for deletion and rejects missing profiles`() {
+        val subject = "oidc|user-${UUID.randomUUID()}"
+        val profile = profileStore.create(UUID.randomUUID(), subject, "Alice")
+
+        profileStore.requestDeletion(subject)
+        assertTrue(profileRepository.findById(profile.accountId).orElseThrow().deletionRequested)
+
+        assertThrows(ApplicationException::class.java) { profileStore.requestDeletion(" ") }
+        assertThrows(ApplicationException::class.java) {
+            profileStore.requestDeletion("oidc|missing-${UUID.randomUUID()}")
+        }
+    }
+
+    @Test
+    fun `returns null for missing deletion records and rejects blank subjects`() {
+        val missingSubject = "oidc|missing-${UUID.randomUUID()}"
+
+        assertNull(deletionStore.get(missingSubject))
+        assertNull(deletionStore.cancel(missingSubject))
+        assertNull(deletionStore.complete(missingSubject))
+        assertThrows(ApplicationException::class.java) { deletionStore.get(" ") }
+        assertThrows(ApplicationException::class.java) { deletionStore.cancel(" ") }
+        assertThrows(ApplicationException::class.java) { deletionStore.complete(" ") }
     }
 }

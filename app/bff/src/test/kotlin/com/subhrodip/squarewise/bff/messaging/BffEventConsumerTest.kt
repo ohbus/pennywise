@@ -114,7 +114,7 @@ class BffEventConsumerTest {
         val retained = fanout.subscribe("retained-user", groupId.toString())
         val envelope = BffEventEnvelope(
             eventId = UUID.randomUUID(),
-            eventType = "member.removed",
+            eventType = "member.removed.v1",
             schemaVersion = 1,
             aggregateId = UUID.randomUUID(),
             groupId = groupId,
@@ -129,5 +129,30 @@ class BffEventConsumerTest {
         assertEquals(1, (result as ProcessedConsumptionResult).deliveredQueues)
         assertEquals(null, fanout.poll(removed.id))
         assertEquals(groupId.toString(), fanout.poll(retained.id)?.groupId)
+    }
+
+    /** Verifies malformed member-removal subjects do not revoke a subscription. */
+    @Test
+    fun `member removal without a usable target subject only publishes the update`() {
+        listOf(emptyMap<String, Any?>(), mapOf("targetSubject" to ""), mapOf("targetSubject" to "   "))
+            .forEach { payload ->
+                val groupId = UUID.randomUUID()
+                val subscriber = fanout.subscribe("retained-user", groupId.toString())
+                val envelope = BffEventEnvelope(
+                    eventId = UUID.randomUUID(),
+                    eventType = "member.removed.v1",
+                    schemaVersion = 1,
+                    aggregateId = UUID.randomUUID(),
+                    groupId = groupId,
+                    groupRevision = 4L,
+                    occurredAt = Instant.now(),
+                    payload = payload
+                )
+
+                val result = consumer.consume(envelope)
+
+                assertTrue(result is ProcessedConsumptionResult)
+                assertEquals(groupId.toString(), fanout.poll(subscriber.id)?.groupId)
+            }
     }
 }

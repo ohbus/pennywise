@@ -4,14 +4,17 @@
 from __future__ import annotations
 
 import json
+import argparse
 import base64
 import os
 import io
 import sys
-import urllib.error
-import urllib.request
+from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 import uuid
 from tests.http_constants import ACCEPT, APPLICATION_JSON, AUTHORIZATION, CONTENT_TYPE, IDEMPOTENCY_KEY, TEXT_CSV
+from tests.e2e.qa10_evidence import write_execution_evidence
 
 
 ACCOUNTS_URL = os.environ.get("ACCOUNTS_URL", "http://localhost:8081")
@@ -70,12 +73,12 @@ def request_json(url: str, method: str = "GET", body: object | None = None, toke
     if headers:
         request_headers.update(headers)
     data = json.dumps(body).encode() if body is not None else None
-    request = urllib.request.Request(url, data=data, headers=request_headers, method=method)
+    request = Request(url, data=data, headers=request_headers, method=method)
     try:
-        with urllib.request.urlopen(request, timeout=5) as response:
+        with urlopen(request, timeout=5) as response:
             raw = response.read()
             return response.status, json.loads(raw) if raw else {}
-    except urllib.error.HTTPError as error:
+    except HTTPError as error:
         raw = error.read()
         try:
             return error.code, json.loads(raw) if raw else {}
@@ -89,7 +92,7 @@ def expect(label: str, actual: int, *allowed: int) -> None:
     print(f"  ✓ {label}: HTTP {actual}")
 
 
-def main() -> None:
+def main(evidence_output: Path | None = None, source_revision: str = "local-worktree", environment: str = "local-compose-oidc") -> None:
     """Run live REST edge checks with deterministic UTF-8 console output."""
     if not TOKEN:
         raise RuntimeError("BEARER_TOKEN must contain a signed access token for authenticated checks")
@@ -181,6 +184,33 @@ def main() -> None:
     )
     expect("Notifications rejects unauthenticated preference update", status, 401)
 
+    status, alice_preferences = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_PREFERENCES}",
+    )
+    expect("Notifications getPreferences returns authenticated defaults", status, 200)
+    if alice_preferences != {"emailEnabled": True, "pushEnabled": True}:
+        raise AssertionError(f"getPreferences returned unexpected defaults: {alice_preferences}")
+
+    status, _ = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_PREFERENCES}",
+        method="PUT", body={"emailEnabled": False, "pushEnabled": True},
+    )
+    expect("Notifications updatePreferences persists authenticated settings", status, 204)
+
+    status, alice_preferences = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_PREFERENCES}",
+    )
+    expect("Notifications getPreferences returns updated settings", status, 200)
+    if alice_preferences != {"emailEnabled": False, "pushEnabled": True}:
+        raise AssertionError(f"getPreferences returned unexpected update: {alice_preferences}")
+
+    status, bob_preferences = request_json(
+        f"{NOTIFICATIONS_URL}{NOTIFICATIONS_PREFERENCES}", token=SECONDARY_TOKEN,
+    )
+    expect("Notifications getPreferences isolates signed subjects", status, 200)
+    if bob_preferences != {"emailEnabled": True, "pushEnabled": True}:
+        raise AssertionError(f"getPreferences leaked Alice settings: {bob_preferences}")
+
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUPS}",
         method="POST",
@@ -242,6 +272,14 @@ def main() -> None:
         method="PATCH", body={"name": "Unauthorized rename"}, token="non-member",
     )
     expect("non-member group update is hidden", status, 404)
+
+    status, updated_group = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}",
+        method="PATCH", body={"name": "REST edge updated"},
+    )
+    expect("authorized group update persists", status, 200)
+    if not isinstance(updated_group, dict) or updated_group.get("name") != "REST edge updated":
+        raise AssertionError(f"authorized group update returned unexpected body: {updated_group}")
 
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}",
@@ -353,7 +391,7 @@ def main() -> None:
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_INVITE_REVOKE.format(group_id=group_id, token=revoked_token)}",
         method="POST",
     )
-    expect("member can revoke invite", status, 204)
+    expect("Expense Core revokeInvite succeeds for an authorized member", status, 204)
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_INVITE_CLAIM.format(token=revoked_token)}",
         method="POST", token="revoked-claim-user",
@@ -517,6 +555,12 @@ def main() -> None:
         "payers": [{"participantId": participant, "amount": {"currency": "EUR", "minor": "100"}}],
         "allocation": {"mode": "EQUAL", "items": [{"participantId": participant, "value": "1"}]},
     }
+    status, before_rejected_expenses = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}"
+    )
+    expect("member expense baseline is readable before rejected writes", status, 200)
+    if not isinstance(before_rejected_expenses, list):
+        raise AssertionError("expense baseline must be a JSON list")
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
         method="POST", body=payload, token="non-member",
@@ -529,6 +573,14 @@ def main() -> None:
         headers={IDEMPOTENCY_KEY: f"missing-auth-{uuid.uuid4()}"},
     )
     expect("unauthenticated expense creation is rejected", status, 401)
+    status, after_rejected_expenses = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}"
+    )
+    expect("member expense state remains readable after rejected writes", status, 200)
+    if not isinstance(after_rejected_expenses, list):
+        raise AssertionError("expense state after rejected writes must be a JSON list")
+    if after_rejected_expenses != before_rejected_expenses:
+        raise AssertionError("rejected expense writes must not mutate durable expense state")
     status, first = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
         method="POST", body=payload, headers={IDEMPOTENCY_KEY: key},
@@ -547,6 +599,12 @@ def main() -> None:
 
     update_payload = dict(payload)
     update_payload["description"] = "Unauthorized update"
+    status, before_rejected_mutations = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}"
+    )
+    expect("member expense state is readable before rejected update/delete", status, 200)
+    if not isinstance(before_rejected_mutations, list):
+        raise AssertionError("expense state before rejected update/delete must be a JSON list")
     status, _ = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}/{expense_id}",
         method="PUT", body={"version": 1, **{key: value for key, value in update_payload.items() if key != "expenseId"}},
@@ -572,6 +630,14 @@ def main() -> None:
         method="DELETE", token="non-member",
     )
     expect("non-member expense deletion is hidden", status, 404)
+    status, after_rejected_mutations = request_json(
+        f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}"
+    )
+    expect("member expense state remains readable after rejected update/delete", status, 200)
+    if not isinstance(after_rejected_mutations, list):
+        raise AssertionError("expense state after rejected update/delete must be a JSON list")
+    if after_rejected_mutations != before_rejected_mutations:
+        raise AssertionError("rejected expense update/delete must not mutate durable expense state")
 
     status, replay = request_json(
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_EXPENSES.format(group_id=group_id)}",
@@ -604,7 +670,7 @@ def main() -> None:
         f"{EXPENSE_CORE_URL}{EXPENSE_GROUP_ARCHIVE.format(group_id=group_id)}",
         method="POST",
     )
-    expect("member can archive group", status, 200)
+    expect("Expense Core archiveGroup succeeds for an authorized member", status, 200)
 
     status, _ = request_json(f"{EXPENSE_CORE_URL}{EXPENSE_GROUP.format(group_id=group_id)}")
     expect("archived group is hidden from member lookup", status, 404)
@@ -633,7 +699,81 @@ def main() -> None:
     expect("archived group rejects new expense", status, 404, 409)
 
     print("REST edge-case checks passed")
+    if evidence_output is not None:
+        artifact = str(evidence_output)
+        write_execution_evidence(
+            evidence_output,
+            source_revision,
+            environment,
+            [
+                {
+                    "surface": "REST",
+                    "operation": "createGroup",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "authorized member created an isolated group",
+                        "invalid-kind and unauthenticated creation were rejected",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "archiveGroup",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "authorized archive returned HTTP 200",
+                        "archived group and members became hidden and archive replay was rejected",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "updateGroup",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "authorized member rename returned HTTP 200",
+                        "updated group name was returned and persisted before archive",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "revokeInvite",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "authorized invite revocation returned HTTP 204",
+                        "revoked invite claim returned HTTP 409",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "getPreferences",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": [
+                        "authenticated defaults were returned",
+                        "updated settings persisted and remained isolated from a second subject",
+                    ],
+                },
+                {
+                    "surface": "REST",
+                    "operation": "updatePreferences",
+                    "status": "passed",
+                    "artifact": artifact,
+                    "assertions": ["authenticated preference update returned HTTP 204 and persisted settings"],
+                },
+            ],
+        )
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run live REST edge-case checks")
+    parser.add_argument("--evidence-output", type=Path, help="write QA-10 operation evidence after success")
+    parser.add_argument("--source-revision", default=os.environ.get("GITHUB_SHA", "local-worktree"))
+    parser.add_argument(
+        "--environment",
+        default=os.environ.get("QA10_E2E_ENVIRONMENT", "local-compose-oidc"),
+    )
+    arguments = parser.parse_args()
+    main(arguments.evidence_output, arguments.source_revision, arguments.environment)

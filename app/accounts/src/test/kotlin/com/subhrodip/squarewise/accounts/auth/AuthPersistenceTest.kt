@@ -4,8 +4,13 @@ import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialEntity
 import com.subhrodip.squarewise.accounts.auth.credential.LoginCredentialRepository
 import com.subhrodip.squarewise.accounts.auth.delivery.outbox.AuthEmailOutboxEntity
 import com.subhrodip.squarewise.accounts.auth.delivery.outbox.AuthEmailOutboxRepository
-import com.subhrodip.squarewise.accounts.auth.delivery.service.AuthEmailOutboxService
+import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailDeliveryResult
+import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailMessage
 import com.subhrodip.squarewise.accounts.auth.delivery.model.AuthEmailTemplate
+import com.subhrodip.squarewise.accounts.auth.delivery.model.CredentialDeliveryContext
+import com.subhrodip.squarewise.accounts.auth.delivery.security.CredentialEnvelopeProtector
+import com.subhrodip.squarewise.accounts.auth.delivery.service.AuthEmailSender
+import com.subhrodip.squarewise.accounts.auth.delivery.service.AuthEmailOutboxService
 import com.subhrodip.squarewise.accounts.auth.session.AuthSessionEntity
 import com.subhrodip.squarewise.accounts.auth.session.AuthSessionRepository
 import java.time.Instant
@@ -13,6 +18,8 @@ import java.time.temporal.ChronoUnit
 import java.time.Duration
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -25,7 +32,9 @@ class AuthPersistenceTest @Autowired constructor(
     private val credentialRepository: LoginCredentialRepository,
     private val sessionRepository: AuthSessionRepository,
     private val authEmailOutboxRepository: AuthEmailOutboxRepository,
-    private val authEmailOutboxService: AuthEmailOutboxService
+    private val authEmailOutboxService: AuthEmailOutboxService,
+    private val authEmailSender: AuthEmailSender,
+    private val credentialEnvelopeProtector: CredentialEnvelopeProtector
 ) {
     @Test
     fun `only one caller can consume an active credential`() {
@@ -119,6 +128,33 @@ class AuthPersistenceTest @Autowired constructor(
     }
 
     @Test
+    fun `sender persists decryptable protected material in the real outbox`() {
+        val expiresAt = Instant.now().plusSeconds(600)
+        val message = AuthEmailMessage(
+            recipient = "sender@example.com",
+            template = AuthEmailTemplate.LOGIN_CODE,
+            credential = "raw-sender-credential",
+            expiresAt = expiresAt
+        )
+
+        assertEquals(AuthEmailDeliveryResult.QUEUED, authEmailSender.send(message))
+
+        val record = authEmailOutboxRepository.findAll()
+            .single { it.recipient == message.recipient }
+        assertEquals("PENDING", record.status)
+        assertEquals(message.template.name, record.template)
+        assertEquals(message.expiresAt, record.expiresAt)
+        assertEquals(
+            message.credential,
+            credentialEnvelopeProtector.reveal(
+                record.encryptedCredential,
+                CredentialDeliveryContext(message.recipient, message.template)
+            )
+        )
+        assertEquals(false, record.encryptedCredential == message.credential)
+    }
+
+    @Test
     fun `auth email outbox claim leases the oldest event`() {
         val now = Instant.now()
         authEmailOutboxService.append(
@@ -155,5 +191,52 @@ class AuthPersistenceTest @Autowired constructor(
 
         assertEquals(true, authEmailOutboxService.reject(eventId, now.plusSeconds(2), Duration.ZERO, 1))
         assertEquals("PARKED", authEmailOutboxRepository.findByEventId(eventId)?.status)
+    }
+
+    @Test
+    fun `outbox rejects invalid lease and retry policies`() {
+        val now = Instant.now()
+        assertThrows(IllegalArgumentException::class.java) {
+            authEmailOutboxService.claim(now, Duration.ZERO)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            authEmailOutboxService.claim(now, Duration.ofSeconds(-1))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            authEmailOutboxService.reject(UUID.randomUUID(), now, Duration.ofSeconds(-1), 1)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            authEmailOutboxService.reject(UUID.randomUUID(), now, Duration.ZERO, 0)
+        }
+    }
+
+    @Test
+    fun `rejected event returns to pending before attempt limit`() {
+        val now = Instant.now()
+        val eventId = UUID.randomUUID()
+        authEmailOutboxService.append(
+            eventId, "retry@example.com", AuthEmailTemplate.LOGIN_CODE, "v1-r", now.plusSeconds(600), now
+        )
+        authEmailOutboxService.claim(now.plusMillis(1), Duration.ofSeconds(30))
+
+        assertEquals(true, authEmailOutboxService.reject(eventId, now.plusSeconds(2), Duration.ofSeconds(5), 3))
+        val record = authEmailOutboxRepository.findByEventId(eventId)
+        assertEquals("PENDING", record?.status)
+        val availableAt = requireNotNull(record?.availableAt)
+        assertTrue(availableAt.isAfter(now.plusSeconds(6)))
+        assertTrue(availableAt.isBefore(now.plusSeconds(8)))
+    }
+
+    @Test
+    fun `reject ignores an event that is not currently claimed`() {
+        assertEquals(
+            false,
+            authEmailOutboxService.reject(
+                UUID.randomUUID(),
+                Instant.now(),
+                Duration.ZERO,
+                3,
+            ),
+        )
     }
 }

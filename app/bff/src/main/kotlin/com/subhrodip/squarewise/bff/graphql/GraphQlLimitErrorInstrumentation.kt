@@ -4,6 +4,7 @@ import graphql.ExecutionResult
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
 import graphql.execution.instrumentation.SimplePerformantInstrumentation
+import graphql.execution.instrumentation.InstrumentationState
 import graphql.execution.instrumentation.parameters.InstrumentationExecutionParameters
 import java.util.concurrent.CompletableFuture
 import java.util.Locale
@@ -14,7 +15,7 @@ class GraphQlLimitErrorInstrumentation : SimplePerformantInstrumentation() {
     override fun instrumentExecutionResult(
         executionResult: ExecutionResult,
         parameters: InstrumentationExecutionParameters,
-        instrumentationState: graphql.execution.instrumentation.InstrumentationState?
+        instrumentationState: InstrumentationState?
     ): CompletableFuture<ExecutionResult> {
         val errors = executionResult.errors.map { error ->
             if (error.extensions?.containsKey("code") == true) {

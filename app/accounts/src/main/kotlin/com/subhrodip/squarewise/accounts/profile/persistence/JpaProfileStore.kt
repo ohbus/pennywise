@@ -3,65 +3,79 @@ package com.subhrodip.squarewise.accounts.profile.persistence
 import com.subhrodip.squarewise.accounts.profile.api.ProfilePatchRequest
 import com.subhrodip.squarewise.accounts.profile.api.ProfileResponse
 import com.subhrodip.squarewise.accounts.profile.service.ProfileRules
-import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentity
-import com.subhrodip.squarewise.accounts.auth.identity.AccountIdentityStore
-import org.springframework.context.annotation.Primary
-import org.springframework.stereotype.Service
-import java.nio.charset.StandardCharsets
+import com.subhrodip.squarewise.errors.domain.ApplicationException
+import com.subhrodip.squarewise.errors.domain.ErrorCode
 import java.util.UUID
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * JPA-backed implementation of [ProfileStore] for managing user account profiles.
  *
- * Interacts with PostgreSQL through [ProfileRepository]. Defaults and persists new profiles
- * upon initial lookup if absent.
+ * Interacts with PostgreSQL through [ProfileRepository]. Strictly enforces read/write
+ * separation: queries never provision or mutate profiles on lookup (closing SEC-002).
  */
-@Primary
 @Service
-class JpaProfileStore(private val repository: ProfileRepository) : ProfileStore, AccountIdentityStore {
-    /** Resolves trusted subject and account state for refresh-token issuance. */
-    override fun findByAccountId(accountId: UUID): AccountIdentity? =
-        repository.findById(accountId).orElse(null)?.toIdentity()
+class JpaProfileStore(private val repository: ProfileRepository) : ProfileStore {
+
     /**
-     * Retrieves the profile associated with the given subject, provisioning a default profile if none exists.
+     * Retrieves the profile associated with the given subject, returning null if absent.
+     * Never mutates or provisions a profile as a side effect of read lookup.
      *
      * @param subject OIDC subject identifier. Must not be blank.
-     * @return [ProfileResponse] representing the profile.
+     * @return [ProfileResponse] or null if not found.
      */
-    override fun get(subject: String): ProfileResponse {
+    @Transactional(readOnly = true)
+    override fun get(subject: String): ProfileResponse? {
         ProfileRules.requireSubject(subject)
-        return (repository.findBySubject(subject)
-            ?: repository.save(default(subject))).toResponse()
+        return repository.findBySubject(subject)?.toResponse()
+    }
+
+    /**
+     * Explicitly provisions a new profile for an account.
+     */
+    @Transactional
+    override fun create(
+        accountId: UUID,
+        subject: String,
+        displayName: String,
+        timezone: String,
+        defaultCurrency: String
+    ): ProfileResponse {
+        ProfileRules.requireSubject(subject)
+        ProfileRules.requireTimezone(timezone)
+        val entity = ProfileEntity(
+            accountId = accountId,
+            subject = subject,
+            displayName = displayName,
+            timezone = timezone,
+            defaultCurrency = defaultCurrency
+        )
+        return repository.save(entity).toResponse()
     }
 
     /**
      * Finds a profile by account ID.
-     *
-     * @param accountId Unique identifier of the profile.
-     * @return [ProfileResponse] or null if not found.
      */
+    @Transactional(readOnly = true)
     override fun findById(accountId: UUID): ProfileResponse? =
         repository.findById(accountId).orElse(null)?.toResponse()
 
     /**
      * Finds profiles by a batch of account IDs.
-     *
-     * @param accountIds List of unique account profile UUIDs.
-     * @return List of matching [ProfileResponse]s.
      */
+    @Transactional(readOnly = true)
     override fun findByIds(accountIds: List<UUID>): List<ProfileResponse> =
         repository.findAllById(accountIds).map { it.toResponse() }
 
     /**
-     * Updates an existing profile or defaults and updates if absent.
-     *
-     * @param subject OIDC subject identifier.
-     * @param patch Patch request containing fields to update.
-     * @return Updated [ProfileResponse].
+     * Updates an existing profile. Fails closed if the profile does not exist.
      */
+    @Transactional
     override fun update(subject: String, patch: ProfilePatchRequest): ProfileResponse {
         ProfileRules.requireSubject(subject)
-        val entity = repository.findBySubject(subject) ?: default(subject)
+        val entity = repository.findBySubject(subject)
+            ?: throw ApplicationException(ErrorCode.ERR_03, "Profile not found")
         entity.displayName = patch.displayName ?: entity.displayName
         entity.timezone = patch.timezone?.also(ProfileRules::requireTimezone) ?: entity.timezone
         entity.defaultCurrency = patch.defaultCurrency ?: entity.defaultCurrency
@@ -70,30 +84,18 @@ class JpaProfileStore(private val repository: ProfileRepository) : ProfileStore,
 
     /**
      * Marks an account profile for deletion while preserving historical financial attribution.
-     *
-     * @param subject OIDC subject identifier.
      */
+    @Transactional
     override fun requestDeletion(subject: String) {
         ProfileRules.requireSubject(subject)
-        val entity = repository.findBySubject(subject) ?: default(subject)
+        val entity = repository.findBySubject(subject)
+            ?: throw ApplicationException(ErrorCode.ERR_03, "Profile not found")
         entity.deletionRequested = true
         repository.save(entity)
     }
-
-    private fun default(subject: String) = ProfileEntity(
-        UUID.nameUUIDFromBytes(subject.toByteArray(StandardCharsets.UTF_8)), subject, subject, "UTC", "EUR"
-    )
 }
 
 /**
  * Maps [ProfileEntity] to its public [ProfileResponse] representation.
  */
 private fun ProfileEntity.toResponse() = ProfileResponse(accountId, displayName, timezone, defaultCurrency)
-
-/** Maps durable profile identity state to the authentication issuance port. */
-private fun ProfileEntity.toIdentity() = AccountIdentity(
-    accountId = accountId,
-    subject = subject,
-    email = subject.removePrefix("internal:"),
-    deletionRequested = deletionRequested
-)

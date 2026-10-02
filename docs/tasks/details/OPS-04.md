@@ -18,6 +18,12 @@ Parse every workflow, run the existing Gradle and contract checks, and inspect
 the diff for whitespace errors. Hosted execution remains the responsibility of
 GitHub after merge.
 
+The verification and Sonar service jobs use `rabbitmq:4.3` rather than the
+management image. Their checks require only AMQP and
+`rabbitmq-diagnostics`; the local Compose topology retains the management
+variant for operator inspection. This reduces hosted service-container startup
+work without changing the application or local acceptance topology.
+
 ## Known limitation
 
 The repository ktlint gate is tracked separately in DOC-12 and remains blocked

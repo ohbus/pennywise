@@ -127,6 +127,24 @@ class EmailDispatcherTest {
         }
     }
 
+    @Test
+    fun `positive retry delay allows a transient failure to recover`() {
+        properties.retryDelayMs = 1L
+        var attempts = 0
+        doAnswer {
+            attempts++
+            if (attempts == 1) {
+                throw MailSendException("temporary SMTP failure", SocketException("reset"))
+            }
+            Unit
+        }.`when`(mailSender).send(anyMessage())
+
+        val outcome = dispatcher.dispatch("delay-recovery@example.com", "Subject", "Body")
+
+        assertThat(outcome).isEqualTo(EmailDeliveryOutcome.DELIVERED)
+        assertThat(attempts).isEqualTo(2)
+    }
+
     /** Verifies permanent causes remain non-retryable when wrapped by a mail failure. */
     @Test
     fun `nested illegal argument failure is permanent without retrying`() {

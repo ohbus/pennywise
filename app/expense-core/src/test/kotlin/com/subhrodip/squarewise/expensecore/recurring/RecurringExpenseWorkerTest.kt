@@ -7,6 +7,9 @@ import com.subhrodip.squarewise.expensecore.recurring.service.RecurringExpenseSe
 import com.subhrodip.squarewise.expensecore.recurring.service.RecurringExpenseWorker
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
@@ -88,5 +91,21 @@ class RecurringExpenseWorkerTest @Autowired constructor(
         worker.enabled = true
         val processedAfterEnable = worker.run()
         assertEquals(1, processedAfterEnable)
+    }
+
+    @Test
+    fun `worker defaults are disabled and forwards configured catch-up bound`() {
+        val mockedService = mock(RecurringExpenseService::class.java)
+        val defaults = RecurringExpenseWorker(mockedService)
+
+        assertEquals(false, defaults.enabled)
+        assertEquals(12, defaults.maxCatchUpOccurrences)
+
+        val today = LocalDate.now()
+        `when`(mockedService.processDueOccurrences(today, 3)).thenReturn(2)
+        val configured = RecurringExpenseWorker(mockedService, enabled = true, maxCatchUpOccurrences = 3)
+
+        assertEquals(2, configured.run())
+        verify(mockedService).processDueOccurrences(today, 3)
     }
 }

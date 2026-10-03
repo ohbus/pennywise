@@ -7,6 +7,7 @@ import com.subhrodip.squarewise.ids.contracts.ApiEndpoints
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.http.ResponseEntity
 import com.subhrodip.squarewise.errors.http.ApiProblem
 import org.springframework.http.MediaType
@@ -53,12 +54,31 @@ class ProfileController(
         return profiles.update(principal.name, request)
     }
 
+    /**
+     * Translates profile-domain failures at the controller boundary so the response identifies
+     * the Accounts service and retains the public RFC 7807 shape.
+     *
+     * @param error domain failure raised while handling a profile operation
+     * @return structured problem response with the catalog HTTP status
+     */
+    @ExceptionHandler(ApplicationException::class)
+    fun applicationFailure(error: ApplicationException): ResponseEntity<ApiProblem> {
+        val status = HttpStatus.resolve(error.errorCode.httpStatus) ?: HttpStatus.INTERNAL_SERVER_ERROR
+        return problem(
+            code = error.errorCode,
+            status = status,
+            title = error.message ?: error.errorCode.safeDetail,
+            detail = error.message ?: error.errorCode.safeDetail,
+            violations = emptyList()
+        )
+    }
+
     private fun problem(
         code: ErrorCode,
         status: HttpStatusCode,
-        title: String = "Internal server error",
-        detail: String = "An unexpected error occurred",
-        violations: List<FieldViolation> = emptyList()
+        title: String,
+        detail: String,
+        violations: List<FieldViolation>
     ): ResponseEntity<ApiProblem> =
         ResponseEntity.status(status)
             .contentType(MediaType.APPLICATION_PROBLEM_JSON)
@@ -82,6 +102,7 @@ class ProfileController(
         when (errorCode) {
             ErrorCode.ERR_02 -> "VALIDATION_FAILED"
             ErrorCode.ERR_03 -> "UNAUTHENTICATED"
+            ErrorCode.ERR_04 -> "FORBIDDEN"
             ErrorCode.ERR_05 -> "NOT_FOUND"
             else -> errorCode.name
         }

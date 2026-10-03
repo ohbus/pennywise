@@ -1,0 +1,53 @@
+package com.subhrodip.squarewise.accounts.auth
+
+import com.subhrodip.squarewise.accounts.auth.abuse.ClientAddressResolver
+import com.subhrodip.squarewise.accounts.auth.abuse.RateLimitBucketStore
+import com.subhrodip.squarewise.accounts.auth.abuse.RateLimitStoreUnavailableException
+import com.subhrodip.squarewise.accounts.auth.abuse.RefreshRateLimitService
+import com.subhrodip.squarewise.accounts.auth.credential.HmacCredentialDigest
+import com.subhrodip.squarewise.accounts.auth.login.LoginStartService
+import com.subhrodip.squarewise.accounts.auth.login.LoginVerificationService
+import com.subhrodip.squarewise.accounts.auth.session.RefreshTokenRequest
+import com.subhrodip.squarewise.accounts.auth.session.TokenSessionService
+import com.subhrodip.squarewise.errors.domain.ApplicationException
+import com.subhrodip.squarewise.errors.domain.ErrorCode
+import jakarta.servlet.http.HttpServletRequest
+import java.time.Instant
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Test
+import org.springframework.mock.web.MockHttpServletRequest
+import org.mockito.Mockito.mock
+
+/** Verifies refresh admission fails closed when the rate-limit store is unavailable. */
+class AuthControllerRateLimitFailureTest {
+    @Test
+    fun `refresh token maps rate limit store outage to ERR-11`() {
+        val digest = HmacCredentialDigest(ByteArray(32) { it.toByte() })
+        val unavailableLimiter = object : RefreshRateLimitService(
+            digest,
+            mock(RateLimitBucketStore::class.java)
+        ) {
+            override fun tryAcquire(networkPartition: String, now: Instant): Boolean {
+                throw RateLimitStoreUnavailableException(IllegalStateException("redis unavailable"))
+            }
+        }
+        val controller = AuthController(
+            loginStartService = mock(LoginStartService::class.java),
+            loginVerificationService = mock(LoginVerificationService::class.java),
+            tokenSessionService = mock(TokenSessionService::class.java),
+            refreshRateLimitService = unavailableLimiter,
+            clientAddressResolver = ClientAddressResolver()
+        )
+        val request: HttpServletRequest = MockHttpServletRequest().apply {
+            remoteAddr = "127.0.0.1"
+        }
+
+        val error = assertThrows(ApplicationException::class.java) {
+            controller.refreshToken(RefreshTokenRequest("opaque-refresh-token"), request)
+        }
+
+        assertEquals(ErrorCode.ERR_11, error.errorCode)
+        assertEquals("Rate-limit service unavailable", error.message)
+    }
+}

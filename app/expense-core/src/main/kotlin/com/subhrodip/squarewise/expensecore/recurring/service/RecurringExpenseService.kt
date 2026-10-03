@@ -209,7 +209,7 @@ class RecurringExpenseService(
     private fun processScheduleOccurrences(
         schedule: RecurringExpenseSchedule,
         asOfDate: LocalDate,
-        maxCatchUpOccurrences: Int = 12
+        maxCatchUpOccurrences: Int
     ): Int {
         var generated = 0
         while (!schedule.paused && !schedule.nextOccurrenceDate.isAfter(asOfDate) && generated < maxCatchUpOccurrences) {

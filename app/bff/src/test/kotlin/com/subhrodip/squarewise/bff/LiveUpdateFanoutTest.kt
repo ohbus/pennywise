@@ -27,6 +27,16 @@ import java.util.concurrent.Executors
 
 class LiveUpdateFanoutTest {
     @Test
+    fun `exposes the invalidation stream and documented defaults`() {
+        val fanout = LiveUpdateFanout()
+
+        assertThat(fanout.invalidationSink).isNotNull
+        assertThat(LiveUpdateFanout.DEFAULT_QUEUE_CAPACITY).isEqualTo(64)
+        assertThat(LiveUpdateFanout.DEFAULT_MAX_SUBSCRIPTIONS_PER_USER).isEqualTo(20)
+        assertThat(LiveUpdateFanout.DEFAULT_SUBSCRIPTION_TTL).isEqualTo(Duration.ofMinutes(30))
+    }
+
+    @Test
     fun `bounds subscriptions per user`() {
         val fanout = LiveUpdateFanout(maxSubscriptionsPerUser = 1)
         fanout.subscribe("user-1", "group-1")

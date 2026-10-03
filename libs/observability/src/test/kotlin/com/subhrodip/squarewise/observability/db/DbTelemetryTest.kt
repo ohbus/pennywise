@@ -97,4 +97,29 @@ class DbTelemetryTest {
             DbTelemetry(slowQueryThresholdMs = 0)
         }
     }
+
+    @Test
+    fun `default telemetry starts with empty counters without a registry`() {
+        val telemetry = DbTelemetry()
+
+        assertEquals(0, telemetry.snapshot().failures)
+        assertEquals(0, telemetry.snapshot().queries)
+        telemetry.route("groups", "writer")
+        telemetry.lag("reader", 0)
+        assertEquals(0, telemetry.snapshot().queries)
+    }
+
+    @Test
+    fun `snapshot defaults every optional counter to zero`() {
+        val snapshot = DbTelemetrySnapshot(failures = 2)
+
+        assertEquals(2, snapshot.failures)
+        assertEquals(0, snapshot.acquisitions)
+        assertEquals(0, snapshot.acquisitionTotalMs)
+        assertEquals(0, snapshot.lockWaits)
+        assertEquals(0, snapshot.deadlocks)
+        assertEquals(0, snapshot.queries)
+        assertEquals(0, snapshot.queryTotalMs)
+        assertEquals(0, snapshot.slowQueries)
+    }
 }

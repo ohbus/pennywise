@@ -20,6 +20,7 @@ import com.subhrodip.squarewise.accounts.auth.login.LoginVerificationService
 import com.subhrodip.squarewise.accounts.auth.provider.InternalJwtTokenProvider
 import com.subhrodip.squarewise.accounts.auth.session.AuthSessionRepository
 import com.subhrodip.squarewise.accounts.auth.session.TokenSessionService
+import com.subhrodip.squarewise.accounts.auth.session.TokenResponse
 import com.subhrodip.squarewise.accounts.profile.persistence.InMemoryProfileStore
 import com.subhrodip.squarewise.errors.http.GlobalErrorHandler
 import com.subhrodip.squarewise.ids.contracts.ApiEndpoints
@@ -297,6 +298,17 @@ class AuthControllerTest @Autowired constructor(
                 .content("{\"refreshToken\":\"unknown\"}")
         )
             .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `token response defaults the authorization scheme to bearer`() {
+        val response = TokenResponse(
+            accessToken = "access",
+            expiresIn = 600,
+            refreshToken = "refresh"
+        )
+
+        assertEquals("Bearer", response.tokenType)
     }
 
     @Test

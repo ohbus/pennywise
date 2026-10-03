@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import com.subhrodip.squarewise.errors.http.GlobalErrorHandler
+import com.subhrodip.squarewise.errors.domain.ApplicationException
+import com.subhrodip.squarewise.errors.domain.ErrorCode
 import com.subhrodip.squarewise.db.routing.DbContextHolder
 import com.subhrodip.squarewise.db.routing.DbOperationKind
 import com.subhrodip.squarewise.db.routing.ReadConsistency
@@ -37,12 +39,13 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 
 class ProfileControllerTest {
     private val recordingProfiles = RecordingProfileStore(InMemoryProfileStore())
-    private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(
-        ProfileController(
+    private val controller = ProfileController(
             profiles = recordingProfiles,
             deletionService = DeletionRequestService(InMemoryDeletionRequestStore { Instant.parse("2026-01-01T00:00:00Z") }),
             exportService = ExportRequestService(InMemoryExportRequestStore { Instant.parse("2026-01-01T00:00:00Z") })
         )
+    private val mvc: MockMvc = MockMvcBuilders.standaloneSetup(
+        controller
     )
         .setControllerAdvice(GlobalErrorHandler())
         .build()
@@ -374,6 +377,17 @@ class ProfileControllerTest {
         )
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+    }
+
+    @Test
+    fun `controller problem handler maps validation and fallback error codes`() {
+        val validation = controller.applicationFailure(ApplicationException(ErrorCode.ERR_02, "invalid profile"))
+        val fallback = controller.applicationFailure(ApplicationException(ErrorCode.ERR_06, "conflict"))
+
+        assertEquals("VALIDATION_FAILED", validation.body?.code)
+        assertEquals("ERR_06", fallback.body?.code)
+        assertEquals(400, validation.body?.status)
+        assertEquals(409, fallback.body?.status)
     }
 
     /** Verifies duplicate requested IDs produce one profile rather than duplicated response rows. */

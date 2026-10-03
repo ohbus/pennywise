@@ -3,6 +3,7 @@ import com.subhrodip.squarewise.expensecore.expenses.api.AllocationPreviewContro
 import com.subhrodip.squarewise.expensecore.expenses.api.request.AllocationPreviewRequest
 import com.subhrodip.squarewise.expensecore.expenses.domain.AllocationCalculator
 import com.subhrodip.squarewise.errors.domain.ApplicationException
+import com.subhrodip.squarewise.errors.domain.ErrorCode
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -67,5 +68,17 @@ class AllocationPreviewControllerTest {
                 AllocationPreviewRequest("-1", listOf("a"))
             )
         }
+    }
+
+    @Test
+    fun `preview maps allocation calculator rejection to the stable error`() {
+        val error = assertThrows(ApplicationException::class.java) {
+            AllocationPreviewController().preview(
+                AllocationPreviewRequest("100", listOf("alice", "alice"))
+            )
+        }
+
+        assertEquals(ErrorCode.ERR_02, error.errorCode)
+        assertEquals("participant IDs must be unique", error.message)
     }
 }

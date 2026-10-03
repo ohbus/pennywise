@@ -35,4 +35,13 @@ class ParallelExecutorTest {
             }
         }
     }
+
+    @Test
+    fun `uses the available processor default when parallelism is omitted`() = runBlocking {
+        val results = ParallelExecutor.executeParallel(
+            tasks = listOf({ "first" }, { "second" })
+        )
+
+        assertEquals(listOf("first", "second"), results)
+    }
 }

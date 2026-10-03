@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.`when`
+import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -95,6 +96,38 @@ class LoginStartServiceTest {
             service.start("user@example.com", "network", LoginCredentialService.CredentialKind.LINK, now),
         )
         verify(emailSender, never()).send(
+            any(AuthEmailMessage::class.java)
+                ?: AuthEmailMessage("ignored@example.com", AuthEmailTemplate.LOGIN_LINK, "", now)
+        )
+    }
+
+    @Test
+    fun `delivery failure remains generic after credential issuance`() {
+        val credential = deliveryCredential(LoginCredentialService.CredentialKind.LINK)
+        `when`(rateLimitService.tryAcquire("person@example.test", "network", now)).thenReturn(true)
+        `when`(
+            credentialService.issue(
+                "person@example.test",
+                LoginCredentialService.CredentialKind.LINK,
+                now
+            )
+        ).thenReturn(credential)
+        doThrow(IllegalStateException("mail provider unavailable"))
+            .`when`(emailSender)
+            .send(
+                any(AuthEmailMessage::class.java)
+                    ?: AuthEmailMessage("ignored@example.com", AuthEmailTemplate.LOGIN_LINK, "", now)
+            )
+
+        val result = service.start(
+            "person@example.test",
+            "network",
+            LoginCredentialService.CredentialKind.LINK,
+            now
+        )
+
+        assertEquals(LoginStartResult.ACCEPTED, result)
+        verify(emailSender).send(
             any(AuthEmailMessage::class.java)
                 ?: AuthEmailMessage("ignored@example.com", AuthEmailTemplate.LOGIN_LINK, "", now)
         )

@@ -11,8 +11,10 @@ import java.time.Instant
 class ExportRequestServiceTest {
     @Test
     fun `creates export request with stable id and requested status`() {
-        val request = ExportRequestService(InMemoryExportRequestStore { Instant.EPOCH }).request("alice")
+        val service = ExportRequestService(InMemoryExportRequestStore { Instant.EPOCH })
+        val request = service.request("alice")
         assertEquals("alice", request.subject)
         assertEquals(ExportStatus.REQUESTED, request.status)
+        assertEquals(request, service.get(request.exportId))
     }
 }
